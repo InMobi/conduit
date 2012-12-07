@@ -1,5 +1,7 @@
 package com.inmobi.databus.distcp;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -117,20 +119,23 @@ public class TestDistCPBaseService  {
   @Test(priority = 1)
   public void testPositive() throws Exception {
     Map<Path, FileSystem> consumePaths = new HashMap<Path, FileSystem>();
+    List<String> result=new ArrayList<String>();
+    String currentLine = "";
     Path p =  service.getDistCPInputFile(consumePaths, testRoot);
     LOG.info("distcp input [" + p + "]");
     FSDataInputStream in = localFs.open(p);
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-    String result = reader.readLine();
+    while ((currentLine = reader.readLine()) != null) {
+    	result.add(currentLine);
+    }
+    reader.close();
     //assert that the minuteFileName inside the valid file with data
     //matches our expectedFileName1
-    assert result.equals(expectedFileName1);
+    assert result.contains(expectedFileName1);
+    assert result.contains(expectedFileName2);
 
     //second line was junkpath which would be skipped instead the next valid
     // path in input should be present
-    result = reader.readLine();
-    assert result.equals(expectedFileName2);
-    reader.close();
 
     Set<String> resultSet = new HashSet<String>();
     //compare consumePaths with expectedOutput
