@@ -185,6 +185,9 @@ public class TestDistCPBaseService  {
     String fileName4 = "databus_test-test_stream_2-2012-11-27-21-20_00000.gz";
     // file name in which stream name is not in streamsSet passed
     String fileName5 = "databus_test-test_stream-2-2012-11-27-21-20_00000.gz";
+    // timestamp part of the filename has wrong format
+    String fileName6 = "databus_test-test_stream-2-2012-11-27-21-20-00000.gz";
+    String fileName7 = "databus_test-test_stream-2-2012-11_27-21-20_00000.gz";
     // get stream names from file name
     String expectedStreamName1 = MergedStreamService.getCategoryFromFileName(
         fileName1, streamsSet);
@@ -196,11 +199,17 @@ public class TestDistCPBaseService  {
         fileName4, streamsSet);
     String expectedStreamName5 = MergedStreamService.getCategoryFromFileName(
         fileName5, streamsSet);
+    String expectedStreamName6 = MergedStreamService.getCategoryFromFileName(
+        fileName6, streamsSet);
+    String expectedStreamName7 = MergedStreamService.getCategoryFromFileName(
+        fileName7, streamsSet);
     assert expectedStreamName1.compareTo("test_stream") == 0;
     assert expectedStreamName2.compareTo("test-stream") == 0;
     assert expectedStreamName3.compareTo("test_streams") == 0;
     assert expectedStreamName4.compareTo("test_stream_2") == 0;
     assert expectedStreamName5 == null;
+    assert expectedStreamName6 == null;
+    assert expectedStreamName7 == null;
   }
 
 }

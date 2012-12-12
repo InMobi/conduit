@@ -126,6 +126,17 @@ public abstract class DistcpBaseService extends AbstractService {
   */
   protected abstract Path getInputPath() throws IOException;
 
+  /*
+   * @param filename should be of the format
+   * collectorname-streamname-yyyy-mm-dd-hh-mn_xxxxx.gz where xxxxx is the index
+   * of the file
+   * 
+   * @param streamSet set of all the destination streams of the corresponding
+   * cluster
+   * 
+   * @return null if the filename is not of correct format or no categories in
+   * the streamset matches with the category in the filename
+   */
   protected static String getCategoryFromFileName(String fileName,
       Set<String> streamsSet) {
     for (String streamName : streamsSet) {
@@ -140,7 +151,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   protected static boolean checkCorrectDateFormat(String timestamp) {
     return timestamp
-        .matches("^.[0-9]{4}.[0-9]{2}.[0-9]{2}.[0-9]{2}.[0-9]{2}.[0-9]{5}.gz$");
+        .matches("^-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}_[0-9]{5}.gz$");
   }
 
   @Override
