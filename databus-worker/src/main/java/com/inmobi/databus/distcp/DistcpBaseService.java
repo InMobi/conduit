@@ -226,13 +226,15 @@ public abstract class DistcpBaseService extends AbstractService {
   }
 
 
-  private void removePathWithDuplicateFileNames(Set<String> minFilesSet){
+  private void removePathWithDuplicateFileNames(Set<String> minFilesSet) {
     Set<String> fileNameSet=new HashSet<String>();
     Iterator<String> iterator=minFilesSet.iterator();
     while(iterator.hasNext()){
       Path p=new Path(iterator.next());
-      if(fileNameSet.contains(p.getName()))
+      if(fileNameSet.contains(p.getName())){
+        LOG.info("Removing duplicate path ["+p+"]");
         iterator.remove();
+      }
       else
         fileNameSet.add(p.getName());
 
