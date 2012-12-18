@@ -77,6 +77,8 @@ public class TestDistCPBaseService {
   public void cleanUP() throws IOException {
     // cleanup testRoot
     localFs.delete(testRoot, true);
+    //cleaning up test Root1
+    localFs.delete(testRoot1, true);
   }
 
   private void createInvalidData() throws IOException {
@@ -294,9 +296,6 @@ public class TestDistCPBaseService {
     }
     // assert that only 1 path is present
     assert (count == 1);
-    
-    //cleaning up test Root1
-    localFs.delete(testRoot1, true);
 
   }
 
