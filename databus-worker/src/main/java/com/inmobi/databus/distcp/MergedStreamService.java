@@ -342,4 +342,25 @@ public class MergedStreamService extends DistcpBaseService {
     return getSrcCluster().getConsumePath(getDestCluster());
 
   }
+
+  private void removePathWithDuplicateFileNames(Set<String> minFilesSet) {
+    Set<String> fileNameSet = new HashSet<String>();
+    Iterator<String> iterator = minFilesSet.iterator();
+    while (iterator.hasNext()) {
+      Path p = new Path(iterator.next());
+      if (fileNameSet.contains(p.getName())) {
+        LOG.info("Removing duplicate path [" + p + "]");
+        iterator.remove();
+      } else
+        fileNameSet.add(p.getName());
+
+    }
+  }
+
+  @Override
+  public void filterMinFilePaths(Set<String> minFilesSet) {
+    // remove all the minute file paths which have the duplicate 'filename'
+    removePathWithDuplicateFileNames(minFilesSet);
+
+  }
 }
