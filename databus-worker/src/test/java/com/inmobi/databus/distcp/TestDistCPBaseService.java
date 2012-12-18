@@ -294,6 +294,9 @@ public class TestDistCPBaseService {
     }
     // assert that only 1 path is present
     assert (count == 1);
+    
+    //cleaning up test Root1
+    localFs.delete(testRoot1, true);
 
   }
 
