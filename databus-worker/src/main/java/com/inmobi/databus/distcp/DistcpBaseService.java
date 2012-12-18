@@ -214,32 +214,18 @@ public abstract class DistcpBaseService extends AbstractService {
         readConsumePath(srcFs, consumeFilePath,
             minFilesSet);
       }
-
-      //removing those path which have same file name
-      removePathWithDuplicateFileNames(minFilesSet);
-      Path tmpPath = createInputFileForDISCTP(destFs, srcCluster.getName(), tmp,
-          minFilesSet);
+      // removing those path which have same file name
+      filterMinFilePaths(minFilesSet);
+      Path tmpPath = createInputFileForDISCTP(destFs, srcCluster.getName(),
+          tmp, minFilesSet);
       return getFinalPathForDistCP(tmpPath, consumePaths);
     }
 
     return null;
   }
 
+  public abstract void filterMinFilePaths(Set<String> minFilesSet);
 
-  private void removePathWithDuplicateFileNames(Set<String> minFilesSet) {
-    Set<String> fileNameSet=new HashSet<String>();
-    Iterator<String> iterator=minFilesSet.iterator();
-    while(iterator.hasNext()){
-      Path p=new Path(iterator.next());
-      if(fileNameSet.contains(p.getName())){
-        LOG.info("Removing duplicate path ["+p+"]");
-        iterator.remove();
-      }
-      else
-        fileNameSet.add(p.getName());
-
-    }
-  }
   /*
    * read each consumePath and add only valid paths to minFilesSet
    */
