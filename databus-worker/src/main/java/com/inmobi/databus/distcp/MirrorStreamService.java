@@ -123,6 +123,11 @@ public class MirrorStreamService extends DistcpBaseService {
       if (entry.getKey().isDir()) {
         getDestFs().mkdirs(entry.getValue());
       } else {
+        if (getDestFs().exists(entry.getValue())) {
+          LOG.warn("File with Path [" + entry.getValue()
+              + "] already exist,hence skipping renaming operation");
+          continue;
+        }
         getDestFs().mkdirs(entry.getValue().getParent());
         if (getDestFs().rename(entry.getKey().getPath(), entry.getValue()) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
@@ -255,10 +260,10 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   public void filterMinFilePaths(Set<String> minFilesSet) {
-    //No-op method for mirror stream service as we don't need to
-    //filter any minute file paths as mirror stream service
-    //is expected to exactly replicate the source cluster
+    // No-op method for mirror stream service as we don't need to
+    // filter any minute file paths as mirror stream service
+    // is expected to exactly replicate the source cluster
     return;
-    
+
   }
 }
