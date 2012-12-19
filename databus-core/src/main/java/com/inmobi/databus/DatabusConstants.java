@@ -22,5 +22,6 @@ public interface DatabusConstants {
   public static final String KRB_PRINCIPAL = "com.inmobi.databus.krb" +
   ".principal";
   public static final String KEY_TAB_FILE = "com.inmobi.databus.keytab";
+  public static final String ENABLE_ZOOKEEPER = "com.inmobi.databus.enablezk";
 
 }

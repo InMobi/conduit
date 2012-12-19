@@ -210,6 +210,13 @@ public class Databus implements Service, DatabusConstants {
         throw new RuntimeException("Zoookeeper connection string not " +
         "specified");
       }
+      String enableZK = prop.getProperty(ENABLE_ZOOKEEPER);
+      boolean enableZookeeper;
+      if (enableZK != null && enableZK.length() != 0)
+        enableZookeeper = Boolean.parseBoolean(enableZK);
+      else
+        enableZookeeper = true;
+      
       String principal = prop.getProperty(KRB_PRINCIPAL);
       String keytab = getProperty(prop, KEY_TAB_FILE);
       prop = null;
@@ -250,11 +257,13 @@ public class Databus implements Service, DatabusConstants {
         }
       }
       final Databus databus = new Databus(config, clustersToProcess);
-      LOG.info("Starting CuratorLeaderManager for eleader election ");
-      CuratorLeaderManager curatorLeaderManager =
-      new CuratorLeaderManager(databus, databusClusterId.toString(),
-      zkConnectString);
-      curatorLeaderManager.start();
+      if (enableZookeeper) {
+        LOG.info("Starting CuratorLeaderManager for eleader election ");
+        CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(
+            databus, databusClusterId.toString(), zkConnectString);
+        curatorLeaderManager.start();
+      } else
+        databus.start();
       Signal.handle(new Signal("INT"), new SignalHandler() {
         @Override
         public void handle(Signal signal) {
