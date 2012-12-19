@@ -224,7 +224,7 @@ public abstract class DistcpBaseService extends AbstractService {
     return null;
   }
 
-  public abstract void filterMinFilePaths(Set<String> minFilesSet);
+  protected abstract void filterMinFilePaths(Set<String> minFilesSet);
 
   /*
    * read each consumePath and add only valid paths to minFilesSet
