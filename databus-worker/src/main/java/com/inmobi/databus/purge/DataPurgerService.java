@@ -200,19 +200,26 @@ public class DataPurgerService extends AbstractService {
         if (trashHourPaths != null && trashHourPaths.length >= 1) {
           for (FileStatus trashHourPath : trashHourPaths) {
             try {
-              Calendar trashPathDate = getDateFromTrashPath(trashPath.getPath()
-                  .getName(), trashHourPath.getPath().getName());
-              if (isPurge(trashPathDate, getTrashPathRetentionInHours()))
+              Calendar trashPathHourDate = getDateFromTrashPath(trashPath
+                  .getPath().getName(), trashHourPath.getPath().getName());
+              if (isPurge(trashPathHourDate, getTrashPathRetentionInHours()))
                 streamsToPurge.add(trashHourPath.getPath().makeQualified(fs));
             } catch (NumberFormatException e) {
               streamsToPurge.add(trashHourPath.getPath().makeQualified(fs));
             }
           }
+        } else {
+          try {
+            Calendar trashPathDate = getDateFromTrashPath(trashPath.getPath()
+                .getName(), "23");
+            if (isPurge(trashPathDate, getTrashPathRetentionInHours()))
+              streamsToPurge.add(trashPath.getPath().makeQualified(fs));
+          } catch (NumberFormatException e) {
+            streamsToPurge.add(trashPath.getPath().makeQualified(fs));
+          }
         }
-
       }
     }
-
   }
 
   private Calendar getDateFromTrashPath(String trashDatePath,
