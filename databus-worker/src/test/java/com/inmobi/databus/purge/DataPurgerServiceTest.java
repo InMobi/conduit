@@ -194,7 +194,7 @@ public class DataPurgerServiceTest {
   }
 
   private void createTestPurgefiles(FileSystem fs, Cluster cluster,
-      Calendar date)
+      Calendar date, boolean createEmptyDirs)
       throws Exception {
     for(String streamname: cluster.getSourceStreams()) {
       String[] files = new String[NUM_OF_FILES];
@@ -232,16 +232,25 @@ public class DataPurgerServiceTest {
         }
 
         {
-          Path path = new Path(trashpath + File.separator
-              + String.valueOf(date.get(Calendar.HOUR_OF_DAY)) + File.separator
-              + files[j]);
-          // LOG.info("Creating trash File " + path.toString());
-          FSDataOutputStream streamout = fs.create(path);
-          streamout.writeBytes("Creating Test trash data for teststream "
-              + path.getName());
-          streamout.close();
-          Assert.assertTrue(fs.exists(path));
+          if(!createEmptyDirs){
+            Path path = new Path(trashpath + File.separator
+                + String.valueOf(date.get(Calendar.HOUR_OF_DAY)) + File.separator
+                + files[j]);
+            // LOG.info("Creating trash File " + path.toString());
+            FSDataOutputStream streamout = fs.create(path);
+            streamout.writeBytes("Creating Test trash data for teststream "
+                + path.getName());
+            streamout.close();
+            Assert.assertTrue(fs.exists(path));            
+          }
         }
+        
+      }
+      if (createEmptyDirs) {
+        Path path = new Path(trashpath);
+        if (!fs.exists(path))
+          fs.create(path);
+        Assert.assertTrue(fs.exists(path));
       }
     }
 
@@ -296,7 +305,7 @@ public class DataPurgerServiceTest {
           .getTimeZone());
       todaysdate.add(Calendar.HOUR, numofhourstoadd);
   
-      createTestPurgefiles(fs, cluster, todaysdate);
+      createTestPurgefiles(fs, cluster, todaysdate, false);
   
       service.runOnce();
   
@@ -315,11 +324,48 @@ public class DataPurgerServiceTest {
     testPurgerService("test-dps-databus_X_4.xml", -3, false, true);
     testPurgerService("test-dps-databus_X_4.xml", -1, true, true);
   }
+  
+  public void testTrashPurging() throws Exception {
+    LOG.info("Creating empty data dirs");
+    DatabusConfigParser configparser = new DatabusConfigParser(
+        "test-dps-databus_X_4.xml");
+    DatabusConfig config = configparser.getConfig();
+
+    for (Cluster cluster : config.getClusters().values()) {
+
+      FileSystem fs = FileSystem.getLocal(new Configuration());
+      fs.delete(new Path(cluster.getRootDir()), true);
+
+      Calendar date1 = new GregorianCalendar(Calendar.getInstance()
+          .getTimeZone());
+      date1.add(Calendar.HOUR, -48);
+      createTestPurgefiles(fs, cluster, date1, true);
+      Calendar date2 = new GregorianCalendar(Calendar.getInstance()
+          .getTimeZone());
+      date2.add(Calendar.HOUR, -24);
+      createTestPurgefiles(fs, cluster, date2, true);
+      Calendar date3 = new GregorianCalendar(Calendar.getInstance()
+          .getTimeZone());
+      date3.add(Calendar.HOUR, -1);
+      createTestPurgefiles(fs, cluster, date3, false);
+
+      TestDataPurgerService service = new TestDataPurgerService(config, cluster);
+
+      service.runOnce();
+
+      verifyPurgefiles(fs, cluster, date1, false, false);
+      verifyPurgefiles(fs, cluster, date2, false, false);
+      verifyPurgefiles(fs, cluster, date3, true, true);
+      fs.delete(new Path(cluster.getRootDir()), true);
+      fs.close();
+    }
+  }
+  
   private DataPurgerService buildPurgerService() {
     DataPurgerService service;
     try {
-      DatabusConfig config = LocalStreamServiceTest.buildTestDatabusConfig("local", "file:///tmp",
- "datapurger", "48", "24");
+      DatabusConfig config = LocalStreamServiceTest.buildTestDatabusConfig(
+          "local", "file:///tmp", "datapurger", "48", "24");
       service = new TestDataPurgerService(config, config.getClusters().get(
           "cluster1"));
     }
