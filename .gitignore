@@ -7,3 +7,5 @@
 .project
 .settings
 target
+build
+.DS_Store
