@@ -2,6 +2,7 @@ package com.inmobi.databus;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,8 +47,17 @@ public class FSCheckpointProvider implements CheckpointProvider {
       }
       in = new BufferedInputStream(
       fs.open(currentCheckpoint));
-      buffer = new byte[in.available()];
-      in.read(buffer);
+      ArrayList<Byte> tempList = new ArrayList<Byte>();
+      int next = in.read();
+      while(next!=-1){
+        tempList.add((byte)next);
+        next = in.read();
+      }
+      Byte[] bytes = tempList.toArray(new Byte[tempList.size()]);
+      buffer = new byte[tempList.size()];
+      for (int i = 0; i < buffer.length; i++) {
+        buffer[i] = bytes[i].byteValue();
+      }
     } catch (IOException e) {
       LOG.warn("Could not read checkpoint ", e);
       throw new RuntimeException(e);
