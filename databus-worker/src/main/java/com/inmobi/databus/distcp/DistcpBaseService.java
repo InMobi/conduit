@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -39,6 +40,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
+import org.apache.tools.ant.taskdefs.Length.FileMode;
+import org.apache.tools.ant.types.FileList.FileName;
 
 public abstract class DistcpBaseService extends AbstractService {
 
@@ -206,13 +209,15 @@ public abstract class DistcpBaseService extends AbstractService {
         * /databus/system/consumers/<cluster>/file1..and so on
         */
         consumePaths.put(consumeFilePath, srcFs);
-
         LOG.debug("Reading minutePaths from ConsumePath [" +
-            consumeFilePath + "]");
-        //read all valid minute files path in each consumePath
+                consumeFilePath + "]");
+            //read all valid minute files path in each consumePath
         readConsumePath(srcFs, consumeFilePath,
-            minFilesSet);
+                minFilesSet);
       }
+      
+      //removing those path which have same file name
+      removePathWithDuplicateFileNames(minFilesSet);
       Path tmpPath = createInputFileForDISCTP(destFs, srcCluster.getName(), tmp,
           minFilesSet);
       return getFinalPathForDistCP(tmpPath, consumePaths);
@@ -221,13 +226,26 @@ public abstract class DistcpBaseService extends AbstractService {
     return null;
   }
 
+  
+  private void removePathWithDuplicateFileNames(Set<String> minFilesSet){
+	  Set<String> fileNameSet=new HashSet<String>();
+	  Iterator<String> iterator=minFilesSet.iterator();
+	 while(iterator.hasNext()){
+		 Path p=new Path(iterator.next());
+		  if(fileNameSet.contains(p.getName()))
+			 iterator.remove();
+		  else
+			  fileNameSet.add(p.getName());
+			  
+	  }
+  }
   /*
    * read each consumePath and add only valid paths to minFilesSet
    */
   private void readConsumePath(FileSystem fs,Path consumePath,
                                Set<String>  minFilesSet)  throws IOException{
     BufferedReader reader = null;
-    try {
+    try {    	
       FSDataInputStream fsDataInputStream = fs.open(consumePath);
       reader = new BufferedReader(new InputStreamReader
           (fsDataInputStream));
@@ -255,7 +273,7 @@ public abstract class DistcpBaseService extends AbstractService {
           }
         }
       } while (minFileName != null);
-    } finally {
+    }finally {
       if (reader != null)
         reader.close();
     }

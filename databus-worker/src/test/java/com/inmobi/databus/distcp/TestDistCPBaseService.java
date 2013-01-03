@@ -21,6 +21,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -28,6 +29,7 @@ import org.testng.annotations.Test;
 public class TestDistCPBaseService  {
   private static Logger LOG = Logger.getLogger(TestDistCPBaseService.class);
   Path testRoot = new Path("/tmp/", this.getClass().getName());
+  Path testRoot1=new Path("/tmp/","test");
   FileSystem localFs;
   Cluster cluster;
   MirrorStreamService service = null;
@@ -71,7 +73,7 @@ public class TestDistCPBaseService  {
 
   }
 
-  //@AfterTest
+  @AfterTest
   public void cleanUP() throws IOException{
     //cleanup testRoot
     localFs.delete(testRoot, true);
@@ -210,6 +212,47 @@ public class TestDistCPBaseService  {
     assert expectedStreamName5 == null;
     assert expectedStreamName6 == null;
     assert expectedStreamName7 == null;
+  }
+   private void createDataWithDuplicateFileNames() throws IOException{
+	  Path dataRoot = new Path(testRoot, service.getInputPath());
+	    localFs.mkdirs(dataRoot);
+	   Path dataRoot1=new  Path(testRoot1, service.getInputPath());
+	   localFs.mkdirs(dataRoot1);
+	    //one valid & invalid data file
+	    Path data_file = new Path(testRoot, "data-file1");
+	    localFs.create(data_file);
+
+	    Path data_file1 = new Path(testRoot1, "data-file1");
+	    localFs.create(data_file1);
+
+	    //one file with data and one valid path and one invalid path
+	    Path p = new Path(dataRoot, "file-with-valid-data");
+	    FSDataOutputStream  out = localFs.create(p);
+	    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
+	    writer.write(data_file.toString() +"\n");
+	    writer.write("some-junk-path\n");
+	    writer.write(data_file1.toString() + "\n");
+	    writer.close();
+  }
+  
+  @Test(priority = 3)
+  public void testDuplicateFileNames() throws IOException{
+	  
+	  cleanUP();
+	  createDataWithDuplicateFileNames();
+	  Map<Path, FileSystem> consumePaths = new HashMap<Path, FileSystem>();
+	    Path p =  service.getDistCPInputFile(consumePaths, testRoot);
+	    LOG.info("distcp input [" + p + "]");
+	    FSDataInputStream in = localFs.open(p);
+	    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+	    int count=0;
+	    
+	    while(reader.readLine()!=null){
+	    	count++;
+	    }
+	    //assert that only 1 path is present
+	    assert (count==1);
+	   
   }
 
 }
