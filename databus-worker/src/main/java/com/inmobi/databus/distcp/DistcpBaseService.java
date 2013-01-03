@@ -245,7 +245,7 @@ public abstract class DistcpBaseService extends AbstractService {
   private void readConsumePath(FileSystem fs,Path consumePath,
                                Set<String>  minFilesSet)  throws IOException{
     BufferedReader reader = null;
-    try {    	
+    try {
       FSDataInputStream fsDataInputStream = fs.open(consumePath);
       reader = new BufferedReader(new InputStreamReader
           (fsDataInputStream));
@@ -273,7 +273,7 @@ public abstract class DistcpBaseService extends AbstractService {
           }
         }
       } while (minFileName != null);
-    }finally {
+    } finally {
       if (reader != null)
         reader.close();
     }
