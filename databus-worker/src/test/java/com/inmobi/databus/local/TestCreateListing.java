@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.FSCheckpointProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -17,8 +15,13 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.FSCheckpointProvider;
+
 
 public class TestCreateListing {
+
+
   private static Logger LOG = Logger.getLogger(TestCreateListing.class);
   Path rootDir = new Path
   ("/tmp/test-databus/databus/");
