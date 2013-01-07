@@ -25,6 +25,10 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.inmobi.databus.AbstractService;
+import com.inmobi.databus.CheckpointProvider;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -37,11 +41,6 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-
-import com.inmobi.databus.AbstractService;
-import com.inmobi.databus.CheckpointProvider;
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
 
 /*
  * Handles Local Streams for a Cluster
@@ -132,7 +131,7 @@ public class LocalStreamService extends AbstractService {
   }
 
   Map<Path, Path> prepareForCommit(long commitTime,
-                                           Map<FileStatus, String> fileListing) throws Exception {
+      Map<FileStatus, String> fileListing) throws Exception {
     FileSystem fs = FileSystem.get(cluster.getHadoopConf());
 
     // find final destination paths
