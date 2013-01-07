@@ -193,12 +193,13 @@ public class MergedStreamService extends DistcpBaseService {
    * benchmark_merge_1352687040907
    */
   private void commitMirroredConsumerPaths(
-      Map<String, Set<Path>> committedPaths, Path tmp) throws Exception {
+      Map<String, Set<Path>> tobeCommittedPaths, Path tmp) throws Exception {
     // Map of Stream and clusters where it's mirrored
-    Map<String, Set<Cluster>> mirrorStreamConsumers = new HashMap<String, Set<Cluster>>();
-    Map<Path, Path> consumerCommitPaths = new LinkedHashMap<Path, Path>();
+    Map<String, Set<Cluster>> mirrorStreamConsumers = new HashMap<String, 
+        Set<Cluster>>();
+    Map<Path, Path> mirrorCommitPaths = new LinkedHashMap<Path, Path>();
     // for each stream in committedPaths
-    for (String stream : committedPaths.keySet()) {
+    for (String stream : tobeCommittedPaths.keySet()) {
       // for each cluster
       for (Cluster cluster : getConfig().getClusters().values()) {
         // is this stream to be mirrored on this cluster
@@ -213,7 +214,7 @@ public class MergedStreamService extends DistcpBaseService {
     } // for each stream
 
     // Commit paths for each consumer
-    for (String stream : committedPaths.keySet()) {
+    for (String stream : tobeCommittedPaths.keySet()) {
       // consumers for this stream
       Set<Cluster> consumers = mirrorStreamConsumers.get(stream);
       Path tmpConsumerPath;
@@ -230,7 +231,7 @@ public class MergedStreamService extends DistcpBaseService {
         tmpConsumerPath = new Path(tmp, tmpPath);
         FSDataOutputStream out = getDestFs().create(tmpConsumerPath);
         try {
-          for (Path path : committedPaths.get(stream)) {
+          for (Path path : tobeCommittedPaths.get(stream)) {
             LOG.debug("Writing Mirror Commit Path [" + path.toString() + "]");
             out.writeBytes(path.toString());
             out.writeBytes("\n");
@@ -244,10 +245,10 @@ public class MergedStreamService extends DistcpBaseService {
         Path finalMirrorPath = new Path(getDestCluster().getMirrorConsumePath(
             consumer), tmpPath + "_"
                 + new Long(System.currentTimeMillis()).toString());
-        consumerCommitPaths.put(tmpConsumerPath, finalMirrorPath);
+        mirrorCommitPaths.put(tmpConsumerPath, finalMirrorPath);
       } // for each consumer
     } // for each stream
-    doLocalCommit(consumerCommitPaths);
+    doLocalCommit(mirrorCommitPaths);
     missingDirsCommittedPaths.clear();
   }
 
