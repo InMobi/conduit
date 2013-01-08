@@ -28,7 +28,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -210,6 +209,12 @@ public class DataPurgerService extends AbstractService {
           }
         } else {
           try {
+            /*
+             * The date direcotry is empty. Check the time elapsed between the
+             * last hour of the empty directory (23rd hour) and the current time
+             * and add the date direcotry to the streamsToPurge only if the time
+             * elapsed is greater than the trashPathRetiontionHours
+             */
             Calendar trashPathDate = getDateFromTrashPath(trashPath.getPath()
                 .getName(), "23");
             if (isPurge(trashPathDate, getTrashPathRetentionInHours()))
@@ -330,12 +335,17 @@ public class DataPurgerService extends AbstractService {
     return Math.abs(hours);
   }
 
-  private void purge() throws Exception {
+  private void purge() {
     Iterator it = streamsToPurge.iterator();
+    Path purgePath = null;
     while (it.hasNext()) {
-      Path purgePath = (Path) it.next();
-      fs.delete(purgePath, true);
-      LOG.info("Purging [" + purgePath + "]");
+      try {
+        purgePath = (Path) it.next();
+        fs.delete(purgePath, true);
+        LOG.info("Purging [" + purgePath + "]");
+      } catch (Exception e) {
+        LOG.warn("Cannot delete path " + purgePath, e);
+      }
     }
   }
 
