@@ -20,6 +20,7 @@ import java.text.NumberFormat;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -28,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -325,6 +327,82 @@ public class DataPurgerServiceTest {
     testPurgerService("test-dps-databus_X_4.xml", -1, true, true);
   }
   
+  public void testDataPurger() throws Exception {
+    LOG.info("Check data purger does not stop when unable to delete a path");
+    DatabusConfigParser configparser = new DatabusConfigParser(
+        "test-dps-databus_X_4.xml");
+    DatabusConfig config = configparser.getConfig();
+
+    for (Cluster cluster : config.getClusters().values()) {
+
+      FileSystem fs = FileSystem.getLocal(new Configuration());
+      fs.delete(new Path(cluster.getRootDir()), true);
+
+      Calendar date1 = new GregorianCalendar(Calendar.getInstance()
+          .getTimeZone());
+      date1.add(Calendar.HOUR, -7);
+      createTestPurgefiles(fs, cluster, date1, false);
+      Calendar date2 = new GregorianCalendar(Calendar.getInstance()
+          .getTimeZone());
+      date2.add(Calendar.HOUR, -6);
+      createTestPurgefiles(fs, cluster, date2, false);
+      ArrayList<Path> pathsToProcess = new ArrayList<Path>();
+      Path[] paths = getLocalCommitPath(fs, cluster, date2);
+      for (Path path : paths) {
+        fs.setPermission(path, new FsPermission("000"));
+        pathsToProcess.add(path);
+      }
+      paths = getMergeCommitPath(fs, cluster, date2);
+      for (Path path : paths) {
+        fs.setPermission(path, new FsPermission("000"));
+        pathsToProcess.add(path);
+      }
+      Calendar date3 = new GregorianCalendar(Calendar.getInstance()
+          .getTimeZone());
+      date3.add(Calendar.HOUR, -5);
+      createTestPurgefiles(fs, cluster, date3, false);
+
+      TestDataPurgerService service = new TestDataPurgerService(config, cluster);
+
+      service.runOnce();
+
+      verifyPurgefiles(fs, cluster, date1, false, false);
+      verifyPurgefiles(fs, cluster, date2, true, false);
+      verifyPurgefiles(fs, cluster, date3, false, false);
+      for (Path p : pathsToProcess) {
+        fs.setPermission(p, new FsPermission("755"));
+      }
+      fs.delete(new Path(cluster.getRootDir()), true);
+      fs.close();
+    }
+  }
+
+  private Path[] getMergeCommitPath(FileSystem fs, Cluster cluster,
+      Calendar date) {
+    Path[] paths = new Path[cluster.getSourceStreams().size()];
+    int i = 0;
+    for (String streamname : cluster.getSourceStreams()) {
+      String datapath = Cluster.getDateAsYYYYMMDDHHMNPath(date.getTime());
+      String mergecommitpath = cluster.getFinalDestDirRoot() + File.separator
+          + streamname + File.separator + datapath;
+      paths[i] = new Path(mergecommitpath);
+    }
+    return paths;
+  }
+
+  private Path[] getLocalCommitPath(FileSystem fs, Cluster cluster,
+      Calendar date) {
+    Path[] paths = new Path[cluster.getSourceStreams().size()];
+    int i = 0;
+    for (String streamname : cluster.getSourceStreams()) {
+      String datapath = Cluster.getDateAsYYYYMMDDHHMNPath(date.getTime());
+      String commitpath = cluster.getLocalFinalDestDirRoot() + File.separator
+          + streamname + File.separator + datapath;
+      paths[i] = new Path(commitpath);
+    }
+    return paths;
+  }
+
   public void testTrashPurging() throws Exception {
     LOG.info("Creating empty data dirs");
     DatabusConfigParser configparser = new DatabusConfigParser(
