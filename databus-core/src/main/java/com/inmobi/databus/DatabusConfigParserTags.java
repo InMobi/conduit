@@ -17,5 +17,5 @@ public interface DatabusConfigParserTags {
   public static final String JOB_QUEUE_NAME = "jobqueuename";
   public static final String HDFS_URL = "hdfsurl";
   public static final String JT_URL = "jturl";
-  public static final String SKIP_COMPRESSION="skipCompression";
+  public static final String COPYMAPPER_IMPL="copyMapperClass";
 }

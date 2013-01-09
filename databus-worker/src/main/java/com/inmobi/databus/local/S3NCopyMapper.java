@@ -11,7 +11,23 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.File;
 import java.io.IOException;
 
-public class S3CopyMapper extends Mapper<Text, Text, Text, Text> {
+/**
+ * Top level S3N copy mapper class which uses the S3 Native copy for the copy
+ * mapper operations.
+ *
+ * In order to use the class, in databus.xml for the specific S3N hdfs url set
+ * copyMapperClass = com.inmobi.databus.local.S3NCopyMapper
+ *
+ * Example
+ * <code>
+ *   <cluster name="testcluster1" hdfsurl="s3n:///"
+              jturl="local"
+              jobqueuename="default"
+              copyMapperClass = "com.inmobi.databus.local.S3NCopyMapper"/>
+ * </code>
+ */
+
+public class S3NCopyMapper extends Mapper<Text, Text, Text, Text> {
 
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
   private S3FileSystemHelper helper;

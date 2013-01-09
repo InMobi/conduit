@@ -493,12 +493,20 @@ public class LocalStreamService extends AbstractService {
     return job;
   }
 
-  private Class<? extends Mapper> getMapperClass() {
-    if (cluster.getHdfsUrl().startsWith("s3n://") &&
-        cluster.skipCompression()) {
-      return S3CopyMapper.class;
-    } else {
+  /*
+    The visiblity of method is set to protected to enable unit testing
+   */
+  protected Class<? extends Mapper> getMapperClass() {
+    String className = cluster.getCopyMapperImpl();
+    if(className == null || className.isEmpty()) {
       return CopyMapper.class;
+    } else {
+      try {
+        return (Class<? extends Mapper>)Class.forName(className);
+      } catch (ClassNotFoundException e) {
+        throw new IllegalArgumentException("Copy mapper Impl " + className +
+          "is not found in class path");
+      }
     }
   }
 }
