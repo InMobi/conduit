@@ -36,6 +36,7 @@ public class Cluster {
   private final Map<String, DestinationStream> consumeStreams;
   private final Set<String> sourceStreams;
   private final Configuration hadoopConf;
+  private final boolean skipCompression;
 
   public Cluster(Map<String, String> clusterElementsMap, String rootDir,
       Map<String, DestinationStream> consumeStreams, Set<String> sourceStreams)
@@ -68,6 +69,13 @@ public class Cluster {
     this.hadoopConf.set("fs.default.name", hdfsUrl);
     this.hadoopConf.set("mapred.job.queue.name",
     		clusterjobqueuename);
+    String compressStr = clusterElementsMap.get(DatabusConfigParser
+      .SKIP_COMPRESSION);
+    if(compressStr!=null && !compressStr.isEmpty()) {
+      skipCompression = Boolean.valueOf(compressStr);
+    } else {
+      skipCompression = false;
+    }
   }
 
   public String getRootDir() {
@@ -240,5 +248,9 @@ public class Cluster {
 
   public String getJobQueueName() {
     return clusterjobqueuename;
+  }
+
+  public boolean skipCompression() {
+    return this.skipCompression;
   }
 }

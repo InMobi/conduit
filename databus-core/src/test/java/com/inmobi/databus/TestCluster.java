@@ -12,7 +12,6 @@ import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.inmobi.databus.utils.CalendarHelper;
 
 public class TestCluster {
 
@@ -23,6 +22,22 @@ public class TestCluster {
     DatabusConfigParser databusConfigParser = new DatabusConfigParser(
         "test-databus.xml");
 
+    validateClusterConfiguration(databusConfigParser, false);
+
+  }
+
+  @Test
+  public void testSkipCompressionFlag() throws Exception {
+    DatabusConfigParser databusConfigParser = new DatabusConfigParser(
+      "test-databus-skipCompression.xml");
+
+    validateClusterConfiguration(databusConfigParser, true);
+  }
+
+  private void validateClusterConfiguration(DatabusConfigParser
+                                              databusConfigParser,
+                                            boolean skipCompression
+                                            ) throws Exception {
     DatabusConfig config = databusConfigParser.getConfig();
 
     Map<String, Cluster> clusterMap = config.getClusters();
@@ -37,7 +52,7 @@ public class TestCluster {
       LOG.info("Testing RootDir " + hdfsUrl + File.separator + rootDir
           + File.separator + " " + cluster.getRootDir());
       Assert.assertTrue(cluster.getRootDir().compareTo(
-          hdfsUrl + File.separator + rootDir + File.separator) == 0);
+        hdfsUrl + File.separator + rootDir + File.separator) == 0);
 
       LOG.info("Testing LocalFinalDesDir " + LocalFinalDestDir + " "
           + cluster.getLocalFinalDestDirRoot());
@@ -137,12 +152,12 @@ public class TestCluster {
           + cluster.getTrashPath());
       Assert
           .assertTrue(cluster.getTrashPath().compareTo(new Path(trashPath)) == 0);
-      
+
       LOG.info("Testing getDataDir " + cluster.getRootDir() + "data" + " "
           + cluster.getDataDir());
       Assert.assertTrue(cluster.getDataDir().compareTo(
           new Path(cluster.getRootDir(), "data")) == 0);
-      
+
       LOG.info("Testing getCheckpointDir " + SystemDir + File.separator
           + "checkpoint" + " " + cluster.getCheckpointDir());
       Assert.assertTrue(cluster.getCheckpointDir().compareTo(
@@ -153,8 +168,11 @@ public class TestCluster {
       Assert.assertTrue(cluster.getTmpPath()
 .compareTo(
           new Path(SystemDir, "tmp")) == 0);
-    }
 
+      LOG.info("Checking the skip compression flag which can be only enabled " +
+        "for S3N filesystem");
+      Assert.assertEquals(cluster.skipCompression(), skipCompression);
+    }
   }
 
 }

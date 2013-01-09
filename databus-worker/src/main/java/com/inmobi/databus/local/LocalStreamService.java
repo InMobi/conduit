@@ -494,10 +494,11 @@ public class LocalStreamService extends AbstractService {
   }
 
   private Class<? extends Mapper> getMapperClass() {
-    if (!cluster.getHdfsUrl().startsWith("s3n://")) {
-      return CopyMapper.class;
-    } else {
+    if (cluster.getHdfsUrl().startsWith("s3n://") &&
+        cluster.skipCompression()) {
       return S3CopyMapper.class;
+    } else {
+      return CopyMapper.class;
     }
   }
 }
