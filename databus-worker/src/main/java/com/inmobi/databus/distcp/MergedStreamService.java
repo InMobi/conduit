@@ -81,6 +81,7 @@ public class MergedStreamService extends DistcpBaseService {
         // file;hence even in case where writing consumer fail(after publishing
         // missing path) at the first run those paths would be added to consumer in next run
         addPublishMissingPaths(missingDirsCommittedPaths, -1, primaryCategories);
+
       }
 
       Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
@@ -144,7 +145,7 @@ public class MergedStreamService extends DistcpBaseService {
         // no race is there in consumePaths, tmpOut
         doFinalCommit(consumePaths);
       }
-      // rmr tmpOut cleanup
+      // rmv tmpOut cleanup
       getDestFs().delete(tmpOut, true);
       LOG.debug("Deleting [" + tmpOut + "]");
     } catch (Exception e) {
