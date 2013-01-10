@@ -131,7 +131,8 @@ public class LocalStreamService extends AbstractService {
     }
   }
 
-  private Map<Path, Path> prepareForCommit(long commitTime) throws Exception {
+
+   Map<Path, Path> prepareForCommit(long commitTime) throws Exception {
     FileSystem fs = FileSystem.get(cluster.getHadoopConf());
 
     // find final destination paths
@@ -169,7 +170,7 @@ public class LocalStreamService extends AbstractService {
         try {
           for (Path destPath : mvPaths.values()) {
             String category = getCategoryFromDestPath(destPath);
-            if (clusterEntry.getDestinationStreams().containsKey(category)) {
+            if (clusterEntry.getPrimaryDestinationStreams().contains(category)) {
               if (!isFileOpened) {
                 out = fs.create(tmpConsumerPath);
                 isFileOpened = true;
