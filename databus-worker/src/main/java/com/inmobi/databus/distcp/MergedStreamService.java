@@ -24,14 +24,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
 
 /*
  * Handles MergedStreams for a Cluster
@@ -41,11 +42,13 @@ public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
   private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
+  private Set<String> primaryCategories;
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster) throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
         destinationCluster);
+    primaryCategories = destinationCluster.getPrimaryDestinationStreams();
   }
 
   @Override
@@ -72,7 +75,12 @@ public class MergedStreamService extends DistcpBaseService {
       }
 
       synchronized (getDestCluster()) {
-        addPublishMissingPaths(missingDirsCommittedPaths, -1, null);
+        // missing paths are published first and later those paths are added to
+        // mirror consumer file,but since "missingDirsCommittedPaths" map is not
+        // cleared until those paths are successfully written to consumer
+        // file;hence even in case where writing consumer fail(after publishing
+        // missing path) at the first run those paths would be added to consumer in next run
+        addPublishMissingPaths(missingDirsCommittedPaths, -1, primaryCategories);
       }
 
       Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
@@ -108,8 +116,11 @@ public class MergedStreamService extends DistcpBaseService {
         tobeCommittedPaths =  new HashMap<String, Set<Path>>();
         synchronized (getDestCluster()) {
           long commitTime = getDestCluster().getCommitTime();
+          // between the last addPublishMissinPaths and this call,distcp is
+          // called which is a MR job and can take time hence this call ensures
+          // all missing paths are added till this time
           addPublishMissingPaths(missingDirsCommittedPaths, commitTime,
-              categoriesToCommit.keySet());
+              primaryCategories);
           commitPaths = createLocalCommitPaths(tmpOut, commitTime, 
               categoriesToCommit, tobeCommittedPaths);
           for (Map.Entry<String, Set<Path>> entry : missingDirsCommittedPaths
@@ -121,11 +132,13 @@ public class MergedStreamService extends DistcpBaseService {
               tobeCommittedPaths.put(entry.getKey(), entry.getValue());
             }
           }
+
+          // Prepare paths for MirrorStreamConsumerService
+          commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
+          // category, Set of Paths to commit
+          doLocalCommit(commitPaths);
         }
-        // Prepare paths for MirrorStreamConsumerService
-        commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
-        // category, Set of Paths to commit
-        doLocalCommit(commitPaths);
+
 
         // Cleanup happens in parallel without sync
         // no race is there in consumePaths, tmpOut
