@@ -22,14 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.ClusterTest;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.DatabusConfigParser;
-import com.inmobi.databus.DestinationStream;
-import com.inmobi.databus.FSCheckpointProvider;
-import com.inmobi.databus.SourceStream;
-import com.inmobi.databus.TestMiniClusterUtil;
+import com.inmobi.databus.*;
 import com.inmobi.databus.local.LocalStreamService.CollectorPathFilter;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -381,7 +374,47 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml, Running Twice");
     testMapReduce("test-lss-multiple-databus.xml", 2);
   }
-  
+
+  private static class NullCheckPointProvider implements CheckpointProvider {
+
+    @Override
+    public byte[] read(String key) {
+      return new byte[0];
+    }
+
+    @Override
+    public void checkpoint(String key, byte[] checkpoint) {
+    }
+
+    @Override
+    public void close() {
+    }
+  }
+  @Test
+  public void testCopyMapperImplMethod() throws Exception{
+    DatabusConfigParser parser = new DatabusConfigParser("test-lss-databus-s3n.xml");
+    DatabusConfig config = parser.getConfig();
+    Set<String> clustersToProcess = new HashSet<String>();
+    Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
+    for (SourceStream sStream : config.getSourceStreams().values()) {
+      for (String cluster : sStream.getSourceClusters()) {
+        clustersToProcess.add(cluster);
+      }
+    }
+
+    for (String clusterName : clustersToProcess) {
+      Cluster cluster = config.getClusters().get(clusterName);
+      cluster.getHadoopConf().set("mapred.job.tracker",
+        super.CreateJobConf().get("mapred.job.tracker"));
+      TestLocalStreamService service = new TestLocalStreamService(config,
+        cluster, new NullCheckPointProvider());
+      services.add(service);
+    }
+
+    for(TestLocalStreamService service : services) {
+      Assert.assertEquals(service.getMapperClass(), S3NCopyMapper.class);
+    }
+  }
   private void testMapReduce(String fileName, int timesToRun) throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(fileName);
     DatabusConfig config = parser.getConfig();

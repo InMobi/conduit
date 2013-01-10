@@ -36,6 +36,7 @@ public class Cluster {
   private final Map<String, DestinationStream> consumeStreams;
   private final Set<String> sourceStreams;
   private final Configuration hadoopConf;
+  private final String copyMapperImpl;
 
   public Cluster(Map<String, String> clusterElementsMap, String rootDir,
       Map<String, DestinationStream> consumeStreams, Set<String> sourceStreams)
@@ -68,6 +69,8 @@ public class Cluster {
     this.hadoopConf.set("fs.default.name", hdfsUrl);
     this.hadoopConf.set("mapred.job.queue.name",
     		clusterjobqueuename);
+    this.copyMapperImpl = clusterElementsMap.get(DatabusConfigParser
+      .COPYMAPPER_IMPL);
   }
 
   public String getRootDir() {
@@ -240,5 +243,9 @@ public class Cluster {
 
   public String getJobQueueName() {
     return clusterjobqueuename;
+  }
+
+  public String getCopyMapperImpl() {
+    return this.copyMapperImpl;
   }
 }

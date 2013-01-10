@@ -39,6 +39,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 
@@ -108,7 +109,7 @@ public class LocalStreamService extends AbstractService {
       if (job.isSuccessful()) {
         long commitTime = cluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
-        commit(prepareForCommit(commitTime, fileListing));
+        commit(prepareForCommit(commitTime));
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
         commit(populateTrashCommitPaths(trashSet));
@@ -130,8 +131,8 @@ public class LocalStreamService extends AbstractService {
     }
   }
 
-  Map<Path, Path> prepareForCommit(long commitTime,
-      Map<FileStatus, String> fileListing) throws Exception {
+
+   Map<Path, Path> prepareForCommit(long commitTime) throws Exception {
     FileSystem fs = FileSystem.get(cluster.getHadoopConf());
 
     // find final destination paths
@@ -480,8 +481,9 @@ public class LocalStreamService extends AbstractService {
     KeyValueTextInputFormat.setInputPaths(job, inputPath);
     job.setInputFormatClass(KeyValueTextInputFormat.class);
 
-    job.setJarByClass(CopyMapper.class);
-    job.setMapperClass(CopyMapper.class);
+    Class<? extends Mapper> mapperClass = getMapperClass();
+    job.setJarByClass(mapperClass);
+    job.setMapperClass(mapperClass);
     job.setNumReduceTasks(0);
 
     job.setOutputFormatClass(NullOutputFormat.class);
@@ -490,5 +492,22 @@ public class LocalStreamService extends AbstractService {
     job.getConfiguration().set("localstream.tmp.path", tmpPath.toString());
 
     return job;
+  }
+
+  /*
+    The visiblity of method is set to protected to enable unit testing
+   */
+  protected Class<? extends Mapper> getMapperClass() {
+    String className = cluster.getCopyMapperImpl();
+    if(className == null || className.isEmpty()) {
+      return CopyMapper.class;
+    } else {
+      try {
+        return (Class<? extends Mapper>)Class.forName(className);
+      } catch (ClassNotFoundException e) {
+        throw new IllegalArgumentException("Copy mapper Impl " + className +
+          "is not found in class path");
+      }
+    }
   }
 }

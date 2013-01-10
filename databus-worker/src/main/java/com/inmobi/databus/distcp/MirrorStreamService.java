@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -122,6 +123,11 @@ public class MirrorStreamService extends DistcpBaseService {
       if (entry.getKey().isDir()) {
         getDestFs().mkdirs(entry.getValue());
       } else {
+        if (getDestFs().exists(entry.getValue())) {
+          LOG.warn("File with Path [" + entry.getValue()
+              + "] already exist,hence skipping renaming operation");
+          continue;
+        }
         getDestFs().mkdirs(entry.getValue().getParent());
         if (getDestFs().rename(entry.getKey().getPath(), entry.getValue()) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
@@ -250,5 +256,14 @@ public class MirrorStreamService extends DistcpBaseService {
       LOG.debug("createListing :: Adding [" + fileStatus.getPath()+ "]");
       results.add(fileStatus);
     }
+  }
+
+  @Override
+  public void filterMinFilePaths(Set<String> minFilesSet) {
+    // No-op method for mirror stream service as we don't need to
+    // filter any minute file paths as mirror stream service
+    // is expected to exactly replicate the source cluster
+    return;
+
   }
 }

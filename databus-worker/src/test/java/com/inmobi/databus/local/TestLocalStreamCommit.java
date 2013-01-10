@@ -55,7 +55,7 @@ public class TestLocalStreamCommit {
         cluster1, new FSCheckpointProvider(
             "/tmp/test-databus/databus/checkpoint"));
     createData(cluster1);
-    service.prepareForCommit(System.currentTimeMillis(), null);
+    service.prepareForCommit(System.currentTimeMillis());
     Path tmpPath = new Path(cluster1.getTmpPath(),
         LocalStreamService.class.getName());
     Path tmpConsumerPath = new Path(tmpPath, "testcluster2");

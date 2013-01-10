@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -213,13 +214,17 @@ public abstract class DistcpBaseService extends AbstractService {
         readConsumePath(srcFs, consumeFilePath,
             minFilesSet);
       }
-      Path tmpPath = createInputFileForDISCTP(destFs, srcCluster.getName(), tmp,
-          minFilesSet);
+      // removing those path which have same file name
+      filterMinFilePaths(minFilesSet);
+      Path tmpPath = createInputFileForDISCTP(destFs, srcCluster.getName(),
+          tmp, minFilesSet);
       return getFinalPathForDistCP(tmpPath, consumePaths);
     }
 
     return null;
   }
+
+  protected abstract void filterMinFilePaths(Set<String> minFilesSet);
 
   /*
    * read each consumePath and add only valid paths to minFilesSet
