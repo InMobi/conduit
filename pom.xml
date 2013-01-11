@@ -200,6 +200,7 @@
         <version>2.12</version>
         <configuration>
           <excludedGroups>${excluded.testng.groups}</excludedGroups>
+          <forkedProcessTimeoutInSeconds>3600</forkedProcessTimeoutInSeconds>
         </configuration>
       </plugin>
       <plugin>
