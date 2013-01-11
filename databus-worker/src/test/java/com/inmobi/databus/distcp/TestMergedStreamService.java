@@ -1,13 +1,5 @@
 package com.inmobi.databus.distcp;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.inmobi.databus.AbstractServiceTest;
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.PublishMissingPathsTest;
-import com.inmobi.databus.SourceStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -18,11 +10,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
+
+import com.inmobi.databus.AbstractServiceTest;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.PublishMissingPathsTest;
+import com.inmobi.databus.SourceStream;
 
 public class TestMergedStreamService extends MergedStreamService
     implements AbstractServiceTest {
@@ -81,7 +82,7 @@ public class TestMergedStreamService extends MergedStreamService
         
         behinddate.add(Calendar.HOUR_OF_DAY, -2);
 
-        LOG.info("Creating Dummy commit Path for verifying Missing Paths");
+        LOG.debug("Creating Dummy commit Path for verifying Missing Paths");
         String dummycommitpath = this.destinationCluster.getFinalDestDirRoot()
             + sstream.getValue().getName() + File.separator
             + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
@@ -103,26 +104,25 @@ public class TestMergedStreamService extends MergedStreamService
   @Override
   protected void postExecute() throws Exception {
     try {
-      for (Map.Entry<String, SourceStream> sstream : getConfig()
-          .getSourceStreams().entrySet()) {
+      for (String sstream : getConfig().getClusters().get(destinationCluster.getName()).getPrimaryDestinationStreams()) {
+        if (srcCluster.getSourceStreams().contains(sstream)) {
+        List<String> filesList = files.get(sstream);
         
-        List<String> filesList = files.get(sstream.getValue().getName());
-        
-        LOG.info("Verifying Missing Paths for Merged Stream");
+          LOG.debug("Verifying Missing Paths for Merged Stream");
 
         if (filesList.size() > 0) {
           PublishMissingPathsTest.VerifyMissingPublishPaths(fs,
               todaysdate.getTime(), behinddate,
               this.destinationCluster.getFinalDestDirRoot()
-                  + sstream.getValue().getName());
+                  + sstream);
           
 
           String commitpath = destinationCluster.getFinalDestDirRoot()
-              + sstream.getValue().getName() + File.separator
+              + sstream + File.separator
               + Cluster.getDateAsYYYYMMDDHHPath(todaysdate.getTime());
           FileStatus[] mindirs = fs.listStatus(new Path(commitpath));
           
-          LOG.info("Verifying Merged Paths in Stream for directory "
+            LOG.debug("Verifying Merged Paths in Stream for directory "
               + commitpath);
 
           Set<String> commitPaths = new HashSet<String>();
@@ -135,16 +135,17 @@ public class TestMergedStreamService extends MergedStreamService
           }
           
           try {
-            LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
+              LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
                 + commitPaths.size());
             
             for (int j = 0; j < filesList.size() - 1; ++j) {
               String checkpath = filesList.get(j);
-              LOG.debug("Merged Checking file: " + checkpath);
+                LOG.debug("Merged Checking file: " + checkpath);
               Assert.assertTrue(commitPaths.contains(checkpath));
             }
           } catch (NumberFormatException e) {
           }
+        }
         }
       }
     } catch (Exception e) {
