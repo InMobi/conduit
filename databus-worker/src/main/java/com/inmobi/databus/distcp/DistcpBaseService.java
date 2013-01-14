@@ -1,19 +1,20 @@
 /*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.inmobi.databus.distcp;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -71,16 +72,13 @@ public abstract class DistcpBaseService extends AbstractService {
     return srcCluster;
   }
 
-
   protected Cluster getDestCluster() {
     return destCluster;
   }
 
-
   protected FileSystem getSrcFs() {
     return srcFs;
   }
-
 
   protected FileSystem getDestFs() {
     return destFs;
@@ -88,7 +86,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   /**
    * Set Common or default DistCp options here.
-   *
+   * 
    * @param inputPathListing
    * @param target
    * @return options instance
@@ -189,21 +187,20 @@ public abstract class DistcpBaseService extends AbstractService {
    * @return
    */
   protected Path getDistCPInputFile(Map<Path, FileSystem> consumePaths,
- Path tmp)
-          throws Exception {
+                                    Path tmp) throws Exception {
     Path input = getInputPath();
     if (!srcFs.exists(input))
       return null;
-    //find all consumePaths which need to be pulled
+    // find all consumePaths which need to be pulled
     FileStatus[] fileList = srcFs.listStatus(input);
     if (fileList != null) {
       Set<String> minFilesSet = new HashSet<String>();
       Set<Path> yetToBeMovedPaths = new HashSet<Path>();
-      /* inputPath could have multiple files due to backlog
-      * read all and create a Input file for DISTCP with valid paths on
-      * destinationCluster as an optimization so that distcp doesn't pull
-      * this file remotely
-      */
+      /*
+       * inputPath could have multiple files due to backlog read all and create
+       * a Input file for DISTCP with valid paths on destinationCluster as an
+       * optimization so that distcp doesn't pull this file remotely
+       */
       for (int i = 0; i < fileList.length; i++) {
         Path consumeFilePath = fileList[i].getPath().makeQualified(srcFs);
         /* put eachFile name in consumePaths
@@ -236,7 +233,7 @@ public abstract class DistcpBaseService extends AbstractService {
   /*
    * read each consumePath and add only valid paths to minFilesSet
    */
-  private void readConsumePath(FileSystem fs,Path consumePath,
+  void readConsumePath(FileSystem fs, Path consumePath,
       Set<String> minFilesSet, Set<Path> yetToBeMovedPaths) throws IOException {
     BufferedReader reader = null;
     try {
@@ -248,14 +245,14 @@ public abstract class DistcpBaseService extends AbstractService {
         minFileName = reader.readLine();
         if (minFileName != null) {
           /*
-           * To avoid data-loss in all services we publish the paths to
-           * consumers directory first before publishing on HDFS for
-           * finalConsumption. In a distributed transaction failure it's
-           * possible that some of these paths do not exist. Do isExistence
-           * check before adding them as DISTCP input otherwise DISTCP jobs can
-           * fail continuously thereby blocking Merge/Mirror stream to run
-           * further
-           */
+          * To avoid data-loss in all services we publish the paths to
+          * consumers directory first before publishing on HDFS for
+          * finalConsumption. In a distributed transaction failure it's
+          * possible that some of these paths do not exist. Do isExistence
+          * check before adding them as DISTCP input otherwise DISTCP
+          * jobs can fail continously thereby blocking Merge/Mirror
+          * stream to run further
+          */
           Path p = new Path(minFileName);
           if (fs.exists(p)) {
             LOG.info("Adding sourceFile [" + minFileName + "] to distcp " +
@@ -267,8 +264,8 @@ public abstract class DistcpBaseService extends AbstractService {
             // 2) previous service is still working and its in between writing
             // consumer paths and publishing data
             if (isMoveFailed(fs, p)) {
-            LOG.info("Skipping [" + minFileName + "] to pull as it's an " +
-                "INVALID PATH");
+              LOG.info("Skipping [" + minFileName + "] to pull as it's an "
+                  + "INVALID PATH");
             } else {
               yetToBeMovedPaths.add(p);
             }
@@ -296,43 +293,27 @@ public abstract class DistcpBaseService extends AbstractService {
     return false;
   }
 
-  // public static void main(String args[]) {
-  // Path root = new Path("hdfs://ruby-nn.grid.ua2.inmobi.com:8020/databus/");
-  // Path p = new Path(
-  // "hdfs://ruby-nn.grid.ua2.inmobi.com:8020/databus/streams/adroit_feedback_delta/2013/01/10/12/33");
-  // String[] tmp = p.toString().substring(root.toString().length() +
-  // 1).split("/");
-  // Path tmp1 = new Path(root,tmp[0]);
-  // Path tmp2 = new Path(tmp1,tmp[1]);
-  // System.out.println(tmp2);
-  // Date pathDate = CalendarHelper.getDateFromStreamDir(tmp2, p);
-  // System.out.println(pathDate);
-  // Calendar calendar = Calendar.getInstance();
-  // calendar.setTime(pathDate);
-  // calendar.add(Calendar.MINUTE, 1);
-  // Date nextdate = calendar.getTime();
-  // String suffix = Cluster.getDateAsYYYYMMDDHHMNPath(nextdate);
-  // System.out.println(tmp2 + File.separator + suffix);
-  // }
-
   /*
    * Helper function to find next minute directory given a path eg: Path p =
    * "hdfs://ruby-nn.grid.ua2.inmobi.com:8020/databus/streams/adroit_feedback_delta/2013/01/10/12/33"
    */
   private Path getNextMinuteDirectory(Path p) {
-    String root = srcCluster.getRootDir();
+    String rootString = srcCluster.getRootDir();
+    Path root = new Path(rootString);// this will clean the root path string of
+                                     // all extra slashes(/)
     // eg: root = "hdfs://ruby-nn.grid.ua2.inmobi.com:8020/databus/"
+    LOG.debug("Path given to getNextMinuteDirectory function [" + p + "]");
     String path = p.toString();
     // if it is a valid path than this condition should be true
-    if (path.length() >= root.length() + 1) {
+    if (path.length() >= root.toString().length() + 1) {
       // tmpPath will have value of form
       // "streams/adroit_feedback_delta/2013/01/10/12/33"
-      String tmpPath = path.substring(root.length() + 1);
-      String tmp[] = tmpPath.split("/");
+      String tmpPath = path.substring(root.toString().length() + 1);
+      String tmp[] = tmpPath.split(File.separator);
       if (tmp.length >= 2) {
         // tmp[0] value should either be streams or steam_local and tmp[1] value
         // will be name of topic
-        Path pathTillStream = new Path(new Path(root), tmp[0]);
+        Path pathTillStream = new Path(root, tmp[0]);
         Path pathTillTopic = new Path(pathTillStream, tmp[1]);
         // pathTillTopic value will be of form
         // hdfs://ruby-nn.grid.ua2.inmobi.com:8020/databus/streams/adroit_feedback_delta/
@@ -350,10 +331,8 @@ public abstract class DistcpBaseService extends AbstractService {
     return null;
   }
 
-  private void writeYetToBeMovedFile(Path tmp,
-      Set<Path> yetToBeMovedPaths)
-      throws Exception
- {
+  void writeYetToBeMovedFile(Path tmp, Set<Path> yetToBeMovedPaths)
+      throws Exception {
     String tmpPath = "yet_to_be_moved_src" + srcCluster.getName()
         + "_to_destn_" + destCluster.getName() + "_"
         + System.currentTimeMillis();
@@ -368,7 +347,7 @@ public abstract class DistcpBaseService extends AbstractService {
         out.writeBytes("\n");
       }
     } catch (IOException e) {
-      LOG.error("Cannot create yet_to_b_emoved file in[" + temporary + "]", e);
+      LOG.error("Cannot create yet_to_be_moved file in[" + temporary + "]", e);
     } finally {
       if (out != null) {
         try {
@@ -390,16 +369,16 @@ public abstract class DistcpBaseService extends AbstractService {
    * Helper function which returns the final path to be used as input forDistcp
    * Does cleanup of consumePaths at sourceCluster if they are INVALID
    */
-  private Path getFinalPathForDistCP(Path tmpPath, Map<Path,
-      FileSystem> consumePaths)throws IOException{
+  private Path getFinalPathForDistCP(Path tmpPath,
+      Map<Path, FileSystem> consumePaths) throws IOException {
     if (tmpPath != null) {
       LOG.warn("Source File For distCP [" + tmpPath + "]");
       consumePaths.put(tmpPath.makeQualified(destFs), destFs);
       return tmpPath.makeQualified(destFs);
     } else {
       /*
-      * no valid paths to return.
-      */
+       * no valid paths to return.
+       */
       return null;
     }
   }
@@ -418,11 +397,13 @@ public abstract class DistcpBaseService extends AbstractService {
       }
     }
   }
+
   /*
-   * Helper method for getDistCPInputFile
-   * if none of the paths are VALID then it does not create an empty file on
-   * <clusterName> but returns a null
+   * Helper method for getDistCPInputFile if none of the paths are VALID then it
+   * does not create an empty file on <clusterName> but returns a null
+   * 
    * @param FileSystem - where to create file i.e. srcFs or destFs
+   * 
    * @param String - sourceCluster from where we are pulling files from
    * @param Path - tmpLocation on sourceCluster
    * @param Set<String> - set of sourceFiles need to be pulled
