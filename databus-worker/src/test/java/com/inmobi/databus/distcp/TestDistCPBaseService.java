@@ -250,7 +250,8 @@ public class TestDistCPBaseService  {
      writer.write(data_file1.toString() + "\n");
      writer.close();
    }
-  public void testDuplicateFileNamesForMirrorService() throws IOException {
+
+  public void testDuplicateFileNamesForMirrorService() throws Exception {
 
     cleanUP();
     createDataWithDuplicateFileNames(mirrorService);
@@ -271,7 +272,7 @@ public class TestDistCPBaseService  {
   }
 
   @Test(priority = 4)
-  public void testDuplicateFileNamesForMergeService() throws IOException {
+  public void testDuplicateFileNamesForMergeService() throws Exception {
 
     cleanUP();
     createDataWithDuplicateFileNames(mergeService);
