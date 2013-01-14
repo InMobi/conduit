@@ -1,16 +1,16 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package com.inmobi.databus.distcp;
 
 import java.io.BufferedReader;
@@ -49,7 +49,6 @@ public abstract class DistcpBaseService extends AbstractService {
   private final Cluster destCluster;
   private final FileSystem srcFs;
   private final FileSystem destFs;
-
   protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
 
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService
@@ -72,13 +71,16 @@ public abstract class DistcpBaseService extends AbstractService {
     return srcCluster;
   }
 
+
   protected Cluster getDestCluster() {
     return destCluster;
   }
 
+
   protected FileSystem getSrcFs() {
     return srcFs;
   }
+
 
   protected FileSystem getDestFs() {
     return destFs;
@@ -86,7 +88,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   /**
    * Set Common or default DistCp options here.
-   * 
+   *
    * @param inputPathListing
    * @param target
    * @return options instance
@@ -191,7 +193,7 @@ public abstract class DistcpBaseService extends AbstractService {
     Path input = getInputPath();
     if (!srcFs.exists(input))
       return null;
-    // find all consumePaths which need to be pulled
+    //find all consumePaths which need to be pulled
     FileStatus[] fileList = srcFs.listStatus(input);
     if (fileList != null) {
       Set<String> minFilesSet = new HashSet<String>();
@@ -213,7 +215,7 @@ public abstract class DistcpBaseService extends AbstractService {
             consumeFilePath + "]");
         //read all valid minute files path in each consumePath
         readConsumePath(srcFs, consumeFilePath,
- minFilesSet, yetToBeMovedPaths);
+            minFilesSet, yetToBeMovedPaths);
       }
       // removing those path which have same file name
       filterMinFilePaths(minFilesSet);
@@ -369,16 +371,16 @@ public abstract class DistcpBaseService extends AbstractService {
    * Helper function which returns the final path to be used as input forDistcp
    * Does cleanup of consumePaths at sourceCluster if they are INVALID
    */
-  private Path getFinalPathForDistCP(Path tmpPath,
-      Map<Path, FileSystem> consumePaths) throws IOException {
+  private Path getFinalPathForDistCP(Path tmpPath, Map<Path,
+      FileSystem> consumePaths)throws IOException{
     if (tmpPath != null) {
       LOG.warn("Source File For distCP [" + tmpPath + "]");
       consumePaths.put(tmpPath.makeQualified(destFs), destFs);
       return tmpPath.makeQualified(destFs);
     } else {
       /*
-       * no valid paths to return.
-       */
+      * no valid paths to return.
+      */
       return null;
     }
   }
@@ -399,11 +401,10 @@ public abstract class DistcpBaseService extends AbstractService {
   }
 
   /*
-   * Helper method for getDistCPInputFile if none of the paths are VALID then it
-   * does not create an empty file on <clusterName> but returns a null
-   * 
+   * Helper method for getDistCPInputFile
+   * if none of the paths are VALID then it does not create an empty file on
+   * <clusterName> but returns a null
    * @param FileSystem - where to create file i.e. srcFs or destFs
-   * 
    * @param String - sourceCluster from where we are pulling files from
    * @param Path - tmpLocation on sourceCluster
    * @param Set<String> - set of sourceFiles need to be pulled
