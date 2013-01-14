@@ -31,10 +31,11 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.DestinationStream;
 
-public class TestDistCPBaseService {
+
+public class TestDistCPBaseService  {
   private static Logger LOG = Logger.getLogger(TestDistCPBaseService.class);
   Path testRoot = new Path("/tmp/", this.getClass().getName());
-  Path testRoot1 = new Path("/tmp/", "test");
+  Path testRoot1=new Path("/tmp/","test");
   FileSystem localFs;
   Cluster cluster;
   MirrorStreamService mirrorService = null;
@@ -50,11 +51,11 @@ public class TestDistCPBaseService {
 
   @BeforeTest
   public void setUP() throws Exception {
-    // create fs
+    //create fs
     localFs = FileSystem.getLocal(new Configuration());
     localFs.mkdirs(testRoot);
 
-    // create cluster
+    //create cluster
     Map<String, String> clusterConf = new HashMap<String, String>();
     clusterConf.put("hdfsurl", localFs.getUri().toString());
     clusterConf.put("jturl", "local");
@@ -63,7 +64,8 @@ public class TestDistCPBaseService {
     Set<String> sourceNames = new HashSet<String>();
     sourceNames.add("stream1");
     Cluster cluster = new Cluster(clusterConf, testRoot.toString(),
-        new HashMap<String, DestinationStream>(), sourceNames);
+        new HashMap<String, DestinationStream>(),
+        sourceNames);
 
     // create mirror service
     mirrorService = new MirrorStreamService(null, cluster, cluster);
@@ -72,15 +74,13 @@ public class TestDistCPBaseService {
     // create data
     createValidData();
 
-    // expectedConsumePaths
-    expectedConsumePaths
-        .add("file:/tmp/com.inmobi.databus.distcp"
-            + ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-valid-data");
-    expectedConsumePaths
-        .add("file:/tmp/com.inmobi.databus.distcp"
-            + ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-junk-data");
-    expectedConsumePaths.add("file:/tmp/com.inmobi.databus.distcp"
-        + ".TestDistCPBaseService/system/mirrors/databusCluster/file1-empty");
+    //expectedConsumePaths
+    expectedConsumePaths.add("file:/tmp/com.inmobi.databus.distcp" +
+        ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-valid-data");
+    expectedConsumePaths.add("file:/tmp/com.inmobi.databus.distcp" +
+        ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-junk-data");
+    expectedConsumePaths.add("file:/tmp/com.inmobi.databus.distcp" +
+        ".TestDistCPBaseService/system/mirrors/databusCluster/file1-empty");
 
   }
 
@@ -92,15 +92,15 @@ public class TestDistCPBaseService {
     localFs.delete(testRoot1, true);
   }
 
-  private void createInvalidData() throws IOException {
+  private void createInvalidData() throws IOException{
     localFs.mkdirs(testRoot);
     Path dataRoot = new Path(testRoot, mirrorService.getInputPath());
     localFs.mkdirs(dataRoot);
-    // one empty file
+    //one empty file
     Path p = new Path(dataRoot, "file1-empty");
     localFs.create(p);
 
-    // one file with data put invalid paths
+    //one file with data put invalid paths
     p = new Path(dataRoot, "file-with-junk-data");
     FSDataOutputStream out = localFs.create(p);
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
@@ -113,21 +113,21 @@ public class TestDistCPBaseService {
   private void createValidData() throws IOException {
     Path dataRoot = new Path(testRoot, mirrorService.getInputPath());
     localFs.mkdirs(dataRoot);
-    // create invalid data
+    //create invalid data
     createInvalidData();
 
-    // one valid & invalid data file
+    //one valid & invalid data file
     Path data_file = new Path(testRoot, "data-file1");
     localFs.create(data_file);
 
     Path data_file1 = new Path(testRoot, "data-file2");
     localFs.create(data_file1);
 
-    // one file with data and one valid path and one invalid path
+    //one file with data and one valid path and one invalid path
     Path p = new Path(dataRoot, "file-with-valid-data");
-    FSDataOutputStream out = localFs.create(p);
+    FSDataOutputStream  out = localFs.create(p);
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
-    writer.write(data_file.toString() + "\n");
+    writer.write(data_file.toString() +"\n");
     writer.write("some-junk-path\n");
     writer.write(data_file1.toString() + "\n");
     writer.close();
@@ -136,14 +136,14 @@ public class TestDistCPBaseService {
   @Test(priority = 1)
   public void testPositive() throws Exception {
     Map<Path, FileSystem> consumePaths = new HashMap<Path, FileSystem>();
-    List<String> result = new ArrayList<String>();
+    List<String> result=new ArrayList<String>();
     String currentLine = "";
     Path p = mirrorService.getDistCPInputFile(consumePaths, testRoot);
     LOG.info("distcp input [" + p + "]");
     FSDataInputStream in = localFs.open(p);
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
     while ((currentLine = reader.readLine()) != null) {
-      result.add(currentLine);
+    	result.add(currentLine);
     }
     reader.close();
     // assert that the minuteFileName inside the valid file with data
@@ -151,18 +151,17 @@ public class TestDistCPBaseService {
     assert result.contains(expectedFileName1);
     assert result.contains(expectedFileName2);
 
-    // second line was junkpath which would be skipped instead the next valid
+    //second line was junkpath which would be skipped instead the next valid
     // path in input should be present
 
     Set<String> resultSet = new HashSet<String>();
-    // compare consumePaths with expectedOutput
+    //compare consumePaths with expectedOutput
     for (Path consumePath : consumePaths.keySet()) {
-      // cant compare the path generated using timestamp
-      // The final path on destinationCluster which contains all valid
+      //cant compare the path generated using timestamp
+      //The final path on destinationCluster which contains all valid
       // minutefileNames has a suffix of timestamp to it
-      if (!consumePath.toString().contains(
-          "file:/tmp/com.inmobi.databus"
-              + ".distcp.TestDistCPBaseService/databusCluster")) {
+      if (!consumePath.toString().contains("file:/tmp/com.inmobi.databus" +
+          ".distcp.TestDistCPBaseService/databusCluster")) {
         LOG.info("Path to consume [" + consumePath + "]");
         resultSet.add(consumePath.toString());
       }
@@ -170,6 +169,7 @@ public class TestDistCPBaseService {
     assert resultSet.containsAll(expectedConsumePaths);
     assert consumePaths.size() == resultSet.size() + 1;
   }
+
 
   @Test(priority = 2)
   public void testNegative() throws Exception {
@@ -182,7 +182,7 @@ public class TestDistCPBaseService {
     assert p == null;
 
   }
-
+  
   @Test
   public void testSplitFileName() throws Exception {
     Set<String> streamsSet = new HashSet<String>();
@@ -227,30 +227,30 @@ public class TestDistCPBaseService {
     assert expectedStreamName7 == null;
   }
 
-  private void createDataWithDuplicateFileNames(DistcpBaseService service)
-      throws IOException {
-    Path dataRoot = new Path(testRoot, service.getInputPath());
-    localFs.mkdirs(dataRoot);
-    Path dataRoot1 = new Path(testRoot1, service.getInputPath());
-    localFs.mkdirs(dataRoot1);
-    // one valid & invalid data file
-    Path data_file = new Path(testRoot, "data-file1");
-    localFs.create(data_file);
+  
+   private void createDataWithDuplicateFileNames(DistcpBaseService service)
+       throws IOException {
+     Path dataRoot = new Path(testRoot, service.getInputPath());
+     localFs.mkdirs(dataRoot);
+     Path dataRoot1 = new Path(testRoot1, service.getInputPath());
+     localFs.mkdirs(dataRoot1);
+     // one valid & invalid data file
+     Path data_file = new Path(testRoot, "data-file1");
+     localFs.create(data_file);
 
-    Path data_file1 = new Path(testRoot1, "data-file1");
-    localFs.create(data_file1);
+     Path data_file1 = new Path(testRoot1, "data-file1");
+     localFs.create(data_file1);
 
-    // one file with data and one valid path and one invalid path
-    Path p = new Path(dataRoot, "file-with-valid-data");
-    FSDataOutputStream out = localFs.create(p);
-    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
-    writer.write(data_file.toString() + "\n");
-    writer.write("some-junk-path\n");
-    writer.write(data_file1.toString() + "\n");
-    writer.close();
-  }
-
-  public void testDuplicateFileNamesForMirrorService() throws Exception {
+     // one file with data and one valid path and one invalid path
+     Path p = new Path(dataRoot, "file-with-valid-data");
+     FSDataOutputStream out = localFs.create(p);
+     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
+     writer.write(data_file.toString() + "\n");
+     writer.write("some-junk-path\n");
+     writer.write(data_file1.toString() + "\n");
+     writer.close();
+   }
+  public void testDuplicateFileNamesForMirrorService() throws IOException {
 
     cleanUP();
     createDataWithDuplicateFileNames(mirrorService);
@@ -271,7 +271,7 @@ public class TestDistCPBaseService {
   }
 
   @Test(priority = 4)
-  public void testDuplicateFileNamesForMergeService() throws Exception {
+  public void testDuplicateFileNamesForMergeService() throws IOException {
 
     cleanUP();
     createDataWithDuplicateFileNames(mergeService);
