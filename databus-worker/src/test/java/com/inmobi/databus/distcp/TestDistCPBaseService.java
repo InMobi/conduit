@@ -23,6 +23,7 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DestinationStream;
 
 
 public class TestDistCPBaseService  {
@@ -54,7 +55,8 @@ public class TestDistCPBaseService  {
     clusterConf.put("jobqueuename", "default");
     Set<String> sourceNames = new HashSet<String>();
     sourceNames.add("stream1");
-    Cluster cluster = new Cluster(clusterConf, testRoot.toString(), null,
+    Cluster cluster = new Cluster(clusterConf, testRoot.toString(),
+        new HashMap<String, DestinationStream>(),
         sourceNames);
 
     // create mirror service

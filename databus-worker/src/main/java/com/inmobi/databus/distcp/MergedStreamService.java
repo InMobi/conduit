@@ -42,11 +42,13 @@ public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
   private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
+  private Set<String> primaryCategories;
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster) throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
         destinationCluster);
+    primaryCategories = destinationCluster.getPrimaryDestinationStreams();
   }
 
   @Override
@@ -77,9 +79,9 @@ public class MergedStreamService extends DistcpBaseService {
         // mirror consumer file,but since "missingDirsCommittedPaths" map is not
         // cleared until those paths are successfully written to consumer
         // file;hence even in case where writing consumer fail(after publishing
-        // missing path) at the first run those paths would be added to consumer
-        // in next run
-        addPublishMissingPaths(missingDirsCommittedPaths, -1, null);
+        // missing path) at the first run those paths would be added to consumer in next run
+        addPublishMissingPaths(missingDirsCommittedPaths, -1, primaryCategories);
+
       }
 
       Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
@@ -119,7 +121,7 @@ public class MergedStreamService extends DistcpBaseService {
           // called which is a MR job and can take time hence this call ensures
           // all missing paths are added till this time
           addPublishMissingPaths(missingDirsCommittedPaths, commitTime,
-              categoriesToCommit.keySet());
+              primaryCategories);
           commitPaths = createLocalCommitPaths(tmpOut, commitTime, 
               categoriesToCommit, tobeCommittedPaths);
           for (Map.Entry<String, Set<Path>> entry : missingDirsCommittedPaths

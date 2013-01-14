@@ -1,17 +1,14 @@
 package com.inmobi.databus.distcp;
 
 import java.util.HashSet;
-
-import com.inmobi.databus.local.TestLocalStreamService;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.AfterSuite;
-
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import com.inmobi.databus.Cluster;
@@ -21,6 +18,7 @@ import com.inmobi.databus.DestinationStream;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.TestMiniClusterUtil;
+import com.inmobi.databus.local.TestLocalStreamService;
 
 public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
@@ -40,6 +38,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     testMergeMirrorStream("test-mss-databus.xml");
     // Test with 2 mirror sites
     testMergeMirrorStream("test-mss-databus_mirror.xml");
+    testMergeMirrorStream("test-mss-databus1.xml");
   }
   
   @Test(groups = { "integration" })
