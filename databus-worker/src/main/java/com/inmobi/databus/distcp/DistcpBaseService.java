@@ -363,8 +363,14 @@ public abstract class DistcpBaseService extends AbstractService {
     Path finalYetToBeMoved = new Path(getInputPath(),
         ("yet_to_be_moved_" + System.currentTimeMillis()));
     ytmCommitPaths.put(temporary, finalYetToBeMoved);
-    doRemoteCommit(ytmCommitPaths);
-
+    LOG.info("Renaming " + temporary + " to " + finalYetToBeMoved);
+    srcFs.mkdirs(finalYetToBeMoved.getParent());
+    if (srcFs.rename(temporary, finalYetToBeMoved) == false) {
+      LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
+          + "dataloss.");
+      throw new Exception("Abort transaction Commit. Rename failed from ["
+          + temporary + "] to [" + finalYetToBeMoved + "]");
+    }
   }
 
   /*
@@ -385,20 +391,6 @@ public abstract class DistcpBaseService extends AbstractService {
     }
   }
 
-  private void doRemoteCommit(Map<Path, Path> ytmCommitPaths) throws Exception {
-    LOG.info("Committing " + ytmCommitPaths.size() + " paths.");
-
-    for (Map.Entry<Path, Path> entry : ytmCommitPaths.entrySet()) {
-      LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      srcFs.mkdirs(entry.getValue().getParent());
-      if (srcFs.rename(entry.getKey(), entry.getValue()) == false) {
-        LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
-            + "dataloss.");
-        throw new Exception("Abort transaction Commit. Rename failed from ["
-            + entry.getKey() + "] to [" + entry.getValue() + "]");
-      }
-    }
-  }
 
   /*
    * Helper method for getDistCPInputFile
