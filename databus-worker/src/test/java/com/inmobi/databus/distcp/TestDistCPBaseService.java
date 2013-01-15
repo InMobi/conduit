@@ -5,7 +5,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +18,7 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -23,6 +27,8 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.DestinationStream;
 
 
@@ -34,6 +40,8 @@ public class TestDistCPBaseService  {
   Cluster cluster;
   MirrorStreamService mirrorService = null;
   MergedStreamService mergeService = null;
+  MergedStreamService mergedService1 = null;
+  FileSystem srcFs = null;
   String expectedFileName1 = "/tmp/com.inmobi.databus.distcp"
       + ".TestDistCPBaseService/data-file1";
   String expectedFileName2 = "/tmp/com.inmobi.databus.distcp"
@@ -242,7 +250,8 @@ public class TestDistCPBaseService  {
      writer.write(data_file1.toString() + "\n");
      writer.close();
    }
-  public void testDuplicateFileNamesForMirrorService() throws IOException {
+
+  public void testDuplicateFileNamesForMirrorService() throws Exception {
 
     cleanUP();
     createDataWithDuplicateFileNames(mirrorService);
@@ -263,7 +272,7 @@ public class TestDistCPBaseService  {
   }
 
   @Test(priority = 4)
-  public void testDuplicateFileNamesForMergeService() throws IOException {
+  public void testDuplicateFileNamesForMergeService() throws Exception {
 
     cleanUP();
     createDataWithDuplicateFileNames(mergeService);
@@ -281,6 +290,122 @@ public class TestDistCPBaseService  {
     assert (resultSet.size() == 1);
     assert (resultSet.contains(expectedFileName1) || resultSet
         .contains(expectedFileName3));
+  }
+
+  private void writeToConsumerFile(FSDataOutputStream out, List<Path> paths)
+      throws IOException {
+    try {
+    for (Path p : paths) {
+      out.writeBytes(p.toString());
+      out.writeBytes("\n");
+    }
+    } finally {
+      out.close();
+    }
+  }
+
+  private DatabusConfig setUPForYTMPaths() throws Exception {
+    DatabusConfigParser parser = new DatabusConfigParser(
+        "testDatabusService_simple.xml");
+    DatabusConfig config = parser.getConfig();
+    Cluster srcCluster = config.getClusters().get("testcluster1");
+    Cluster destinationCluster = config.getClusters().get("testcluster2");
+    mergedService1 = new MergedStreamService(config, srcCluster,
+        destinationCluster);
+    srcFs = FileSystem.get(new URI(srcCluster.getHdfsUrl()),
+        srcCluster.getHadoopConf());
+    return config;
+  }
+
+  @Test(priority = 5)
+  public void testYetToBeMovedPaths() throws Exception {
+
+    DatabusConfig config = setUPForYTMPaths();
+    Cluster srcCluster = config.getClusters().get("testcluster1");
+    try {
+    Cluster destinationCluster = config.getClusters().get("testcluster2");
+    List<Path> paths = new ArrayList<Path>();
+    Date currntdate = new Date();
+    Path localPath = new Path(srcCluster.getLocalDestDir("test1", currntdate));
+    Path dataFile1 = new Path(localPath, "dataFile1");
+    Path dataFile2 = new Path(localPath, "dataFile2");
+    srcFs.create(dataFile1);
+    paths.add(dataFile1);
+
+    srcFs.create(dataFile2);
+    paths.add(dataFile2);
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(currntdate);
+    calendar.add(Calendar.MINUTE, 1);
+    Path localPath1 = new Path(srcCluster.getLocalDestDir("test1",
+        calendar.getTime()));
+    Path invalidFile = new Path(localPath1, "missingFile");// dont create this
+                                                           // file but just add
+                                                           // to consumers
+    paths.add(invalidFile);
+
+    calendar.add(Calendar.MINUTE, 1);
+    Path localPath2 = new Path(srcCluster.getLocalDestDir("test1",
+        calendar.getTime()));
+    Path nextMinFile = new Path(localPath2, "dataFile3");
+    Path yetToBeMoved = new Path(localPath2, "ytm");
+    srcFs.create(nextMinFile);
+    paths.add(nextMinFile);
+    paths.add(yetToBeMoved);
+
+    // Prepare a consumer file on srcFs
+    Path consumerFile = srcCluster.getConsumePath(destinationCluster);
+    FSDataOutputStream out = srcFs.create(consumerFile);
+    writeToConsumerFile(out, paths);
+
+    Set<String> minFilesSet = new HashSet<String>();
+    Set<Path> yetToBeMovedPaths = new HashSet<Path>();
+    mergedService1
+        .readConsumePath(srcFs, consumerFile, minFilesSet, yetToBeMovedPaths);
+    assert (yetToBeMovedPaths.contains(yetToBeMoved));
+    assert (minFilesSet.contains(dataFile1.toString()));
+    assert (minFilesSet.contains(dataFile2.toString()));
+    assert (minFilesSet.contains(nextMinFile.toString()));
+    } finally {
+    // cleanup
+      srcFs.delete(new Path(srcCluster.getRootDir()), true);
+    }
+  }
+
+  @Test(priority = 6)
+  public void testWriteYetToBeMovedFile() throws Exception {
+    DatabusConfig config = setUPForYTMPaths();
+    Cluster srcCluster = config.getClusters().get("testcluster1");
+    Cluster dstnCluster = config.getClusters().get("testcluster2");
+    Path ytm1 = new Path(srcCluster.getLocalDestDir("test1", new Date()),
+        "ytm1");
+    Path ytm2 = new Path(srcCluster.getLocalDestDir("test1", new Date()),
+        "ytm2");
+    System.out.println("YYM " + ytm1);
+    Set<Path> yetToBeMovedPaths = new HashSet<Path>();
+    yetToBeMovedPaths.add(ytm1);
+    yetToBeMovedPaths.add(ytm2);
+    try {
+    mergedService1.writeYetToBeMovedFile(srcCluster.getTmpPath(),
+        yetToBeMovedPaths);
+    Path consumerDir = srcCluster.getConsumePath(dstnCluster);
+    FileStatus[] status = srcFs.listStatus(consumerDir);// only ytm consumer
+                                                        // file would be there
+    FSDataInputStream fsin = srcFs.open(status[0].getPath());
+    BufferedReader in = new BufferedReader(new InputStreamReader(fsin));
+    Set<String> ytmPaths = new HashSet<String>();
+    String line;
+    while ((line = in.readLine()) != null) {
+      ytmPaths.add(line);
+
+    }
+    assert ytmPaths.contains(ytm1.toString());
+    assert ytmPaths.contains(ytm2.toString());
+    } finally {
+      srcFs.delete(new Path(srcCluster.getRootDir()), true);
+    }
+
   }
 
 }
