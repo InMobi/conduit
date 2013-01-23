@@ -39,8 +39,9 @@ public class TestMergedStreamService extends MergedStreamService
   private Date todaysdate = null;
   
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster) throws Exception {
-    super(config, srcCluster, destinationCluster);
+      Cluster destinationCluster, Cluster currentCluster) throws Exception {
+
+    super(config, srcCluster, destinationCluster, currentCluster);
     this.srcCluster = srcCluster;
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());

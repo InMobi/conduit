@@ -60,6 +60,11 @@ public class Databus implements Service, DatabusConstants {
    * to enable unit testing
    */
   protected List<AbstractService> init() throws Exception {
+    String currentClusterName = config.getClusterName();
+    Cluster currentCluster = null;
+    if (currentClusterName != null) {
+      currentCluster = config.getClusters().get(currentClusterName);
+    }
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
@@ -92,11 +97,11 @@ public class Databus implements Service, DatabusConstants {
 
 			for (String remote : mergedStreamRemoteClusters) {
         services.add(getMergedStreamService(config,
-            config.getClusters().get(remote), cluster));
+            config.getClusters().get(remote), cluster, currentCluster));
       }
 			for (String remote : mirroredRemoteClusters) {
         services.add(getMirrorStreamService(config,
-            config.getClusters().get(remote), cluster));
+            config.getClusters().get(remote), cluster, currentCluster));
       }
     }
 
@@ -119,13 +124,15 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster) throws Exception {
-    return new MergedStreamService(config, srcCluster, dstCluster);
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Exception {
+    return new MergedStreamService(config, srcCluster, dstCluster, currentCluster);
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster) throws Exception {
-    return new MirrorStreamService(config, srcCluster, dstCluster);
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Exception {
+    return new MirrorStreamService(config, srcCluster, dstCluster, currentCluster);
   }
 
   @Override

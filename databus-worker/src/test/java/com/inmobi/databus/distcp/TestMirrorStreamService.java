@@ -37,8 +37,9 @@ public class TestMirrorStreamService extends MirrorStreamService
   private long mergeCommitTime = 0;
   
   public TestMirrorStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster) throws Exception {
-    super(config, srcCluster, destinationCluster);
+      Cluster destinationCluster, Cluster currentCluster) throws Exception {
+    //modify the config properly here
+    super(config, srcCluster, destinationCluster, currentCluster);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());

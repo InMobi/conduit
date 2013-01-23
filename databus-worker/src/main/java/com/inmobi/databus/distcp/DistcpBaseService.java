@@ -47,6 +47,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   private final Cluster srcCluster;
   private final Cluster destCluster;
+  private final Cluster currentCluster;
   private final FileSystem srcFs;
   private final FileSystem destFs;
   protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
@@ -55,12 +56,16 @@ public abstract class DistcpBaseService extends AbstractService {
       .class);
 
   public DistcpBaseService(DatabusConfig config, String name,
-                           Cluster srcCluster,
-                           Cluster destCluster) throws Exception {
+                           Cluster srcCluster, Cluster destCluster,
+                           Cluster currentCluster) throws Exception {
     super(name + "_" +
         srcCluster.getName() + "_" + destCluster.getName(), config);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
+    if(currentCluster != null)
+      this.currentCluster = currentCluster;
+    else
+      this.currentCluster = destCluster;
     srcFs = FileSystem.get(new URI(srcCluster.getHdfsUrl()),
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(
@@ -109,7 +114,7 @@ public abstract class DistcpBaseService extends AbstractService {
   {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
-    Configuration conf = destCluster.getHadoopConf();
+    Configuration conf = currentCluster.getHadoopConf();
     DistCp distCp = new DistCp(conf, options);
     try {
       distCp.execute();

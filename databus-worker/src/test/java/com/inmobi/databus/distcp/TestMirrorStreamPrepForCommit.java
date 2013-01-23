@@ -60,7 +60,7 @@ public class TestMirrorStreamPrepForCommit {
 
     //create service
     service = new MirrorStreamService(null, cluster,
-        cluster);
+        cluster, null);
 
     //createFinalExpectedPath
     finalExpectedPaths.add(new Path

@@ -53,16 +53,18 @@ public class DatabusTest extends TestMiniClusterUtil {
     
     @Override
     protected MergedStreamService getMergedStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster) throws Exception {
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+        Exception {
       return new TestMergedStreamService(config,
-          srcCluster, dstCluster);
+          srcCluster, dstCluster, currentCluster);
     }
     
     @Override
     protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster) throws Exception {
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+        Exception {
       return new TestMirrorStreamService(config,
-          srcCluster, dstCluster);
+          srcCluster, dstCluster, currentCluster);
     }
     
   }

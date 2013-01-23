@@ -43,9 +43,10 @@ public class MirrorStreamService extends DistcpBaseService {
   private static final Log LOG = LogFactory.getLog(MirrorStreamService.class);
 
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
-                             Cluster destinationCluster) throws Exception {
+                             Cluster destinationCluster,
+                             Cluster currentCluster) throws Exception {
     super(config, MirrorStreamService.class.getName(), srcCluster,
-    destinationCluster);
+    destinationCluster, currentCluster);
   }
 
   @Override

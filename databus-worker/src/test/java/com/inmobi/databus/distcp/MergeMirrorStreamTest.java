@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import junit.framework.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -23,6 +24,7 @@ import com.inmobi.databus.local.TestLocalStreamService;
 public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   private static final Log LOG = LogFactory.getLog(MergeMirrorStreamTest.class);
+  private String clusterName;
 
   /*
    * Here is the basic idea, create two clusters of different rootdir paths run
@@ -84,7 +86,14 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
         clustersToProcess.add(cluster);
       }
     }
-    
+
+    String currentClusterName = config.getClusterName();
+    Cluster currentCluster = null;
+    if (currentClusterName != null) {
+      clusterName = currentClusterName;
+      currentCluster = config.getClusters().get(currentClusterName);
+    }
+
     for (String clusterName : clustersToProcess) {
       Cluster cluster = config.getClusters().get(clusterName);
       cluster.getHadoopConf().set("mapred.job.tracker",
@@ -133,11 +142,12 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   
       for (String remote : mergedStreamRemoteClusters) {
         mergedStreamServices.add(new TestMergedStreamService(config,
-            config.getClusters().get(remote), cluster.getValue()));
+            config.getClusters().get(remote), cluster.getValue(), currentCluster));
       }
       for (String remote : mirroredRemoteClusters) {
         mirrorStreamServices.add(new TestMirrorStreamService(config,
-            config.getClusters().get(remote), cluster.getValue()));
+            config.getClusters().get(remote), cluster.getValue(),
+            currentCluster));
       }
     }
     
