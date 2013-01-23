@@ -55,7 +55,11 @@ public class Databus implements Service, DatabusConstants {
     return config;
   }
 
-  private void init() throws Exception {
+  /*
+   * The visiblity of method is set to protected and returns list of services 
+   * to enable unit testing
+   */
+  protected List<AbstractService> init() throws Exception {
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
@@ -105,6 +109,7 @@ public class Databus implements Service, DatabusConstants {
       //Start a purger per cluster
       services.add(new DataPurgerService(config, cluster));
     }
+    return services;
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
