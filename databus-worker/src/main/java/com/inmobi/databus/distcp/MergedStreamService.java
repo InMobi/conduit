@@ -270,37 +270,39 @@ public class MergedStreamService extends DistcpBaseService {
       throws Exception {
     Map<String, List<Path>> categoriesToCommit = new HashMap<String, List<Path>>();
     FileStatus[] allFiles = getDestFs().listStatus(tmpOut);
-    for (int i = 0; i < allFiles.length; i++) {
-      String fileName = allFiles[i].getPath().getName();
-      if (fileName != null) {
-        String category = getCategoryFromFileName(fileName, getDestCluster()
-            .getPrimaryDestinationStreams());
-        if (category != null) {
-          Path intermediatePath = new Path(tmpOut, category);
-          if (!getDestFs().exists(intermediatePath))
-            getDestFs().mkdirs(intermediatePath);
-          Path source = allFiles[i].getPath().makeQualified(getDestFs());
+    if (allFiles != null) {
+      for (int i = 0; i < allFiles.length; i++) {
+        String fileName = allFiles[i].getPath().getName();
+        if (fileName != null) {
+          String category = getCategoryFromFileName(fileName,
+              getDestCluster().getPrimaryDestinationStreams());
+          if (category != null) {
+            Path intermediatePath = new Path(tmpOut, category);
+            if (!getDestFs().exists(intermediatePath))
+              getDestFs().mkdirs(intermediatePath);
+            Path source = allFiles[i].getPath().makeQualified(getDestFs());
 
-          Path intermediateFilePath = new Path(intermediatePath.makeQualified(
-              getDestFs()).toString()
-              + File.separator + fileName);
-          if (getDestFs().rename(source, intermediateFilePath) == false) {
-            LOG.warn("Failed to Rename [" + source +"] to [" +
-                intermediateFilePath +"]");
-            LOG.warn("Aborting Tranasction prepareForCommit to avoid data " +
-                "LOSS. Retry would happen in next run");
-            throw new Exception("Rename [" + source + "] to [" +
+            Path intermediateFilePath = new Path(
+                intermediatePath.makeQualified(getDestFs()).toString() +
+                    File.separator + fileName);
+            if (getDestFs().rename(source, intermediateFilePath) == false) {
+              LOG.warn("Failed to Rename [" + source + "] to [" +
+                  intermediateFilePath + "]");
+              LOG.warn("Aborting Tranasction prepareForCommit to avoid data " +
+                  "LOSS. Retry would happen in next run");
+              throw new Exception("Rename [" + source + "] to [" +
+                  intermediateFilePath + "]");
+            }
+            LOG.debug("Moving [" + source + "] to intermediateFilePath [" +
                 intermediateFilePath + "]");
-          }
-          LOG.debug("Moving [" + source + "] to intermediateFilePath ["
-              + intermediateFilePath + "]");
-          List<Path> fileList = categoriesToCommit.get(category);
-          if (fileList == null) {
-            fileList = new ArrayList<Path>();
-            fileList.add(intermediateFilePath.makeQualified(getDestFs()));
-            categoriesToCommit.put(category, fileList);
-          } else {
-            fileList.add(intermediateFilePath);
+            List<Path> fileList = categoriesToCommit.get(category);
+            if (fileList == null) {
+              fileList = new ArrayList<Path>();
+              fileList.add(intermediateFilePath.makeQualified(getDestFs()));
+              categoriesToCommit.put(category, fileList);
+            } else {
+              fileList.add(intermediateFilePath);
+            }
           }
         }
       }
