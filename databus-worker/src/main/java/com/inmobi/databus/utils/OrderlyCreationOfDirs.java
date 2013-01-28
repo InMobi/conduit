@@ -33,7 +33,7 @@ public class OrderlyCreationOfDirs {
 
   public OrderlyCreationOfDirs() {
   }
- 
+
   /**
    * This method lists all the minute directories for a particular 
    * stream category.
@@ -93,7 +93,7 @@ public class OrderlyCreationOfDirs {
 
   public void listingAndValidation(Path streamDir, FileSystem fs,
       List<Path> outOfOrderDirs, Set<Path> notCreatedMinutePaths)
-      throws IOException {
+          throws IOException {
     Set<Path> listing = new HashSet<Path>();
     TreeMap<Date, FileStatus>creationTimeOfFiles = new TreeMap<Date, 
         FileStatus >();
@@ -105,85 +105,85 @@ public class OrderlyCreationOfDirs {
     validateOrderlyCreationOfPaths(streamDir, creationTimeOfFiles,
         outOfOrderDirs, notCreatedMinutePaths);
   }
-  
+
   public void getStreamNames(String baseDir, String rootDir, List<String>
-  		streamNames) throws Exception {
-  		FileSystem baseDirFs = new Path(rootDir, baseDir).getFileSystem
-  				(new Configuration());
-  		FileStatus[] streamFileStatuses = baseDirFs.listStatus(new Path
-  				(rootDir, baseDir));
-  		for (FileStatus file : streamFileStatuses) {
-  			if (!streamNames.contains(file.getPath().getName())) {
-  				streamNames.add(file.getPath().getName());
-  			}
-  		}  	
+  streamNames) throws Exception {
+    FileSystem baseDirFs = new Path(rootDir, baseDir).getFileSystem
+        (new Configuration());
+    FileStatus[] streamFileStatuses = baseDirFs.listStatus(new Path
+        (rootDir, baseDir));
+    for (FileStatus file : streamFileStatuses) {
+      if (!streamNames.contains(file.getPath().getName())) {
+        streamNames.add(file.getPath().getName());
+      }
+    }  	
   }
-  
+
   public void getBaseDirs(String baseDirArg, List<String> baseDirs) {
-  	for (String baseDir : baseDirArg.split(",")) {
-			baseDirs.add(baseDir);
-		}
+    for (String baseDir : baseDirArg.split(",")) {
+      baseDirs.add(baseDir);
+    }
   }
-  
+
   public List<Path> run(String [] args) throws Exception {
-  	List<Path> outoforderdirs = new ArrayList<Path>();
-  	Set<Path> notCreatedMinutePaths = new HashSet<Path>();
-  	String[]	rootDirs = args[0].split(",");
-  	List<String> baseDirs = new ArrayList<String>();
-  	List<String> streamNames;
-  	if (args.length == 1) {
-  	  baseDirs.add("streams");
-  	  baseDirs.add("streams_local");
-  	  for (String rootDir : rootDirs) {
-  	    for (String baseDir : baseDirs) {
-  	      streamNames = new ArrayList<String>();
-  	      getStreamNames(baseDir, rootDir, streamNames);
-  	      pathConstruction(rootDir, baseDir, streamNames, outoforderdirs,
-  	          notCreatedMinutePaths);
-  	    }
-  	  }
-  	  if (outoforderdirs.isEmpty()) {
-  	    System.out.println("There are no out of order dirs");
-  	  }
-  	  if (notCreatedMinutePaths.isEmpty()) {
-  	    System.out.println("There are no missing dirs");
-  	  }
-  	} else if (args.length == 2) {
-  	  getBaseDirs(args[1], baseDirs);
-  	  for (String rootDir : rootDirs) {
-  	    for (String baseDir : baseDirs) {
-  	      streamNames = new ArrayList<String>();
-  	      getStreamNames(baseDir, rootDir, streamNames);
-  	      pathConstruction(rootDir, baseDir, streamNames, outoforderdirs,
-  	          notCreatedMinutePaths);
-  	    }
-  	  }
-  	  if (outoforderdirs.isEmpty()) {
-  	    System.out.println("There are no out of order dirs");
-  	  }
-  	  if (notCreatedMinutePaths.isEmpty()) {
-  	    System.out.println("There are no missing dirs");
-  	  }
-  	} else if (args.length == 3) {
-  	  getBaseDirs(args[1], baseDirs);
-  	  streamNames = new ArrayList<String>();
-  	  for (String streamname : args[2].split(",")) {
-  	    streamNames.add(streamname);
-  	  }
-  	  for (String rootDir : rootDirs) {
-  	    for (String baseDir : baseDirs) {
-  	      pathConstruction(rootDir, baseDir, streamNames, outoforderdirs,
-  	          notCreatedMinutePaths);
-  	    }
-  	  }
-  	  if (outoforderdirs.isEmpty()) {
-  	    System.out.println("There are no out of order dirs");
-  	  } 
-  	  if (notCreatedMinutePaths.isEmpty()) {
-  	    System.out.println("There are no missing dirs");
-  	  }
-  	}
-  	return outoforderdirs;
+    List<Path> outoforderdirs = new ArrayList<Path>();
+    Set<Path> notCreatedMinutePaths = new HashSet<Path>();
+    String[]	rootDirs = args[0].split(",");
+    List<String> baseDirs = new ArrayList<String>();
+    List<String> streamNames;
+    if (args.length == 1) {
+      baseDirs.add("streams");
+      baseDirs.add("streams_local");
+      for (String rootDir : rootDirs) {
+        for (String baseDir : baseDirs) {
+          streamNames = new ArrayList<String>();
+          getStreamNames(baseDir, rootDir, streamNames);
+          pathConstruction(rootDir, baseDir, streamNames, outoforderdirs,
+              notCreatedMinutePaths);
+        }
+      }
+      if (outoforderdirs.isEmpty()) {
+        System.out.println("There are no out of order dirs");
+      }
+      if (notCreatedMinutePaths.isEmpty()) {
+        System.out.println("There are no missing dirs");
+      }
+    } else if (args.length == 2) {
+      getBaseDirs(args[1], baseDirs);
+      for (String rootDir : rootDirs) {
+        for (String baseDir : baseDirs) {
+          streamNames = new ArrayList<String>();
+          getStreamNames(baseDir, rootDir, streamNames);
+          pathConstruction(rootDir, baseDir, streamNames, outoforderdirs,
+              notCreatedMinutePaths);
+        }
+      }
+      if (outoforderdirs.isEmpty()) {
+        System.out.println("There are no out of order dirs");
+      }
+      if (notCreatedMinutePaths.isEmpty()) {
+        System.out.println("There are no missing dirs");
+      }
+    } else if (args.length == 3) {
+      getBaseDirs(args[1], baseDirs);
+      streamNames = new ArrayList<String>();
+      for (String streamname : args[2].split(",")) {
+        streamNames.add(streamname);
+      }
+      for (String rootDir : rootDirs) {
+        for (String baseDir : baseDirs) {
+          pathConstruction(rootDir, baseDir, streamNames, outoforderdirs,
+              notCreatedMinutePaths);
+        }
+      }
+      if (outoforderdirs.isEmpty()) {
+        System.out.println("There are no out of order dirs");
+      } 
+      if (notCreatedMinutePaths.isEmpty()) {
+        System.out.println("There are no missing dirs");
+      }
+    }
+    return outoforderdirs;
   }
 
   /**
@@ -195,17 +195,17 @@ public class OrderlyCreationOfDirs {
   public void pathConstruction(String rootDir, String baseDir,
       List<String> streamNames, List<Path> outOfOrderDirs,
       Set<Path> notCreatedMinutePaths) throws IOException {
-  	FileSystem fs = new Path(rootDir).getFileSystem(new Configuration());
-  	Path rootBaseDirPath = new Path(rootDir, baseDir);
-  	for (String streamName : streamNames) {
-  		Path streamDir = new Path(rootBaseDirPath , streamName);
-  		FileStatus[] files = fs.listStatus(streamDir);
-  		if (files == null || files.length == 0) {
-  			LOG.info("No direcotries in that stream: " + streamName);
-  			continue;
-  		}
+    FileSystem fs = new Path(rootDir).getFileSystem(new Configuration());
+    Path rootBaseDirPath = new Path(rootDir, baseDir);
+    for (String streamName : streamNames) {
+      Path streamDir = new Path(rootBaseDirPath , streamName);
+      FileStatus[] files = fs.listStatus(streamDir);
+      if (files == null || files.length == 0) {
+        LOG.info("No direcotries in that stream: " + streamName);
+        continue;
+      }
       listingAndValidation(streamDir, fs, outOfOrderDirs, notCreatedMinutePaths);
-  	}
+    }
   }
 
   public static void main(String[] args) throws Exception {

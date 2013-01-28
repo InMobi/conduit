@@ -24,10 +24,10 @@ public class FileUtil {
     FileSystem fs = FileSystem.get(conf);
     FSDataOutputStream out = fs.create(target);
     GzipCodec gzipCodec = (GzipCodec) ReflectionUtils.newInstance(
-              GzipCodec.class, conf);
+        GzipCodec.class, conf);
     Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
     OutputStream compressedOut = gzipCodec.createOutputStream(out,
-              gzipCompressor);
+        gzipCompressor);
     FSDataInputStream in = fs.open(src);
     try {
       IOUtils.copyBytes(in, compressedOut, conf);

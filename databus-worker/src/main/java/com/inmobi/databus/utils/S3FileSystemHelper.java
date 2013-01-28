@@ -47,8 +47,8 @@ public class S3FileSystemHelper {
     credentials.initialize(uri, conf);
     try {
       AWSCredentials awsCredentials =
-        new AWSCredentials(credentials.getAccessKey(),
-          credentials.getSecretAccessKey());
+          new AWSCredentials(credentials.getAccessKey(),
+              credentials.getSecretAccessKey());
       this.service = new RestS3Service(awsCredentials);
     } catch (S3ServiceException e) {
       if (e.getCause() instanceof IOException) {
@@ -72,7 +72,7 @@ public class S3FileSystemHelper {
     String destKey = pathToKey(dest);
     try {
       service.copyObject(bucket.getName(), srcKey, bucket.getName(),
-        new S3Object(destKey), false);
+          new S3Object(destKey), false);
     } catch (S3ServiceException e) {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
@@ -82,7 +82,7 @@ public class S3FileSystemHelper {
   }
 
   public synchronized static S3FileSystemHelper getInstance(Configuration conf)
-    throws IOException {
+      throws IOException {
     if (INSTANCE == null) {
       INSTANCE = new S3FileSystemHelper();
       URI uri = FileSystem.get(conf).getUri();
