@@ -118,11 +118,13 @@ public class OrderlyCreationOfDirs {
         (new Configuration());
     FileStatus[] streamFileStatuses = baseDirFs.listStatus(new Path
         (rootDir, baseDir));
-    for (FileStatus file : streamFileStatuses) {
-      if (!streamNames.contains(file.getPath().getName())) {
-        streamNames.add(file.getPath().getName());
-      }
-    }  	
+    if (streamFileStatuses != null) {
+      for (FileStatus file : streamFileStatuses) {
+        if (!streamNames.contains(file.getPath().getName())) {
+          streamNames.add(file.getPath().getName());
+        }
+      }  
+    }
   }
 
   public void getBaseDirs(String baseDirArg, List<String> baseDirs) {
