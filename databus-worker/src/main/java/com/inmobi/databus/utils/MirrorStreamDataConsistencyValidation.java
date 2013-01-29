@@ -60,7 +60,7 @@ public class MirrorStreamDataConsistencyValidation {
         new Configuration());
     doRecursiveListing(completeMergedStreamDirPath, filesInMergedStream,
         mergedFS);             
-    Iterator it = filesInMergedStream.iterator();
+    Iterator<Path> it = filesInMergedStream.iterator();
     while (it.hasNext()) {
       LOG.debug(" files in merged stream : " + (it.next()));
     }
@@ -76,7 +76,7 @@ public class MirrorStreamDataConsistencyValidation {
       mirroredFs = mirrorStreamDirPath.getFileSystem(new Configuration());
       LOG.info("mirroredStream Path : " + mirrorStreamDirPath);
       doRecursiveListing(mirrorStreamDirPath, filesInMirroredStream, mirroredFs);
-      Iterator it = filesInMirroredStream.iterator();
+      Iterator<Path> it = filesInMirroredStream.iterator();
       while (it.hasNext() ) {
         LOG.debug(" files in mirrored stream: " + (it.next()));
       }

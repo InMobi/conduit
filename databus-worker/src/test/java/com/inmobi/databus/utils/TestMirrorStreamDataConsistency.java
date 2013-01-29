@@ -245,8 +245,8 @@ public class TestMirrorStreamDataConsistency {
 	}
 
 	private void mirrorStreamConsistency(String [] streamNames, List<Path> 
-			expectedPaths, MirrorStreamDataConsistencyValidation obj) throws 
-					Exception {
+			expectedPaths, MirrorStreamDataConsistencyValidation obj) 
+			    throws Exception {
 		List<Path> inconsistentdata = new ArrayList<Path>();
 		for (String streamName : streamNames) {
 			inconsistentdata.addAll(obj.processListingStreams(streamName));
