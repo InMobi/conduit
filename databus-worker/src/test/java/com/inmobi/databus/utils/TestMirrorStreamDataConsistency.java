@@ -27,8 +27,8 @@ public class TestMirrorStreamDataConsistency {
 			+ "/2/,file:///tmp/test/" + className +"/3/");
 	String [] mirrorStreamUrls = mirrorStreamUrl.split(",");
 	String [] allStreamNames = ("empty,emptyDirs,consistentData,missingFiles," +
-			"missingDirs,dataReplayDirs,dataReplayFiles,extraFiles,extraDirs").
-			split(",");
+	    "missingDirs,dataReplayDirs,dataReplayFiles,extraFiles,extraDirs," +
+	    "pugredfiles").split(",");
 	String [] emptyStreamName = "empty".split(",");
 	String [] emptyDirStreamName = "emptyDirs".split(",");
 	String [] consistentDataStreamName = "consistentData".split(",");
@@ -38,7 +38,8 @@ public class TestMirrorStreamDataConsistency {
 	String [] dataReplayDirsStreamName = "dataReplayDirs".split(",");
 	String [] extrafilesStreamName = "extraFiles".split(",");
 	String [] extraDirsStreamName = "extraDirs".split(",");
-
+	String [] purgedFileStreamName = "pugredfiles".split(",");
+	
 	List<Path> emptyPaths = new ArrayList<Path>();
 	List<Path> emptyDirsPaths = new ArrayList<Path>();
 	List<Path> missedFilePaths = new ArrayList<Path>();
@@ -47,6 +48,11 @@ public class TestMirrorStreamDataConsistency {
 	List<Path> dataReplayDirPaths = new ArrayList<Path>();
 	List<Path> extraFilePaths = new ArrayList<Path>();
 	List<Path> extraDirPaths = new ArrayList<Path>();
+	/* purgedFilePaths contains all the inconsistency paths in the purgedfiles 
+	 * category. Here PurgedFilePaths contains all kinds of inconsistencies
+	 * (i.e purged paths, to be mirrored paths, missing paths, data replay paths) 
+	 */
+	List<Path> purgedFilePaths = new ArrayList<Path>();
 
 	long temptime = System.currentTimeMillis();
 
@@ -114,7 +120,14 @@ public class TestMirrorStreamDataConsistency {
 						date = Cluster.getDateAsYYYYMMDDHHMNPath(temptime + i * 
 								milliseconds);
 						createFilesData(fs, new Path(streamDir, date), 2, 0);
-					} 
+					} else if (streamName.equals("pugredfiles")) {
+					  date = Cluster.getDateAsYYYYMMDDHHMNPath(temptime + i * 
+					      milliseconds);
+					  createFilesData(fs, new Path(streamDir, date), 2, 1);
+					  for (int j = 0; j < mirrorStreamUrls.length; j++) {
+					    purgedFilePaths.add(new Path(new Path(streamDir, date), "file1"));
+					  }
+					}
 				} else {
 					if (streamName.equals("emptyDirs")) {
 						date = Cluster.getDateAsYYYYMMDDHHMNPath(temptime + i * 
@@ -162,7 +175,12 @@ public class TestMirrorStreamDataConsistency {
 							extraDirPaths.add(new Path(new Path(streamDir, date), "file0"));
 							extraDirPaths.add(new Path(new Path(streamDir, date), "file1"));
 						}
-					} 
+					} else if (streamName.equals("pugredfiles")) {
+					  date = Cluster.getDateAsYYYYMMDDHHMNPath(temptime + (i-1) * 
+					      milliseconds);
+					  createFilesData(fs, new Path(streamDir, date), 1, 0);
+					  purgedFilePaths.add(new Path(new Path(streamDir, date), "file0"));
+					}
 				}
 			}	
 		}
@@ -182,6 +200,7 @@ public class TestMirrorStreamDataConsistency {
 			createMinDirs(baseDir, false, 2, dataReplayDirsStreamName);
 			createMinDirs(baseDir, false, 2, extrafilesStreamName);
 			createMinDirs(baseDir, false, 2, extraDirsStreamName);
+			createMinDirs(baseDir, false, 2, purgedFileStreamName);
 		} else {
 			for (String mirrorstreamName : mirrorStreamUrls) {
 				baseDir = new Path(mirrorstreamName, "streams");
@@ -194,6 +213,7 @@ public class TestMirrorStreamDataConsistency {
 				createMinDirs(baseDir, true, 3, dataReplayDirsStreamName);
 				createMinDirs(baseDir, true, 2, extrafilesStreamName);
 				createMinDirs(baseDir, true, 3, extraDirsStreamName);
+				createMinDirs(baseDir, true, 3, purgedFileStreamName);
 			}
 		}
 	}
@@ -254,6 +274,9 @@ public class TestMirrorStreamDataConsistency {
 		mirrorStreamConsistency(extrafilesStreamName, extraFilePaths, obj);
 		//extra dir paths
 		mirrorStreamConsistency(extraDirsStreamName, extraDirPaths, obj);
+		// purged paths
+		mirrorStreamConsistency(purgedFileStreamName, purgedFilePaths, obj);
+
 		//all streams together
 		List<Path> allStreamPaths = new ArrayList<Path>();
 		allStreamPaths.addAll(emptyPaths);
@@ -264,6 +287,7 @@ public class TestMirrorStreamDataConsistency {
 		allStreamPaths.addAll(dataReplayFilePaths);
 		allStreamPaths.addAll(extraFilePaths);
 		allStreamPaths.addAll(extraDirPaths);
+		allStreamPaths.addAll(purgedFilePaths);
 		
 		mirrorStreamConsistency(allStreamNames, allStreamPaths, obj);
 		String [] args = {("file:///tmp/test/" + className + "/1/"), ("file:///tmp/" +
