@@ -256,7 +256,7 @@ public class MirrorStreamDataConsistencyValidation {
     if (args.length == 2) {
       FileSystem fs = mirrorStreamDirs.get(0).getFileSystem(new Configuration());
       FileStatus[] fileStatuses = fs.listStatus(mirrorStreamDirs.get(0));
-      if (fileStatuses.length != 0) {
+      if (fileStatuses != null && fileStatuses.length != 0) {
         for (FileStatus file : fileStatuses) {  
           streamNames.add(file.getPath().getName());
         } 
