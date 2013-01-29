@@ -87,6 +87,80 @@ public class MirrorStreamDataConsistencyValidation {
     }
   }
 
+  public void skipPurgedPaths(List<Path> mergedStreamFiles, 
+      List<Path> mirrorStreamFiles, int mergedStreamLen, int mirrorStreamLen, 
+      List<Path> inconsistentData) {
+    String mergedStreamfilePath = getStreamFilePath(mergedStreamFiles, 0, 
+        mergedStreamLen);
+    String mirrorStreamfilePath = getStreamFilePath(mirrorStreamFiles, 0, 
+        mirrorStreamLen);
+    String mirrorDir = getStreamDir(mirrorStreamFiles, mirrorStreamLen);
+    int index = 0;
+
+    if (!mergedStreamfilePath.equals(mirrorStreamfilePath)) {
+      int indexOfPath = checkForPurgedPaths(mirrorStreamFiles, 
+          mergedStreamfilePath, mirrorDir, index, mergedStreamFiles); 
+      if (indexOfPath == -1) {
+        int loopCount = 0;
+        while (comparePaths(mergedStreamFiles, mirrorStreamFiles, 
+            mergedStreamLen, mirrorStreamLen) < 0) {
+          inconsistentData.add(mergedStreamFiles.get(0));
+          System.out.println("purged path is :" + mergedStreamFiles.remove(0));
+          loopCount++;
+          if (mergedStreamFiles.size() == 0) {
+            break;
+          }
+        }
+        if (loopCount == 0) {
+          while (comparePaths(mergedStreamFiles, mirrorStreamFiles, 
+              mergedStreamLen, mirrorStreamLen) > 0) {
+            inconsistentData.add(mirrorStreamFiles.get(0));
+            System.out.println("purged path in he mirror stream" + 
+                mirrorStreamFiles.remove(0));
+            if (mirrorStreamFiles.size() == 0) {
+              break;
+            }
+          }
+        } 
+      }
+    }
+  }
+
+  protected int comparePaths(List<Path> mergedStreamFiles,
+      List<Path> mirrorStreamFiles, int mergedStreamLen, 
+      int mirrorStreamLen) {
+    String mergedStreamfilePath = getStreamFilePath(mergedStreamFiles, 0, 
+        mergedStreamLen);
+    String mirrorStreamfilePath = getStreamFilePath(mirrorStreamFiles, 0, 
+        mirrorStreamLen);
+    return (mergedStreamfilePath.compareTo(mirrorStreamfilePath));
+  }
+
+  protected String getStreamFilePath(List<Path> listOfStreamFiles, int index,
+      int streamLen) {
+    return listOfStreamFiles.get(index).toString().substring(streamLen);
+  }
+
+  protected String getStreamDir(List<Path> listOfStreamFiles,
+      int streamLen) {
+    return listOfStreamFiles.get(0).toString().
+        substring(0, streamLen - 1);
+  }
+
+  protected int checkForPurgedPaths(List<Path> listOfFiles,
+      String streamfilePath, String streamDir, int index,
+      List<Path> pathsToCompare) {
+    Path pathForMirror = new Path(streamDir, streamfilePath);
+    int mirrorIndex = listOfFiles.indexOf(pathForMirror);
+    if (mirrorIndex != -1) {
+      while (index < mirrorIndex) {
+        LOG.info("Purged paths: " + listOfFiles.get(index++) );
+        listOfFiles.remove(index - 1);
+      }
+    } 
+    return mirrorIndex;
+  }
+
   /**
    * It compares the merged stream and mirror streams 
    * stores the missed paths and data replay paths in the inconsistent data List
@@ -105,12 +179,16 @@ public class MirrorStreamDataConsistencyValidation {
     int j;
     int mergedStreamLen = mergedStreamDirPath.length();
     int mirrorStreamLen = mirrorStreamDirPath.length();
+    skipPurgedPaths(mergedStreamFiles, mirrorStreamFiles, mergedStreamLen, 
+        mirrorStreamLen, inconsistentData);
+
     for( i=0, j=0 ; i < mergedStreamFiles.size() && 
         j < mirrorStreamFiles.size(); i++, j++) {
-      String mergedStreamfilePath = mergedStreamFiles.get(i).toString().
-          substring(mergedStreamLen);
-      String mirrorStreamfilePath = mirrorStreamFiles.get(j).toString().
-          substring(mirrorStreamLen);
+      String mergedStreamfilePath = getStreamFilePath(mergedStreamFiles, i, 
+          mergedStreamLen);
+      String mirrorStreamfilePath = getStreamFilePath(mirrorStreamFiles, j, 
+          mirrorStreamLen);
+
       if(!mergedStreamfilePath.equals(mirrorStreamfilePath)) {
         if(mergedStreamfilePath.compareTo(mirrorStreamfilePath) < 0) {
           System.out.println("Missing file path : " + mergedStreamFiles.get(i));
