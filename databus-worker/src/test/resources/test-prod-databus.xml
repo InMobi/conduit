@@ -1,0 +1,914 @@
+<databus>
+  <defaults>
+    <rootdir>/databus</rootdir>
+    <retentioninhours>25</retentioninhours>
+    <trashretentioninhours>6</trashretentioninhours>
+  </defaults>
+
+
+  <streams>
+  
+  <!-- Local Streams -->
+
+   <stream name="billing_ifphs">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+    
+    <stream name="billing_ifpht">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+  
+    <stream name="adroit_report_obj_ua2">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source> 
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="adroit_report_obj_uj1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source> 
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="adroit_report_obj_lhr1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source> 
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+    <stream name="adroit_report_obj_hkg1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source> 
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="rr">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="cas_rr">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="cas_channel">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_ua2_bcpm">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_ua2_nbcpm">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_ua2_csc">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_lhr1_bcpm">
+      <sources>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_lhr1_nbcpm">
+      <sources>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_lhr1_csc">
+      <sources>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_uj1_bcpm">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_uj1_nbcpm">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_uj1_csc">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_hkg1_bcpm">
+      <sources>
+        <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_hkg1_nbcpm">
+      <sources>
+        <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+    <stream name="beacon_rr_hkg1_csc">
+      <sources>
+        <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+
+
+  <!-- Merged Streams -->
+
+     <stream name="ifd_rr">
+      <sources>
+       <source>
+          <name>uj1</name>
+          <retentioninhours>240</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>240</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+<stream name="ifcg">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      <destination>
+          <primary>true</primary>
+          <name>ua2_main</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+
+      </destinations>
+    </stream>
+
+     <stream name="ifc_ir">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      <destination>
+          <primary>true</primary>
+          <name>ua2_main</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+
+     <stream name="ifcp">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>25</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      <destination>
+          <primary>true</primary>
+          <name>ua2_main</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+
+   <stream name="billing_cpc_lhr1">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>lhr1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="billing_cpc_ua2">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="billing_cpc_uj1">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>uj1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="billing_cpc_hkg1">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>hkg1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="billing_cpm_lhr1">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>lhr1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="billing_cpm_ua2">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="billing_cpm_uj1">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>uj1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="billing_cpm_hkg1">
+      <sources>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>hkg1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+  
+  <!-- Mirror streaming -->
+    <stream name="adroit_downloads">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+      </sources>
+     <destinations>
+       <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+       <destination>
+          <name>uj1</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+        <destination>
+          <name>lhr1</name>
+          <retentioninhours>48</retentioninhours>
+        </destination>
+     </destinations> 
+    </stream>
+
+    <stream name="adroit_report_obj">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+      </sources>
+     <destinations>
+       <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+       <destination>
+          <name>uj1</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+        <destination>
+          <name>lhr1</name>
+          <retentioninhours>48</retentioninhours>
+        </destination>
+     </destinations>
+    </stream>
+
+    <stream name="adroit_feedback_delta">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+      </sources>
+     <destinations>
+       <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+       <destination>
+          <name>uj1</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+        <destination>
+          <name>lhr1</name>
+          <retentioninhours>48</retentioninhours>
+        </destination>
+     </destinations>
+    </stream>
+ 
+ <stream name="click_rr">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+         <source>
+          <name>lhr1</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+        <source>
+          <name>hkg1</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+      </sources>
+     <destinations>
+       <destination>
+          <primary>true</primary>
+          <name>ua2_main</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+     </destinations>
+    </stream>
+
+  <stream name="ifc_ff">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+         <source>
+          <name>lhr1</name>
+          <retentioninhours>48</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+     <destinations>
+       <destination>
+          <primary>true</primary>
+          <name>ua2_main</name>
+          <retentioninhours>48</retentioninhours>
+       </destination>
+     </destinations>
+    </stream>
+  </streams>
+
+<!-- click_rr_* for all colos, merge on respective -->
+
+   <stream name="click_rr_ua2">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+
+
+<!-- click_rr_lhr1 and click_rr_wc1 both go as merged streams on lhr1 -->
+
+   <stream name="click_rr_lhr1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>lhr1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="click_rr_ir1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>lhr1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>    
+     </stream>
+
+
+<!-- click_rr_uj1 and click_rr_wc1 both go as merged streams on uj1 -->
+   <stream name="click_rr_uj1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>uj1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+   <stream name="click_rr_wc1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>uj1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>    
+      </stream>
+     
+   <stream name="click_rr_hkg1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>uj1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+        <source>
+          <name>lhr1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+  <source>
+          <name>hkg1</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>hkg1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+      </stream>
+
+<!-- fds_ua2   go as merged streams on ua2 -->
+   <stream name="fds_ua2">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>ua2</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+<!-- fds_uj1   go as merged streams on uj1 -->
+   <stream name="fds_uj1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>uj1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+<!-- fds_lhr1   go as merged streams on lhr1 -->
+   <stream name="fds_lhr1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>lhr1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+<!-- fds_hkg1   go as merged streams on hkg1 -->
+   <stream name="fds_hkg1">
+      <sources>
+        <source>
+          <name>ua2</name>
+          <retentioninhours>49</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      <destination>
+          <primary>true</primary>
+          <name>hkg1</name>
+          <retentioninhours>50</retentioninhours>
+      </destination>
+      </destinations>
+    </stream>
+
+
+
+  <clusters>
+    <cluster name="ua2" hdfsurl="file:///tmp/testproduction/ua2" jturl="local" jobqueuename="default">        
+    </cluster>
+    <cluster name="uj1" hdfsurl="file:///tmp/testproduction/uj1" jturl="local" jobqueuename="default">        
+    </cluster>
+    <cluster name="lhr1" hdfsurl="file:///tmp/testproduction/lhr1" jturl="local" jobqueuename="default">        
+    </cluster>
+    <cluster name="ua2_main" hdfsurl="file:///tmp/testproduction/ua2_main" jturl="local" jobqueuename="default">
+    </cluster>
+    <cluster name="hkg1" hdfsurl="file:///tmp/testproduction/hkg1" jturl="local" jobqueuename="default">
+    </cluster>
+  </clusters>
+
+</databus>
