@@ -371,8 +371,12 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   public void testMultipleStreamMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml");
     testMapReduce("test-lss-multiple-databus.xml", 1);
+  }
+  
+  @Test(groups = { "integration" })
+  public void testMultipleStreamMapReduceWithMultipleRuns() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml, Running Twice");
-    testMapReduce("test-lss-multiple-databus.xml", 2);
+    testMapReduce("test-lss-multiple-databus1.xml", 2);
   }
 
   private static class NullCheckPointProvider implements CheckpointProvider {

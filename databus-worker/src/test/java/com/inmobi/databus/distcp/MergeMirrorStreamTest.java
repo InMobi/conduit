@@ -36,15 +36,27 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   @Test
   public void testMergeMirrorStream() throws Exception {
     testMergeMirrorStream("test-mss-databus.xml");
+  }
+
+  @Test
+  public void testMergeMirrorStreamWithMultipleStreams() throws Exception {
+    testMergeMirrorStream("test-mss-databus1.xml");
+  }
+  
+  @Test
+  public void testMergeMirrorStreamWithMirror() throws Exception {
     // Test with 2 mirror sites
     testMergeMirrorStream("test-mss-databus_mirror.xml");
-    testMergeMirrorStream("test-mss-databus1.xml");
   }
   
   @Test(groups = { "integration" })
   public void testAllComboMergeMirrorStream() throws Exception {
     // Test with 1 merged stream only
     testMergeMirrorStream("test-mergedss-databus.xml");
+  }
+
+  @Test(groups = { "integration" })
+  public void testAllServices() throws Exception {
     // Test with 1 source and 1 merged stream only
     testMergeMirrorStream("test-mergedss-databus_2.xml");
   }
