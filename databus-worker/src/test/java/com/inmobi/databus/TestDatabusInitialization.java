@@ -39,6 +39,50 @@ public class TestDatabusInitialization {
 
     testDatabusAllServices();
   }
+  
+  @Test
+  public void testProdConf() throws Exception {
+    setUP("test-prod-databus.xml");
+    listOfServices = new ArrayList<AbstractService>();
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("ua2");
+    clustersToProcess.add("uj1");
+    clustersToProcess.add("lhr1");
+    clustersToProcess.add("ua2_main");
+    clustersToProcess.add("hkg1");
+    Databus databus = new Databus(config, clustersToProcess);
+    listOfServices.addAll(databus.init());
+    System.out.println("total number of services running in the prod " + 
+        listOfServices.size());
+    Assert.assertEquals(listOfServices.size(), 31);
+    
+    //test local stream services
+    for (int i = 0; i < 4; i++) {
+      Assert.assertTrue(assertLocalStreamService());
+    }
+    Assert.assertFalse(assertLocalStreamService());
+    
+    //test Data purger services
+    for (int i = 0; i < 5; i++) {
+      Assert.assertTrue(assertDataPurgerService());
+    }
+    Assert.assertFalse(assertDataPurgerService());
+    
+    //test Merge stream services
+    for (int i= 0; i < 20; i++) {
+      Assert.assertTrue(assertMergedStreamService());
+    }
+    Assert.assertFalse(assertMergedStreamService());
+    
+    //test mirror stream services
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(assertMirrorStreamService());
+    }
+    Assert.assertFalse(assertMirrorStreamService());
+    
+    // list should be empty after removing all the services
+    Assert.assertTrue(listOfServices.isEmpty());
+  }
 
   /*
    * testcluster1---- local stream service and purger service will be populated
@@ -57,7 +101,7 @@ public class TestDatabusInitialization {
     // no mirror stream service as non-primary destination is not available
     Assert.assertFalse(assertMirrorStreamService());
     Assert.assertTrue(assertLocalStreamService());
-    Assert.assertTrue(assertInstanceOfDataPurgerService());
+    Assert.assertTrue(assertDataPurgerService());
   }
 
   /*
@@ -82,8 +126,8 @@ public class TestDatabusInitialization {
     Assert.assertFalse(assertMirrorStreamService());
     Assert.assertTrue(assertMergedStreamService());
     Assert.assertTrue(assertMergedStreamService());
-    Assert.assertTrue(assertInstanceOfDataPurgerService());
-    Assert.assertTrue(assertInstanceOfDataPurgerService());
+    Assert.assertTrue(assertDataPurgerService());
+    Assert.assertTrue(assertDataPurgerService());
   }
 
   /*
@@ -109,12 +153,12 @@ public class TestDatabusInitialization {
     Assert.assertTrue(assertMergedStreamService());
     Assert.assertTrue(assertMirrorStreamService());
     Assert.assertFalse(assertMirrorStreamService());
-    Assert.assertTrue(assertInstanceOfDataPurgerService());
-    Assert.assertTrue(assertInstanceOfDataPurgerService());
-    Assert.assertTrue(assertInstanceOfDataPurgerService());
+    Assert.assertTrue(assertDataPurgerService());
+    Assert.assertTrue(assertDataPurgerService());
+    Assert.assertTrue(assertDataPurgerService());
   }
 
-  private boolean assertInstanceOfDataPurgerService() {
+  private boolean assertDataPurgerService() {
     for (AbstractService service : listOfServices) {
       if (service instanceof DataPurgerService) {
         listOfServices.remove(service);
