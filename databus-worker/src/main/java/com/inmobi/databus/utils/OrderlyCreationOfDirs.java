@@ -30,6 +30,9 @@ import com.inmobi.databus.Cluster;
 public class OrderlyCreationOfDirs {
   private static final Log LOG = LogFactory.getLog(
       OrderlyCreationOfDirs.class);
+  
+  private static final int DATE_FORMAT_LENGTH = CalendarHelper.minDirFormatStr.
+      length();
 
   public OrderlyCreationOfDirs() {
   }
@@ -39,15 +42,17 @@ public class OrderlyCreationOfDirs {
    * stream category.
    */
   public void doRecursiveListing(Path dir, Set<Path> listing, 
-      FileSystem fs) throws IOException {
+      FileSystem fs, int streamDirlen) throws IOException {
     FileStatus[] fileStatuses = fs.listStatus(dir);
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + dir);
-      listing.add(dir);
+      if (dir.toString().length() == (streamDirlen + DATE_FORMAT_LENGTH + 1)) {
+        listing.add(dir);
+      } 
     } else {
       for (FileStatus file : fileStatuses) {  
         if (file.isDir()) {
-          doRecursiveListing(file.getPath(), listing,  fs);	      
+          doRecursiveListing(file.getPath(), listing, fs, streamDirlen);   
         } else {
           listing.add(file.getPath().getParent());
         }       
@@ -97,7 +102,8 @@ public class OrderlyCreationOfDirs {
     Set<Path> listing = new HashSet<Path>();
     TreeMap<Date, FileStatus>creationTimeOfFiles = new TreeMap<Date, 
         FileStatus >();
-    doRecursiveListing(streamDir, listing, fs);
+    // passing stream dir length as argument to know the minute dir
+    doRecursiveListing(streamDir, listing, fs, streamDir.toString().length());
     for (Path path :listing) {
       creationTimeOfFiles.put(CalendarHelper.getDateFromStreamDir(
           streamDir, path), fs.getFileStatus(path));
@@ -112,11 +118,13 @@ public class OrderlyCreationOfDirs {
         (new Configuration());
     FileStatus[] streamFileStatuses = baseDirFs.listStatus(new Path
         (rootDir, baseDir));
-    for (FileStatus file : streamFileStatuses) {
-      if (!streamNames.contains(file.getPath().getName())) {
-        streamNames.add(file.getPath().getName());
-      }
-    }  	
+    if (streamFileStatuses != null) {
+      for (FileStatus file : streamFileStatuses) {
+        if (!streamNames.contains(file.getPath().getName())) {
+          streamNames.add(file.getPath().getName());
+        }
+      }  
+    }
   }
 
   public void getBaseDirs(String baseDirArg, List<String> baseDirs) {

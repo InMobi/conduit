@@ -30,7 +30,9 @@ public class TestOrderlyCreationOfFilesValidation {
       TestOrderlyCreationOfFilesValidation.class);
   private static String className = TestOrderlyCreationOfFilesValidation.class
       .getSimpleName();
-
+  private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
+  private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
+  
   FileSystem fs;
   Set<Path> outoforderExpectedResults = new HashSet<Path>();
   Set<Path> noneMissingDirsExpectedResults = new HashSet<Path>();
@@ -83,6 +85,14 @@ public class TestOrderlyCreationOfFilesValidation {
     Path minDir = new Path(listPath, date);
     fs.mkdirs(minDir);
     LOG.info("minDir " + minDir);
+    // creating hour dir (i.e. incomplete minute dir).
+    date = Cluster.getDateAsYYYYMMDDHHPath(temptime +
+        dirNumber * MILLISECONDS_IN_HOUR);
+    Path hourDir = new Path(listPath, date);
+    if (!fs.exists(hourDir)) {
+      fs.mkdirs(hourDir);
+      LOG.info("created an empty hour dir " + hourDir);
+    }
     for (int i =0; i < filesCount; i++) {
       createFilesData(fs, minDir, i );
     }
