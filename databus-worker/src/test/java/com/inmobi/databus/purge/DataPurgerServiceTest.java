@@ -330,7 +330,7 @@ public class DataPurgerServiceTest {
   public void testDataPurger() throws Exception {
     LOG.info("Check data purger does not stop when unable to delete a path");
     DatabusConfigParser configparser = new DatabusConfigParser(
-        "test-dps-databus_X_4.xml");
+        "test-dps-databus_X_5.xml");
     DatabusConfig config = configparser.getConfig();
 
     for (Cluster cluster : config.getClusters().values()) {
@@ -406,7 +406,7 @@ public class DataPurgerServiceTest {
   public void testTrashPurging() throws Exception {
     LOG.info("Creating empty data dirs");
     DatabusConfigParser configparser = new DatabusConfigParser(
-        "test-dps-databus_X_4.xml");
+        "test-dps-databus_X_6.xml");
     DatabusConfig config = configparser.getConfig();
 
     for (Cluster cluster : config.getClusters().values()) {

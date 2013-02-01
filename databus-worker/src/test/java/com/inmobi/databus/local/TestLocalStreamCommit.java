@@ -48,7 +48,7 @@ public class TestLocalStreamCommit {
   @Test
   public void testPrepareForCommit() throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(
-        "src/test/resources/test-merge-mirror-databus.xml");
+        "src/test/resources/test-merge-mirror-databus1.xml");
 
     Cluster cluster1 = parser.getConfig().getClusters().get("testcluster1");
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
