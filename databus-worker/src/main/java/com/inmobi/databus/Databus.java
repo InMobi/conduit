@@ -37,6 +37,13 @@ import java.util.Set;
 public class Databus implements Service, DatabusConstants {
   private static Logger LOG = Logger.getLogger(Databus.class);
   private DatabusConfig config;
+  private String currentClusterName = null;
+
+  public Databus(DatabusConfig config, Set<String> clustersToProcess,
+                 String currentCluster) {
+    this(config, clustersToProcess);
+    this.currentClusterName = currentCluster;
+  }
 
   public Set<String> getClustersToProcess() {
     return clustersToProcess;
@@ -60,7 +67,6 @@ public class Databus implements Service, DatabusConstants {
    * to enable unit testing
    */
   protected List<AbstractService> init() throws Exception {
-    String currentClusterName = config.getClusterName();
     Cluster currentCluster = null;
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
@@ -228,6 +234,7 @@ public class Databus implements Service, DatabusConstants {
         enableZookeeper = Boolean.parseBoolean(enableZK);
       else
         enableZookeeper = true;
+      String currentCluster = prop.getProperty(CLUSTER_NAME);
       
       String principal = prop.getProperty(KRB_PRINCIPAL);
       String keytab = getProperty(prop, KEY_TAB_FILE);
@@ -268,7 +275,8 @@ public class Databus implements Service, DatabusConstants {
           databusClusterId.append("_");
         }
       }
-      final Databus databus = new Databus(config, clustersToProcess);
+      final Databus databus = new Databus(config, clustersToProcess,
+          currentCluster);
       if (enableZookeeper) {
         LOG.info("Starting CuratorLeaderManager for eleader election ");
         CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(

@@ -107,13 +107,9 @@ public class DatabusConfigParser implements DatabusConfigParserTags {
       defaults.put(TRASH_RETENTION_IN_HOURS,
           String.valueOf(defaultTrashRetentionInHours));
 
-      String clusterName = getTextValue((Element) configList.item(0),
-          CLUSTER_NAME);
-      defaults.put(CLUSTER_NAME, clusterName);
-
       logger.debug("rootDir = " + rootDir + " global retentionInHours "
           + defaultRetentionInHours + " global trashretentionInHours "
-          + defaultTrashRetentionInHours + " current running cluster: " + clusterName);
+          + defaultTrashRetentionInHours);
     }
   }
 

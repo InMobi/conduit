@@ -24,7 +24,6 @@ import com.inmobi.databus.local.TestLocalStreamService;
 public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   private static final Log LOG = LogFactory.getLog(MergeMirrorStreamTest.class);
-  private String clusterName;
 
   /*
    * Here is the basic idea, create two clusters of different rootdir paths run
@@ -37,30 +36,36 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
    */
   @Test
   public void testMergeMirrorStream() throws Exception {
-    testMergeMirrorStream("test-mss-databus.xml");
+    testMergeMirrorStream("test-mss-databus.xml", null);
   }
 
   @Test
   public void testMergeMirrorStreamWithMultipleStreams() throws Exception {
-    testMergeMirrorStream("test-mss-databus1.xml");
+    testMergeMirrorStream("test-mss-databus1.xml", null);
   }
   
   @Test
   public void testMergeMirrorStreamWithMirror() throws Exception {
     // Test with 2 mirror sites
-    testMergeMirrorStream("test-mss-databus_mirror.xml");
+    testMergeMirrorStream("test-mss-databus_mirror.xml", null);
   }
-  
+
+  @Test
+  public void testMergeStreamWithCurrentClusterName() throws Exception {
+    String clusterName = "testcluster1";
+    testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName);
+  }
+
   @Test(groups = { "integration" })
   public void testAllComboMergeMirrorStream() throws Exception {
     // Test with 1 merged stream only
-    testMergeMirrorStream("test-mergedss-databus.xml");
+    testMergeMirrorStream("test-mergedss-databus.xml", null);
   }
 
   @Test(groups = { "integration" })
   public void testAllServices() throws Exception {
     // Test with 1 source and 1 merged stream only
-    testMergeMirrorStream("test-mergedss-databus_2.xml");
+    testMergeMirrorStream("test-mergedss-databus_2.xml", null);
   }
   
   @BeforeSuite
@@ -73,11 +78,18 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     super.cleanup();
   }
 
-  private void testMergeMirrorStream(String filename) throws Exception {
+  private void testMergeMirrorStream(String filename,
+                                     String currentClusterName) throws
+      Exception {
     
     DatabusConfigParser parser = new DatabusConfigParser(filename);
     DatabusConfig config = parser.getConfig();
-    
+
+    Cluster currentCluster = null;
+    if (currentClusterName != null) {
+      currentCluster = config.getClusters().get(currentClusterName);
+    }
+
     Set<String> clustersToProcess = new HashSet<String>();
     Set<TestLocalStreamService> localStreamServices = new HashSet<TestLocalStreamService>();
     
@@ -85,13 +97,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       for (String cluster : sStream.getSourceClusters()) {
         clustersToProcess.add(cluster);
       }
-    }
-
-    String currentClusterName = config.getClusterName();
-    Cluster currentCluster = null;
-    if (currentClusterName != null) {
-      clusterName = currentClusterName;
-      currentCluster = config.getClusters().get(currentClusterName);
     }
 
     for (String clusterName : clustersToProcess) {

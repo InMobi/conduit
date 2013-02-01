@@ -15,7 +15,7 @@ package com.inmobi.databus;
 
 import java.util.Map;
 
-public class DatabusConfig implements DatabusConfigParserTags {
+public class DatabusConfig {
 
   private final Map<String, Cluster> clusters;
   private final Map<String, SourceStream> streams;
@@ -50,10 +50,6 @@ public class DatabusConfig implements DatabusConfigParserTags {
 
   public Map<String, String> getDefaults() {
     return defaults;
-  }
-
-  public String getClusterName() {
-    return defaults.get(CLUSTER_NAME);
   }
 
 }

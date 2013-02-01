@@ -6,7 +6,6 @@ public interface DatabusConfigParserTags {
   public static final String ROOTDIR = "rootdir";
   public static final String RETENTION_IN_HOURS = "retentioninhours";
   public static final String TRASH_RETENTION_IN_HOURS = "trashretentioninhours";
-  public static final String CLUSTER_NAME = "clustername";
 
   public static final String NAME = "name";
   public static final String STREAM = "stream";

@@ -23,5 +23,7 @@ public interface DatabusConstants {
   ".principal";
   public static final String KEY_TAB_FILE = "com.inmobi.databus.keytab";
   public static final String ENABLE_ZOOKEEPER = "com.inmobi.databus.enablezk";
+  public static final String CLUSTER_NAME = "com.inmobi.databus.current" +
+      ".cluster";
 
 }

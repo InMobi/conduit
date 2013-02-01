@@ -310,7 +310,7 @@ public class TestDistCPBaseService  {
     DatabusConfig config = parser.getConfig();
     Cluster srcCluster = config.getClusters().get("testcluster1");
     Cluster destinationCluster = config.getClusters().get("testcluster2");
-    Cluster currentCluster = config.getClusters().get(config.getClusterName());
+    Cluster currentCluster = null;
     mergedService1 = new MergedStreamService(config, srcCluster,
         destinationCluster, currentCluster);
     srcFs = FileSystem.get(new URI(srcCluster.getHdfsUrl()),
