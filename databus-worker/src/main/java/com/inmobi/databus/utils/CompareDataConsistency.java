@@ -31,10 +31,16 @@ public abstract class CompareDataConsistency {
     if (destStreamIt.hasNext()) {
       destStreamKey = destStreamIt.next().getKey();
     }
+    String firstSourceStreamKey = sourceStreamKey;
+    String firstDestStreamKey = destStreamKey;
     while ((sourceStreamKey != null) && (destStreamKey != null)) {
       if (!sourceStreamKey.equals(destStreamKey)) {
         if(sourceStreamKey.compareTo(destStreamKey) < 0) {
-          System.out.println("missing path: " + sourceStreamFiles.get(sourceStreamKey));
+          if (firstDestStreamKey.equals(destStreamKey)) {
+            System.out.println("purged path: " + sourceStreamFiles.get(sourceStreamKey));
+          } else {
+            System.out.println("missing path: " + sourceStreamFiles.get(sourceStreamKey));
+          }
           inconsistency.add(sourceStreamFiles.get(sourceStreamKey));
           if (sourcestreamIt.hasNext()) {
             sourceStreamKey = sourcestreamIt.next().getKey();
@@ -42,7 +48,11 @@ public abstract class CompareDataConsistency {
             sourceStreamKey = null;
           }
         } else {
-          System.out.println("data replay: " + destStreamFiles.get(destStreamKey));
+          if (firstSourceStreamKey.equals(sourceStreamKey)) {
+            System.out.println("purged path: " + destStreamFiles.get(destStreamKey));
+          } else {
+            System.out.println("data replay: " + destStreamFiles.get(destStreamKey));
+          }
           inconsistency.add(destStreamFiles.get(destStreamKey));
           if (destStreamIt.hasNext()) {	
             destStreamKey = destStreamIt.next().getKey();

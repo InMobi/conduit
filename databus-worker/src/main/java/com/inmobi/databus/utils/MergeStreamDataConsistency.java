@@ -79,7 +79,7 @@ public class MergeStreamDataConsistency extends CompareDataConsistency {
           new Configuration());
       FileStatus[] fileStatuses = fs.listStatus(new Path(mergedStreamRoorDir, 
           "streams"));
-      if (fileStatuses.length != 0) {
+      if (fileStatuses != null && fileStatuses.length != 0) {
         for (FileStatus file : fileStatuses) {  
           streamNames.add(file.getPath().getName());
         } 
