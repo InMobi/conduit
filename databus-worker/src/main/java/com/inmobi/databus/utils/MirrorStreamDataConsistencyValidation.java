@@ -60,7 +60,7 @@ public class MirrorStreamDataConsistencyValidation {
         new Configuration());
     doRecursiveListing(completeMergedStreamDirPath, filesInMergedStream,
         mergedFS);             
-    Iterator it = filesInMergedStream.iterator();
+    Iterator<Path> it = filesInMergedStream.iterator();
     while (it.hasNext()) {
       LOG.debug(" files in merged stream : " + (it.next()));
     }
@@ -76,7 +76,7 @@ public class MirrorStreamDataConsistencyValidation {
       mirroredFs = mirrorStreamDirPath.getFileSystem(new Configuration());
       LOG.info("mirroredStream Path : " + mirrorStreamDirPath);
       doRecursiveListing(mirrorStreamDirPath, filesInMirroredStream, mirroredFs);
-      Iterator it = filesInMirroredStream.iterator();
+      Iterator<Path> it = filesInMirroredStream.iterator();
       while (it.hasNext() ) {
         LOG.debug(" files in mirrored stream: " + (it.next()));
       }
@@ -105,7 +105,7 @@ public class MirrorStreamDataConsistencyValidation {
     int j;
     int mergedStreamLen = mergedStreamDirPath.length();
     int mirrorStreamLen = mirrorStreamDirPath.length();
-    for( i=0, j=0 ; i < mergedStreamFiles.size() && 
+    for(i=0, j=0 ; i < mergedStreamFiles.size() && 
         j < mirrorStreamFiles.size(); i++, j++) {
       String mergedStreamfilePath = mergedStreamFiles.get(i).toString().
           substring(mergedStreamLen);
@@ -113,11 +113,21 @@ public class MirrorStreamDataConsistencyValidation {
           substring(mirrorStreamLen);
       if(!mergedStreamfilePath.equals(mirrorStreamfilePath)) {
         if(mergedStreamfilePath.compareTo(mirrorStreamfilePath) < 0) {
-          System.out.println("Missing file path : " + mergedStreamFiles.get(i));
+          if (j == 0) {
+            System.out.println("purged path in the mirror stream" + 
+                mergedStreamFiles.get(i));
+          } else {
+            System.out.println("Missing file path : " + mergedStreamFiles.get(i));
+          }
           inconsistentData.add(mergedStreamFiles.get(i));
           --j;
         } else {
-          System.out.println("Data Replica : " + mirrorStreamFiles.get(j));
+          if (i == 0) {
+            System.out.println("purged path in the mirror stream" + 
+                mirrorStreamFiles.get(j));
+          } else {
+            System.out.println("Data Replica : " + mirrorStreamFiles.get(j));
+          }
           inconsistentData.add(mirrorStreamFiles.get(j));
           --i;
         }
@@ -178,7 +188,7 @@ public class MirrorStreamDataConsistencyValidation {
     if (args.length == 2) {
       FileSystem fs = mirrorStreamDirs.get(0).getFileSystem(new Configuration());
       FileStatus[] fileStatuses = fs.listStatus(mirrorStreamDirs.get(0));
-      if (fileStatuses.length != 0) {
+      if (fileStatuses != null && fileStatuses.length != 0) {
         for (FileStatus file : fileStatuses) {  
           streamNames.add(file.getPath().getName());
         } 
