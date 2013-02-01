@@ -18,116 +18,101 @@ public class TestDatabusInitialization {
   DatabusConfigParser configParser;
   DatabusConfig config;
 
-  private List<AbstractService> listOfServices;
-
   public void setUP(String filename) throws Exception {
     configParser = new DatabusConfigParser(filename);
     config = configParser.getConfig();
   }
-
-  /*
-   * Unit test for init() method
-   * It tests whether all services are correctly populated or not.
-   *
-   */
-  @Test
-  public void testDatabusInitialization() throws Exception {
-
-    testLocalStreamService();
-
-    testLocalMergeServices();
-
-    testDatabusAllServices();
-  }
   
-  @Test
-  public void testProdConf() throws Exception {
-    setUP("test-prod-databus.xml");
-    listOfServices = new ArrayList<AbstractService>();
+  public void testServicesOnCluster(String confFile, String clusterName, 
+      int numOfLocalServices, int numOfPurgerServices, int numofMergeServices, 
+      int numOfMirrorServices)
+          throws Exception {
+    setUP(confFile);
+    List<AbstractService> listOfServices = new ArrayList<AbstractService>();
     Set<String> clustersToProcess = new HashSet<String>();
-    clustersToProcess.add("ua2");
-    clustersToProcess.add("uj1");
-    clustersToProcess.add("lhr1");
-    clustersToProcess.add("ua2_main");
-    clustersToProcess.add("hkg1");
+    clustersToProcess.add(clusterName);
     Databus databus = new Databus(config, clustersToProcess);
     listOfServices.addAll(databus.init());
-    System.out.println("total number of services running in the prod " + 
-        listOfServices.size());
-    Assert.assertEquals(listOfServices.size(), 31);
-    
-    //test local stream services
-    for (int i = 0; i < 4; i++) {
-      Assert.assertTrue(assertLocalStreamService());
-    }
-    Assert.assertFalse(assertLocalStreamService());
-    
-    //test Data purger services
-    for (int i = 0; i < 5; i++) {
-      Assert.assertTrue(assertDataPurgerService());
-    }
-    Assert.assertFalse(assertDataPurgerService());
-    
-    //test Merge stream services
-    for (int i= 0; i < 20; i++) {
-      Assert.assertTrue(assertMergedStreamService());
-    }
-    Assert.assertFalse(assertMergedStreamService());
-    
-    //test mirror stream services
-    for (int i = 0; i < 2; i++) {
-      Assert.assertTrue(assertMirrorStreamService());
-    }
-    Assert.assertFalse(assertMirrorStreamService());
-    
-    // list should be empty after removing all the services
-    Assert.assertTrue(listOfServices.isEmpty());
-  }
 
+    Assert.assertEquals(numOfPurgerServices, getNumOfPurgerServices(
+        listOfServices));
+    Assert.assertEquals(numOfLocalServices, getNumOfLocalStreamServices(
+        listOfServices));
+    Assert.assertEquals(numofMergeServices, getNumOfMergeStreamServices(
+        listOfServices));
+    Assert.assertEquals(numOfMirrorServices, getNumOfMirrorStreamServices(
+        listOfServices));  
+  }
+  
+  /*
+   * Expected O/P:
+   * Local stream services  - 1, Merge Stream services  - 4, 
+   * Mirror Stream Service  - 0, DataPurgerService - 1
+   */
+  @Test
+  public void testCluser1() throws Exception {
+    testServicesOnCluster("test-combo-databus.xml", "testcluster1", 1, 1, 4, 0);
+  }
+  
+  /*
+   * Expected O/P:
+   * Local stream services  - 1, Merge Stream services  - 4, 
+   * Mirror Stream Service  - 1, DataPurgerService - 1
+   */
+  @Test
+  public void testCluster2() throws Exception {
+    testServicesOnCluster("test-combo-databus.xml", "testcluster2", 1, 1, 4, 1);
+  }
+  
+  /*
+   * Expected O/P:
+   * Local stream services  - 1, Merge Stream services  - 4, 
+   * Mirror Stream Service  - 1, DataPurgerService - 1
+   */
+  @Test
+  public void testCluster3() throws Exception {
+    testServicesOnCluster("test-combo-databus.xml", "testcluster3", 1, 1, 4, 1);
+  }
+  
+  /*
+   * Expected O/P:
+   * Local stream services  - 0, Merge Stream services  - 4, 
+   * Mirror Stream Service  - 0, DataPurgerService - 1
+   */
+  @Test
+  public void testCluster4() throws Exception {
+    testServicesOnCluster("test-combo-databus.xml", "testcluster4", 0, 1, 4, 0);
+  }
+  
+  /*
+   * Expected O/P:
+   * Local stream services  - 1, Merge Stream services  - 4, 
+   * Mirror Stream Service  - 0, DataPurgerService - 1
+   */
+  @Test
+  public void testCluster5() throws Exception {
+    testServicesOnCluster("test-combo-databus.xml", "testcluster5", 1, 1, 4, 0);
+  }
+  
   /*
    * testcluster1---- local stream service and purger service will be populated
    */
-  private void testLocalStreamService() throws Exception {
-    setUP("test-lss-databus.xml");
-    listOfServices = new ArrayList<AbstractService>();
-    Set<String> clustersToProcess = new HashSet<String>();
-    clustersToProcess.add("testcluster1");
-    Databus databus = new Databus(config, clustersToProcess);
-    listOfServices.addAll(databus.init());
-
-    Assert.assertEquals(listOfServices.size(), 2);
-    // no merge stream service as primary destination is not available
-    Assert.assertFalse(assertMergedStreamService());
-    // no mirror stream service as non-primary destination is not available
-    Assert.assertFalse(assertMirrorStreamService());
-    Assert.assertTrue(assertLocalStreamService());
-    Assert.assertTrue(assertDataPurgerService());
+  @Test
+  public void testLocalStreamService() throws Exception {
+    testServicesOnCluster("test-lss-databus.xml", "testcluster1", 1, 1, 0, 0);
   }
 
   /*
-   * testcluster1--- local, merge_cluster1_cluster2, merge_cluster2_cluster1
+   * testcluster1--- local, merge_cluster1_cluster1, merge_cluster2_cluster1
    *                 and purger services (4 services)
    * testcluster2--- merged and purger services  (2 services)
    */
-  private void testLocalMergeServices() throws Exception {
-    setUP("test-mergedss-databus.xml");
-    listOfServices = new ArrayList<AbstractService>();
-    Set<String> clustersToProcess = new HashSet<String>();
-    clustersToProcess.add("testcluster1");
-    clustersToProcess.add("testcluster2");
-    Databus databus = new Databus(config, clustersToProcess);
-    listOfServices.addAll(databus.init());
-
-    Assert.assertEquals(listOfServices.size(), 6);
-
-    Assert.assertTrue(assertLocalStreamService());
-    Assert.assertTrue(assertLocalStreamService());
-    // no mirror stream service as non-primary destination is not available
-    Assert.assertFalse(assertMirrorStreamService());
-    Assert.assertTrue(assertMergedStreamService());
-    Assert.assertTrue(assertMergedStreamService());
-    Assert.assertTrue(assertDataPurgerService());
-    Assert.assertTrue(assertDataPurgerService());
+  @Test
+  public void testLocalMergeServices() throws Exception {
+    testServicesOnCluster("test-mergedss-databus.xml", "testcluster1", 1, 1, 2, 
+        0);
+    testServicesOnCluster("test-mergedss-databus.xml", "testcluster2", 1, 1, 0, 
+        0);
   }
 
   /*
@@ -136,65 +121,56 @@ public class TestDatabusInitialization {
    * testcluster3--- It is neither source nor destination of any stream, so
    *                 only purger service will be started
    */
-  private void testDatabusAllServices() throws Exception {
-    setUP("test-merge-mirror-databus.xml");
-    listOfServices = new ArrayList<AbstractService>();
-    Set<String> clustersToProcess = new HashSet<String>();
-    clustersToProcess.add("testcluster1");
-    clustersToProcess.add("testcluster2");
-    clustersToProcess.add("testcluster3");
-    Databus databus = new Databus(config, clustersToProcess);
-    listOfServices.addAll(databus.init());
-
-    Assert.assertEquals(listOfServices.size(), 7);
-
-    Assert.assertTrue(assertLocalStreamService());
-    Assert.assertTrue(assertMergedStreamService());
-    Assert.assertTrue(assertMergedStreamService());
-    Assert.assertTrue(assertMirrorStreamService());
-    Assert.assertFalse(assertMirrorStreamService());
-    Assert.assertTrue(assertDataPurgerService());
-    Assert.assertTrue(assertDataPurgerService());
-    Assert.assertTrue(assertDataPurgerService());
+  @Test
+  public void testDatabusAllServices() throws Exception {
+    testServicesOnCluster("test-merge-mirror-databus.xml", "testcluster1", 1, 1,
+        1, 0);
+    testServicesOnCluster("test-merge-mirror-databus.xml", "testcluster2", 0, 1,
+        1, 1);
+    testServicesOnCluster("test-merge-mirror-databus.xml", "testcluster3", 0, 1,
+        0, 0);
   }
 
-  private boolean assertDataPurgerService() {
+  private int getNumOfPurgerServices(List<AbstractService> listOfServices) {
+    int numOfPurgerServices = 0;
     for (AbstractService service : listOfServices) {
       if (service instanceof DataPurgerService) {
-        listOfServices.remove(service);
-        return true;
+        numOfPurgerServices++;
       }
     }
-    return false;
+    return numOfPurgerServices;
   }
 
-  protected boolean assertLocalStreamService() {
+  protected int getNumOfLocalStreamServices(
+      List<AbstractService> listOfServices) {
+    int numOfLocalServices = 0;
     for (AbstractService service : listOfServices) {
       if (service instanceof LocalStreamService) {
-        listOfServices.remove(service);
-        return true;
+        numOfLocalServices++;
       }
     }
-    return false;
+    return numOfLocalServices;
   }
 
-  protected boolean assertMergedStreamService() {
+  protected int getNumOfMergeStreamServices(List<AbstractService> listOfServices) 
+  {
+    int numOfMergeServices = 0;
     for (AbstractService service : listOfServices) {
       if (service instanceof MergedStreamService) {
-        listOfServices.remove(service);
-        return true;
+        numOfMergeServices++;
       }
     }
-    return false;
+    return numOfMergeServices;
   }
 
-  protected boolean assertMirrorStreamService() {
+  protected int getNumOfMirrorStreamServices(
+      List<AbstractService> listOfServices) {
+    int numOfMirrorServices = 0;
     for (AbstractService service : listOfServices) {
       if (service instanceof MirrorStreamService) {
-        listOfServices.remove(service);
-        return true;
+        numOfMirrorServices++;
       }
     }
-    return false;
+    return numOfMirrorServices;
   }
 }
