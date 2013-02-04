@@ -430,5 +430,8 @@ public abstract class DistcpBaseService extends AbstractService {
       return null;
   }
 
-
+  public Cluster getCurrentCluster() {
+    // for tests
+    return currentCluster;
+  }
 }

@@ -55,7 +55,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     String clusterName = "testcluster1";
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster4");
-    testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName, clustersToProcess);
+    testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName,
+        clustersToProcess);
   }
 
   @Test(groups = { "integration" })
@@ -80,11 +81,9 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     super.cleanup();
   }
 
-  private void testMergeMirrorStream(String filename,
-                                     String currentClusterName,
+  private void testMergeMirrorStream(String filename, String currentClusterName,
                                      Set<String> additionalClustersToProcess)
-      throws
-      Exception {
+      throws Exception {
     
     DatabusConfigParser parser = new DatabusConfigParser(filename);
     DatabusConfig config = parser.getConfig();
@@ -92,12 +91,15 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Cluster currentCluster = null;
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
+      Assert.assertNotNull(currentCluster);
+      Assert.assertEquals(currentClusterName, currentCluster.getName());
     }
 
     Set<String> clustersToProcess = new HashSet<String>();
     if(additionalClustersToProcess != null)
       clustersToProcess.addAll(additionalClustersToProcess);
-    Set<TestLocalStreamService> localStreamServices = new HashSet<TestLocalStreamService>();
+    Set<TestLocalStreamService> localStreamServices =
+        new HashSet<TestLocalStreamService>();
     
     for (SourceStream sStream : config.getSourceStreams().values()) {
       for (String cluster : sStream.getSourceClusters()) {
@@ -144,21 +146,32 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
             mergedStreamRemoteClusters.add(cName);
         }
         if (!cStream.isPrimary())  {
-          Cluster primaryCluster = config.getPrimaryClusterForDestinationStream(cStream.getName());
+          Cluster primaryCluster =
+              config.getPrimaryClusterForDestinationStream(cStream.getName());
           if (primaryCluster != null)
             mirroredRemoteClusters.add(primaryCluster.getName());
         }
       }
   
-  
       for (String remote : mergedStreamRemoteClusters) {
-        mergedStreamServices.add(new TestMergedStreamService(config,
-            config.getClusters().get(remote), cluster.getValue(), currentCluster));
+        TestMergedStreamService remoteMergeService =
+            new TestMergedStreamService(config,
+                config.getClusters().get(remote), cluster.getValue(),
+                currentCluster);
+        mergedStreamServices.add(remoteMergeService);
+        if (currentCluster != null)
+          Assert.assertEquals(currentCluster,
+              remoteMergeService.getCurrentCluster());
       }
       for (String remote : mirroredRemoteClusters) {
-        mirrorStreamServices.add(new TestMirrorStreamService(config,
-            config.getClusters().get(remote), cluster.getValue(),
-            currentCluster));
+        TestMirrorStreamService remoteMirrorService =
+            new TestMirrorStreamService(config,
+                config.getClusters().get(remote), cluster.getValue(),
+                currentCluster);
+        mirrorStreamServices.add(remoteMirrorService);
+        if (currentCluster != null)
+          Assert.assertEquals(currentCluster,
+              remoteMirrorService.getCurrentCluster());
       }
     }
     
