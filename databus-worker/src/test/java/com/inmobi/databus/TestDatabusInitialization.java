@@ -23,14 +23,13 @@ public class TestDatabusInitialization {
     config = configParser.getConfig();
   }
   
-  public void testServicesOnCluster(String confFile, String clusterName, 
+  public void testServicesOnCluster(String confFile, Set<String> clustersToProcess, 
       int numOfLocalServices, int numOfPurgerServices, int numofMergeServices, 
       int numOfMirrorServices)
           throws Exception {
     setUP(confFile);
     List<AbstractService> listOfServices = new ArrayList<AbstractService>();
-    Set<String> clustersToProcess = new HashSet<String>();
-    clustersToProcess.add(clusterName);
+    
     Databus databus = new Databus(config, clustersToProcess);
     listOfServices.addAll(databus.init());
 
@@ -51,7 +50,10 @@ public class TestDatabusInitialization {
    */
   @Test
   public void testCluser1() throws Exception {
-    testServicesOnCluster("test-combo-databus.xml", "testcluster1", 1, 1, 4, 0);
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 
+        0);
   }
   
   /*
@@ -61,7 +63,10 @@ public class TestDatabusInitialization {
    */
   @Test
   public void testCluster2() throws Exception {
-    testServicesOnCluster("test-combo-databus.xml", "testcluster2", 1, 1, 4, 1);
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster2");
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 
+        1);
   }
   
   /*
@@ -71,7 +76,9 @@ public class TestDatabusInitialization {
    */
   @Test
   public void testCluster3() throws Exception {
-    testServicesOnCluster("test-combo-databus.xml", "testcluster3", 1, 1, 4, 1);
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster3");
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 1);
   }
   
   /*
@@ -81,7 +88,9 @@ public class TestDatabusInitialization {
    */
   @Test
   public void testCluster4() throws Exception {
-    testServicesOnCluster("test-combo-databus.xml", "testcluster4", 0, 1, 4, 0);
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster4");
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 0, 1, 4, 0);
   }
   
   /*
@@ -91,7 +100,67 @@ public class TestDatabusInitialization {
    */
   @Test
   public void testCluster5() throws Exception {
-    testServicesOnCluster("test-combo-databus.xml", "testcluster5", 1, 1, 4, 0);
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster5");
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 0);
+  }
+  
+  /*
+   * Local stream service -- 4. 
+   * Ex: testcluster1, testcluster2, testcluster3, testcluster5 are the sources 
+   * of stream "stream21".
+   * If the cluster is source of any stream then it will 
+   * have local stream service. No local stream service for testcluster4 as it 
+   * is not source of any stream.
+   * 
+   * DataPurger Service: 5
+   * purger service for each cluster in the clusters to process set.
+   *
+   * Merge Service:  20 services
+   * ---------------------------- 
+   * tetscluster1: 4 merge services
+   * Primary destination of a stream "stream21". testcluster1,
+   * testcluster2,testcluster3,testcluster5 are the sources of "stream21".
+   * So it will be having 4 merge services. 
+   * 
+   * testcluster2: 4 merge services
+   * primary destination of "stream5_testcluster2" category. It has 4 sources.
+   * 
+   * testcluster3: 4 merge services
+   * Primary destination of "stream5_ir1" category. It has 4 sources.
+   * 
+   * testcluster4:  4 merge services
+   * primary destination of "stream5" category. All other clusters are sources.
+   * 
+   * testcluster5: 4 merge services
+   * primary destination of "stream5_testcluster5" category. It has 4 sources.
+   * 
+   * --------------------
+   * MirrorStream Service: 2 services.
+   * ----------------------
+   * testcluster2 and testcluster3 are the non primary destinations of the 
+   * "stream3" category.
+   */
+  @Test
+  public void testWithAllClusters() throws Exception {
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    clustersToProcess.add("testcluster2");
+    clustersToProcess.add("testcluster3");
+    clustersToProcess.add("testcluster4");
+    clustersToProcess.add("testcluster5");
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 4, 5, 20,
+        2);
+  }
+  
+  @Test
+  public void testConfWithMultipleClusters() throws Exception {
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    clustersToProcess.add("testcluster2");
+    clustersToProcess.add("testcluster4");
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 2, 3, 12,
+        1);
   }
   
   /*
@@ -99,20 +168,37 @@ public class TestDatabusInitialization {
    */
   @Test
   public void testLocalStreamService() throws Exception {
-    testServicesOnCluster("test-lss-databus.xml", "testcluster1", 1, 1, 0, 0);
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    testServicesOnCluster("test-lss-databus.xml", clustersToProcess, 1, 1, 0, 0);
   }
 
   /*
    * testcluster1--- local, merge_cluster1_cluster1, merge_cluster2_cluster1
    *                 and purger services (4 services)
-   * testcluster2--- merged and purger services  (2 services)
    */
   @Test
   public void testLocalMergeServices() throws Exception {
-    testServicesOnCluster("test-mergedss-databus.xml", "testcluster1", 1, 1, 2, 
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    testServicesOnCluster("test-mergedss-databus.xml", clustersToProcess, 1, 1, 2, 
         0);
-    testServicesOnCluster("test-mergedss-databus.xml", "testcluster2", 1, 1, 0, 
+    clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster2");
+    testServicesOnCluster("test-mergedss-databus.xml", clustersToProcess, 1, 1, 0, 
         0);
+  }
+  
+  /*
+   * testcluster2--- merged and purger services  (2 services)
+   */
+  @Test
+  public void testLocalMergeServicesWithMultipleClusters() throws Exception {
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    clustersToProcess.add("testcluster2");
+    testServicesOnCluster("test-mergedss-databus.xml", clustersToProcess, 2, 2, 
+        2, 0);
   }
 
   /*
@@ -123,11 +209,17 @@ public class TestDatabusInitialization {
    */
   @Test
   public void testDatabusAllServices() throws Exception {
-    testServicesOnCluster("test-merge-mirror-databus.xml", "testcluster1", 1, 1,
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    testServicesOnCluster("test-merge-mirror-databus.xml", clustersToProcess, 1, 1,
         1, 0);
-    testServicesOnCluster("test-merge-mirror-databus.xml", "testcluster2", 0, 1,
+    clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster2");
+    testServicesOnCluster("test-merge-mirror-databus.xml", clustersToProcess, 0, 1,
         1, 1);
-    testServicesOnCluster("test-merge-mirror-databus.xml", "testcluster3", 0, 1,
+    clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster3");
+    testServicesOnCluster("test-merge-mirror-databus.xml", clustersToProcess, 0, 1,
         0, 0);
   }
 
