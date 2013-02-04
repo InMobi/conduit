@@ -36,36 +36,38 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
    */
   @Test
   public void testMergeMirrorStream() throws Exception {
-    testMergeMirrorStream("test-mss-databus.xml", null);
+    testMergeMirrorStream("test-mss-databus.xml", null, null);
   }
 
   @Test
   public void testMergeMirrorStreamWithMultipleStreams() throws Exception {
-    testMergeMirrorStream("test-mss-databus1.xml", null);
+    testMergeMirrorStream("test-mss-databus1.xml", null, null);
   }
   
   @Test
   public void testMergeMirrorStreamWithMirror() throws Exception {
     // Test with 2 mirror sites
-    testMergeMirrorStream("test-mss-databus_mirror.xml", null);
+    testMergeMirrorStream("test-mss-databus_mirror.xml", null, null);
   }
 
   @Test
   public void testMergeStreamWithCurrentClusterName() throws Exception {
     String clusterName = "testcluster1";
-    testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName);
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster4");
+    testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName, clustersToProcess);
   }
 
   @Test(groups = { "integration" })
   public void testAllComboMergeMirrorStream() throws Exception {
     // Test with 1 merged stream only
-    testMergeMirrorStream("test-mergedss-databus.xml", null);
+    testMergeMirrorStream("test-mergedss-databus.xml", null, null);
   }
 
   @Test(groups = { "integration" })
   public void testAllServices() throws Exception {
     // Test with 1 source and 1 merged stream only
-    testMergeMirrorStream("test-mergedss-databus_2.xml", null);
+    testMergeMirrorStream("test-mergedss-databus_2.xml", null, null);
   }
   
   @BeforeSuite
@@ -79,7 +81,9 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   }
 
   private void testMergeMirrorStream(String filename,
-                                     String currentClusterName) throws
+                                     String currentClusterName,
+                                     Set<String> additionalClustersToProcess)
+      throws
       Exception {
     
     DatabusConfigParser parser = new DatabusConfigParser(filename);
@@ -91,6 +95,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     }
 
     Set<String> clustersToProcess = new HashSet<String>();
+    if(additionalClustersToProcess != null)
+      clustersToProcess.addAll(additionalClustersToProcess);
     Set<TestLocalStreamService> localStreamServices = new HashSet<TestLocalStreamService>();
     
     for (SourceStream sStream : config.getSourceStreams().values()) {

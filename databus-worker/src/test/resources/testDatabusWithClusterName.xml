@@ -18,11 +18,15 @@
                     <name>testcluster2</name>
                     <retentioninhours>24</retentioninhours>
                 </source>
+                <source>
+                    <name>testcluster3</name>
+                    <retentioninhours>24</retentioninhours>
+                </source>
             </sources>
             <destinations>
                 <destination>
                     <primary>true</primary>
-                    <name>testcluster2</name>
+                    <name>testcluster4</name>
                     <retentioninhours>24</retentioninhours>
                 </destination>
             </destinations>
@@ -36,6 +40,18 @@
                 >
         </cluster>
         <cluster name="testcluster2" hdfsurl="file:////tmp/databusclustername/testcluster2"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
+        <cluster name="testcluster3"
+                 hdfsurl="file:////tmp/databusclustername/testcluster3"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
+        <cluster name="testcluster4"
+                 hdfsurl="file:////tmp/databusclustername/testcluster4"
                  jturl="local"
                  jobqueuename="default"
                 >
