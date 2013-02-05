@@ -160,8 +160,11 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
                 currentCluster);
         mergedStreamServices.add(remoteMergeService);
         if (currentCluster != null)
-          Assert.assertEquals(currentCluster,
-              remoteMergeService.getCurrentCluster());
+          Assert.assertEquals(remoteMergeService.getCurrentCluster(),
+              currentCluster);
+        else
+          Assert.assertEquals(remoteMergeService.getCurrentCluster(),
+              cluster.getValue());
       }
       for (String remote : mirroredRemoteClusters) {
         TestMirrorStreamService remoteMirrorService =
@@ -170,8 +173,11 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
                 currentCluster);
         mirrorStreamServices.add(remoteMirrorService);
         if (currentCluster != null)
-          Assert.assertEquals(currentCluster,
-              remoteMirrorService.getCurrentCluster());
+          Assert.assertEquals(remoteMirrorService.getCurrentCluster(),
+              currentCluster);
+        else
+          Assert.assertEquals(remoteMirrorService.getCurrentCluster(),
+              cluster.getValue());
       }
     }
     
