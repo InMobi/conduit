@@ -12,27 +12,23 @@
   <name>Databus</name>
   <packaging>pom</packaging>
 
+  <parent>
+    <artifactId>inmobi-master-pom</artifactId>
+    <groupId>com.inmobi</groupId>
+    <version>1.0.1</version>
+  </parent>
+
   <scm>
-    <connection>scm:git:git://github.com/InMobi/data-bus</connection>
-    <url>https://github.com/InMobi/data-bus</url>
-    <developerConnection>scm:git:git@github.com/InMobi/data-bus.git</developerConnection>
+    <connection>scm:git:git://github.corp.inmobi.com/platform/conduit</connection>
+    <url>https://github.corp.inmobi.com/platform/conduit</url>
+    <developerConnection>scm:git:git@github.corp.inmobi.com/platform/conduit.git</developerConnection>
   </scm>
 
   <repositories>
     <repository>
-      <id>cloudera</id>
-      <name>cloudera repo</name>
-      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-    </repository>
-    <repository>
-      <id>mvn-central</id>
-      <name>mvn central repo</name>
-      <url>http://repo1.maven.org maven2/</url>
-    </repository>
-    <repository>
-      <id>InMobiRepository</id>
-      <name>InMobi Internal Repository</name>
-      <url>http://build.corp.inmobi.com/nexus/content/repositories/releases</url>
+      <id>releases</id>
+      <name>Releases</name>
+      <url>http://maven.scm.corp.inmobi.com/content/repositories/releases/</url>
     </repository>
   </repositories>
 
@@ -221,19 +217,6 @@
       </plugin>
     </plugins>
   </reporting>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>InMobiSnapshotRepository</id>
-      <name>InMobi Internal Repository</name>
-      <url>http://build.corp.inmobi.com/nexus/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>InMobiRepository</id>
-      <name>InMobi Internal Repository</name>
-      <url>http://build.corp.inmobi.com/nexus/content/repositories/releases</url>
-    </repository>
-  </distributionManagement>
 
   <modules>
     <module>databus-core</module>
