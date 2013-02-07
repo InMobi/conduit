@@ -46,8 +46,8 @@ public class DatabusTest extends TestMiniClusterUtil {
   
     @Override
     protected LocalStreamService getLocalStreamService(DatabusConfig config,
-        Cluster cluster) {
-      return new TestLocalStreamService(config, cluster,
+        Cluster cluster, Cluster currentCluster) {
+      return new TestLocalStreamService(config, cluster, currentCluster,
           new FSCheckpointProvider(cluster.getCheckpointDir()));
     }
     

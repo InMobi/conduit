@@ -52,7 +52,7 @@ public class TestLocalStreamCommit {
 
     Cluster cluster1 = parser.getConfig().getClusters().get("testcluster1");
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
-        cluster1, new FSCheckpointProvider(
+        cluster1, null, new FSCheckpointProvider(
             "/tmp/test-databus/databus/checkpoint"));
     createData(cluster1);
     service.prepareForCommit(System.currentTimeMillis());

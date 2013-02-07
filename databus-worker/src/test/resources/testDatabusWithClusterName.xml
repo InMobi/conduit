@@ -56,5 +56,11 @@
                  jobqueuename="default"
                 >
         </cluster>
+        <cluster name="testcluster5"
+                 hdfsurl="file:////tmp/databusclustername/testcluster5"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
     </clusters>
 </databus>

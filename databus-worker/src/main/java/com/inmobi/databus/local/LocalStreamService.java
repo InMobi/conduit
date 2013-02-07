@@ -53,18 +53,24 @@ public class LocalStreamService extends AbstractService {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
 
-  private final Cluster cluster;
+  private final Cluster srcCluster;
+  private Cluster currentCluster = null;
   private Path tmpPath;
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
 
-  public LocalStreamService(DatabusConfig config, Cluster cluster,
+  public LocalStreamService(DatabusConfig config, Cluster srcCluster,
+                            Cluster currentCluster,
                             CheckpointProvider provider) {
     super(LocalStreamService.class.getName(), config, DEFAULT_RUN_INTERVAL,
-    provider);
-    this.cluster = cluster;
-    this.tmpPath = new Path(cluster.getTmpPath(), getName());
+        provider);
+    this.srcCluster = srcCluster;
+    if (currentCluster == null)
+      this.currentCluster = srcCluster;
+    else
+      this.currentCluster = currentCluster;
+    this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
   }
@@ -85,13 +91,13 @@ public class LocalStreamService extends AbstractService {
   protected void execute() throws Exception {
     try {
 
-      FileSystem fs = FileSystem.get(cluster.getHadoopConf());
+      FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
       // Cleanup tmpPath before everyRun to avoid
       // any old data being used in this run if the old run was aborted
       cleanUpTmp(fs);
       LOG.info("TmpPath is [" + tmpPath + "]");
 
-      publishMissingPaths(fs, cluster.getLocalFinalDestDirRoot());
+      publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot());
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
@@ -107,7 +113,7 @@ public class LocalStreamService extends AbstractService {
       Job job = createJob(tmpJobInputPath);
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
-        long commitTime = cluster.getCommitTime();
+        long commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
         commit(prepareForCommit(commitTime));
         checkPoint(checkpointPaths);
@@ -133,21 +139,21 @@ public class LocalStreamService extends AbstractService {
 
 
    Map<Path, Path> prepareForCommit(long commitTime) throws Exception {
-    FileSystem fs = FileSystem.get(cluster.getHadoopConf());
+    FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     // find final destination paths
     Map<Path, Path> mvPaths = new LinkedHashMap<Path, Path>();
     FileStatus[] categories = fs.listStatus(tmpJobOutputPath);
     for (FileStatus categoryDir : categories) {
       String categoryName = categoryDir.getPath().getName();
-      Path destDir = new Path(cluster.getLocalDestDir(categoryName, commitTime));
+      Path destDir = new Path(srcCluster.getLocalDestDir(categoryName, commitTime));
       FileStatus[] files = fs.listStatus(categoryDir.getPath());
       for (FileStatus file : files) {
         Path destPath = new Path(destDir, file.getPath().getName());
         LOG.debug("Moving [" + file.getPath() + "] to [" + destPath + "]");
         mvPaths.put(file.getPath(), destPath);
       }
-      publishMissingPaths(fs, cluster.getLocalFinalDestDirRoot(), commitTime,
+      publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot(), commitTime,
       categoryName);
     }
 
@@ -158,7 +164,7 @@ public class LocalStreamService extends AbstractService {
       boolean consumeCluster = false;
       for (String destStream : destStreams) {
         if (clusterEntry.getPrimaryDestinationStreams().contains(destStream)
-        && cluster.getSourceStreams().contains(destStream)) {
+        && srcCluster.getSourceStreams().contains(destStream)) {
           consumeCluster = true;
         }
       }
@@ -187,7 +193,7 @@ public class LocalStreamService extends AbstractService {
           if (isFileOpened) {
             out.close();
             Path finalConsumerPath = new Path(
-                cluster.getConsumePath(clusterEntry), Long.toString(System
+                srcCluster.getConsumePath(clusterEntry), Long.toString(System
                     .currentTimeMillis()));
             LOG.debug("Moving [" + tmpConsumerPath + "] to [ "
                 + finalConsumerPath + "]");
@@ -207,7 +213,7 @@ public class LocalStreamService extends AbstractService {
   Map<Path, Path> populateTrashCommitPaths(Set<FileStatus> trashSet) {
     // find trash paths
     Map<Path, Path> trashPaths = new TreeMap<Path, Path>();
-    Path trash = cluster.getTrashPathWithDateHour();
+    Path trash = srcCluster.getTrashPathWithDateHour();
     Iterator<FileStatus> it = trashSet.iterator();
     while (it.hasNext()) {
       FileStatus src = it.next();
@@ -222,7 +228,7 @@ public class LocalStreamService extends AbstractService {
 
   private void commit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
-    FileSystem fs = FileSystem.get(cluster.getHadoopConf());
+    FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       fs.mkdirs(entry.getValue().getParent());
@@ -239,9 +245,9 @@ public class LocalStreamService extends AbstractService {
   private void createMRInput(Path inputPath,
                              Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
                              Map<String, FileStatus> checkpointPaths) throws IOException {
-    FileSystem fs = FileSystem.get(cluster.getHadoopConf());
+    FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
-    createListing(fs, fs.getFileStatus(cluster.getDataDir()), fileListing,
+    createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
     trashSet, checkpointPaths);
 
     FSDataOutputStream out = fs.create(inputPath);
@@ -475,7 +481,7 @@ public class LocalStreamService extends AbstractService {
 
   private Job createJob(Path inputPath) throws IOException {
     String jobName = "localstream";
-    Configuration conf = cluster.getHadoopConf();
+    Configuration conf = currentCluster.getHadoopConf();
     Job job = new Job(conf);
     job.setJobName(jobName);
     KeyValueTextInputFormat.setInputPaths(job, inputPath);
@@ -498,7 +504,7 @@ public class LocalStreamService extends AbstractService {
     The visiblity of method is set to protected to enable unit testing
    */
   protected Class<? extends Mapper> getMapperClass() {
-    String className = cluster.getCopyMapperImpl();
+    String className = srcCluster.getCopyMapperImpl();
     if(className == null || className.isEmpty()) {
       return CopyMapper.class;
     } else {

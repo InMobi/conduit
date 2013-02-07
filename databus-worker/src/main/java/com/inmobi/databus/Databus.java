@@ -77,7 +77,7 @@ public class Databus implements Service, DatabusConstants {
       }
       //Start LocalStreamConsumerService for this cluster if it's the source of any stream
       if (cluster.getSourceStreams().size() > 0) {
-        services.add(getLocalStreamService(config, cluster));
+        services.add(getLocalStreamService(config, cluster, currentCluster));
       }
 
 			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
@@ -124,9 +124,9 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster) {
-    return new LocalStreamService(config, cluster, new FSCheckpointProvider(
-        cluster.getCheckpointDir()));
+      Cluster cluster, Cluster currentCluster) {
+    return new LocalStreamService(config, cluster, currentCluster,
+        new FSCheckpointProvider(cluster.getCheckpointDir()));
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,

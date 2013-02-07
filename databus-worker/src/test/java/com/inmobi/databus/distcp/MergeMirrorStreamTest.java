@@ -52,9 +52,10 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   @Test
   public void testMergeStreamWithCurrentClusterName() throws Exception {
-    String clusterName = "testcluster1";
+    String clusterName = "testcluster5";
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster4");
+    clustersToProcess.add("testcluster5");
     testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName,
         clustersToProcess);
   }
@@ -112,7 +113,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       cluster.getHadoopConf().set("mapred.job.tracker",
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-          cluster, new FSCheckpointProvider(cluster.getCheckpointDir()));
+          cluster, currentCluster,new FSCheckpointProvider(cluster
+          .getCheckpointDir()));
       localStreamServices.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);

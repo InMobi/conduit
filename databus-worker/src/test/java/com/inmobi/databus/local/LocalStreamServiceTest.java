@@ -184,7 +184,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       fs.delete(new Path(cluster.getRootDir() + "/databus-checkpoint"), true);
 
       TestLocalStreamService service = new TestLocalStreamService(null,
-          cluster, new FSCheckpointProvider(cluster.getRootDir()
+          cluster, null, new FSCheckpointProvider(cluster.getRootDir()
               + "/databus-checkpoint"));
       service.createListing(fs, dataDir, results, trashSet, checkpointPaths);
 
@@ -338,7 +338,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     
     Cluster cluster = ClusterTest.buildLocalCluster();
     TestLocalStreamService service = new TestLocalStreamService(
-        buildTestDatabusConfig(), cluster, new FSCheckpointProvider(
+        buildTestDatabusConfig(), cluster, null, new FSCheckpointProvider(
             cluster.getCheckpointDir()));
     
     Map<Path, Path> trashCommitPaths = service
@@ -411,7 +411,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       cluster.getHadoopConf().set("mapred.job.tracker",
         super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-        cluster, new NullCheckPointProvider());
+        cluster, null, new NullCheckPointProvider());
       services.add(service);
     }
 
@@ -437,7 +437,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       cluster.getHadoopConf().set("mapred.job.tracker",
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-          cluster, new FSCheckpointProvider(cluster.getCheckpointDir()));
+          cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()));
       services.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
