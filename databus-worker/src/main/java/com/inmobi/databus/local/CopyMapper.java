@@ -34,6 +34,7 @@ public class CopyMapper extends Mapper<Text, Text, Text, Text> {
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
   public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
   public static final String SRC_FS_DEFAULT_NAME_KEY = "src.fs.default.name";
+
   @Override
   public void map(Text key, Text value, Context context) throws IOException,
       InterruptedException {
@@ -43,7 +44,8 @@ public class CopyMapper extends Mapper<Text, Text, Text, Text> {
     String category = src.getParent().getParent().getName();
 
     Configuration srcConf = new Configuration();
-    srcConf.set(FS_DEFAULT_NAME_KEY, context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
+    srcConf.set(FS_DEFAULT_NAME_KEY,
+        context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
 
     FileSystem fs = FileSystem.get(srcConf);
     Path target = getTempPath(context, src, category, collector);
