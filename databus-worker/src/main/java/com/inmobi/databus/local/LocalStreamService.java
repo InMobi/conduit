@@ -52,6 +52,7 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 public class LocalStreamService extends AbstractService {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
+  public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
 
   private final Cluster srcCluster;
   private Cluster currentCluster = null;
@@ -494,8 +495,10 @@ public class LocalStreamService extends AbstractService {
 
     job.setOutputFormatClass(NullOutputFormat.class);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution",
-    "false");
+        "false");
     job.getConfiguration().set("localstream.tmp.path", tmpPath.toString());
+    job.getConfiguration().set("src.fs.default.name",
+        srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
 
     return job;
   }

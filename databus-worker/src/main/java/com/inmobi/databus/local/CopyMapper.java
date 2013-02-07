@@ -22,6 +22,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.conf.Configuration;
 
 import com.inmobi.databus.utils.FileUtil;
 
@@ -31,22 +32,26 @@ import java.io.IOException;
 public class CopyMapper extends Mapper<Text, Text, Text, Text> {
 
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
-
+  public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
+  public static final String SRC_FS_DEFAULT_NAME_KEY = "src.fs.default.name";
   @Override
   public void map(Text key, Text value, Context context) throws IOException,
-          InterruptedException {
+      InterruptedException {
     Path src = new Path(key.toString());
     String dest = value.toString();
     String collector = src.getParent().getName();
     String category = src.getParent().getParent().getName();
 
-    FileSystem fs = FileSystem.get(context.getConfiguration());
+    Configuration srcConf = new Configuration();
+    srcConf.set(FS_DEFAULT_NAME_KEY, context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
+
+    FileSystem fs = FileSystem.get(srcConf);
     Path target = getTempPath(context, src, category, collector);
-    FileUtil.gzip(src, target, context.getConfiguration());
+    FileUtil.gzip(src, target, srcConf);
     // move to final destination
     fs.mkdirs(new Path(dest).makeQualified(fs));
     Path destPath = new Path(dest + File.separator + collector + "-"
-            + src.getName() + ".gz");
+        + src.getName() + ".gz");
     LOG.info("Renaming file " + target + " to " + destPath);
     fs.rename(target, destPath);
 
