@@ -480,7 +480,10 @@ public class LocalStreamService extends AbstractService {
     return new Path(tmpJobOutputPath, category);
   }
 
-  private Job createJob(Path inputPath) throws IOException {
+  /*
+    The visiblity of method is set to protected to enable unit testing
+   */
+  protected Job createJob(Path inputPath) throws IOException {
     String jobName = "localstream";
     Configuration conf = currentCluster.getHadoopConf();
     Job job = new Job(conf);
@@ -518,5 +521,9 @@ public class LocalStreamService extends AbstractService {
           "is not found in class path");
       }
     }
+  }
+
+  public Cluster getCurrentCluster() {
+    return currentCluster;
   }
 }

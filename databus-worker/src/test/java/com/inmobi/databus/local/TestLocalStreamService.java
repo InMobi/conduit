@@ -38,7 +38,6 @@ public class TestLocalStreamService extends LocalStreamService implements
     AbstractServiceTest {
   private static Logger LOG = Logger.getLogger(TestLocalStreamService.class);
   private Cluster srcCluster = null;
-  private Cluster currentCluster = null;
   private CheckpointProvider provider = null;
   private static final int NUM_OF_FILES = 25;
   private List<String> tmpFilesList = null;
@@ -294,7 +293,6 @@ public class TestLocalStreamService extends LocalStreamService implements
       CheckpointProvider provider) {
     super(config, srcCluster, currentCluster, provider);
     this.srcCluster = srcCluster;
-    this.currentCluster = currentCluster;
     this.provider = provider;
     try {
       this.fs = FileSystem.getLocal(new Configuration());
@@ -323,10 +321,6 @@ public class TestLocalStreamService extends LocalStreamService implements
   @Override
   public Cluster getCluster() {
     return srcCluster;
-  }
-
-  public Cluster getCurrentCluster() {
-    return currentCluster;
   }
 
   public CheckpointProvider getCheckpointProvider() {

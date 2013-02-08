@@ -28,6 +28,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
@@ -41,6 +42,8 @@ import static org.mockito.Mockito.when;
 public class LocalStreamServiceTest extends TestMiniClusterUtil {
   private static Logger LOG = Logger.getLogger(LocalStreamServiceTest.class);
   private final static int number_files = 9;
+  public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
+  public static final String SRC_FS_DEFAULT_NAME_KEY = "src.fs.default.name";
 
   Set<String> expectedResults = new LinkedHashSet<String>();
   Set<String> expectedTrashPaths = new LinkedHashSet<String>();
@@ -394,6 +397,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     public void close() {
     }
   }
+
   @Test
   public void testCopyMapperImplMethod() throws Exception{
     DatabusConfigParser parser = new DatabusConfigParser("test-lss-databus-s3n.xml");
@@ -419,6 +423,64 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       Assert.assertEquals(service.getMapperClass(), S3NCopyMapper.class);
     }
   }
+
+  @Test
+  public void testWithOutClusterName() throws Exception {
+    testClusterName("test-lss-databus.xml", null);
+  }
+
+  @Test
+  public void testWithClusterName() throws Exception {
+    testClusterName("test-lss-databus.xml", "testcluster2");
+  }
+
+  private void testClusterName(String configName, String currentClusterName)
+      throws Exception {
+    DatabusConfigParser parser = new DatabusConfigParser(configName);
+    DatabusConfig config = parser.getConfig();
+    Set<String> clustersToProcess = new HashSet<String>();
+    Set<TestLocalStreamService> services =
+        new HashSet<TestLocalStreamService>();
+    Cluster currentCluster = null;
+    for (SourceStream sStream : config.getSourceStreams().values()) {
+      for (String cluster : sStream.getSourceClusters()) {
+        clustersToProcess.add(cluster);
+      }
+    }
+    if (currentClusterName != null) {
+      currentCluster = config.getClusters().get(currentClusterName);
+    }
+    for (String clusterName : clustersToProcess) {
+      Cluster cluster = config.getClusters().get(clusterName);
+      cluster.getHadoopConf().set("mapred.job.tracker",
+          super.CreateJobConf().get("mapred.job.tracker"));
+      TestLocalStreamService service =
+          new TestLocalStreamService(config, cluster, currentCluster,
+              new NullCheckPointProvider());
+      services.add(service);
+    }
+
+    for (TestLocalStreamService service : services) {
+      if (currentClusterName != null)
+        Assert.assertEquals(service.getCurrentCluster().getName(),
+            currentClusterName);
+      //creating a job with empty input path
+      Path tmpJobInputPath = new Path("/tmp/job/input/path");
+      Job testJobConf = service.createJob(tmpJobInputPath);
+      Assert
+          .assertEquals(testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),
+              service.getCurrentCluster().getHadoopConf()
+                  .get(FS_DEFAULT_NAME_KEY));
+      Assert.assertEquals(
+          testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY),
+          service.getCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+      if (currentCluster == null)
+        Assert.assertEquals(
+            testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),
+            testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
+    }
+  }
+
   private void testMapReduce(String fileName, int timesToRun) throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(fileName);
     DatabusConfig config = parser.getConfig();
