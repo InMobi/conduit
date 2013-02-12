@@ -44,23 +44,6 @@ public class TestMirrorStreamService extends MirrorStreamService
     this.fs = FileSystem.getLocal(new Configuration());
   }
   
-  public void getAllFiles(Path listPath, FileSystem fs, 
-      List<String> fileList) 
-          throws IOException {
-    FileStatus[] fileStatuses = fs.listStatus(listPath);
-    if (fileStatuses == null || fileStatuses.length == 0) {
-      LOG.debug("No files in directory:" + listPath);
-    } else {
-      for (FileStatus file : fileStatuses) { 
-        if (file.isDir()) {
-          getAllFiles(file.getPath(), fs, fileList);
-        } else { 
-          fileList.add(file.getPath().getName());
-        }
-      } 
-    }
-  }
-
   @Override
   protected void preExecute() throws Exception {
     try {
@@ -77,7 +60,7 @@ public class TestMirrorStreamService extends MirrorStreamService
         List<String> filesList = new ArrayList<String>();
         String listPath = srcCluster.getFinalDestDirRoot()
             + sstream.getValue().getName();     
-        getAllFiles(new Path(listPath), fs, filesList);
+        TestMergedStreamService.getAllFiles(new Path(listPath), fs, filesList);
         files.put(sstream.getValue().getName(), filesList);
       }
     } catch (Exception e) {
@@ -108,7 +91,7 @@ public class TestMirrorStreamService extends MirrorStreamService
         String commitpath = destinationCluster.getFinalDestDirRoot()
             + sstream.getValue().getName();
         List<String> commitPaths = new ArrayList<String>();
-        getAllFiles(new Path(commitpath), fs, commitPaths);
+        TestMergedStreamService.getAllFiles(new Path(commitpath), fs, commitPaths);
         try {
           LOG.debug("Checking in Path for Mirror mapred Output, No. of files: "
               + commitPaths.size());

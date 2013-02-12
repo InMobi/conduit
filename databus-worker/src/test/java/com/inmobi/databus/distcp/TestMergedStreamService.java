@@ -46,7 +46,7 @@ public class TestMergedStreamService extends MergedStreamService
     this.fs = FileSystem.getLocal(new Configuration());
   }
   
-  public void getAllFiles(Path listPath, FileSystem fs, 
+  public static void getAllFiles(Path listPath, FileSystem fs, 
       List<String> fileList) 
           throws IOException {
     FileStatus[] fileStatuses = fs.listStatus(listPath);
@@ -107,38 +107,38 @@ public class TestMergedStreamService extends MergedStreamService
   @Override
   protected void postExecute() throws Exception {
     try {
-      for (String sstream : getConfig().getClusters().get(destinationCluster.getName()).getPrimaryDestinationStreams()) {
+      for (String sstream : getConfig().getClusters().
+          get(destinationCluster.getName()).getPrimaryDestinationStreams()) {
         if (srcCluster.getSourceStreams().contains(sstream)) {
-        List<String> filesList = files.get(sstream);
-        
+          List<String> filesList = files.get(sstream);
+
           LOG.debug("Verifying Missing Paths for Merged Stream");
 
-        if (filesList.size() > 0) {
-          PublishMissingPathsTest.VerifyMissingPublishPaths(fs,
-              todaysdate.getTime(), behinddate,
-              this.destinationCluster.getFinalDestDirRoot()
-                  + sstream);
-          
+          if (filesList.size() > 0) {
+            PublishMissingPathsTest.VerifyMissingPublishPaths(fs,
+                todaysdate.getTime(), behinddate,
+                this.destinationCluster.getFinalDestDirRoot()
+                + sstream);
 
-          String commitpath = destinationCluster.getFinalDestDirRoot()
-              + sstream;          
-          
+            String commitpath = destinationCluster.getFinalDestDirRoot()
+                + sstream;          
+
             LOG.debug("Verifying Merged Paths in Stream for directory "
-              + commitpath);
-          List<String> commitPaths = new ArrayList<String>();
-          getAllFiles(new Path(commitpath), fs, commitPaths);
-          try {
+                + commitpath);
+            List<String> commitPaths = new ArrayList<String>();
+            getAllFiles(new Path(commitpath), fs, commitPaths);
+            try {
               LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
-                + commitPaths.size());
-            
-            for (int j = 0; j < filesList.size() - 1; ++j) {
-              String checkpath = filesList.get(j);
+                  + commitPaths.size());
+
+              for (int j = 0; j < filesList.size() - 1; ++j) {
+                String checkpath = filesList.get(j);
                 LOG.debug("Merged Checking file: " + checkpath);
-              Assert.assertTrue(commitPaths.contains(checkpath));
+                Assert.assertTrue(commitPaths.contains(checkpath));
+              }
+            } catch (NumberFormatException e) {
             }
-          } catch (NumberFormatException e) {
           }
-        }
         }
       }
     } catch (Exception e) {
