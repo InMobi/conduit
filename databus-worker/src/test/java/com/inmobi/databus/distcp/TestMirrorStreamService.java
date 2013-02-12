@@ -9,6 +9,7 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -33,7 +34,6 @@ public class TestMirrorStreamService extends MirrorStreamService
   private FileSystem fs = null;
   private Map<String, List<String>> files = null;
   private Calendar behinddate = new GregorianCalendar();
-  private Calendar todaysdate = null;
   private long mergeCommitTime = 0;
   
   public TestMirrorStreamService(DatabusConfig config, Cluster srcCluster,
@@ -42,47 +42,27 @@ public class TestMirrorStreamService extends MirrorStreamService
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
-    this.behinddate.add(Calendar.MINUTE, -5);
   }
   
   @Override
   protected void preExecute() throws Exception {
     try {
-      mergeCommitTime = 0;
-      todaysdate = behinddate;
+      mergeCommitTime = behinddate.getTimeInMillis();
       // PublishMissingPathsTest.testPublishMissingPaths(this, false);
       if (files != null)
         files.clear();
       files = null;
       files = new HashMap<String, List<String>>();
+      behinddate.add(Calendar.HOUR_OF_DAY, -2);
       for (Map.Entry<String, SourceStream> sstream : getConfig()
           .getSourceStreams().entrySet()) {
         
         List<String> filesList = new ArrayList<String>();
-        long mins = (System.currentTimeMillis() - behinddate.getTimeInMillis()) / 60000;
-        
-        for (int i = 0; i < mins; ++i) {
-          String listPath = srcCluster.getFinalDestDirRoot()
-              + sstream.getValue().getName() + File.separator
-              + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
-          
-          FileStatus[] fStats = fs.listStatus(new Path(listPath));
-          
-          if ((mergeCommitTime != 0) && fStats.length != 0) {
-            mergeCommitTime = behinddate.getTimeInMillis();
-          }
-          for (FileStatus fStat : fStats) {
-            filesList.add(fStat.getPath().getName());
-          }
-          behinddate.add(Calendar.MINUTE, 1);
-        }
-        String dummycommitpath = this.srcCluster.getFinalDestDirRoot()
-            + sstream.getValue().getName() + File.separator
-            + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
-        fs.mkdirs(new Path(dummycommitpath));
+        String listPath = srcCluster.getFinalDestDirRoot()
+            + sstream.getValue().getName();     
+        TestMergedStreamService.getAllFiles(new Path(listPath), fs, filesList);
         files.put(sstream.getValue().getName(), filesList);
       }
-      behinddate.add(Calendar.HOUR_OF_DAY, -2);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);
@@ -99,25 +79,19 @@ public class TestMirrorStreamService extends MirrorStreamService
     try {
       for (Map.Entry<String, SourceStream> sstream : getConfig()
           .getSourceStreams().entrySet()) {
+        // checking from next minute of behind time because the dummy commitpath 
+        // can not be mirrored to dest cluster as it was created before merge 
+        // stream service run.
+        behinddate.add(Calendar.MINUTE, 1);
         PublishMissingPathsTest.VerifyMissingPublishPaths(fs, mergeCommitTime,
             behinddate, this.destinationCluster.getFinalDestDirRoot()
                 + sstream.getValue().getName());
         
         List<String> filesList = files.get(sstream.getValue().getName());
         String commitpath = destinationCluster.getFinalDestDirRoot()
-            + sstream.getValue().getName() + File.separator
-            + Cluster.getDateAsYYYYMMDDHHPath(todaysdate.getTimeInMillis());
-        FileStatus[] mindirs = fs.listStatus(new Path(commitpath));
-        
-        Set<String> commitPaths = new HashSet<String>();
-        
-        for (FileStatus minutedir : mindirs) {
-          FileStatus[] filePaths = fs.listStatus(minutedir.getPath());
-          for (FileStatus filePath : filePaths) {
-            commitPaths.add(filePath.getPath().getName());
-          }
-        }
-        
+            + sstream.getValue().getName();
+        List<String> commitPaths = new ArrayList<String>();
+        TestMergedStreamService.getAllFiles(new Path(commitpath), fs, commitPaths);
         try {
           LOG.debug("Checking in Path for Mirror mapred Output, No. of files: "
               + commitPaths.size());
