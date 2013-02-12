@@ -1,6 +1,7 @@
 package com.inmobi.databus.distcp;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,11 +41,26 @@ public class TestMergedStreamService extends MergedStreamService
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster) throws Exception {
     super(config, srcCluster, destinationCluster);
-    // TODO Auto-generated constructor stub
     this.srcCluster = srcCluster;
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());
-    this.behinddate.add(Calendar.MINUTE, -5);
+  }
+  
+  public void getAllFiles(Path listPath, FileSystem fs, 
+      List<String> fileList) 
+          throws IOException {
+    FileStatus[] fileStatuses = fs.listStatus(listPath);
+    if (fileStatuses == null || fileStatuses.length == 0) {
+      LOG.debug("No files in directory:" + listPath);
+    } else {
+      for (FileStatus file : fileStatuses) { 
+        if (file.isDir()) {
+          getAllFiles(file.getPath(), fs, fileList);
+        } else { 
+          fileList.add(file.getPath().getName());
+        }
+      } 
+    }
   }
   
   @Override
@@ -55,33 +71,20 @@ public class TestMergedStreamService extends MergedStreamService
         files.clear();
       files = null;
       files = new HashMap<String, List<String>>();
+      behinddate.add(Calendar.HOUR_OF_DAY, -2);
       for (Map.Entry<String, SourceStream> sstream : getConfig()
           .getSourceStreams().entrySet()) {
         
         LOG.debug("Working for Stream in Merged Stream Service "
             + sstream.getValue().getName());
 
-        List<String> filesList = new ArrayList<String>();
-        long mins = (System.currentTimeMillis() - behinddate.getTimeInMillis()) / 60000;
-        
-        for (int i = 0; i < mins; ++i) {
-          String listPath = srcCluster.getLocalFinalDestDirRoot()
-              + sstream.getValue().getName() + File.separator
-              + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
+        List<String> filesList = new ArrayList<String>();        
+        String listPath = srcCluster.getLocalFinalDestDirRoot()
+            + sstream.getValue().getName();
           
-          LOG.debug("Getting List of Files from Path: " + listPath);
-          FileStatus[] fStats = fs.listStatus(new Path(listPath));
-          behinddate.add(Calendar.MINUTE, 1);
-          for (FileStatus fStat : fStats) {
-            filesList.add(fStat.getPath().getName());
-            LOG.debug("Adding File to Merged filesList "
-                + fStat.getPath().getName());
-          }
-        }
+        LOG.debug("Getting List of Files from Path: " + listPath);
+        getAllFiles(new Path(listPath), fs, filesList);
         files.put(sstream.getValue().getName(), filesList);
-        
-        behinddate.add(Calendar.HOUR_OF_DAY, -2);
-
         LOG.debug("Creating Dummy commit Path for verifying Missing Paths");
         String dummycommitpath = this.destinationCluster.getFinalDestDirRoot()
             + sstream.getValue().getName() + File.separator
@@ -118,22 +121,12 @@ public class TestMergedStreamService extends MergedStreamService
           
 
           String commitpath = destinationCluster.getFinalDestDirRoot()
-              + sstream + File.separator
-              + Cluster.getDateAsYYYYMMDDHHPath(todaysdate.getTime());
-          FileStatus[] mindirs = fs.listStatus(new Path(commitpath));
+              + sstream;          
           
             LOG.debug("Verifying Merged Paths in Stream for directory "
               + commitpath);
-
-          Set<String> commitPaths = new HashSet<String>();
-          
-          for (FileStatus minutedir : mindirs) {
-            FileStatus[] filePaths = fs.listStatus(minutedir.getPath());
-            for (FileStatus filePath : filePaths) {
-              commitPaths.add(filePath.getPath().getName());
-            }
-          }
-          
+          List<String> commitPaths = new ArrayList<String>();
+          getAllFiles(new Path(commitpath), fs, commitPaths);
           try {
               LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
                 + commitPaths.size());
