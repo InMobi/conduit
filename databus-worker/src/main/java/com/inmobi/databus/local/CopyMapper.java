@@ -14,6 +14,7 @@
 
 package com.inmobi.databus.local;
 
+import com.inmobi.databus.ConfigConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
@@ -29,11 +30,10 @@ import com.inmobi.databus.utils.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
-public class CopyMapper extends Mapper<Text, Text, Text, Text> {
+public class CopyMapper extends Mapper<Text, Text, Text,
+    Text> implements ConfigConstants{
 
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
-  public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
-  public static final String SRC_FS_DEFAULT_NAME_KEY = "src.fs.default.name";
 
   @Override
   public void map(Text key, Text value, Context context) throws IOException,
@@ -74,7 +74,7 @@ public class CopyMapper extends Mapper<Text, Text, Text, Text> {
 
   private Path getJobTmpDir(Context context, JobID jobId) {
     return new Path(
-            new Path(context.getConfiguration().get("localstream.tmp.path")),
+            new Path(context.getConfiguration().get(LOCALSTREAM_TMP_PATH)),
             jobId.toString());
   }
 }

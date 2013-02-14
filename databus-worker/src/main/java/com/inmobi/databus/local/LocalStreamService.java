@@ -25,10 +25,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.inmobi.databus.AbstractService;
-import com.inmobi.databus.CheckpointProvider;
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -49,10 +46,10 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
  * (i) One LocalStreamService per Cluster
  */
 
-public class LocalStreamService extends AbstractService {
+public class LocalStreamService extends AbstractService implements
+    ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
-  public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
 
   private final Cluster srcCluster;
   private Cluster currentCluster = null;
@@ -499,8 +496,8 @@ public class LocalStreamService extends AbstractService {
     job.setOutputFormatClass(NullOutputFormat.class);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution",
         "false");
-    job.getConfiguration().set("localstream.tmp.path", tmpPath.toString());
-    job.getConfiguration().set("src.fs.default.name",
+    job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
+    job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
 
     return job;

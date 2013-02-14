@@ -1,5 +1,6 @@
 package com.inmobi.databus.local;
 
+import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.utils.S3FileSystemHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,12 +29,11 @@ import java.io.IOException;
  * </code>
  */
 
-public class S3NCopyMapper extends Mapper<Text, Text, Text, Text> {
+public class S3NCopyMapper extends Mapper<Text, Text, Text,
+    Text> implements ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
   private S3FileSystemHelper helper;
-  public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
-  public static final String SRC_FS_DEFAULT_NAME_KEY = "src.fs.default.name";
   private Configuration srcConf = null;
 
   protected void setup(Context context) throws IOException, InterruptedException {
