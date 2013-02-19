@@ -1,0 +1,68 @@
+<databus>
+    <defaults>
+        <rootdir>/databusclusternameparallel</rootdir>
+        <retentioninhours>24</retentioninhours>
+        <trashretentioninhours>48</trashretentioninhours>
+    </defaults>
+
+    <!-- A stream can have only one primary and multiple mirrors as destinations
+      -->
+    <streams>
+        <stream name="test1">
+            <sources>
+                <source>
+                    <name>testcluster1</name>
+                    <retentioninhours>24</retentioninhours>
+                </source>
+                <source>
+                    <name>testcluster2</name>
+                    <retentioninhours>24</retentioninhours>
+                </source>
+                <source>
+                    <name>testcluster3</name>
+                    <retentioninhours>24</retentioninhours>
+                </source>
+            </sources>
+            <destinations>
+                <destination>
+                    <primary>true</primary>
+                    <name>testcluster4</name>
+                    <retentioninhours>24</retentioninhours>
+                </destination>
+            </destinations>
+        </stream>
+    </streams>
+
+    <clusters>
+        <cluster name="testcluster1"
+                 hdfsurl="file:///tmp/databusclusterparallel/testcluster1"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
+        <cluster name="testcluster2"
+                 hdfsurl="file:////tmp/databusclusterparallel/testcluster2"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
+        <cluster name="testcluster3"
+                 hdfsurl="file:////tmp/databusclusterparallel/testcluster3"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
+        <cluster name="testcluster4"
+                 hdfsurl="file:////tmp/databusclusterparallel/testcluster4"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
+        <cluster name="testcluster5"
+                 hdfsurl="file:////tmp/databusclusterparallel/testcluster5"
+                 jturl="local"
+                 jobqueuename="default"
+                >
+        </cluster>
+    </clusters>
+</databus>

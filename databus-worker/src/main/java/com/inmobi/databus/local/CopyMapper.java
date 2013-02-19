@@ -14,6 +14,7 @@
 
 package com.inmobi.databus.local;
 
+import com.inmobi.databus.ConfigConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
@@ -22,31 +23,37 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.conf.Configuration;
 
 import com.inmobi.databus.utils.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
 
-public class CopyMapper extends Mapper<Text, Text, Text, Text> {
+public class CopyMapper extends Mapper<Text, Text, Text,
+    Text> implements ConfigConstants{
 
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
 
   @Override
   public void map(Text key, Text value, Context context) throws IOException,
-          InterruptedException {
+      InterruptedException {
     Path src = new Path(key.toString());
     String dest = value.toString();
     String collector = src.getParent().getName();
     String category = src.getParent().getParent().getName();
 
-    FileSystem fs = FileSystem.get(context.getConfiguration());
+    Configuration srcConf = new Configuration();
+    srcConf.set(FS_DEFAULT_NAME_KEY,
+        context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
+
+    FileSystem fs = FileSystem.get(srcConf);
     Path target = getTempPath(context, src, category, collector);
-    FileUtil.gzip(src, target, context.getConfiguration());
+    FileUtil.gzip(src, target, srcConf);
     // move to final destination
     fs.mkdirs(new Path(dest).makeQualified(fs));
     Path destPath = new Path(dest + File.separator + collector + "-"
-            + src.getName() + ".gz");
+        + src.getName() + ".gz");
     LOG.info("Renaming file " + target + " to " + destPath);
     fs.rename(target, destPath);
 
@@ -67,7 +74,7 @@ public class CopyMapper extends Mapper<Text, Text, Text, Text> {
 
   private Path getJobTmpDir(Context context, JobID jobId) {
     return new Path(
-            new Path(context.getConfiguration().get("localstream.tmp.path")),
+            new Path(context.getConfiguration().get(LOCALSTREAM_TMP_PATH)),
             jobId.toString());
   }
 }

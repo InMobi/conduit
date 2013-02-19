@@ -37,6 +37,13 @@ import java.util.Set;
 public class Databus implements Service, DatabusConstants {
   private static Logger LOG = Logger.getLogger(Databus.class);
   private DatabusConfig config;
+  private String currentClusterName = null;
+
+  public Databus(DatabusConfig config, Set<String> clustersToProcess,
+                 String currentCluster) {
+    this(config, clustersToProcess);
+    this.currentClusterName = currentCluster;
+  }
 
   public Set<String> getClustersToProcess() {
     return clustersToProcess;
@@ -60,13 +67,17 @@ public class Databus implements Service, DatabusConstants {
    * to enable unit testing
    */
   protected List<AbstractService> init() throws Exception {
+    Cluster currentCluster = null;
+    if (currentClusterName != null) {
+      currentCluster = config.getClusters().get(currentClusterName);
+    }
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
       }
       //Start LocalStreamConsumerService for this cluster if it's the source of any stream
       if (cluster.getSourceStreams().size() > 0) {
-        services.add(getLocalStreamService(config, cluster));
+        services.add(getLocalStreamService(config, cluster, currentCluster));
       }
 
 			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
@@ -92,11 +103,11 @@ public class Databus implements Service, DatabusConstants {
 
 			for (String remote : mergedStreamRemoteClusters) {
         services.add(getMergedStreamService(config,
-            config.getClusters().get(remote), cluster));
+            config.getClusters().get(remote), cluster, currentCluster));
       }
 			for (String remote : mirroredRemoteClusters) {
         services.add(getMirrorStreamService(config,
-            config.getClusters().get(remote), cluster));
+            config.getClusters().get(remote), cluster, currentCluster));
       }
     }
 
@@ -113,19 +124,21 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster) {
-    return new LocalStreamService(config, cluster, new FSCheckpointProvider(
-        cluster.getCheckpointDir()));
+      Cluster cluster, Cluster currentCluster) {
+    return new LocalStreamService(config, cluster, currentCluster,
+        new FSCheckpointProvider(cluster.getCheckpointDir()));
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster) throws Exception {
-    return new MergedStreamService(config, srcCluster, dstCluster);
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Exception {
+    return new MergedStreamService(config, srcCluster, dstCluster, currentCluster);
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster) throws Exception {
-    return new MirrorStreamService(config, srcCluster, dstCluster);
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Exception {
+    return new MirrorStreamService(config, srcCluster, dstCluster, currentCluster);
   }
 
   @Override
@@ -221,6 +234,7 @@ public class Databus implements Service, DatabusConstants {
         enableZookeeper = Boolean.parseBoolean(enableZK);
       else
         enableZookeeper = true;
+      String currentCluster = prop.getProperty(CLUSTER_NAME);
       
       String principal = prop.getProperty(KRB_PRINCIPAL);
       String keytab = getProperty(prop, KEY_TAB_FILE);
@@ -261,7 +275,8 @@ public class Databus implements Service, DatabusConstants {
           databusClusterId.append("_");
         }
       }
-      final Databus databus = new Databus(config, clustersToProcess);
+      final Databus databus = new Databus(config, clustersToProcess,
+          currentCluster);
       if (enableZookeeper) {
         LOG.info("Starting CuratorLeaderManager for eleader election ");
         CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(

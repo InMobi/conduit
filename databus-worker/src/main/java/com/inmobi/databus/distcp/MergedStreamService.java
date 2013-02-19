@@ -45,9 +45,9 @@ public class MergedStreamService extends DistcpBaseService {
   private Set<String> primaryCategories;
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster) throws Exception {
+      Cluster destinationCluster, Cluster currentCluster) throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
-        destinationCluster);
+        destinationCluster, currentCluster);
     primaryCategories = destinationCluster.getPrimaryDestinationStreams();
   }
 

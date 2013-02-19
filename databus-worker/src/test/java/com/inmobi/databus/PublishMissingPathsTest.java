@@ -92,7 +92,7 @@ public class PublishMissingPathsTest {
         .getClusters().values());
     Cluster cluster = clusterList.get(0);
     TestLocalStreamService service = new TestLocalStreamService(config,
-        cluster, new FSCheckpointProvider(cluster.getCheckpointDir()));
+        cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()));
     
     ArrayList<SourceStream> sstreamList = new ArrayList<SourceStream>(config
         .getSourceStreams().values());

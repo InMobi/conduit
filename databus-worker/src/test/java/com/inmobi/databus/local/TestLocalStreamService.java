@@ -288,10 +288,11 @@ public class TestLocalStreamService extends LocalStreamService implements
     
   }
   
-  public TestLocalStreamService(DatabusConfig config, Cluster cluster,
+  public TestLocalStreamService(DatabusConfig config,
+                                Cluster srcCluster, Cluster currentCluster,
       CheckpointProvider provider) {
-    super(config, cluster, provider);
-    this.srcCluster = cluster;
+    super(config, srcCluster, currentCluster, provider);
+    this.srcCluster = srcCluster;
     this.provider = provider;
     try {
       this.fs = FileSystem.getLocal(new Configuration());
@@ -321,7 +322,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   public Cluster getCluster() {
     return srcCluster;
   }
-  
+
   public CheckpointProvider getCheckpointProvider() {
     return provider;
   }

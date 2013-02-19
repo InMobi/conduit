@@ -1,8 +1,10 @@
 package com.inmobi.databus.local;
 
+import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.utils.S3FileSystemHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -27,13 +29,18 @@ import java.io.IOException;
  * </code>
  */
 
-public class S3NCopyMapper extends Mapper<Text, Text, Text, Text> {
+public class S3NCopyMapper extends Mapper<Text, Text, Text,
+    Text> implements ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
   private S3FileSystemHelper helper;
+  private Configuration srcConf = null;
 
   protected void setup(Context context) throws IOException, InterruptedException {
     super.setup(context);
+    srcConf = new Configuration();
+    srcConf.set(FS_DEFAULT_NAME_KEY,
+        context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
     helper = S3FileSystemHelper.getInstance(context.getConfiguration());
   }
 
@@ -45,7 +52,12 @@ public class S3NCopyMapper extends Mapper<Text, Text, Text, Text> {
     String dest = value.toString();
     String collector = src.getParent().getName();
 
-    FileSystem fs = FileSystem.get(context.getConfiguration());
+    if (srcConf == null) {
+      srcConf = new Configuration();
+      srcConf.set(FS_DEFAULT_NAME_KEY,
+          context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
+    }
+    FileSystem fs = FileSystem.get(srcConf);
     // Create Destination directories
     fs.mkdirs(new Path(dest).makeQualified(fs));
     String pathToken;
