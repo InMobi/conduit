@@ -19,6 +19,7 @@ import com.inmobi.databus.utils.CalendarHelper;
 import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -66,7 +67,6 @@ public class TestLocalStreamService extends LocalStreamService implements
     List<String> filesList = new ArrayList<String>();
     
     for (int j = 0; j < filesCount; ++j) {
-      Thread.sleep(1000);
       String filenameStr = new String(streamName + "-"
           + getDateAsYYYYMMDDHHmm(new Date()) + "_" + idFormat.format(j));
       filesList.add(j, filenameStr);
@@ -83,6 +83,44 @@ public class TestLocalStreamService extends LocalStreamService implements
     }
     
     return filesList;
+  }
+  
+  @Override
+  protected String getCurrentFile(FileSystem fs, FileStatus[] files,
+      long lastFileTimeout) {
+    class FileNameComparator implements Comparator {
+      public int compare(Object o, Object o1) {
+        FileStatus file1 = (FileStatus)o;
+        FileStatus file2 = (FileStatus)o1;
+        String file1Time = file1.getPath().getName();
+        String file2Time = file2.getPath().getName();
+        if ((file1Time.compareToIgnoreCase(file2Time)) < 0)
+          return -1;
+        else
+          return 1;
+      }
+    }
+
+    if (files == null || files.length == 0)
+      return null;
+    TreeSet<FileStatus> sortedFiles = new TreeSet<FileStatus>(new
+        FileNameComparator());
+    for (FileStatus file : files) {
+      sortedFiles.add(file);
+    }
+
+    //get last file from set
+    FileStatus lastFile = sortedFiles.last();
+
+    long currentTime = System.currentTimeMillis();
+    long lastFileTime = lastFile.getModificationTime();
+    if (currentTime - lastFileTime >= lastFileTimeout) {
+      return null;
+    } else {
+      LOG.debug("current(i.e. latest) file in the collector path " + 
+          lastFile.getPath());
+      return lastFile.getPath().getName();
+    }
   }
   
   public void doRecursiveListing(Path dir, Set<Path> listing,

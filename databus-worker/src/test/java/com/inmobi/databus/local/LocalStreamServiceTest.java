@@ -445,6 +445,10 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     
     for (TestLocalStreamService service : services) {
       for (int i = 0; i < timesToRun; ++i) {
+        // To avoid multiple runs in a single minute
+        if (i > 0) {
+          Thread.sleep(60000);
+        }
         service.preExecute();
         service.execute();
         service.postExecute();
