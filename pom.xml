@@ -195,8 +195,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.12</version>
         <configuration>
-          <parallel>methods</parallel>
-          <threadCount>10</threadCount>
           <excludedGroups>${excluded.testng.groups}</excludedGroups> 
           <forkedProcessTimeoutInSeconds>3600</forkedProcessTimeoutInSeconds>
         </configuration>
