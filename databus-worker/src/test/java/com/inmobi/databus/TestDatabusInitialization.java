@@ -15,24 +15,21 @@ import com.inmobi.databus.purge.DataPurgerService;
 
 public class TestDatabusInitialization {
 
-  DatabusConfigParser configParser;
-  DatabusConfig config;
-
-  public void setUP(String filename) throws Exception {
-    configParser = new DatabusConfigParser(filename);
-    config = configParser.getConfig();
+  public void setUP(String filename, Set<String> clustersToProcess, 
+      List<AbstractService> listOfServices) throws Exception {
+    DatabusConfigParser configParser = new DatabusConfigParser(filename);
+    DatabusConfig config = configParser.getConfig();
+    Databus databus = new Databus(config, clustersToProcess);
+    listOfServices.addAll(databus.init());
   }
   
   public void testServicesOnCluster(String confFile, Set<String> clustersToProcess, 
       int numOfLocalServices, int numOfPurgerServices, int numofMergeServices, 
       int numOfMirrorServices)
           throws Exception {
-    setUP(confFile);
     List<AbstractService> listOfServices = new ArrayList<AbstractService>();
+    setUP(confFile, clustersToProcess, listOfServices);
     
-    Databus databus = new Databus(config, clustersToProcess);
-    listOfServices.addAll(databus.init());
-
     Assert.assertEquals(numOfPurgerServices, getNumOfPurgerServices(
         listOfServices));
     Assert.assertEquals(numOfLocalServices, getNumOfLocalStreamServices(
