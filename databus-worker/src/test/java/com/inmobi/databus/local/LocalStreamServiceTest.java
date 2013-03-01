@@ -447,9 +447,15 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       for (int i = 0; i < timesToRun; ++i) {
         service.preExecute();
         service.execute();
+        long finishTime = System.currentTimeMillis();
         service.postExecute();
         Thread.sleep(1000);
-        
+        /* check for number of times local stream service should run and 
+        no need of waiting if it is the last run of service*/
+        if (timesToRun > 1 && (i == (timesToRun - 1))) {
+          long sleepTime = service.getMSecondsTillNextRun(finishTime);
+          Thread.sleep(sleepTime);
+        }
       }
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
