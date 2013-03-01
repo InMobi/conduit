@@ -452,7 +452,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
         Thread.sleep(1000);
         /* check for number of times local stream service should run and 
         no need of waiting if it is the last run of service*/
-        if (timesToRun > 1 && (i == (timesToRun - 1))) {
+        if (timesToRun > 1 && (i < (timesToRun - 1))) {
           long sleepTime = service.getMSecondsTillNextRun(finishTime);
           Thread.sleep(sleepTime);
         }
