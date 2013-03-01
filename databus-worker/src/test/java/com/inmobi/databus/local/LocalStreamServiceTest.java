@@ -449,6 +449,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
         service.execute();
         service.postExecute();
         Thread.sleep(1000);
+        
       }
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
