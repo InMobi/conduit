@@ -39,7 +39,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   private static Logger LOG = Logger.getLogger(TestLocalStreamService.class);
   private Cluster srcCluster = null;
   private CheckpointProvider provider = null;
-  private static final int NUM_OF_FILES = 25;
+  private static final int NUM_OF_FILES = 10;
   private List<String> tmpFilesList = null;
   private Map<String, List<String>> files = new HashMap<String, List<String>>();
   private Map<String, Set<String>> prevfiles = new HashMap<String, Set<String>>();
@@ -140,8 +140,7 @@ public class TestLocalStreamService extends LocalStreamService implements
         LOG.debug("Creating Tmp Files for LocalStream");
         String pathName = srcCluster.getTmpPath() + File.separator
             + this.getName() + File.separator;
-        tmpFilesList = createScribeData(fs, this.getName(), pathName,
-            NUM_OF_FILES);
+        tmpFilesList = createScribeData(fs, this.getName(), pathName, 1);
       }
     } catch (Exception e) {
       e.printStackTrace();
