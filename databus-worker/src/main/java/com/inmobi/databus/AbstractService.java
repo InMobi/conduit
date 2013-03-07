@@ -261,22 +261,22 @@ public abstract class AbstractService implements Service, Runnable {
 	}
   
   /*
-  * publish all the missing paths and clears missingDirCommittedPaths map
-  * after publishing
-  */
-    public void commitPublishMissingPaths(FileSystem fs, Map<String, Set<Path>>
-        missingDirsCommittedPaths) throws IOException {
-      if (missingDirsCommittedPaths != null && missingDirsCommittedPaths.size() > 0) {
-        for (String category : missingDirsCommittedPaths.keySet()) {
-          Set<Path> missingPathsPerCategory = missingDirsCommittedPaths.get(category);
-          for (Path missingdir : missingPathsPerCategory) {
-            if (!fs.exists(missingdir)) {
-              fs.mkdirs(missingdir);
-            }
+   * publish all the missing paths and clears missingDirCommittedPaths map
+   * after publishing
+   */
+  public void commitPublishMissingPaths(FileSystem fs, Map<String, Set<Path>>
+  missingDirsCommittedPaths) throws IOException {
+    if (missingDirsCommittedPaths != null && missingDirsCommittedPaths.size() > 0) {
+      for (String category : missingDirsCommittedPaths.keySet()) {
+        Set<Path> missingPathsPerCategory = missingDirsCommittedPaths.get(category);
+        for (Path missingdir : missingPathsPerCategory) {
+          if (!fs.exists(missingdir)) {
+            fs.mkdirs(missingdir);
           }
         }
-        missingDirsCommittedPaths.clear();
       }
+      missingDirsCommittedPaths.clear();
     }
+  }
 
 } 
