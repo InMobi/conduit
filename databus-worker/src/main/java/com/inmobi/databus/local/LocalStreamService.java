@@ -57,6 +57,8 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
+  private Map<String, Set<Path>> missingDirsCommittedPaths = new
+      HashMap<String, Set<Path>>();
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
                             Cluster currentCluster,
@@ -95,7 +97,9 @@ public class LocalStreamService extends AbstractService implements
       cleanUpTmp(fs);
       LOG.info("TmpPath is [" + tmpPath + "]");
 
-      publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot());
+      missingDirsCommittedPaths.putAll(publishMissingPaths(fs,
+          srcCluster.getLocalFinalDestDirRoot()));
+      commitPublishMissingPaths(fs, missingDirsCommittedPaths);
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
@@ -151,8 +155,15 @@ public class LocalStreamService extends AbstractService implements
         LOG.debug("Moving [" + file.getPath() + "] to [" + destPath + "]");
         mvPaths.put(file.getPath(), destPath);
       }
-      publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot(), commitTime,
-      categoryName);
+      Set<Path> missingdirectories = missingDirsCommittedPaths.get(categoryName);
+      Set<Path> publishMissingDirs = publishMissingPaths(fs,
+          srcCluster.getLocalFinalDestDirRoot(), commitTime, categoryName);
+      if (missingdirectories != null) {
+        missingdirectories.addAll(publishMissingDirs);
+      } else {
+        missingDirsCommittedPaths.put(categoryName, publishMissingDirs);
+      }
+      commitPublishMissingPaths(fs, missingDirsCommittedPaths);
     }
 
     // find input files for consumer
