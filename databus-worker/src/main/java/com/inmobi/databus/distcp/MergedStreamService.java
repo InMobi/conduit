@@ -191,12 +191,12 @@ public class MergedStreamService extends DistcpBaseService {
   /*
    * @param Map<String, Set<Path>> commitedPaths - Stream Name, It's committed
    * Path.
-   * tmpConsumePath: hdfsUrl/rootDir/system/tmp/
-   * distcp_mergedStream_sourceCluster_destinationCluster/tmp/
+   * tmpConsumePath: hdfsUrl/<rootDir>/system/tmp/
+   * distcp_mergedStream_<sourceCluster>_<destinationCluster>/tmp/
    * src_sourceCluster_via_destinationCluster_mirrorto_consumername_streamname
-   * final Mirror Path: hdfsUrl/rootDir/system/mirrors/consumerCluster/
-   * src_sourceCluster_via_destinationCluster_mirrorto_consumerName_
-   * streamName_filestatus
+   * final Mirror Path: hdfsUrl/<rootDir>/system/mirrors/<consumerCluster>/
+   * src_<sourceCluster>_via_<destinationCluster>_mirrorto_<consumerName>_
+   * <streamName>_filestatus
    */
   private void commitMirroredConsumerPaths(
       Map<String, Set<Path>> tobeCommittedPaths, Path tmp) throws Exception {
@@ -305,7 +305,7 @@ public class MergedStreamService extends DistcpBaseService {
   /*
    * @returns Map<Path, Path> - Map of filePath, destinationPath committed
    * for stream
-   * destinationPath : hdfsUrl/rootdir/streams/category/YYYY/MM/HH/MN/filename
+   * destinationPath : hdfsUrl/<rootdir>/streams/<category>/YYYY/MM/HH/MN/filename
    */
   public Map<Path, Path> createLocalCommitPaths(Path tmpOut, long commitTime, 
       Map<String, List<Path>> categoriesToCommit, 
