@@ -12,6 +12,9 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -113,7 +116,10 @@ public class PublishMissingPathsTest {
     {
       Calendar todaysdate = new GregorianCalendar();
       
-      service.publishMissingPaths();
+      Map<String, Set<Path>> missingDirCommittedPaths = new HashMap<String,
+          Set<Path>>();
+      service.publishMissingPaths(fs, missingDirCommittedPaths);
+      service.commitPublishMissingPaths(fs, missingDirCommittedPaths);
       
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);
@@ -122,8 +128,11 @@ public class PublishMissingPathsTest {
     {
       Calendar todaysdate = new GregorianCalendar();
 
-      service.publishMissingPaths();
-      
+      Map<String, Set<Path>> missingDirCommittedPaths = new HashMap<String,
+          Set<Path>>();
+      service.publishMissingPaths(fs, missingDirCommittedPaths);
+      service.commitPublishMissingPaths(fs, missingDirCommittedPaths);
+
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);
     }
