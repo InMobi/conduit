@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -230,7 +231,6 @@ public abstract class AbstractService implements Service, Runnable {
           if (!fs.exists(missingDir)) {
             LOG.debug("Creating Missing Directory [" + missingPath + "]");
             missingDirectories.add(new Path(missingPath));
-            fs.mkdirs(missingDir);
           }
 					prevRuntime += MILLISECONDS_IN_MINUTE;
 				}
@@ -259,5 +259,24 @@ public abstract class AbstractService implements Service, Runnable {
 		LOG.info("Done Creating All the Missing Paths in " + destDir);
     return missingDirectories;
 	}
+  
+  /*
+  * publish all the missing paths and clears missingDirCommittedPaths map
+  * after publishing
+  */
+    public void commitPublishMissingPaths(FileSystem fs, Map<String, Set<Path>>
+        missingDirsCommittedPaths) throws IOException {
+      if (missingDirsCommittedPaths != null && missingDirsCommittedPaths.size() > 0) {
+        for (String category : missingDirsCommittedPaths.keySet()) {
+          Set<Path> missingPathsPerCategory = missingDirsCommittedPaths.get(category);
+          for (Path missingdir : missingPathsPerCategory) {
+            if (!fs.exists(missingdir)) {
+              fs.mkdirs(missingdir);
+            }
+          }
+        }
+        missingDirsCommittedPaths.clear();
+      }
+    }
 
 } 
