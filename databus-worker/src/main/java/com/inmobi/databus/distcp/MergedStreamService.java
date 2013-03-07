@@ -75,13 +75,20 @@ public class MergedStreamService extends DistcpBaseService {
       }
 
       synchronized (getDestCluster()) {
-        // missing paths are published first and later those paths are added to
-        // mirror consumer file,but since "missingDirsCommittedPaths" map is not
-        // cleared until those paths are successfully written to consumer
-        // file;hence even in case where writing consumer fail(after publishing
-        // missing path) at the first run those paths would be added to consumer in next run
-        addPublishMissingPaths(missingDirsCommittedPaths, -1, primaryCategories);
-
+        //missing paths are added to mirror consumer file first and those missing
+        //paths are published next. 'missingDirsCommittedPaths' map is not cleared
+        //until all these missing paths are successfully published. If any
+        //failure occurs while publishing paths or writing to mirror consumer
+        //file at the first run those paths would be added to consumer in next run
+        //even if databus restarts while publishing the missing paths or writing
+        //to mirror consumer file, there will be no holes in mirror stream.
+        preparePublishMissingPaths(missingDirsCommittedPaths, -1, primaryCategories);
+        if (missingDirsCommittedPaths.size() > 0) {
+          LOG.info("Adding Missing Directories to the mirror consumer file and" +
+              " publishing the missing paths"+ missingDirsCommittedPaths.size());
+          commitMirroredConsumerPaths(missingDirsCommittedPaths, tmp);
+          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths);
+        }
       }
 
       Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
@@ -89,11 +96,6 @@ public class MergedStreamService extends DistcpBaseService {
         LOG.warn("No data to pull from " + "Cluster ["
             + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
-        if (missingDirsCommittedPaths.size() > 0) {
-          LOG.warn("Adding Missing Directories for Pull "
-              + missingDirsCommittedPaths.size());
-          commitMirroredConsumerPaths(missingDirsCommittedPaths, tmp);
-        }
         return;
       }
       LOG.warn("Starting a distcp pull from [" + inputFilePath.toString()
@@ -120,7 +122,7 @@ public class MergedStreamService extends DistcpBaseService {
           // between the last addPublishMissinPaths and this call,distcp is
           // called which is a MR job and can take time hence this call ensures
           // all missing paths are added till this time
-          addPublishMissingPaths(missingDirsCommittedPaths, commitTime,
+          preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
               primaryCategories);
           commitPaths = createLocalCommitPaths(tmpOut, commitTime, 
               categoriesToCommit, tobeCommittedPaths);
@@ -136,6 +138,7 @@ public class MergedStreamService extends DistcpBaseService {
 
           // Prepare paths for MirrorStreamConsumerService
           commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
+          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths);
         }
@@ -154,7 +157,7 @@ public class MergedStreamService extends DistcpBaseService {
     }
   }
 
-  private void addPublishMissingPaths(
+  private void preparePublishMissingPaths(
       Map<String, Set<Path>> missingDirsCommittedPaths, long commitTime,
       Set<String> categoriesToCommit) 
           throws Exception {
@@ -263,7 +266,6 @@ public class MergedStreamService extends DistcpBaseService {
       } // for each consumer
     } // for each stream
     doLocalCommit(mirrorCommitPaths);
-    missingDirsCommittedPaths.clear();
   }
 
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)
