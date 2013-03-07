@@ -336,7 +336,7 @@ public class TestLocalStreamService extends LocalStreamService implements
 
   @Override
   public void publishMissingPaths() throws Exception {
-    
+    super.publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot());
   }
 }
 
