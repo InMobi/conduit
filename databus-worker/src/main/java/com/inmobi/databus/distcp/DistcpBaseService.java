@@ -302,7 +302,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   /*
    * Helper function to find next minute directory given a path eg: Path p =
-   * "hdfsUrl/databus/streams/adroit_feedback_delta/2013/01/10/12/33"
+   * "hdfsUrl/databus/streams/<streamName>/2013/01/10/12/33"
    */
   private Path getNextMinuteDirectory(Path p) {
     String rootString = srcCluster.getRootDir();
@@ -314,7 +314,7 @@ public abstract class DistcpBaseService extends AbstractService {
     // if it is a valid path than this condition should be true
     if (path.length() >= root.toString().length() + 1) {
       // tmpPath will have value of form
-      // "streams/adroit_feedback_delta/2013/01/10/12/33"
+      // "streams/<streamName>/2013/01/10/12/33"
       String tmpPath = path.substring(root.toString().length() + 1);
       String tmp[] = tmpPath.split(File.separator);
       if (tmp.length >= 2) {
@@ -323,7 +323,7 @@ public abstract class DistcpBaseService extends AbstractService {
         Path pathTillStream = new Path(root, tmp[0]);
         Path pathTillTopic = new Path(pathTillStream, tmp[1]);
         // pathTillTopic value will be of form
-        // hdfsUrl/databus/streams/adroit_feedback_delta/
+        // hdfsUrl/databus/streams/<streamName>/
         Date pathDate = CalendarHelper.getDateFromStreamDir(pathTillTopic, p);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(pathDate);
