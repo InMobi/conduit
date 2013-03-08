@@ -194,8 +194,8 @@ public class TestDatabusInitialization {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
     clustersToProcess.add("testcluster2");
-    testServicesOnCluster("test-mergedss-databus.xml", clustersToProcess, 2, 2, 
-        2, 0);
+    testServicesOnCluster("test-xinclude-mergedss-databus.xml", 
+        clustersToProcess, 2, 2, 2, 0);
   }
 
   /*

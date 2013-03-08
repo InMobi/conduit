@@ -1,0 +1,21 @@
+<separatexml>
+  <stream name="test1">
+    <sources>
+      <source>
+        <name>testcluster1</name>
+         <retentioninhours>24</retentioninhours>
+      </source>
+      <source>
+        <name>testcluster2</name>
+        <retentioninhours>24</retentioninhours>
+      </source>
+    </sources>
+    <destinations>
+      <destination>
+        <primary>true</primary>
+        <name>testcluster1</name>
+        <retentioninhours>24</retentioninhours>
+      </destination>
+    </destinations>
+  </stream>
+</separatexml>

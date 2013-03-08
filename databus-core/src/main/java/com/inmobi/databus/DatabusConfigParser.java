@@ -55,6 +55,8 @@ public class DatabusConfigParser implements DatabusConfigParserTags {
 
   private void parseXmlFile(String fileName) throws Exception {
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    dbf.setXIncludeAware(true);
+    dbf.setNamespaceAware(true);
     DocumentBuilder db = dbf.newDocumentBuilder();
     Document dom;
     if (fileName == null) {
