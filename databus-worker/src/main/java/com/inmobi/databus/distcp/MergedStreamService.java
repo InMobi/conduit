@@ -191,20 +191,12 @@ public class MergedStreamService extends DistcpBaseService {
   /*
    * @param Map<String, Set<Path>> commitedPaths - Stream Name, It's committed
    * Path.
-   * tmpConsumePath: hdfsUrl/rootDir/system/tmp/
-   * distcp_mergedStream_databusdev1_databusdev2/tmp/src_sourceCluster_via_
-   * destinationCluster_mirrorto_consumername_streamname
-   * final Mirror Path: hdfsUrl/rootDir/system/mirrors/
-   * databusdev1/src_sourceCluster_via_destinationCluster_mirrorto_consumerName_
-   * benchmark_merge_filestatus
-   * Example paths:
-   * tmpConsumePath:hdfs://databusdev2.mkhoj.com:9000/databus/system/tmp/
-   * distcp_mergedStream_databusdev1_databusdev2/tmp/
-   * src_databusdev1_via_databusdev2_mirrorto_databusdev1_benchmark_merge
-   * 
-   * finalMirrorPath: hdfs://databusdev2.mkhoj.com:9000/databus/system/mirrors/
-   * databusdev1/src_databusdev1_via_databusdev2_mirrorto_databusdev1_
-   * benchmark_merge_1352687040907
+   * tmpConsumePath: hdfsUrl/<rootDir>/system/tmp/
+   * distcp_mergedStream_<sourceCluster>_<destinationCluster>/tmp/
+   * src_sourceCluster_via_destinationCluster_mirrorto_consumername_streamname
+   * final Mirror Path: hdfsUrl/<rootDir>/system/mirrors/<consumerCluster>/
+   * src_<sourceCluster>_via_<destinationCluster>_mirrorto_<consumerName>_
+   * <streamName>_filestatus
    */
   private void commitMirroredConsumerPaths(
       Map<String, Set<Path>> tobeCommittedPaths, Path tmp) throws Exception {
@@ -313,10 +305,7 @@ public class MergedStreamService extends DistcpBaseService {
   /*
    * @returns Map<Path, Path> - Map of filePath, destinationPath committed
    * for stream
-   * destinationPath : hdfsUrl/rootdir/streams/category/YYYY/MM/HH/MN/filename
-   * Example path:
-   * hdfs://databusdev2.mkhoj.com:9000/databus/streams/test-topic/
-   * 2012/10/00/00/filename
+   * destinationPath : hdfsUrl/<rootdir>/streams/<category>/YYYY/MM/HH/MN/filename
    */
   public Map<Path, Path> createLocalCommitPaths(Path tmpOut, long commitTime, 
       Map<String, List<Path>> categoriesToCommit, 
