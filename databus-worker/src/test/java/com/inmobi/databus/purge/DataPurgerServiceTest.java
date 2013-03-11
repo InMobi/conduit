@@ -385,7 +385,7 @@ public class DataPurgerServiceTest {
       String datapath = Cluster.getDateAsYYYYMMDDHHMNPath(date.getTime());
       String mergecommitpath = cluster.getFinalDestDirRoot() + File.separator
           + streamname + File.separator + datapath;
-      paths[i] = new Path(mergecommitpath);
+      paths[i++] = new Path(mergecommitpath);
     }
     return paths;
   }
@@ -398,7 +398,7 @@ public class DataPurgerServiceTest {
       String datapath = Cluster.getDateAsYYYYMMDDHHMNPath(date.getTime());
       String commitpath = cluster.getLocalFinalDestDirRoot() + File.separator
           + streamname + File.separator + datapath;
-      paths[i] = new Path(commitpath);
+      paths[i++] = new Path(commitpath);
     }
     return paths;
   }
