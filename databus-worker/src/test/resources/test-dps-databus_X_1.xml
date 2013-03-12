@@ -12,14 +12,14 @@
       <sources>
         <source>
           <name>testcluster1</name>
-          <retentioninhours>2</retentioninhours>
+          <retentioninhours>3</retentioninhours>
         </source>
       </sources>
       <destinations>
         <destination>
 	  <primary>true</primary>
           <name>testcluster1</name>
-          <retentioninhours>2</retentioninhours>
+          <retentioninhours>3</retentioninhours>
         </destination>
       </destinations>
     </stream>

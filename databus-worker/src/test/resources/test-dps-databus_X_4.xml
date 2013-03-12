@@ -2,7 +2,7 @@
   <defaults>
     <rootdir>/tmp/datapurger</rootdir>
     <retentioninhours>1</retentioninhours>
-    <trashretentioninhours>4</trashretentioninhours>
+    <trashretentioninhours>5</trashretentioninhours>
   </defaults>
 
   <!-- A stream can have only one primary and multiple mirrors as destinations
@@ -12,14 +12,14 @@
       <sources>
         <source>
           <name>testcluster1</name>
-          <retentioninhours>2</retentioninhours>
+          <retentioninhours>3</retentioninhours>
         </source>
       </sources>
       <destinations>
 	<destination>
           <primary>true</primary>
           <name>testcluster1</name>
-          <retentioninhours>2</retentioninhours>
+          <retentioninhours>3</retentioninhours>
         </destination>
       </destinations>
     </stream>

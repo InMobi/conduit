@@ -320,7 +320,7 @@ public class DataPurgerServiceTest {
   public void testPurgerService() throws Exception {
 
     LOG.info("Working for file test-dps-databus_X_1.xml");
-    testPurgerService("test-dps-databus_X_1.xml", -2, false, false);
+    testPurgerService("test-dps-databus_X_1.xml", -3, false, false);
     testPurgerService("test-dps-databus_X_1.xml", -1, true, false);
     LOG.info("Working for file test-dps-databus_X_4.xml");
     testPurgerService("test-dps-databus_X_4.xml", -3, false, true);
