@@ -35,7 +35,7 @@ import com.inmobi.databus.DestinationStream;
 public class TestDistCPBaseService  {
   private static Logger LOG = Logger.getLogger(TestDistCPBaseService.class);
   Path testRoot = new Path("/tmp/", this.getClass().getName());
-  Path testRoot1=new Path("/tmp/","test");
+  Path testRoot1=new Path("/tmp/","sample-test");
   FileSystem localFs;
   Cluster cluster;
   MirrorStreamService mirrorService = null;
@@ -46,7 +46,7 @@ public class TestDistCPBaseService  {
       + ".TestDistCPBaseService/data-file1";
   String expectedFileName2 = "/tmp/com.inmobi.databus.distcp"
       + ".TestDistCPBaseService/data-file2";
-  String expectedFileName3 = "/tmp/test/data-file1";
+  String expectedFileName3 = "/tmp/sample-test/data-file1";
   Set<String> expectedConsumePaths = new HashSet<String>();
 
   @BeforeTest

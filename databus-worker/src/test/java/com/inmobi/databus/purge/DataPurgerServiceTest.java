@@ -251,7 +251,7 @@ public class DataPurgerServiceTest {
       if (createEmptyDirs) {
         Path path = new Path(trashpath);
         if (!fs.exists(path))
-          fs.create(path);
+          fs.mkdirs(path);
         Assert.assertTrue(fs.exists(path));
       }
     }
@@ -320,7 +320,7 @@ public class DataPurgerServiceTest {
   public void testPurgerService() throws Exception {
 
     LOG.info("Working for file test-dps-databus_X_1.xml");
-    testPurgerService("test-dps-databus_X_1.xml", -2, false, false);
+    testPurgerService("test-dps-databus_X_1.xml", -3, false, false);
     testPurgerService("test-dps-databus_X_1.xml", -1, true, false);
     LOG.info("Working for file test-dps-databus_X_4.xml");
     testPurgerService("test-dps-databus_X_4.xml", -3, false, true);
@@ -385,7 +385,7 @@ public class DataPurgerServiceTest {
       String datapath = Cluster.getDateAsYYYYMMDDHHMNPath(date.getTime());
       String mergecommitpath = cluster.getFinalDestDirRoot() + File.separator
           + streamname + File.separator + datapath;
-      paths[i] = new Path(mergecommitpath);
+      paths[i++] = new Path(mergecommitpath);
     }
     return paths;
   }
@@ -398,7 +398,7 @@ public class DataPurgerServiceTest {
       String datapath = Cluster.getDateAsYYYYMMDDHHMNPath(date.getTime());
       String commitpath = cluster.getLocalFinalDestDirRoot() + File.separator
           + streamname + File.separator + datapath;
-      paths[i] = new Path(commitpath);
+      paths[i++] = new Path(commitpath);
     }
     return paths;
   }
