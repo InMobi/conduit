@@ -51,8 +51,8 @@ public class PublishMissingPathsTest {
     LOG.debug("Create Missing Directory for streams_publish: " + publishPaths);
 
     fs.mkdirs(new Path(publishPaths));
-    
-    service.publishMissingPaths();
+    long commitTime = service.getCluster().getCommitTime();
+    service.publishMissingPaths(commitTime);
     
     VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
         basepublishPaths);
@@ -115,11 +115,12 @@ public class PublishMissingPathsTest {
     fs.mkdirs(new Path(publishPaths));
     {
       Calendar todaysdate = new GregorianCalendar();
-      
+      long commitTime = cluster.getCommitTime();
       Map<String, Set<Path>> missingDirCommittedPaths = new HashMap<String,
           Set<Path>>();
-      service.publishMissingPaths(fs, missingDirCommittedPaths);
-      service.commitPublishMissingPaths(fs, missingDirCommittedPaths);
+      
+      service.publishMissingPaths(fs, missingDirCommittedPaths, commitTime);
+      service.commitPublishMissingPaths(fs, missingDirCommittedPaths, commitTime);
       
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);
@@ -127,11 +128,11 @@ public class PublishMissingPathsTest {
 
     {
       Calendar todaysdate = new GregorianCalendar();
-
+      long commitTime = cluster.getCommitTime();
       Map<String, Set<Path>> missingDirCommittedPaths = new HashMap<String,
           Set<Path>>();
-      service.publishMissingPaths(fs, missingDirCommittedPaths);
-      service.commitPublishMissingPaths(fs, missingDirCommittedPaths);
+      service.publishMissingPaths(fs, missingDirCommittedPaths, commitTime);
+      service.commitPublishMissingPaths(fs, missingDirCommittedPaths, commitTime);
 
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);

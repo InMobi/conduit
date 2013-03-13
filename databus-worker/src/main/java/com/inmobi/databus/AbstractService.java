@@ -208,10 +208,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected Set<Path> publishMissingPaths(FileSystem fs, String destDir,
 	    long commitTime, String categoryName) throws Exception {
     Set<Path> missingDirectories = new TreeSet<Path>();
-		Calendar commitTimeMinutes = new GregorianCalendar();
-		commitTimeMinutes.set(Calendar.MILLISECOND, 0);
-		commitTimeMinutes.set(Calendar.SECOND, 0);
-		commitTime = commitTimeMinutes.getTimeInMillis();
 		Long prevRuntime = new Long(-1);
 		if (!prevRuntimeForCategory.containsKey(categoryName)) {
 			LOG.debug("Calculating Previous Runtime from Directory Listing");
@@ -229,19 +225,17 @@ public abstract class AbstractService implements Service, Runnable {
 					    prevRuntime);
           Path missingDir = new Path(missingPath);
           if (!fs.exists(missingDir)) {
-            LOG.debug("Creating Missing Directory [" + missingPath + "]");
             missingDirectories.add(new Path(missingPath));
           }
 					prevRuntime += MILLISECONDS_IN_MINUTE;
 				}
 			}
-			prevRuntimeForCategory.put(categoryName, commitTime);
 		}
     return missingDirectories;
 	}
 
   protected Map<String, Set<Path>> publishMissingPaths(FileSystem fs,
-      String destDir)
+      String destDir, long commitTime)
 	    throws Exception {
     Map<String, Set<Path>> missingDirectories = new HashMap<String, Set<Path>>();
     Set<Path> missingdirsinstream = null;
@@ -250,8 +244,7 @@ public abstract class AbstractService implements Service, Runnable {
 		if (fileStatus != null) {
 			for (FileStatus file : fileStatus) {
         missingdirsinstream = publishMissingPaths(fs, destDir,
-            System.currentTimeMillis(), file
-				    .getPath().getName());
+            commitTime, file.getPath().getName());
         if (missingdirsinstream.size() > 0)
           missingDirectories.put(file.getPath().getName(), missingdirsinstream);
 			}
@@ -264,16 +257,19 @@ public abstract class AbstractService implements Service, Runnable {
    * publish all the missing paths and clears missingDirCommittedPaths map
    * after publishing
    */
-  public void commitPublishMissingPaths(FileSystem fs, Map<String, Set<Path>>
-  missingDirsCommittedPaths) throws IOException {
+  public void commitPublishMissingPaths(FileSystem fs, 
+      Map<String, Set<Path>> missingDirsCommittedPaths, long commitTime) 
+          throws IOException {
     if (missingDirsCommittedPaths != null && missingDirsCommittedPaths.size() > 0) {
       for (String category : missingDirsCommittedPaths.keySet()) {
         Set<Path> missingPathsPerCategory = missingDirsCommittedPaths.get(category);
         for (Path missingdir : missingPathsPerCategory) {
           if (!fs.exists(missingdir)) {
+            LOG.debug("Creating Missing Directory [" + missingdir + "]");
             fs.mkdirs(missingdir);
           }
         }
+        prevRuntimeForCategory.put(category, commitTime);
       }
       missingDirsCommittedPaths.clear();
     }

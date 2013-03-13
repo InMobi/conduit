@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -123,7 +125,10 @@ public class Cluster {
   }
 
   public synchronized long getCommitTime() {
-    return (long) System.currentTimeMillis();
+    Calendar commitTimeMinutes = new GregorianCalendar();
+    commitTimeMinutes.set(Calendar.MILLISECOND, 0);
+    commitTimeMinutes.set(Calendar.SECOND, 0);
+    return commitTimeMinutes.getTimeInMillis();
   }
 
   public String getHdfsUrl() {

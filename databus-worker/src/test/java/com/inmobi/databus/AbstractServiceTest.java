@@ -18,5 +18,5 @@ public interface AbstractServiceTest {
 
   public abstract Cluster getCluster();
 
-  public abstract void publishMissingPaths() throws Exception;
+  public abstract void publishMissingPaths(long commitTime) throws Exception;
 }

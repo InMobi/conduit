@@ -83,12 +83,14 @@ public class MergedStreamService extends DistcpBaseService {
         disadvantage when failure occurs before publishing missing paths to 
         dest cluster is missing paths which were calculated in the previous run 
         will be added to mirror consumer file again */
-        preparePublishMissingPaths(missingDirsCommittedPaths, -1, primaryCategories);
+        long commitTime = getDestCluster().getCommitTime();
+        preparePublishMissingPaths(missingDirsCommittedPaths, commitTime, 
+            primaryCategories);
         if (missingDirsCommittedPaths.size() > 0) {
           LOG.info("Adding Missing Directories to the mirror consumer file and" +
               " publishing the missing paths"+ missingDirsCommittedPaths.size());
           commitMirroredConsumerPaths(missingDirsCommittedPaths, tmp);
-          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths);
+          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, commitTime);
         }
       }
 
@@ -139,7 +141,8 @@ public class MergedStreamService extends DistcpBaseService {
 
           // Prepare paths for MirrorStreamConsumerService
           commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
-          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths);
+          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, 
+              commitTime);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths);
         }
@@ -173,7 +176,7 @@ public class MergedStreamService extends DistcpBaseService {
       }
     } else {
       missingDirsforCategory = publishMissingPaths(
-          getDestFs(), getDestCluster().getFinalDestDirRoot());
+          getDestFs(), getDestCluster().getFinalDestDirRoot(), commitTime);
     }
 
     if (missingDirsforCategory != null) {
