@@ -96,10 +96,10 @@ public class LocalStreamService extends AbstractService implements
       // any old data being used in this run if the old run was aborted
       cleanUpTmp(fs);
       LOG.info("TmpPath is [" + tmpPath + "]");
-
+      long commitTime = srcCluster.getCommitTime();
       missingDirsCommittedPaths.putAll(publishMissingPaths(fs,
-          srcCluster.getLocalFinalDestDirRoot()));
-      commitPublishMissingPaths(fs, missingDirsCommittedPaths);
+          srcCluster.getLocalFinalDestDirRoot(), commitTime));
+      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
@@ -115,7 +115,7 @@ public class LocalStreamService extends AbstractService implements
       Job job = createJob(tmpJobInputPath);
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
-        long commitTime = srcCluster.getCommitTime();
+        commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
         commit(prepareForCommit(commitTime));
         checkPoint(checkpointPaths);
@@ -163,7 +163,7 @@ public class LocalStreamService extends AbstractService implements
       } else {
         missingDirsCommittedPaths.put(categoryName, publishMissingDirs);
       }
-      commitPublishMissingPaths(fs, missingDirsCommittedPaths);
+      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
     }
 
     // find input files for consumer

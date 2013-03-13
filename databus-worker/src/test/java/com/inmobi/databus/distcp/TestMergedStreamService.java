@@ -166,8 +166,9 @@ public class TestMergedStreamService extends MergedStreamService
   }
 
   @Override
-  public void publishMissingPaths() throws Exception {
-    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot());
+  public void publishMissingPaths(long commitTime) throws Exception {
+    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot(), 
+        commitTime);
   }
   
   @Override

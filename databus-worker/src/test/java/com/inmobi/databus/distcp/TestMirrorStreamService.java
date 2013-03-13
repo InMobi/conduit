@@ -129,8 +129,9 @@ public class TestMirrorStreamService extends MirrorStreamService
   }
 
   @Override
-  public void publishMissingPaths() throws Exception {
-    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot());
+  public void publishMissingPaths(long commitTime) throws Exception {
+    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot(), 
+        commitTime);
   }
   
   @Override
