@@ -340,41 +340,42 @@ public abstract class DistcpBaseService extends AbstractService {
 
   void writeYetToBeMovedFile(Path tmp, Set<Path> yetToBeMovedPaths)
       throws Exception {
-    String tmpPath = "yet_to_be_moved_src" + srcCluster.getName()
-        + "_to_destn_" + destCluster.getName() + "_"
-        + System.currentTimeMillis();
-    Path temporary = new Path(tmp, tmpPath);
-    Map<Path, Path> ytmCommitPaths = new HashMap<Path, Path>();
-    FSDataOutputStream out = null;
-    try {
-      out = srcFs.create(temporary);
-      for (Path p : yetToBeMovedPaths) {
-        LOG.debug("Writing yet To Be Moved Path [" + p + "]");
-        out.writeBytes(p.toString());
-        out.writeBytes("\n");
-      }
-    } catch (IOException e) {
-      LOG.error("Cannot create yet_to_be_moved file in[" + temporary + "]", e);
-    } finally {
-      if (out != null) {
-        try {
-          out.close();
-        } catch (IOException e) {
-          LOG.error("Cannot close the file [" + temporary + "]", e);
+    if (yetToBeMovedPaths != null && yetToBeMovedPaths.size() > 0) {
+      String tmpPath = "yet_to_be_moved_src" + srcCluster.getName()
+          + "_to_destn_" + destCluster.getName() + "_"
+          + System.currentTimeMillis();
+      Path temporary = new Path(tmp, tmpPath);
+      Map<Path, Path> ytmCommitPaths = new HashMap<Path, Path>();
+      FSDataOutputStream out = null;
+      try {
+        out = srcFs.create(temporary);
+        for (Path p : yetToBeMovedPaths) {
+          LOG.debug("Writing yet To Be Moved Path [" + p + "]");
+          out.writeBytes(p.toString());
+          out.writeBytes("\n");
+        }
+      } catch (IOException e) {
+        LOG.error("Cannot create yet_to_be_moved file in[" + temporary + "]", e);
+      } finally {
+        if (out != null) {
+          try {
+            out.close();
+          } catch (IOException e) {
+            LOG.error("Cannot close the file [" + temporary + "]", e);
+          }
         }
       }
-    }
-
-    Path finalYetToBeMoved = new Path(getInputPath(),
-        ("yet_to_be_moved_" + System.currentTimeMillis()));
-    ytmCommitPaths.put(temporary, finalYetToBeMoved);
-    LOG.info("Renaming " + temporary + " to " + finalYetToBeMoved);
-    srcFs.mkdirs(finalYetToBeMoved.getParent());
-    if (srcFs.rename(temporary, finalYetToBeMoved) == false) {
-      LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
-          + "dataloss.");
-      throw new Exception("Abort transaction Commit. Rename failed from ["
-          + temporary + "] to [" + finalYetToBeMoved + "]");
+      Path finalYetToBeMoved = new Path(getInputPath(),
+          ("yet_to_be_moved_" + System.currentTimeMillis()));
+      ytmCommitPaths.put(temporary, finalYetToBeMoved);
+      LOG.info("Renaming " + temporary + " to " + finalYetToBeMoved);
+      srcFs.mkdirs(finalYetToBeMoved.getParent());
+      if (srcFs.rename(temporary, finalYetToBeMoved) == false) {
+        LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
+            + "dataloss.");
+        throw new Exception("Abort transaction Commit. Rename failed from ["
+            + temporary + "] to [" + finalYetToBeMoved + "]");
+      }
     }
   }
 
