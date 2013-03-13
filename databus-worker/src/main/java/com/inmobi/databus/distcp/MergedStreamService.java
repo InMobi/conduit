@@ -235,6 +235,9 @@ public class MergedStreamService extends DistcpBaseService {
         LOG.warn(" Consumers is empty for stream [" + stream + "]");
         continue;
       }
+      if (tobeCommittedPaths.get(stream).size() == 0) {
+        continue;
+      }
       for (Cluster consumer : consumers) {
         // commit paths for this consumer, this stream
         // adding srcCluster avoids two Remote Copiers creating same filename

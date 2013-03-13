@@ -224,9 +224,10 @@ public abstract class DistcpBaseService extends AbstractService {
       }
       // removing those path which have same file name
       filterMinFilePaths(minFilesSet);
-      // writing yet to be moved file on the source cluster
-      writeYetToBeMovedFile(srcCluster.getTmpPath(), yetToBeMovedPaths);
-
+      if (yetToBeMovedPaths.size() > 0) {
+        // writing yet to be moved file on the source cluster
+        writeYetToBeMovedFile(srcCluster.getTmpPath(), yetToBeMovedPaths);
+      }
       Path tmpPath = createInputFileForDISCTP(destFs, srcCluster.getName(),
           tmp, minFilesSet);
       return getFinalPathForDistCP(tmpPath, consumePaths);
