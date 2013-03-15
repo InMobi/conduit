@@ -19,9 +19,10 @@
   </parent>
 
   <scm>
-    <connection>scm:git:git://github.corp.inmobi.com/platform/conduit</connection>
+    <connection>scm:git:https://github.corp.inmobi.com/platform/conduit.git</connection>
     <url>https://github.corp.inmobi.com/platform/conduit</url>
-    <developerConnection>scm:git:git@github.corp.inmobi.com/platform/conduit.git</developerConnection>
+    <developerConnection>scm:git:https://github.corp.inmobi.com/platform/conduit.git</developerConnection>
+    <tag>HEAD</tag>
   </scm>
 
   <repositories>
