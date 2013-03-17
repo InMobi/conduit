@@ -251,7 +251,7 @@ public class DataPurgerServiceTest {
       if (createEmptyDirs) {
         Path path = new Path(trashpath);
         if (!fs.exists(path))
-          fs.create(path);
+          fs.mkdirs(path);
         Assert.assertTrue(fs.exists(path));
       }
     }
