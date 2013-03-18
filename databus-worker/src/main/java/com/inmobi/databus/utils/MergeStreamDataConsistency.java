@@ -65,10 +65,19 @@ public class MergeStreamDataConsistency extends CompareDataConsistency {
           doRecursiveListing(file.getPath(), listOfFiles, fs, inconsistency);
         } else {
           String fileName = file.getPath().getName();
+          // Checking for duplicates in merge stream
           if (listOfFiles.containsKey(fileName)) {
             Path duplicateFile = listOfFiles.get(fileName);
-            inconsistency.add(duplicateFile);
-            System.out.println("Duplicate file: " + duplicateFile);
+            // file listing may happen in any order(i.e. not guaranteed in 
+            // ascending or descending order). Checking for the file which was
+            // created first among the duplicates.
+            if (duplicateFile.compareTo(file.getPath()) < 0) {
+              inconsistency.add(duplicateFile);
+              System.out.println("Duplicate file: " + duplicateFile);
+            } else {
+              inconsistency.add(file.getPath());
+              System.out.println("Duplicate file: " + file.getPath());
+            }
           }
           listOfFiles.put(fileName, file.getPath());
         }
