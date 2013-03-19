@@ -38,6 +38,7 @@ public class TestMergeStreamDataConsistency {
 	List<String> inconsistencyAtEndOfStream = new ArrayList<String>();
 	List<String> purgedPathStreaName = new ArrayList<String>();
 	List<String> purgedOnLocalStream = new ArrayList<String>();
+	List<String> duplicateFileStream = new ArrayList<String>();
 	List<String> allStreamNames = new ArrayList<String>();
 
 	List<Path> emptyPaths = new ArrayList<Path>();
@@ -51,6 +52,7 @@ public class TestMergeStreamDataConsistency {
 	List<Path> purgedPaths = new ArrayList<Path>();
 	// It stores all the purged paths on the streams_local
 	List<Path> purgedLocalPaths = new ArrayList<Path>();
+	List<Path> duplicateFilePaths = new ArrayList<Path>();
 	
 	boolean missing = false;
 	boolean missingAtEnd = false;
@@ -72,6 +74,7 @@ public class TestMergeStreamDataConsistency {
 		defineStreamNames(inconsistencyAtEndOfStream, "inconsistencyAtEnd");
 		defineStreamNames(purgedPathStreaName, "purgedFiles");
 		defineStreamNames(purgedOnLocalStream, "purgeLocal");
+		defineStreamNames(duplicateFileStream, "duplicates");
 		defineStreamNames(allStreamNames, "empty");
 		defineStreamNames(allStreamNames, "emptyDirs");
 		defineStreamNames(allStreamNames, "consistentData");
@@ -83,6 +86,7 @@ public class TestMergeStreamDataConsistency {
 		defineStreamNames(allStreamNames, "inconsistencyAtEnd");
 		defineStreamNames(allStreamNames, "purgedFiles");
 		defineStreamNames(allStreamNames, "purgeLocal");
+		defineStreamNames(allStreamNames, "duplicates");
 		
 		createTestData(localStreamUrl, "local");
 		createTestData(mergedStreamUrl, "merge");
@@ -161,6 +165,17 @@ public class TestMergeStreamDataConsistency {
 					  purgedLocalPaths.add(new Path(new Path(streamDir, date), "file0"));
 					  purgedLocalPaths.add(new Path(new Path(streamDir, date), "file1"));
 					  purgedLocalPaths.add(new Path(new Path(streamDir, date), "file2"));
+					} else if (streamName.equals("duplicates")) {
+					  date = Cluster.getDateAsYYYYMMDDHHMNPath(temptime + i *
+					      milliseconds);
+					  Path minDir = new Path(streamDir, date);
+					  createFilesData(fs, minDir, numOfFiles, start);
+					  if (i == 1) {
+					    date = Cluster.getDateAsYYYYMMDDHHMNPath(temptime + (i + dirCount)
+					        * milliseconds);
+					    createFilesData(fs, new Path(streamDir, date), 1, 1);
+					  }
+					  duplicateFilePaths.add(new Path(minDir, "file1"));
 					}
 				} else {
 					if (streamName.equals("emptyDirs")) {
@@ -223,6 +238,10 @@ public class TestMergeStreamDataConsistency {
 					  } else {
 					    createFilesData(fs, new Path(streamDir, date), 5, start);
 					  }
+					} else if (streamName.equals("duplicates")) {
+					  date = Cluster.getDateAsYYYYMMDDHHMNPath(temptime + i *
+					      milliseconds);
+					  createFilesData(fs, new Path(streamDir, date), 5, start);
 					}
 				}	
 			}	
@@ -246,6 +265,7 @@ public class TestMergeStreamDataConsistency {
 			createMinDirs(baseDir, false, 1, inconsistencyAtEndOfStream, start);
 			createMinDirs(baseDir, false, 1, purgedPathStreaName, 3);
       createMinDirs(baseDir, false, 1, purgedOnLocalStream, start);
+      createMinDirs(baseDir, false, 1, duplicateFileStream, start);
 		} else {
 			int start = 0;
 			boolean fileCreated = false;
@@ -266,6 +286,7 @@ public class TestMergeStreamDataConsistency {
 				createMinDirs(baseDir, true, 1, inconsistencyAtEndOfStream, start);
 				createMinDirs(baseDir, true, 1, purgedPathStreaName, start);
 				createMinDirs(baseDir, true, 1, purgedOnLocalStream, start);
+				createMinDirs(baseDir, true, 1, duplicateFileStream, start);
 				start += 5;
 			}
 		}
@@ -279,8 +300,7 @@ public class TestMergeStreamDataConsistency {
 		for (int j = start; j < filesCount + start; j++) {
 			filesList.add(new Path("file" + j));
 			path= new Path(minDir, filesList.get(j-start));
-			LOG.debug("Creating Test Data with filename [" + filesList.get(j-start)
-					+ "]");
+			LOG.debug("Creating Test Data with filename [" + path);
 			FSDataOutputStream streamout = fs.create(path);
 			streamout.writeBytes("Creating Test data for teststream"
 					+ filesList.get(j-start));
@@ -313,6 +333,7 @@ public class TestMergeStreamDataConsistency {
 		testLocalMergeStreams(inconsistencyAtEndOfStream, inconsistencyEndPaths, obj);
 		testLocalMergeStreams(purgedPathStreaName, purgedPaths, obj);
     testLocalMergeStreams(purgedOnLocalStream, purgedLocalPaths, obj);
+    testLocalMergeStreams(duplicateFileStream, duplicateFilePaths, obj);
 		
 		LOG.info("all streams together");
 		List<Path> allStreamPaths = new ArrayList<Path>();
@@ -325,6 +346,7 @@ public class TestMergeStreamDataConsistency {
 		allStreamPaths.addAll(inconsistencyEndPaths);
 		allStreamPaths.addAll(purgedPaths);
     allStreamPaths.addAll(purgedLocalPaths);
+    allStreamPaths.addAll(duplicateFilePaths);
 
 		testLocalMergeStreams(allStreamNames, allStreamPaths, obj);
 		// testing run method

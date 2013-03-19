@@ -41,11 +41,11 @@ public class MergeStreamDataConsistency extends CompareDataConsistency {
         streamDir = new Path(new Path(localStreamRootDir, "streams_local"),
             streamName);
         fs = streamDir.getFileSystem(new Configuration());
-        doRecursiveListing(streamDir, localStreamFiles, fs);
+        doRecursiveListing(streamDir, localStreamFiles, fs, inconsistency);
       }
       streamDir = new Path(new Path(mergedStreamRoorDir, "streams"), streamName);
       fs = streamDir.getFileSystem(new Configuration());
-      doRecursiveListing(streamDir, mergedStreamFiles, fs);
+      doRecursiveListing(streamDir, mergedStreamFiles, fs, inconsistency);
       System.out.println("stream name: " + streamName);
       compareDataConsistency(localStreamFiles, mergedStreamFiles, 
           inconsistency);
@@ -53,17 +53,33 @@ public class MergeStreamDataConsistency extends CompareDataConsistency {
     return inconsistency;
   }
 
-  public void doRecursiveListing(Path streamDir, TreeMap<String, Path> 
-  listOfFiles, FileSystem fs) throws IOException {
+  public void doRecursiveListing(Path streamDir, 
+      TreeMap<String, Path> listOfFiles, FileSystem fs, List<Path> inconsistency) 
+          throws IOException {
     FileStatus[] fileStatuses = fs.listStatus(streamDir);
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + streamDir);
     } else {
       for (FileStatus file : fileStatuses) { 
         if (file.isDir()) {
-          doRecursiveListing(file.getPath(), listOfFiles, fs);
-        } else { 
-          listOfFiles.put(file.getPath().getName(), file.getPath());
+          doRecursiveListing(file.getPath(), listOfFiles, fs, inconsistency);
+        } else {
+          String fileName = file.getPath().getName();
+          // Checking for duplicates in merge stream
+          if (listOfFiles.containsKey(fileName)) {
+            Path duplicateFile = listOfFiles.get(fileName);
+            // file listing may happen in any order(i.e. not guaranteed in 
+            // ascending or descending order). Checking for the file which was
+            // created first among the duplicates.
+            if (duplicateFile.compareTo(file.getPath()) < 0) {
+              inconsistency.add(duplicateFile);
+              System.out.println("Duplicate file: " + duplicateFile);
+            } else {
+              inconsistency.add(file.getPath());
+              System.out.println("Duplicate file: " + file.getPath());
+            }
+          }
+          listOfFiles.put(fileName, file.getPath());
         }
       } 
     }
