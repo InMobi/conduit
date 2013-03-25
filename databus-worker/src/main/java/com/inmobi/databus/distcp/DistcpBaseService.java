@@ -107,10 +107,13 @@ public abstract class DistcpBaseService extends AbstractService {
     return options;
   }
 
-  protected Boolean executeDistCp(DistCpOptions options) throws Exception {
-    // Add Additional Default arguments to the array below which gets merged
-    // with the arguments as sent in by the Derived Service
+  protected Boolean executeDistCp(DistCpOptions options, String serviceName)
+      throws Exception {
+    //Add Additional Default arguments to the array below which gets merged
+    //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
+    conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
+        "_" + getDestCluster().getName());
     DistCp distCp = new DistCp(conf, options);
     try {
       distCp.execute();
@@ -349,13 +352,14 @@ public abstract class DistcpBaseService extends AbstractService {
         out.writeBytes("\n");
       }
     } catch (IOException e) {
-      LOG.error("Cannot create yet_to_be_moved file in[" + temporary + "]", e);
+      throw new IOException("Cannot create yet_to_be_moved file in[" + 
+          temporary + "]", e);
     } finally {
       if (out != null) {
         try {
           out.close();
         } catch (IOException e) {
-          LOG.error("Cannot close the file [" + temporary + "]", e);
+          throw new IOException("Cannot close the file [" + temporary + "]", e);
         }
       }
     }
