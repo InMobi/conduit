@@ -357,13 +357,14 @@ public abstract class DistcpBaseService extends AbstractService {
         out.writeBytes("\n");
       }
     } catch (IOException e) {
-      LOG.error("Cannot create yet_to_be_moved file in[" + temporary + "]", e);
+      throw new IOException("Cannot create yet_to_be_moved file in[" + 
+          temporary + "]", e);
     } finally {
       if (out != null) {
         try {
           out.close();
         } catch (IOException e) {
-          LOG.error("Cannot close the file [" + temporary + "]", e);
+          throw new IOException("Cannot close the file [" + temporary + "]", e);
         }
       }
     }
