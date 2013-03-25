@@ -108,7 +108,7 @@ public class MergedStreamService extends DistcpBaseService {
 
       try {
         if (!executeDistCp(getDistCpOptions(inputFilePath, tmpOut), 
-            "MergeStreamService"))
+            "MergedStreamService"))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Error in distcp", e);
