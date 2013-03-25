@@ -109,12 +109,14 @@ public abstract class DistcpBaseService extends AbstractService {
     return options;
   }
 
-  protected Boolean executeDistCp(DistCpOptions options)
+  protected Boolean executeDistCp(DistCpOptions options, String serviceName)
       throws Exception
   {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
+    conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
+        "_" + getDestCluster().getName());
     DistCp distCp = new DistCp(conf, options);
     try {
       distCp.execute();

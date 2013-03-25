@@ -96,7 +96,7 @@ public class MirrorStreamService extends DistcpBaseService {
       options.setPreserveSrcPath(true);
 
       try {
-        if (!executeDistCp(options))
+        if (!executeDistCp(options, "MirrorStreamService"))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Problem in Mirrored distcp..skipping commit for this run",
