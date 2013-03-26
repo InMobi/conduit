@@ -43,6 +43,8 @@ public class TestMirrorStreamPrepForCommit {
   private void setUP() throws Exception{
     //create fs
     localFs = FileSystem.getLocal(new Configuration());
+    // clean up the test data if any thing is left in the previous runs
+    cleanup();
     localFs.mkdirs(tmpOut);
 
     //create test data

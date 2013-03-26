@@ -30,6 +30,8 @@ public class DatabusTest extends TestMiniClusterUtil {
   
   // @BeforeSuite
   public void setup() throws Exception {
+    // clean up the test data if any thing is left in the previous runs
+    cleanup();
     super.setup(2, 2, 1);
   }
   

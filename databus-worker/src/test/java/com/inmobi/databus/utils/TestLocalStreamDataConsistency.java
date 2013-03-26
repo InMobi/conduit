@@ -49,6 +49,8 @@ public class TestLocalStreamDataConsistency {
 	@BeforeTest
 	public void setUp() throws Exception {
 		fs = FileSystem.getLocal(new Configuration());
+		// clean up the test data if any thing is left in the previous runs
+		cleanup();
 		defineStreamNames(emptyStreamName, "empty");
 		defineStreamNames(consistentDataStreamName, "consistentData");
 		defineStreamNames(missedFilesStreamName, "missingFiles");

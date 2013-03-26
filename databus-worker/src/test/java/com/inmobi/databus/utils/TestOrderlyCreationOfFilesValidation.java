@@ -53,6 +53,8 @@ public class TestOrderlyCreationOfFilesValidation {
   @BeforeTest
   public void setup() throws Exception {
   	fs = FileSystem.getLocal(new Configuration());
+  	// clean up the test data if any thing is left in the previous runs
+  	cleanup();
   	emptyStream.add("empty");
   	inorderStream.add("inorder");
   	outoforderStream.add("outoforder");

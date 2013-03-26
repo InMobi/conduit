@@ -30,8 +30,9 @@ public class TestCreateListing {
 
   @BeforeTest
   private void setUP() throws Exception{
-
-   localFs = FileSystem.getLocal(new Configuration());
+    localFs = FileSystem.getLocal(new Configuration());
+    // clean up the test data if any thing is left in the previous runs
+    cleanup();
   }
 
   @AfterTest
