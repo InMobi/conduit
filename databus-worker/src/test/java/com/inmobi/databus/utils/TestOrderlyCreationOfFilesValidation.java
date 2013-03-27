@@ -210,7 +210,7 @@ public class TestOrderlyCreationOfFilesValidation {
       Path minDir, int fileNum) throws Exception {
     Path filenameStr = new Path("file" + fileNum );
     Path path = new Path(minDir, filenameStr);
-    LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
+    LOG.debug("Creating Test Data with filename [" + path + "]");
     FSDataOutputStream streamout = fs.create(path);
     streamout.writeBytes("Creating Test data for teststream "
         + path);
@@ -297,7 +297,6 @@ public class TestOrderlyCreationOfFilesValidation {
   	checkAllElements(totalOutOfOrderDirs, outoforderExpectedResults);
   	Assert.assertEquals(totalOutOfOrderDirs.size(), outoforderExpectedResults.
   			size()); 
-  	LOG.info("checking");
 
   	// base dirs as optional
   	String arg[] =  {("file:///tmp/test/" + className + "/1/,file:///tmp/test/"
