@@ -59,6 +59,8 @@ public class TestMirrorStreamDataConsistency {
 	@BeforeTest
 	public void setup() throws Exception {
 		fs = FileSystem.getLocal(new Configuration());
+		// clean up the test data if any thing is left in the previous runs
+		cleanup();
 		createTestData(mergedStreamUrl, "merge");
 		createTestData(mirrorStreamUrl, "mirror"); 
 	}

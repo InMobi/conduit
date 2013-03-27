@@ -53,6 +53,8 @@ public class TestDistCPBaseService  {
   public void setUP() throws Exception {
     //create fs
     localFs = FileSystem.getLocal(new Configuration());
+    // clean up the test data if any thing is left in the previous runs
+    cleanUP();
     localFs.mkdirs(testRoot);
 
     //create cluster
