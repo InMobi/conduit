@@ -13,20 +13,9 @@
 */
 package com.inmobi.databus;
 
-import com.inmobi.databus.distcp.MergedStreamService;
-import com.inmobi.databus.distcp.MirrorStreamService;
-import com.inmobi.databus.local.LocalStreamService;
-import com.inmobi.databus.purge.DataPurgerService;
-import com.inmobi.databus.utils.SecureLoginUtil;
-import com.inmobi.databus.zookeeper.CuratorLeaderManager;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,10 +23,25 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import com.inmobi.databus.distcp.MergedStreamService;
+import com.inmobi.databus.distcp.MirrorStreamService;
+import com.inmobi.databus.local.LocalStreamService;
+import com.inmobi.databus.purge.DataPurgerService;
+import com.inmobi.databus.utils.SecureLoginUtil;
+import com.inmobi.databus.zookeeper.CuratorLeaderManager;
+
 public class Databus implements Service, DatabusConstants {
   private static Logger LOG = Logger.getLogger(Databus.class);
   private DatabusConfig config;
   private String currentClusterName = null;
+  private int numStreamsLocalService = 5;
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -77,7 +81,18 @@ public class Databus implements Service, DatabusConstants {
       }
       //Start LocalStreamConsumerService for this cluster if it's the source of any stream
       if (cluster.getSourceStreams().size() > 0) {
-        services.add(getLocalStreamService(config, cluster, currentCluster));
+        Iterator<String> iterator = cluster.getSourceStreams().iterator();
+        List<String> streamsToProcess = new ArrayList<String>();
+        while (iterator.hasNext()) {
+          for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
+            streamsToProcess.add(iterator.next());
+          }
+          if (streamsToProcess.size() > 0) {
+            services.add(getLocalStreamService(config, cluster, currentCluster,
+                streamsToProcess));
+            streamsToProcess = new ArrayList<String>();
+          }
+        }
       }
 
 			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
@@ -124,9 +139,10 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster) {
+      Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
+      throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()));
+        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,

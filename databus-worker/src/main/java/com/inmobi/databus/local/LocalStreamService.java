@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -67,21 +68,38 @@ public class LocalStreamService extends AbstractService implements
   private final int FILES_TO_KEEP = 6;
   private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
   private final long BYTES_PER_MAPPER = 100;
+  private final Map<String, FileStatus> streamsFileStatusMap = new HashMap<String, FileStatus>();
+  private final FileSystem srcFs;
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster currentCluster, CheckpointProvider provider) {
-    super(LocalStreamService.class.getName(), config, DEFAULT_RUN_INTERVAL,
+      Cluster currentCluster, CheckpointProvider provider,
+      List<String> streamsToProcess) throws IOException {
+    super("LocalStreamService_" + getServiceName(streamsToProcess), config,
+        DEFAULT_RUN_INTERVAL,
         provider);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
     else
       this.currentCluster = currentCluster;
+    srcFs = FileSystem.get(srcCluster.getHadoopConf());
+    for (String stream : streamsToProcess) {
+      streamsFileStatusMap.put(stream,
+          srcFs.getFileStatus(new Path(srcCluster.getDataDir(), stream)));
+    }
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
   }
 
+
+  private static final String getServiceName(List<String> streamsToProcess) {
+    String servicename = "";
+    for (String stream : streamsToProcess) {
+      servicename += stream + "@";
+    }
+    return servicename;
+  }
   private void cleanUpTmp(FileSystem fs) throws Exception {
     if (fs.exists(tmpPath)) {
       LOG.info("Deleting tmpPath recursively [" + tmpPath + "]");
@@ -104,8 +122,14 @@ public class LocalStreamService extends AbstractService implements
       cleanUpTmp(fs);
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
-      missingDirsCommittedPaths.putAll(publishMissingPaths(fs,
-          srcCluster.getLocalFinalDestDirRoot(), commitTime));
+
+      for (String stream : streamsFileStatusMap.keySet()) {
+        Set<Path> missingPaths = publishMissingPaths(fs,
+            srcCluster.getLocalFinalDestDirRoot(), commitTime, stream);
+        if (null != missingPaths && missingPaths.size() > 0) {
+          missingDirsCommittedPaths.put(stream, missingPaths);
+        }
+      }
       commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
@@ -210,9 +234,13 @@ public class LocalStreamService extends AbstractService implements
         } finally {
           if (isFileOpened) {
             out.close();
+            // Multiple localstream threads can merge different streams to the
+            // same destination cluster. To avoid conflict of filename in
+            // /databus/system/consumers/{clusterName}/
+            // suffix it with streams contained in the file
             Path finalConsumerPath = new Path(
                 srcCluster.getConsumePath(clusterEntry), Long.toString(System
-                    .currentTimeMillis()));
+                    .currentTimeMillis()) + "_" + streamsFileStatusMap.keySet());
             LOG.debug("Moving [" + tmpConsumerPath + "] to [ "
                 + finalConsumerPath + "]");
             consumerCommitPaths.put(tmpConsumerPath, finalConsumerPath);
@@ -269,23 +297,6 @@ public class LocalStreamService extends AbstractService implements
         trashSet, checkpointPaths);
     long totalSize = 0;
 
-    // FSDataOutputStream out = fs.create(inputPath);
-    // try {
-    // Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
-    // .iterator();
-    // while (it.hasNext()) {
-    // Entry<FileStatus, String> entry = it.next();
-    // out.append(new Text(entry.getValue()), entry.getKey());
-    // out.writeBytes(entry.getKey().getPath().toString());
-    // out.writeBytes("\t");
-    // out.writeBytes(entry.getValue());
-    // out.writeBytes("\n");
-    // }
-    //
-    // } finally {
-    // out.close();
-    // }
-
     SequenceFile.Writer out = null;
     try {
       Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
@@ -325,8 +336,8 @@ public class LocalStreamService extends AbstractService implements
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
       Map<String, FileStatus> checkpointPaths, long lastFileTimeout)
       throws IOException {
-    FileStatus[] streams = fs.listStatus(fileStatus.getPath());
-    for (FileStatus stream : streams) {
+
+    for (FileStatus stream : streamsFileStatusMap.values()) {
       String streamName = stream.getPath().getName();
       LOG.debug("createListing working on Stream [" + streamName + "]");
       FileStatus[] collectors = fs.listStatus(stream.getPath());
@@ -423,7 +434,8 @@ public class LocalStreamService extends AbstractService implements
   private void populateCheckpointPathForCollector(
       Map<String, FileStatus> checkpointPaths,
       TreeMap<String, FileStatus> collectorPaths, String checkpointKey) {
-    // Last file in sorted ascending order to be checkpointed for this collector
+    // Last file in sorted ascending order to be check-pointed for this
+    // collector
     if (collectorPaths != null && collectorPaths.size() > 0) {
       Entry<String, FileStatus> entry = collectorPaths.lastEntry();
       checkpointPaths.put(checkpointKey, entry.getValue());
@@ -517,12 +529,10 @@ public class LocalStreamService extends AbstractService implements
    * The visiblity of method is set to protected to enable unit testing
    */
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
-    String jobName = "localstream";
+    String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
     Job job = new Job(conf);
     job.setJobName(jobName);
-    // KeyValueTextInputFormat.setInputPaths(job, inputPath);
-    // job.setInputFormatClass(KeyValueTextInputFormat.class);
 
     Class<? extends Mapper> mapperClass = getMapperClass();
     job.setJarByClass(mapperClass);

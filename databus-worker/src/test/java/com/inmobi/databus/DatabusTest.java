@@ -1,28 +1,28 @@
 package com.inmobi.databus;
 
-import com.inmobi.databus.distcp.TestMirrorStreamService;
-import com.inmobi.databus.distcp.TestMergedStreamService;
-import com.inmobi.databus.local.TestLocalStreamService;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import java.util.TimerTask;
-import java.util.GregorianCalendar;
+import java.io.IOException;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
+import java.util.TimerTask;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import java.util.HashSet;
-import java.util.Map;
-import org.testng.annotations.Test;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
 import com.inmobi.databus.distcp.MergeMirrorStreamTest;
 import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.distcp.MirrorStreamService;
+import com.inmobi.databus.distcp.TestMergedStreamService;
+import com.inmobi.databus.distcp.TestMirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
-
-import java.util.Set;
+import com.inmobi.databus.local.TestLocalStreamService;
 
 public class DatabusTest extends TestMiniClusterUtil {
   
@@ -48,9 +48,11 @@ public class DatabusTest extends TestMiniClusterUtil {
   
     @Override
     protected LocalStreamService getLocalStreamService(DatabusConfig config,
-        Cluster cluster, Cluster currentCluster) {
+        Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
+        throws IOException {
       return new TestLocalStreamService(config, cluster, currentCluster,
-          new FSCheckpointProvider(cluster.getCheckpointDir()));
+          new FSCheckpointProvider(cluster.getCheckpointDir()),
+          streamsToProcess);
     }
     
     @Override

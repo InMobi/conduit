@@ -1,11 +1,12 @@
 package com.inmobi.databus;
 
-import org.apache.log4j.Logger;
-
-import com.inmobi.databus.local.LocalStreamService;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
+
+import com.inmobi.databus.local.LocalStreamService;
 
 public class TimeToRunTest {
   
@@ -19,7 +20,7 @@ public class TimeToRunTest {
     LOG.info("Test Date [" + format.format(date) + "]");
     try {
       LocalStreamService service = new LocalStreamService(null,
-          ClusterTest.buildLocalCluster(), null, null);
+          ClusterTest.buildLocalCluster(), null, null, null);
       
       long mSecondsTillNextMin = service.getMSecondsTillNextRun(date.getTime());
       LOG.info("mSecondsTillNextMin = [" + mSecondsTillNextMin + "]");

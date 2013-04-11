@@ -1,23 +1,22 @@
 package com.inmobi.databus;
 
-import com.inmobi.databus.local.TestLocalStreamService;
-
-import org.testng.Assert;
-
-import java.util.ArrayList;
-import org.testng.annotations.Test;
-
-import org.apache.log4j.Logger;
-
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import com.inmobi.databus.local.TestLocalStreamService;
 
 public class PublishMissingPathsTest {
   
@@ -86,16 +85,17 @@ public class PublishMissingPathsTest {
   public void testPublishMissingPaths() throws Exception {
     DatabusConfigParser configParser = new DatabusConfigParser(
         "test-lss-pub-databus.xml");
-    
+    List<String> streamsToProcess = new ArrayList();
     DatabusConfig config = configParser.getConfig();
-    
+    streamsToProcess.addAll(config.getSourceStreams().keySet());
     FileSystem fs = FileSystem.getLocal(new Configuration());
     
     ArrayList<Cluster> clusterList = new ArrayList<Cluster>(config
         .getClusters().values());
     Cluster cluster = clusterList.get(0);
     TestLocalStreamService service = new TestLocalStreamService(config,
-        cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()));
+        cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()),
+        streamsToProcess);
     
     ArrayList<SourceStream> sstreamList = new ArrayList<SourceStream>(config
         .getSourceStreams().values());
