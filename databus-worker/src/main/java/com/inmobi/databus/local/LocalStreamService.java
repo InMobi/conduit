@@ -555,8 +555,8 @@ public class LocalStreamService extends AbstractService implements
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
     
     // set configurations needed for UniformSizeInputFormat
-    int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
-    job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
+    job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, 
+        getNumMapsForJob(totalSize));
     job.getConfiguration().setLong(
         DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalSize);
     job.getConfiguration().set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH,
@@ -564,6 +564,15 @@ public class LocalStreamService extends AbstractService implements
     job.setInputFormatClass(UniformSizeInputFormat.class);
 
     return job;
+  }
+  
+  private int getNumMapsForJob(long totalSize) {
+    String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
+    if (mbPerMapper != null) {
+      BYTES_PER_MAPPER = Long.getLong(mbPerMapper) * 1024 * 1024;
+    }
+    int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
+    return numMaps;
   }
 
   /*

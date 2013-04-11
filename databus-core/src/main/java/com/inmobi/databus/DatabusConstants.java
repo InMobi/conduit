@@ -25,5 +25,6 @@ public interface DatabusConstants {
   public static final String ENABLE_ZOOKEEPER = "com.inmobi.databus.enablezk";
   public static final String CLUSTER_NAME = "com.inmobi.databus.current" +
       ".cluster";
+  public static final String MB_PER_MAPPER = "com.inmobi.databus.MBPerMapper";
 
 }
