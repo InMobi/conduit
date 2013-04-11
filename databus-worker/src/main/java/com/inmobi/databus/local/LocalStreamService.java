@@ -69,7 +69,7 @@ public class LocalStreamService extends AbstractService implements
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
   // on assumption that the map task processing throughput is ~25 MB/s.
-  long BYTES_PER_MAPPER = 512 * 1024 * 1024;
+  protected long BYTES_PER_MAPPER = 512 * 1024 * 1024;
   private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
   private DataInputBuffer in = new DataInputBuffer();
 
@@ -527,6 +527,13 @@ public class LocalStreamService extends AbstractService implements
   /*
     The visiblity of method is set to protected to enable unit testing
    */
+  protected void setBytesPerMapper(long bytesPerMapper) {
+    BYTES_PER_MAPPER = bytesPerMapper;
+  }
+  
+  /*
+    The visiblity of method is set to protected to enable unit testing
+   */
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = "localstream";
     Configuration conf = currentCluster.getHadoopConf();
@@ -548,8 +555,7 @@ public class LocalStreamService extends AbstractService implements
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
     
     // set configurations needed for UniformSizeInputFormat
-    int numMaps = (int) (totalSize / BYTES_PER_MAPPER) < 1 ? 1 :
-      (int) (totalSize / BYTES_PER_MAPPER);
+    int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
     job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
     job.getConfiguration().setLong(
         DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalSize);
