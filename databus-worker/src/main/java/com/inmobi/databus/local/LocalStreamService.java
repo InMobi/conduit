@@ -13,6 +13,8 @@
  */
 package com.inmobi.databus.local;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,10 +37,15 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.io.DataInputBuffer;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.hadoop.tools.DistCpConstants;
+import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
 
 /*
  * Handles Local Streams for a Cluster
@@ -59,6 +66,12 @@ public class LocalStreamService extends AbstractService implements
   private final int FILES_TO_KEEP = 6;
   private Map<String, Set<Path>> missingDirsCommittedPaths = new
       HashMap<String, Set<Path>>();
+  // The amount of data expected to be processed by each mapper, such that
+  // each map task completes within ~20 seconds. This calculation is based
+  // on assumption that the map task processing throughput is ~25 MB/s.
+  long BYTES_PER_MAPPER = 512 * 1024 * 1024;
+  private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
+  private DataInputBuffer in = new DataInputBuffer();
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
                             Cluster currentCluster,
@@ -106,13 +119,13 @@ public class LocalStreamService extends AbstractService implements
       // checkpointKey, CheckPointPath
       Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
 
-      createMRInput(tmpJobInputPath, fileListing, trashSet, checkpointPaths);
+      long totalSize = createMRInput(tmpJobInputPath, fileListing, trashSet, checkpointPaths);
 
       if (fileListing.size() == 0) {
         LOG.info("Nothing to do!");
         return;
       }
-      Job job = createJob(tmpJobInputPath);
+      Job job = createJob(tmpJobInputPath, totalSize);
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
@@ -251,29 +264,52 @@ public class LocalStreamService extends AbstractService implements
 
   }
 
-  private void createMRInput(Path inputPath,
+  private long createMRInput(Path inputPath,
                              Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
                              Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
     trashSet, checkpointPaths);
-
-    FSDataOutputStream out = fs.create(inputPath);
+    
+    // the total size of data present in all files
+    long totalSize = 0;
+    SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
+      inputPath, Text.class, FileStatus.class);
     try {
       Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
-        out.writeBytes(entry.getKey().getPath().toString());
-        out.writeBytes("\t");
-        out.writeBytes(entry.getValue());
-        out.writeBytes("\n");
+        out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
+        totalSize += entry.getKey().getLen();
       }
     } finally { 
       out.close();
     }
+    
+    return totalSize;
   }
 
+  // This method is taken from DistCp SimpleCopyListing class.
+  private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
+    // if the file is not an instance of RawLocaleFileStatus, simply return it
+    if (fileStatus.getClass() == FileStatus.class) {
+      return fileStatus;
+    }
+    
+    // Else if it is a local file, we need to convert it to an instance of 
+    // FileStatus class. The reason is that SequenceFile.Writer/Reader does 
+    // an exact match for FileStatus class.
+    FileStatus status = new FileStatus();
+    
+    buffer.reset();
+    DataOutputStream out = new DataOutputStream(buffer);
+    fileStatus.write(out);
+    
+    in.reset(buffer.toByteArray(), 0, buffer.size());
+    status.readFields(in);
+    return status;
+  }
 
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
@@ -491,7 +527,7 @@ public class LocalStreamService extends AbstractService implements
   /*
     The visiblity of method is set to protected to enable unit testing
    */
-  protected Job createJob(Path inputPath) throws IOException {
+  protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = "localstream";
     Configuration conf = currentCluster.getHadoopConf();
     Job job = new Job(conf);
@@ -510,6 +546,16 @@ public class LocalStreamService extends AbstractService implements
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
     job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+    
+    // set configurations needed for UniformSizeInputFormat
+    int numMaps = (int) (totalSize / BYTES_PER_MAPPER) < 1 ? 1 :
+      (int) (totalSize / BYTES_PER_MAPPER);
+    job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
+    job.getConfiguration().setLong(
+        DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalSize);
+    job.getConfiguration().set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH,
+        inputPath.toString());
+    job.setInputFormatClass(UniformSizeInputFormat.class);
 
     return job;
   }

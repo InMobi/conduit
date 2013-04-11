@@ -468,7 +468,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
             currentClusterName);
       //creating a job with empty input path
       Path tmpJobInputPath = new Path("/tmp/job/input/path");
-      Job testJobConf = service.createJob(tmpJobInputPath);
+      Job testJobConf = service.createJob(tmpJobInputPath, 1000);
       Assert
           .assertEquals(testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),
               service.getCurrentCluster().getHadoopConf()
