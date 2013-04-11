@@ -13,6 +13,10 @@
  */
 package com.inmobi.databus.local;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,8 +26,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.inmobi.databus.*;
-import com.inmobi.databus.local.LocalStreamService.CollectorPathFilter;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,9 +37,16 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.inmobi.databus.CheckpointProvider;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.ClusterTest;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DestinationStream;
+import com.inmobi.databus.FSCheckpointProvider;
+import com.inmobi.databus.SourceStream;
+import com.inmobi.databus.TestMiniClusterUtil;
+import com.inmobi.databus.local.LocalStreamService.CollectorPathFilter;
 
 public class LocalStreamServiceTest extends TestMiniClusterUtil {
   private static Logger LOG = Logger.getLogger(LocalStreamServiceTest.class);
@@ -155,26 +164,26 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     when(fs.listStatus(cluster.getDataDir())).thenReturn(files);
     when(fs.listStatus(new Path("/databus/data/stream1"))).thenReturn(stream1);
 
-		when(
-		    fs.listStatus(new Path("/databus/data/stream1/collector1"),
-		        any(CollectorPathFilter.class))).thenReturn(stream3);
+    when(
+        fs.listStatus(new Path("/databus/data/stream1/collector1"),
+            any(CollectorPathFilter.class))).thenReturn(stream3);
     when(fs.listStatus(new Path("/databus/data/stream2"))).thenReturn(stream2);
-		when(
-		    fs.listStatus(new Path("/databus/data/stream1/collector2"),
-		        any(CollectorPathFilter.class))).thenReturn(stream4);
-		when(
-		    fs.listStatus(new Path("/databus/data/stream2/collector1"),
-		        any(CollectorPathFilter.class))).thenReturn(stream5);
-		when(
-		    fs.listStatus(new Path("/databus/data/stream2/collector2"),
-		        any(CollectorPathFilter.class))).thenReturn(stream6);
+    when(
+        fs.listStatus(new Path("/databus/data/stream1/collector2"),
+            any(CollectorPathFilter.class))).thenReturn(stream4);
+    when(
+        fs.listStatus(new Path("/databus/data/stream2/collector1"),
+            any(CollectorPathFilter.class))).thenReturn(stream5);
+    when(
+        fs.listStatus(new Path("/databus/data/stream2/collector2"),
+            any(CollectorPathFilter.class))).thenReturn(stream6);
 
     Path file = mock(Path.class);
     when(file.makeQualified(any(FileSystem.class))).thenReturn(
         new Path("/databus/data/stream1/collector1/"));
   }
 
-	private void testCreateListing() {
+  private void testCreateListing() {
     try {
       Cluster cluster = ClusterTest.buildLocalCluster();
       FileSystem fs = mock(FileSystem.class);
@@ -295,12 +304,12 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
     return new DatabusConfig(streamMap, clusterMap, defaults);
   }
-  
+
   @Test
   public void testPopulateTrashPaths() throws Exception {
     FileStatus[] status = new FileStatus[10];
     String[] expectedstatus = new String[10];
-    
+
     status[0] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
         "/databus/data/test1/testcluster1/test1-2012-08-29-07-09_00000"));
     status[1] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
@@ -321,18 +330,17 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
         "/databus/data/test1/testcluster2/test1-2012-08-29-07-09_00078"));
     status[9] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
         "/databus/data/test1/testcluster2/test1-2012-08-29-07-04_00034"));
-    
+
     expectedstatus[0] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-04_00000";
     expectedstatus[1] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-09_00000";
     expectedstatus[2] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-09_00009";
     expectedstatus[3] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-10_00000";
     expectedstatus[4] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-12_00000";
-    
+
     expectedstatus[5] = "/databus/data/test1/testcluster2/test1-2012-08-13-07-09_00000";
     expectedstatus[6] = "/databus/data/test1/testcluster2/test1-2012-08-29-07-04_00034";
     expectedstatus[7] = "/databus/data/test1/testcluster2/test1-2012-08-29-07-09_00078";
-    
-    
+
     expectedstatus[8] = "/databus/data/test2/testcluster1/test2-2012-08-29-07-09_00003";
     expectedstatus[9] = "/databus/data/test2/testcluster1/test2-2012-08-29-07-45_00000";
 
@@ -340,44 +348,44 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     for (int i = 0; i < 10; ++i) {
       trashSet.add(status[i]);
     }
-    
+
     Cluster cluster = ClusterTest.buildLocalCluster();
     TestLocalStreamService service = new TestLocalStreamService(
         buildTestDatabusConfig(), cluster, null, new FSCheckpointProvider(
             cluster.getCheckpointDir()));
-    
+
     Map<Path, Path> trashCommitPaths = service
         .populateTrashCommitPaths(trashSet);
 
     Set<Path> srcPaths = trashCommitPaths.keySet();
-    
+
     Iterator<Path> it = srcPaths.iterator();
     int i = 0;
-    
+
     while (it.hasNext()) {
       String actualPath = it.next().toString();
       String expectedPath = expectedstatus[i];
-      
+
       LOG.debug("Comparing Trash Paths Actual [" + actualPath + "] Expected ["
           + expectedPath + "]");
       Assert.assertEquals(actualPath, expectedPath);
-      
+
       i++;
     }
   }
-  
+
   @Test
   public void testMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-databus.xml");
     testMapReduce("test-lss-databus.xml", 1);
   }
-  
+
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml");
     testMapReduce("test-lss-multiple-databus.xml", 1);
   }
-  
+
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduceWithMultipleRuns() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml, Running Twice");
@@ -401,8 +409,9 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   }
 
   @Test
-  public void testCopyMapperImplMethod() throws Exception{
-    DatabusConfigParser parser = new DatabusConfigParser("test-lss-databus-s3n.xml");
+  public void testCopyMapperImplMethod() throws Exception {
+    DatabusConfigParser parser = new DatabusConfigParser(
+        "test-lss-databus-s3n.xml");
     DatabusConfig config = parser.getConfig();
     Set<String> clustersToProcess = new HashSet<String>();
     Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
@@ -415,13 +424,13 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     for (String clusterName : clustersToProcess) {
       Cluster cluster = config.getClusters().get(clusterName);
       cluster.getHadoopConf().set("mapred.job.tracker",
-        super.CreateJobConf().get("mapred.job.tracker"));
+          super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-        cluster, null, new NullCheckPointProvider());
+          cluster, null, new NullCheckPointProvider());
       services.add(service);
     }
 
-    for(TestLocalStreamService service : services) {
+    for (TestLocalStreamService service : services) {
       Assert.assertEquals(service.getMapperClass(), S3NCopyMapper.class);
     }
   }
@@ -441,8 +450,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     DatabusConfigParser parser = new DatabusConfigParser(configName);
     DatabusConfig config = parser.getConfig();
     Set<String> clustersToProcess = new HashSet<String>();
-    Set<TestLocalStreamService> services =
-        new HashSet<TestLocalStreamService>();
+    Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
     Cluster currentCluster = null;
     for (SourceStream sStream : config.getSourceStreams().values()) {
       for (String cluster : sStream.getSourceClusters()) {
@@ -456,9 +464,8 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       Cluster cluster = config.getClusters().get(clusterName);
       cluster.getHadoopConf().set("mapred.job.tracker",
           super.CreateJobConf().get("mapred.job.tracker"));
-      TestLocalStreamService service =
-          new TestLocalStreamService(config, cluster, currentCluster,
-              new NullCheckPointProvider());
+      TestLocalStreamService service = new TestLocalStreamService(config,
+          cluster, currentCluster, new NullCheckPointProvider());
       services.add(service);
     }
 
@@ -466,16 +473,15 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       if (currentClusterName != null)
         Assert.assertEquals(service.getCurrentCluster().getName(),
             currentClusterName);
-      //creating a job with empty input path
+      // creating a job with empty input path
       Path tmpJobInputPath = new Path("/tmp/job/input/path");
-      Job testJobConf = service.createJob(tmpJobInputPath);
-      Assert
-          .assertEquals(testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),
-              service.getCurrentCluster().getHadoopConf()
-                  .get(FS_DEFAULT_NAME_KEY));
+      Job testJobConf = service.createJob(tmpJobInputPath, 1000);
       Assert.assertEquals(
-          testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY),
-          service.getCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+          testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY), service
+              .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+      Assert.assertEquals(
+          testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY), service
+              .getCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
       if (currentCluster == null)
         Assert.assertEquals(
             testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),
@@ -486,16 +492,16 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   private void testMapReduce(String fileName, int timesToRun) throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(fileName);
     DatabusConfig config = parser.getConfig();
-    
+
     Set<String> clustersToProcess = new HashSet<String>();
     Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
-    
+
     for (SourceStream sStream : config.getSourceStreams().values()) {
       for (String cluster : sStream.getSourceClusters()) {
         clustersToProcess.add(cluster);
       }
     }
-    
+
     for (String clusterName : clustersToProcess) {
       Cluster cluster = config.getClusters().get(clusterName);
       cluster.getHadoopConf().set("mapred.job.tracker",
@@ -506,7 +512,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
     }
-    
+
     for (TestLocalStreamService service : services) {
       for (int i = 0; i < timesToRun; ++i) {
         service.preExecute();
@@ -514,8 +520,10 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
         long finishTime = System.currentTimeMillis();
         service.postExecute();
         Thread.sleep(1000);
-        /* check for number of times local stream service should run and 
-        no need of waiting if it is the last run of service*/
+        /*
+         * check for number of times local stream service should run and no need
+         * of waiting if it is the last run of service
+         */
         if (timesToRun > 1 && (i < (timesToRun - 1))) {
           long sleepTime = service.getMSecondsTillNextRun(finishTime);
           Thread.sleep(sleepTime);
@@ -524,7 +532,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
     }
-    
+
   }
 
 }
