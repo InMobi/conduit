@@ -19,6 +19,8 @@ import com.inmobi.databus.local.LocalStreamService;
 import com.inmobi.databus.purge.DataPurgerService;
 import com.inmobi.databus.utils.SecureLoginUtil;
 import com.inmobi.databus.zookeeper.CuratorLeaderManager;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -27,7 +29,11 @@ import sun.misc.SignalHandler;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -61,6 +67,38 @@ public class Databus implements Service, DatabusConstants {
   public DatabusConfig getConfig() {
     return config;
   }
+  
+  // This method returns the name of the jar containing the input class.
+  // It is taken from org.apache.hadoop.mapred.JobConf class.
+  private static String findContainingJar(Class my_class) {
+    ClassLoader loader = my_class.getClassLoader();
+    String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
+    try {
+      for(Enumeration itr = loader.getResources(class_file);
+          itr.hasMoreElements();) {
+        URL url = (URL) itr.nextElement();
+        if ("jar".equals(url.getProtocol())) {
+          String toReturn = url.getPath();
+          if (toReturn.startsWith("file:")) {
+            toReturn = toReturn.substring("file:".length());
+          }
+          // URLDecoder is a misnamed class, since it actually decodes
+          // x-www-form-urlencoded MIME type rather than actual
+          // URL encoding (which the file path has). Therefore it would
+          // decode +s to ' 's which is incorrect (spaces are actually
+          // either unencoded or encoded as "%20"). Replace +s first, so
+          // that they are kept sacred during the decoding process.
+          toReturn = toReturn.replaceAll("\\+", "%2B");
+          toReturn = URLDecoder.decode(toReturn, "UTF-8");
+          return toReturn.replaceAll("!.*$", "");
+        }
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return null;
+  }
+  
 
   /*
    * The visiblity of method is set to protected and returns list of services 
@@ -71,12 +109,20 @@ public class Databus implements Service, DatabusConstants {
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
     }
+    
+    // find the name of the jar containing UniformSizeInputFormat class.
+    String inputFormatSrcJar = 
+        findContainingJar(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+    LOG.debug("Jar containing UniformSizeInputFormat [" + inputFormatSrcJar + "]");
+    
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
       }
       //Start LocalStreamConsumerService for this cluster if it's the source of any stream
       if (cluster.getSourceStreams().size() > 0) {
+        // copy input format jar from local to cluster FS
+        copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
         services.add(getLocalStreamService(config, cluster, currentCluster));
       }
 
@@ -121,6 +167,21 @@ public class Databus implements Service, DatabusConstants {
       services.add(new DataPurgerService(config, cluster));
     }
     return services;
+  }
+  
+  private void copyInputFormatJarToClusterFS(Cluster cluster, 
+      String inputFormatSrcJar) throws IOException {
+    FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
+    // create jars path inside /databus/system/tmp path
+    Path jarsPath = new Path(cluster.getTmpPath(), "jars");
+    if (!clusterFS.exists(jarsPath)) {
+      clusterFS.mkdirs(jarsPath);
+    }
+    // copy inputFormat source jar into /databus/system/tmp/jars path
+    Path inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+    if (!clusterFS.exists(inputFormatJarDestPath)) {
+      clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
+    }
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
