@@ -85,7 +85,7 @@ public class PublishMissingPathsTest {
   public void testPublishMissingPaths() throws Exception {
     DatabusConfigParser configParser = new DatabusConfigParser(
         "test-lss-pub-databus.xml");
-    List<String> streamsToProcess = new ArrayList();
+    List<String> streamsToProcess = new ArrayList<String>();
     DatabusConfig config = configParser.getConfig();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
     FileSystem fs = FileSystem.getLocal(new Configuration());

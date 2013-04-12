@@ -416,11 +416,14 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     }
   }
 
-  @Test
+  // @Test
   public void testCopyMapperImplMethod() throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(
         "test-lss-databus-s3n.xml");
+    List<String> streamsToProcess = new ArrayList<String>();
     DatabusConfig config = parser.getConfig();
+    streamsToProcess.addAll(config.getSourceStreams().keySet());
+
     Set<String> clustersToProcess = new HashSet<String>();
     Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
     for (SourceStream sStream : config.getSourceStreams().values()) {
@@ -434,7 +437,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       cluster.getHadoopConf().set("mapred.job.tracker",
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-          cluster, null, new NullCheckPointProvider(), null);
+          cluster, null, new NullCheckPointProvider(), streamsToProcess);
       services.add(service);
     }
 

@@ -13,6 +13,7 @@
  */
 package com.inmobi.databus.local;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -74,7 +75,8 @@ public class LocalStreamService extends AbstractService implements
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
       List<String> streamsToProcess) throws IOException {
-    super("LocalStreamService_" + getServiceName(streamsToProcess), config,
+    super("LocalStreamService_" + srcCluster + "_"
+        + getServiceName(streamsToProcess), config,
         DEFAULT_RUN_INTERVAL,
         provider);
     this.srcCluster = srcCluster;
@@ -84,8 +86,14 @@ public class LocalStreamService extends AbstractService implements
       this.currentCluster = currentCluster;
     srcFs = FileSystem.get(srcCluster.getHadoopConf());
     for (String stream : streamsToProcess) {
+      try {
       streamsFileStatusMap.put(stream,
           srcFs.getFileStatus(new Path(srcCluster.getDataDir(), stream)));
+      } catch (IOException ie) {
+        LOG.error(srcCluster.getDataDir() + File.separator + stream
+            + " not found,hence not launching localstream service for "
+            + stream);
+      }
     }
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
@@ -536,6 +544,7 @@ public class LocalStreamService extends AbstractService implements
 
     Class<? extends Mapper> mapperClass = getMapperClass();
     job.setJarByClass(mapperClass);
+
     job.setMapperClass(mapperClass);
     job.setNumReduceTasks(0);
 

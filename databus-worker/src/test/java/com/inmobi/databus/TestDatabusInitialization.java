@@ -49,7 +49,7 @@ public class TestDatabusInitialization {
   public void testCluser1() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 6, 1, 4,
         0);
   }
   
@@ -62,7 +62,7 @@ public class TestDatabusInitialization {
   public void testCluster2() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster2");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 6, 1, 4,
         1);
   }
   
@@ -75,7 +75,8 @@ public class TestDatabusInitialization {
   public void testCluster3() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster3");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 1);
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 4, 1, 4,
+        1);
   }
   
   /*
@@ -99,7 +100,8 @@ public class TestDatabusInitialization {
   public void testCluster5() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster5");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 1, 1, 4, 0);
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 4, 1, 4,
+        0);
   }
   
   /*
@@ -146,7 +148,8 @@ public class TestDatabusInitialization {
     clustersToProcess.add("testcluster3");
     clustersToProcess.add("testcluster4");
     clustersToProcess.add("testcluster5");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 4, 5, 20,
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 20, 5,
+        20,
         2);
   }
   
@@ -156,7 +159,8 @@ public class TestDatabusInitialization {
     clustersToProcess.add("testcluster1");
     clustersToProcess.add("testcluster2");
     clustersToProcess.add("testcluster4");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 2, 3, 12,
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 12, 3,
+        12,
         1);
   }
   
