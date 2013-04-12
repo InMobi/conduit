@@ -103,7 +103,7 @@ public class LocalStreamService extends AbstractService implements
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
-    streamsToProcessName = getNameOfStreamsToProcess();
+    streamsToProcessName = getServiceName(streamsToProcess);
   }
 
 
@@ -270,12 +270,6 @@ public class LocalStreamService extends AbstractService implements
     return commitPaths;
   }
 
-  private String getNameOfStreamsToProcess() {
-    String result = "";
-    for (String stream : streamsToProcess)
-      result += stream + "_";
-    return result;
-  }
   Map<Path, Path> populateTrashCommitPaths(Set<FileStatus> trashSet) {
     // find trash paths
     Map<Path, Path> trashPaths = new TreeMap<Path, Path>();
