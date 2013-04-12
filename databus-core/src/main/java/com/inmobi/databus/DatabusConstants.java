@@ -26,5 +26,7 @@ public interface DatabusConstants {
   public static final String CLUSTER_NAME = "com.inmobi.databus.current" +
       ".cluster";
   public static final String MB_PER_MAPPER = "com.inmobi.databus.MBPerMapper";
+  public static final String STREAMS_PER_LOCALSERVICE = "com.inmobi.databus."
+      + "streamsPerLocal";
 
 }

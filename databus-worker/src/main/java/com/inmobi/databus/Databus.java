@@ -41,7 +41,7 @@ public class Databus implements Service, DatabusConstants {
   private static Logger LOG = Logger.getLogger(Databus.class);
   private DatabusConfig config;
   private String currentClusterName = null;
-  private int numStreamsLocalService = 5;
+  private static int numStreamsLocalService = 5;
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -217,6 +217,10 @@ public class Databus implements Service, DatabusConstants {
       Properties prop = new Properties();
       prop.load(new FileReader(cfgFile));
 
+      String streamperLocal = prop.getProperty(STREAMS_PER_LOCALSERVICE);
+      if (streamperLocal != null) {
+        numStreamsLocalService = Integer.parseInt(streamperLocal);
+      }
       String log4jFile = getProperty(prop, LOG4J_FILE);
       if (log4jFile == null) {
         LOG.error("log4j.properties incorrectly defined");
