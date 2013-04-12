@@ -73,6 +73,7 @@ public class LocalStreamService extends AbstractService implements
   private final int FILES_TO_KEEP = 6;
   private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
   private final List<String> streamsToProcess;
+  private final String streamsToProcessName;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -102,6 +103,7 @@ public class LocalStreamService extends AbstractService implements
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+    streamsToProcessName = getNameOfStreamsToProcess();
   }
 
 
@@ -252,7 +254,7 @@ public class LocalStreamService extends AbstractService implements
             // suffix it with streams contained in the file
             Path finalConsumerPath = new Path(
                 srcCluster.getConsumePath(clusterEntry), Long.toString(System
-                    .currentTimeMillis()) + "_" + streamsToProcess);
+                    .currentTimeMillis()) + "_" + streamsToProcessName);
             LOG.debug("Moving [" + tmpConsumerPath + "] to [ "
                 + finalConsumerPath + "]");
             consumerCommitPaths.put(tmpConsumerPath, finalConsumerPath);
@@ -268,6 +270,12 @@ public class LocalStreamService extends AbstractService implements
     return commitPaths;
   }
 
+  private String getNameOfStreamsToProcess() {
+    String result = "";
+    for (String stream : streamsToProcess)
+      result += stream + "_";
+    return result;
+  }
   Map<Path, Path> populateTrashCommitPaths(Set<FileStatus> trashSet) {
     // find trash paths
     Map<Path, Path> trashPaths = new TreeMap<Path, Path>();
