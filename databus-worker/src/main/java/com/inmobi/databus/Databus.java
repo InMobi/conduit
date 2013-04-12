@@ -254,6 +254,11 @@ public class Databus implements Service, DatabusConstants {
       
       String principal = prop.getProperty(KRB_PRINCIPAL);
       String keytab = getProperty(prop, KEY_TAB_FILE);
+      
+      String mbPerMapper = prop.getProperty(MB_PER_MAPPER);
+      if (mbPerMapper != null) {
+        System.setProperty(MB_PER_MAPPER, mbPerMapper);
+      }
       prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {

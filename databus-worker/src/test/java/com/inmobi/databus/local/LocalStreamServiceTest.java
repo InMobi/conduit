@@ -416,7 +416,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     }
   }
 
-  // @Test
+  @Test
   public void testCopyMapperImplMethod() throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(
         "test-lss-databus-s3n.xml");
@@ -534,6 +534,8 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     for (TestLocalStreamService service : services) {
       for (int i = 0; i < timesToRun; ++i) {
         service.preExecute();
+        // set BYTES_PER_MAPPER to a lower value for test
+        service.setBytesPerMapper(100);
         service.execute();
         long finishTime = System.currentTimeMillis();
         service.postExecute();

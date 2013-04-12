@@ -13,8 +13,10 @@
  */
 package com.inmobi.databus.local;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +38,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -49,6 +52,8 @@ import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.DatabusConstants;
+
 
 /*
  * Handles Local Streams for a Cluster
@@ -68,9 +73,14 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
   private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
-  private final long BYTES_PER_MAPPER = 100;
-  private final Map<String, FileStatus> streamsFileStatusMap = new HashMap<String, FileStatus>();
-  private final FileSystem srcFs;
+  private final List<String> streamsToProcess;
+
+  // The amount of data expected to be processed by each mapper, such that
+  // each map task completes within ~20 seconds. This calculation is based
+  // on assumption that the map task processing throughput is ~25 MB/s.
+  protected long BYTES_PER_MAPPER = 512 * 1024 * 1024;
+  private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
+  private DataInputBuffer in = new DataInputBuffer();
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
@@ -84,17 +94,7 @@ public class LocalStreamService extends AbstractService implements
       this.currentCluster = srcCluster;
     else
       this.currentCluster = currentCluster;
-    srcFs = FileSystem.get(srcCluster.getHadoopConf());
-    for (String stream : streamsToProcess) {
-      try {
-      streamsFileStatusMap.put(stream,
-          srcFs.getFileStatus(new Path(srcCluster.getDataDir(), stream)));
-      } catch (IOException ie) {
-        LOG.error(srcCluster.getDataDir() + File.separator + stream
-            + " not found,hence not launching localstream service for "
-            + stream);
-      }
-    }
+    this.streamsToProcess = streamsToProcess;
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
@@ -131,7 +131,7 @@ public class LocalStreamService extends AbstractService implements
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
 
-      for (String stream : streamsFileStatusMap.keySet()) {
+      for (String stream : streamsToProcess) {
         Set<Path> missingPaths = publishMissingPaths(fs,
             srcCluster.getLocalFinalDestDirRoot(), commitTime, stream);
         if (null != missingPaths && missingPaths.size() > 0) {
@@ -248,7 +248,7 @@ public class LocalStreamService extends AbstractService implements
             // suffix it with streams contained in the file
             Path finalConsumerPath = new Path(
                 srcCluster.getConsumePath(clusterEntry), Long.toString(System
-                    .currentTimeMillis()) + "_" + streamsFileStatusMap.keySet());
+                    .currentTimeMillis()) + "_" + streamsToProcess);
             LOG.debug("Moving [" + tmpConsumerPath + "] to [ "
                 + finalConsumerPath + "]");
             consumerCommitPaths.put(tmpConsumerPath, finalConsumerPath);
@@ -296,16 +296,16 @@ public class LocalStreamService extends AbstractService implements
 
   }
 
-  private long createMRInput(Path inputPath,
-      Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths) throws IOException {
+  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
-        trashSet, checkpointPaths);
+    trashSet, checkpointPaths);
+    
+    // the total size of data present in all files
     long totalSize = 0;
-
-    SequenceFile.Writer out = null;
+    SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
+      inputPath, Text.class, FileStatus.class);
     try {
       Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
           .iterator();
@@ -315,15 +315,37 @@ public class LocalStreamService extends AbstractService implements
           out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
               inputPath, Text.class, entry.getKey().getClass());
         }
-        out.append(new Text(entry.getValue()), entry.getKey());
+        out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
         totalSize += entry.getKey().getLen();
       }
     } finally {
       out.close();
     }
+    
     return totalSize;
-
   }
+
+  // This method is taken from DistCp SimpleCopyListing class.
+  private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
+    // if the file is not an instance of RawLocaleFileStatus, simply return it
+    if (fileStatus.getClass() == FileStatus.class) {
+      return fileStatus;
+    }
+    
+    // Else if it is a local file, we need to convert it to an instance of 
+    // FileStatus class. The reason is that SequenceFile.Writer/Reader does 
+    // an exact match for FileStatus class.
+    FileStatus status = new FileStatus();
+    
+    buffer.reset();
+    DataOutputStream out = new DataOutputStream(buffer);
+    fileStatus.write(out);
+    
+    in.reset(buffer.toByteArray(), 0, buffer.size());
+    status.readFields(in);
+    return status;
+  }
+
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
@@ -344,8 +366,13 @@ public class LocalStreamService extends AbstractService implements
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
       Map<String, FileStatus> checkpointPaths, long lastFileTimeout)
       throws IOException {
-
-    for (FileStatus stream : streamsFileStatusMap.values()) {
+    List<FileStatus> streamsFileStatus = new ArrayList<FileStatus>();
+    FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
+    for (String stream : streamsToProcess) {
+      streamsFileStatus.add(srcFs.getFileStatus(new Path(srcCluster
+          .getDataDir(), stream)));
+    }
+    for (FileStatus stream : streamsFileStatus) {
       String streamName = stream.getPath().getName();
       LOG.debug("createListing working on Stream [" + streamName + "]");
       FileStatus[] collectors = fs.listStatus(stream.getPath());
@@ -533,8 +560,13 @@ public class LocalStreamService extends AbstractService implements
     return new Path(tmpJobOutputPath, category);
   }
 
+
+  protected void setBytesPerMapper(long bytesPerMapper) {
+    BYTES_PER_MAPPER = bytesPerMapper;
+  }
+  
   /*
-   * The visiblity of method is set to protected to enable unit testing
+    The visiblity of method is set to protected to enable unit testing
    */
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
@@ -554,8 +586,9 @@ public class LocalStreamService extends AbstractService implements
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
     job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
-    job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS,
-        (int) (totalSize / BYTES_PER_MAPPER));
+    // set configurations needed for UniformSizeInputFormat
+    job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, 
+        getNumMapsForJob(totalSize));
     job.getConfiguration().setLong(
         DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalSize);
     job.getConfiguration().set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH,
@@ -563,6 +596,15 @@ public class LocalStreamService extends AbstractService implements
     job.setInputFormatClass(UniformSizeInputFormat.class);
 
     return job;
+  }
+  
+  private int getNumMapsForJob(long totalSize) {
+    String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
+    if (mbPerMapper != null) {
+      BYTES_PER_MAPPER = Long.getLong(mbPerMapper) * 1024 * 1024;
+    }
+    int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
+    return numMaps;
   }
 
   /*

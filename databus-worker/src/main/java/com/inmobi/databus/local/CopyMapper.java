@@ -31,16 +31,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptID;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.utils.FileUtil;
 
-public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> implements
-    ConfigConstants {
 
+public class CopyMapper extends Mapper<Text, FileStatus, Text,
+    Text> implements ConfigConstants{
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
 
   @Override
-  public void map(Text key, FileStatus value, Context context)
-      throws IOException, InterruptedException {
-    // Path src = new Path(key.toString());
-    // String dest = value.toString();
+  public void map(Text key, FileStatus value, Context context) throws IOException,
+      InterruptedException {
     Path src = value.getPath();
     String dest = key.toString();
     String collector = src.getParent().getName();
