@@ -32,6 +32,7 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.FileUtil;
 
 public class TestLocalStreamService extends LocalStreamService implements
     AbstractServiceTest {
@@ -141,6 +142,11 @@ public class TestLocalStreamService extends LocalStreamService implements
             + this.getName() + File.separator;
         tmpFilesList = createScribeData(fs, this.getName(), pathName, 1);
       }
+      
+      // Copy input format src jar to FS
+      String inputFormatSrcJar = FileUtil.findContainingJar(
+          org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+      fs.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
     } catch (Exception e) {
       e.printStackTrace();
       throw new Error("Error in LocalStreamService Test PreExecute");

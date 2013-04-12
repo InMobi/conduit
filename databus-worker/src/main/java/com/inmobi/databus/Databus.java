@@ -13,6 +13,7 @@
 */
 package com.inmobi.databus;
 
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -34,6 +37,7 @@ import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.distcp.MirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
 import com.inmobi.databus.purge.DataPurgerService;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.databus.utils.SecureLoginUtil;
 import com.inmobi.databus.zookeeper.CuratorLeaderManager;
 
@@ -75,12 +79,21 @@ public class Databus implements Service, DatabusConstants {
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
     }
+    
+    // find the name of the jar containing UniformSizeInputFormat class.
+    String inputFormatSrcJar = FileUtil.findContainingJar(
+        org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+    LOG.debug("Jar containing UniformSizeInputFormat [" + inputFormatSrcJar + "]");
+    
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
       }
       //Start LocalStreamConsumerService for this cluster if it's the source of any stream
       if (cluster.getSourceStreams().size() > 0) {
+        // copy input format jar from local to cluster FS
+        copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
+
         Iterator<String> iterator = cluster.getSourceStreams().iterator();
         List<String> streamsToProcess = new ArrayList<String>();
         while (iterator.hasNext()) {
@@ -136,6 +149,21 @@ public class Databus implements Service, DatabusConstants {
       services.add(new DataPurgerService(config, cluster));
     }
     return services;
+  }
+  
+  private void copyInputFormatJarToClusterFS(Cluster cluster, 
+      String inputFormatSrcJar) throws IOException {
+    FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
+    // create jars path inside /databus/system/tmp path
+    Path jarsPath = new Path(cluster.getTmpPath(), "jars");
+    if (!clusterFS.exists(jarsPath)) {
+      clusterFS.mkdirs(jarsPath);
+    }
+    // copy inputFormat source jar into /databus/system/tmp/jars path
+    Path inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+    if (!clusterFS.exists(inputFormatJarDestPath)) {
+      clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
+    }
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,

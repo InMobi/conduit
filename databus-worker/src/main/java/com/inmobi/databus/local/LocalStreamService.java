@@ -45,7 +45,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
-import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
 
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -81,6 +80,9 @@ public class LocalStreamService extends AbstractService implements
   protected long BYTES_PER_MAPPER = 512 * 1024 * 1024;
   private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
   private DataInputBuffer in = new DataInputBuffer();
+  // these paths are used to set the path of input format jar in job conf
+  private final Path jarsPath;
+  final Path inputFormatJarDestPath;
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
@@ -98,6 +100,8 @@ public class LocalStreamService extends AbstractService implements
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
+    jarsPath = new Path(srcCluster.getTmpPath(), "jars");
+    inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
   }
 
 
@@ -571,8 +575,13 @@ public class LocalStreamService extends AbstractService implements
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
+   
     Job job = new Job(conf);
     job.setJobName(jobName);
+    //DistributedCache.addFileToClassPath(inputFormatJarDestPath, job.getConfiguration());
+    job.getConfiguration().set("tmpjars", inputFormatJarDestPath.toString());
+    LOG.debug("Adding file ["  + inputFormatJarDestPath + "] to distributed cache");
+    job.setInputFormatClass(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
 
     Class<? extends Mapper> mapperClass = getMapperClass();
     job.setJarByClass(mapperClass);
@@ -593,7 +602,6 @@ public class LocalStreamService extends AbstractService implements
         DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalSize);
     job.getConfiguration().set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH,
         inputPath.toString());
-    job.setInputFormatClass(UniformSizeInputFormat.class);
 
     return job;
   }
