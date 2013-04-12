@@ -72,7 +72,7 @@ public class LocalStreamService extends AbstractService implements
   private DataInputBuffer in = new DataInputBuffer();
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
-  private final Path inputFormatJarDestPath;
+  final Path inputFormatJarDestPath;
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
                             Cluster currentCluster,
