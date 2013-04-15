@@ -322,6 +322,12 @@ public class LocalStreamService extends AbstractService implements
               inputPath, Text.class, entry.getKey().getClass());
         }
         out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
+        
+        // Create a sync point after each entry. This will ensure that SequenceFile
+        // Reader can work at file entry level granularity, given that SequenceFile
+        // Reader reads from the starting of sync point.
+        out.sync();
+        
         totalSize += entry.getKey().getLen();
       }
     } finally {
@@ -597,13 +603,16 @@ public class LocalStreamService extends AbstractService implements
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
     job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+    
     // set configurations needed for UniformSizeInputFormat
-    job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, 
-        getNumMapsForJob(totalSize));
+    int numMaps = getNumMapsForJob(totalSize);
+    job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
     job.getConfiguration().setLong(
         DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalSize);
     job.getConfiguration().set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH,
         inputPath.toString());
+    LOG.info("Expected number of maps [" + numMaps + "] Total data size [" + 
+        totalSize + "]");
 
     return job;
   }
