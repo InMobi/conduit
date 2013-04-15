@@ -611,7 +611,7 @@ public class LocalStreamService extends AbstractService implements
   private int getNumMapsForJob(long totalSize) {
     String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
     if (mbPerMapper != null) {
-      BYTES_PER_MAPPER = Long.getLong(mbPerMapper) * 1024 * 1024;
+      BYTES_PER_MAPPER = Long.parseLong(mbPerMapper) * 1024 * 1024;
     }
     int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
     return numMaps;
