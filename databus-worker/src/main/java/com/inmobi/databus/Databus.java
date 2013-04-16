@@ -13,18 +13,6 @@
 */
 package com.inmobi.databus;
 
-import com.inmobi.databus.distcp.MergedStreamService;
-import com.inmobi.databus.distcp.MirrorStreamService;
-import com.inmobi.databus.local.LocalStreamService;
-import com.inmobi.databus.purge.DataPurgerService;
-import com.inmobi.databus.utils.SecureLoginUtil;
-import com.inmobi.databus.zookeeper.CuratorLeaderManager;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -33,6 +21,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import com.inmobi.databus.distcp.MergedStreamService;
+import com.inmobi.databus.distcp.MirrorStreamService;
+import com.inmobi.databus.local.LocalStreamService;
+import com.inmobi.databus.purge.DataPurgerService;
+import com.inmobi.databus.utils.SecureLoginUtil;
+import com.inmobi.databus.zookeeper.CuratorLeaderManager;
 
 public class Databus implements Service, DatabusConstants {
   private static Logger LOG = Logger.getLogger(Databus.class);
@@ -132,13 +134,15 @@ public class Databus implements Service, DatabusConstants {
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
       Exception {
-    return new MergedStreamService(config, srcCluster, dstCluster, currentCluster);
+    return new MergedStreamService(config, srcCluster, dstCluster,
+        currentCluster, new FSCheckpointProvider(dstCluster.getCheckpointDir()));
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
       Exception {
-    return new MirrorStreamService(config, srcCluster, dstCluster, currentCluster);
+    return new MirrorStreamService(config, srcCluster, dstCluster,
+        currentCluster, new FSCheckpointProvider(dstCluster.getCheckpointDir()));
   }
 
   @Override

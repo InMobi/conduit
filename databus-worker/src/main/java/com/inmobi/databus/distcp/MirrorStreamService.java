@@ -15,6 +15,8 @@ package com.inmobi.databus.distcp;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,15 +24,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.utils.DatePathComparator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCpOptions;
+
+import com.inmobi.databus.CheckpointProvider;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
  * (i)   1 Mirror Thread per src DatabusConfig.Cluster from where streams need to be mirrored on destCluster
@@ -44,14 +48,19 @@ public class MirrorStreamService extends DistcpBaseService {
 
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
                              Cluster destinationCluster,
-                             Cluster currentCluster) throws Exception {
+ Cluster currentCluster,
+      CheckpointProvider provider, Set<String> streamsToProcess)
+      throws Exception {
     super(config, MirrorStreamService.class.getName(), srcCluster,
-    destinationCluster, currentCluster);
+        destinationCluster, currentCluster, provider, streamsToProcess);
   }
 
   @Override
   protected Path getInputPath() throws IOException {
-    return getSrcCluster().getMirrorConsumePath(getDestCluster());
+    // return getSrcCluster().getMirrorConsumePath(getDestCluster());
+    String finalDestDir = getSrcCluster().getFinalDestDirRoot();
+
+    return new Path(finalDestDir);
   }
 
   @Override
@@ -106,7 +115,8 @@ public class MirrorStreamService extends DistcpBaseService {
       if (!skipCommit) {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
         doLocalCommit(commitPaths);
-        doFinalCommit(consumePaths);
+        // doFinalCommit(consumePaths);
+        finalizeCheckPoints();
       }
       getDestFs().delete(tmpOut, true);
       LOG.debug("Cleanup [" + tmpOut + "]");
@@ -259,12 +269,63 @@ public class MirrorStreamService extends DistcpBaseService {
     }
   }
 
+  /*
+   * Method to create checkpoint in cases when checkpoint for a stream is not
+   * present First this method would check on the destination FS to compute the
+   * last mirrored path;if found would checkpoint that .If not found than it
+   * would check on the source cluster to compute the last merged path and would
+   * checkpoint its equivalent on destination cluster. This method can return
+   * null in cases where its not able to calculate the checkpoint
+   */
   @Override
-  public void filterMinFilePaths(Set<String> minFilesSet) {
-    // No-op method for mirror stream service as we don't need to
-    // filter any minute file paths as mirror stream service
-    // is expected to exactly replicate the source cluster
-    return;
+  protected byte[] createCheckPoint(String stream) throws IOException {
+    Path finalDestDir = new Path(destCluster.getFinalDestDirRoot());
+    Path streamFinalDestDir = new Path(finalDestDir, stream);
+    Path finalSrcDir = new Path(srcCluster.getFinalDestDirRoot());
+    Path streamFinalSrctDir = new Path(finalSrcDir, stream);
+
+    Path lastMirroredPath = getLastMirroredPath(getDestFs(), streamFinalDestDir);
+    Path lastMergedPathOnSrc = null;
+    if (lastMirroredPath == null) {
+      lastMergedPathOnSrc = getLastMirroredPath(getSrcFs(), streamFinalSrctDir);
+      if (lastMergedPathOnSrc != null) {
+        try {
+          URI uri = new URI(lastMergedPathOnSrc.toString());
+          String relativePathString = uri.getPath();
+          lastMirroredPath = getDestFs().makeQualified(
+              new Path(relativePathString));
+        } catch (URISyntaxException e) {
+          LOG.error(
+              "Last merged path computed from the source cluster has invalid URI Syntax;Path is ["
+                  + lastMergedPathOnSrc + "]", e);
+        }
+
+      }
+    }
+    if (lastMirroredPath == null)
+      return null;
+    byte[] value = lastMirroredPath.toString().getBytes(); 
+    provider.checkpoint(getCheckPointKey(stream), value);
+    return value;
+  }
+
+  private Path getLastMirroredPath(FileSystem fs, Path streamFinalDestDir)
+      throws IOException {
+    FileStatus streamRoot;
+    List<FileStatus> streamPaths = new ArrayList<FileStatus>();
+      streamRoot = fs.getFileStatus(streamFinalDestDir);
+      createListing(fs, streamRoot, streamPaths);
+    if (streamPaths.size() == 0)
+      return null;
+    DatePathComparator comparator = new DatePathComparator();
+    FileStatus last = streamPaths.get(0);
+    for (int i = 1; i < streamPaths.size(); i++) {
+      if (comparator.compare(streamPaths.get(i), last) > 0)
+        last = streamPaths.get(i);
+    }
+      // return the last path from the sorted list
+    return last.getPath();
+
 
   }
 }

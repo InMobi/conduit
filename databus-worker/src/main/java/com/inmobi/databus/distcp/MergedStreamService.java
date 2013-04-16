@@ -26,11 +26,11 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 
@@ -42,13 +42,15 @@ public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
   private Map<String, Set<Path>> missingDirsCommittedPaths;
-  private Set<String> primaryCategories;
+
+  // private Set<String> primaryCategories;
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster) throws Exception {
+      Cluster destinationCluster, Cluster currentCluster,
+      CheckpointProvider provider, Set<String> streamsToProcess)
+      throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster);
-    primaryCategories = destinationCluster.getPrimaryDestinationStreams();
+        destinationCluster, currentCluster, provider,streamsToProcess);
   }
 
   @Override
@@ -56,7 +58,7 @@ public class MergedStreamService extends DistcpBaseService {
     try {
       boolean skipCommit = false;
       Map<Path, FileSystem> consumePaths = new HashMap<Path, FileSystem>();
-      missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
+      missingDirsCommittedPaths = new LinkedHashMap<String, Set<Path>>();
 
       Path tmpOut = new Path(getDestCluster().getTmpPath(),
           "distcp_mergedStream_" + getSrcCluster().getName() + "_"
@@ -85,11 +87,11 @@ public class MergedStreamService extends DistcpBaseService {
         will be added to mirror consumer file again */
         long commitTime = getDestCluster().getCommitTime();
         preparePublishMissingPaths(missingDirsCommittedPaths, commitTime, 
-            primaryCategories);
+            streamsToProcess);
         if (missingDirsCommittedPaths.size() > 0) {
-          LOG.info("Adding Missing Directories to the mirror consumer file and" +
-              " publishing the missing paths"+ missingDirsCommittedPaths.size());
-          commitMirroredConsumerPaths(missingDirsCommittedPaths, tmp);
+          LOG.info("Total number of stream for which missing paths to be published "
+              + missingDirsCommittedPaths.size());
+          LOG.debug("Missing paths published " + missingDirsCommittedPaths);
           commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, commitTime);
         }
       }
@@ -127,7 +129,7 @@ public class MergedStreamService extends DistcpBaseService {
           // called which is a MR job and can take time hence this call ensures
           // all missing paths are added till this time
           preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
-              primaryCategories);
+              streamsToProcess);
           commitPaths = createLocalCommitPaths(tmpOut, commitTime, 
               categoriesToCommit, tobeCommittedPaths);
           for (Map.Entry<String, Set<Path>> entry : missingDirsCommittedPaths
@@ -141,7 +143,7 @@ public class MergedStreamService extends DistcpBaseService {
           }
 
           // Prepare paths for MirrorStreamConsumerService
-          commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
+          // commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
           commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, 
               commitTime);
           // category, Set of Paths to commit
@@ -151,7 +153,8 @@ public class MergedStreamService extends DistcpBaseService {
 
         // Cleanup happens in parallel without sync
         // no race is there in consumePaths, tmpOut
-        doFinalCommit(consumePaths);
+        // doFinalCommit(consumePaths);
+        finalizeCheckPoints();
       }
       // rmv tmpOut cleanup
       getDestFs().delete(tmpOut, true);
@@ -161,6 +164,7 @@ public class MergedStreamService extends DistcpBaseService {
       throw new Exception(e);
     }
   }
+
 
   private void preparePublishMissingPaths(
       Map<String, Set<Path>> missingDirsCommittedPaths, long commitTime,
@@ -196,77 +200,6 @@ public class MergedStreamService extends DistcpBaseService {
     }
   }
 
-  /*
-   * @param Map<String, Set<Path>> commitedPaths - Stream Name, It's committed
-   * Path.
-   * tmpConsumePath: hdfsUrl/<rootDir>/system/tmp/
-   * distcp_mergedStream_<sourceCluster>_<destinationCluster>/tmp/
-   * src_sourceCluster_via_destinationCluster_mirrorto_consumername_streamname
-   * final Mirror Path: hdfsUrl/<rootDir>/system/mirrors/<consumerCluster>/
-   * src_<sourceCluster>_via_<destinationCluster>_mirrorto_<consumerName>_
-   * <streamName>_filestatus
-   */
-  private void commitMirroredConsumerPaths(
-      Map<String, Set<Path>> tobeCommittedPaths, Path tmp) throws Exception {
-    // Map of Stream and clusters where it's mirrored
-    Map<String, Set<Cluster>> mirrorStreamConsumers = new HashMap<String, 
-        Set<Cluster>>();
-    Map<Path, Path> mirrorCommitPaths = new LinkedHashMap<Path, Path>();
-    // for each stream in committedPaths
-    for (String stream : tobeCommittedPaths.keySet()) {
-      // for each cluster
-      for (Cluster cluster : getConfig().getClusters().values()) {
-        // is this stream to be mirrored on this cluster
-        if (cluster.getMirroredStreams().contains(stream)) {
-          Set<Cluster> mirrorConsumers = mirrorStreamConsumers.get(stream);
-          if (mirrorConsumers == null)
-            mirrorConsumers = new HashSet<Cluster>();
-          mirrorConsumers.add(cluster);
-          mirrorStreamConsumers.put(stream, mirrorConsumers);
-        }
-      }
-    } // for each stream
-
-    // Commit paths for each consumer
-    for (String stream : tobeCommittedPaths.keySet()) {
-      // consumers for this stream
-      Set<Cluster> consumers = mirrorStreamConsumers.get(stream);
-      Path tmpConsumerPath;
-      if (consumers == null || consumers.size() == 0) {
-        LOG.warn(" Consumers is empty for stream [" + stream + "]");
-        continue;
-      }
-      if (tobeCommittedPaths.get(stream).size() == 0) {
-        continue;
-      }
-      for (Cluster consumer : consumers) {
-        // commit paths for this consumer, this stream
-        // adding srcCluster avoids two Remote Copiers creating same filename
-        String tmpPath = "src_" + getSrcCluster().getName() + "_via_"
-            + getDestCluster().getName() + "_mirrorto_" + consumer.getName()
-            + "_" + stream;
-        tmpConsumerPath = new Path(tmp, tmpPath);
-        FSDataOutputStream out = getDestFs().create(tmpConsumerPath);
-        try {
-          for (Path path : tobeCommittedPaths.get(stream)) {
-            LOG.debug("Writing Mirror Commit Path [" + path.toString() + "]");
-            out.writeBytes(path.toString());
-            out.writeBytes("\n");
-          }
-        } finally {
-          out.close();
-        }
-        // Two MergedStreamConsumers will write file for same consumer within
-        // the same time
-        // adding srcCLuster name avoids that conflict
-        Path finalMirrorPath = new Path(getDestCluster().getMirrorConsumePath(
-            consumer), tmpPath + "_"
-                + new Long(System.currentTimeMillis()).toString());
-        mirrorCommitPaths.put(tmpConsumerPath, finalMirrorPath);
-      } // for each consumer
-    } // for each stream
-    doLocalCommit(mirrorCommitPaths);
-  }
 
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)
       throws Exception {
@@ -365,27 +298,15 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   protected Path getInputPath() throws IOException {
-    return getSrcCluster().getConsumePath(getDestCluster());
-  }
+    String finalDestDir = getSrcCluster().getLocalFinalDestDirRoot();
+    return new Path(finalDestDir);
 
-  private void removePathWithDuplicateFileNames(Set<String> minFilesSet) {
-    Set<String> fileNameSet = new HashSet<String>();
-    Iterator<String> iterator = minFilesSet.iterator();
-    while (iterator.hasNext()) {
-      Path p = new Path(iterator.next());
-      if (fileNameSet.contains(p.getName())) {
-        LOG.info("Removing duplicate path [" + p + "]");
-        iterator.remove();
-      } else
-        fileNameSet.add(p.getName());
-
-    }
   }
 
   @Override
-  public void filterMinFilePaths(Set<String> minFilesSet) {
-    // remove all the minute file paths which have the duplicate 'filename'
-    removePathWithDuplicateFileNames(minFilesSet);
+  protected byte[] createCheckPoint(String stream) {
+    // TODO Auto-generated method stub
+    return null;
 
   }
 }

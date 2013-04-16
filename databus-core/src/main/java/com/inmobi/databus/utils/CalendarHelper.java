@@ -163,4 +163,31 @@ public class CalendarHelper {
     return calendar;
   }
 
+  public static Path getPathFromDate(Date date, Path dirPrefix) {
+
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    String suffix = calendar.get(Calendar.YEAR) + File.separator
+        + calendar.get(Calendar.MONTH) + File.separator
+        + calendar.get(Calendar.DAY_OF_MONTH) + File.separator
+        + calendar.get(Calendar.HOUR) + File.separator
+        + calendar.get(Calendar.MINUTE);
+    return new Path(dirPrefix, suffix);
+
+  }
+
+  public static Path getNextMinutPathFromDate(Date date, Path dirPrefix) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    calendar.add(Calendar.MINUTE, 1);
+    return getPathFromDate(calendar.getTime(), dirPrefix);
+  }
+
+  public static Date addAMinute(Date date) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    calendar.add(Calendar.MINUTE, 1);
+    return calendar.getTime();
+  }
+
 }
