@@ -1,6 +1,8 @@
 package com.inmobi.databus.local;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -20,13 +22,16 @@ public class TestLocalStreamCommit {
   static Path rootDir = new Path("/tmp/test-databus/databus/");
 
   static FileSystem localFs;
-
+  private List<String> streamsToProcess = new ArrayList<String>();
+   
   private void createData(Cluster cluster) throws IOException {
     Path tmpPath = new Path(cluster.getTmpPath(),
         LocalStreamService.class.getName());
     Path tmpJobOutputPath = new Path(tmpPath, "jobOut");
     Path path1 = new Path(tmpJobOutputPath, "stream1");
     Path path2 = new Path(tmpJobOutputPath, "stream2");
+    streamsToProcess.add("stream1");
+    streamsToProcess.add("stream2");
     localFs.mkdirs(path1);
     localFs.mkdirs(path2);
     localFs.create(new Path(path1, "file1"));
@@ -54,7 +59,7 @@ public class TestLocalStreamCommit {
     Cluster cluster1 = parser.getConfig().getClusters().get("testcluster1");
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
         cluster1, null, new FSCheckpointProvider(
-            "/tmp/test-databus/databus/checkpoint"));
+            "/tmp/test-databus/databus/checkpoint"), streamsToProcess);
     createData(cluster1);
     service.prepareForCommit(System.currentTimeMillis());
     Path tmpPath = new Path(cluster1.getTmpPath(),

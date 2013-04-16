@@ -1,7 +1,9 @@
 package com.inmobi.databus.local;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,7 +46,8 @@ public class TestCreateListing {
   @Test
   public void testCreateListing1() throws Exception{
 
-
+    List<String> streamsToProcess = new ArrayList<String>();
+    streamsToProcess.add("stream1");
     Path collectorPath = new Path(rootDir, "data/stream1/collector1");
     localFs.mkdirs(collectorPath);
     Map<String, String> clusterConf = new HashMap<String, String>();
@@ -62,7 +65,8 @@ public class TestCreateListing {
     FileStatus>();
 
     LocalStreamService service = new LocalStreamService(null, cluster, null,
-    new FSCheckpointProvider("/tmp/test-databus/databus/checkpoint"));
+        new FSCheckpointProvider("/tmp/test-databus/databus/checkpoint"),
+        streamsToProcess);
     service.createListing(localFs, localFs.getFileStatus(new Path(rootDir,
     "data")), results, trashSet, checkpointPaths);
 

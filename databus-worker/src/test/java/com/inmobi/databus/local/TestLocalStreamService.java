@@ -1,23 +1,11 @@
 package com.inmobi.databus.local;
 
-import org.apache.log4j.Logger;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import org.apache.hadoop.fs.FSDataOutputStream;
-
-import com.inmobi.databus.AbstractServiceTest;
-import com.inmobi.databus.CheckpointProvider;
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.PublishMissingPathsTest;
-import com.inmobi.databus.SourceStream;
-import com.inmobi.databus.utils.CalendarHelper;
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -28,11 +16,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.log4j.Logger;
 import org.testng.Assert;
+
+import com.inmobi.databus.AbstractServiceTest;
+import com.inmobi.databus.CheckpointProvider;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.PublishMissingPathsTest;
+import com.inmobi.databus.SourceStream;
+import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.FileUtil;
 
 public class TestLocalStreamService extends LocalStreamService implements
     AbstractServiceTest {
@@ -142,6 +142,11 @@ public class TestLocalStreamService extends LocalStreamService implements
             + this.getName() + File.separator;
         tmpFilesList = createScribeData(fs, this.getName(), pathName, 1);
       }
+      
+      // Copy input format src jar to FS
+      String inputFormatSrcJar = FileUtil.findContainingJar(
+          org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+      fs.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
     } catch (Exception e) {
       e.printStackTrace();
       throw new Error("Error in LocalStreamService Test PreExecute");
@@ -289,8 +294,9 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public TestLocalStreamService(DatabusConfig config,
                                 Cluster srcCluster, Cluster currentCluster,
-      CheckpointProvider provider) {
-    super(config, srcCluster, currentCluster, provider);
+ CheckpointProvider provider,
+      List<String> streamsToProcess) throws IOException {
+    super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.srcCluster = srcCluster;
     this.provider = provider;
     try {

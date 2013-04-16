@@ -1,10 +1,13 @@
 package com.inmobi.databus.distcp;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -132,6 +135,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     
     DatabusConfigParser parser = new DatabusConfigParser(filename);
     DatabusConfig config = parser.getConfig();
+    List<String> streamsToProcess = new ArrayList<String>();
+    streamsToProcess.addAll(config.getSourceStreams().keySet());
 
     Cluster currentCluster = null;
     if (currentClusterName != null) {
@@ -160,7 +165,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster,new FSCheckpointProvider(cluster
-          .getCheckpointDir()));
+.getCheckpointDir()), streamsToProcess);
       localStreamServices.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);

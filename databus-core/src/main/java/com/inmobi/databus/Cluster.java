@@ -31,6 +31,11 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.databus.utils.CalendarHelper;
 
 public class Cluster {
+  @Override
+  public String toString() {
+    return clustername;
+  }
+
   private final String rootDir;
   private final String hdfsUrl;
   private final String clustername;

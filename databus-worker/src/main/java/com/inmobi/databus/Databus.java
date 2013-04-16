@@ -13,8 +13,10 @@
 */
 package com.inmobi.databus;
 
+
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -33,6 +37,7 @@ import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.distcp.MirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
 import com.inmobi.databus.purge.DataPurgerService;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.databus.utils.SecureLoginUtil;
 import com.inmobi.databus.zookeeper.CuratorLeaderManager;
 
@@ -40,6 +45,7 @@ public class Databus implements Service, DatabusConstants {
   private static Logger LOG = Logger.getLogger(Databus.class);
   private DatabusConfig config;
   private String currentClusterName = null;
+  private static int numStreamsLocalService = 5;
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -73,13 +79,33 @@ public class Databus implements Service, DatabusConstants {
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
     }
+    
+    // find the name of the jar containing UniformSizeInputFormat class.
+    String inputFormatSrcJar = FileUtil.findContainingJar(
+        org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+    LOG.debug("Jar containing UniformSizeInputFormat [" + inputFormatSrcJar + "]");
+    
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
       }
       //Start LocalStreamConsumerService for this cluster if it's the source of any stream
       if (cluster.getSourceStreams().size() > 0) {
-        services.add(getLocalStreamService(config, cluster, currentCluster));
+        // copy input format jar from local to cluster FS
+        copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
+
+        Iterator<String> iterator = cluster.getSourceStreams().iterator();
+        List<String> streamsToProcess = new ArrayList<String>();
+        while (iterator.hasNext()) {
+          for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
+            streamsToProcess.add(iterator.next());
+          }
+          if (streamsToProcess.size() > 0) {
+            services.add(getLocalStreamService(config, cluster, currentCluster,
+                streamsToProcess));
+            streamsToProcess = new ArrayList<String>();
+          }
+        }
       }
 
 			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
@@ -125,10 +151,26 @@ public class Databus implements Service, DatabusConstants {
     return services;
   }
   
+  private void copyInputFormatJarToClusterFS(Cluster cluster, 
+      String inputFormatSrcJar) throws IOException {
+    FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
+    // create jars path inside /databus/system/tmp path
+    Path jarsPath = new Path(cluster.getTmpPath(), "jars");
+    if (!clusterFS.exists(jarsPath)) {
+      clusterFS.mkdirs(jarsPath);
+    }
+    // copy inputFormat source jar into /databus/system/tmp/jars path
+    Path inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+    if (!clusterFS.exists(inputFormatJarDestPath)) {
+      clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
+    }
+  }
+  
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster) {
+      Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
+      throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()));
+        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
@@ -205,6 +247,10 @@ public class Databus implements Service, DatabusConstants {
       Properties prop = new Properties();
       prop.load(new FileReader(cfgFile));
 
+      String streamperLocal = prop.getProperty(STREAMS_PER_LOCALSERVICE);
+      if (streamperLocal != null) {
+        numStreamsLocalService = Integer.parseInt(streamperLocal);
+      }
       String log4jFile = getProperty(prop, LOG4J_FILE);
       if (log4jFile == null) {
         LOG.error("log4j.properties incorrectly defined");
@@ -242,6 +288,11 @@ public class Databus implements Service, DatabusConstants {
       
       String principal = prop.getProperty(KRB_PRINCIPAL);
       String keytab = getProperty(prop, KEY_TAB_FILE);
+      
+      String mbPerMapper = prop.getProperty(MB_PER_MAPPER);
+      if (mbPerMapper != null) {
+        System.setProperty(MB_PER_MAPPER, mbPerMapper);
+      }
       prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {
