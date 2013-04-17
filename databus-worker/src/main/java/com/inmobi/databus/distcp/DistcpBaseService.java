@@ -29,6 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCp;
@@ -118,7 +119,11 @@ public abstract class DistcpBaseService extends AbstractService {
     Configuration conf = currentCluster.getHadoopConf();
     conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
         "_" + getDestCluster().getName());
-    DistCp distCp = new DistCp(conf, options);
+    
+    //TODO: this is a placeholder map to compile as of now. Need to be replaced
+    // by actual map object.
+    Map<String, FileStatus> fileCopyList = null;
+    DistCp distCp = new DatabusDistCp(conf, options, fileCopyList);
     try {
       distCp.execute();
     } catch (Exception e) {
