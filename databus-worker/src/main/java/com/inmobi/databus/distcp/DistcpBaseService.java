@@ -20,7 +20,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,7 +34,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpConstants;
-import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -51,7 +49,6 @@ public abstract class DistcpBaseService extends AbstractService {
   private final FileSystem srcFs;
   private final FileSystem destFs;
   protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
-  protected final Set<String> streamsToProcess;
   protected final CheckpointProvider provider;
   protected Map<String, Path> checkPointPaths = new HashMap<String, Path>();
 
@@ -62,7 +59,7 @@ public abstract class DistcpBaseService extends AbstractService {
       CheckpointProvider provider, Set<String> streamsToProcess)
       throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config);
+        config, streamsToProcess);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
@@ -73,7 +70,6 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
-    this.streamsToProcess=streamsToProcess;
     this.provider = provider;
   }
 
@@ -93,38 +89,18 @@ public abstract class DistcpBaseService extends AbstractService {
     return destFs;
   }
 
-  /**
-   * Set Common or default DistCp options here.
-   * 
-   * @param inputPathListing
-   * @param target
-   * @return options instance
-   */
 
-  protected DistCpOptions getDistCpOptions(Path inputPathListing, Path target) {
-    DistCpOptions options = new DistCpOptions(inputPathListing, target);
-    options.setBlocking(true);
-    options.setSkipPathValidation(true);
-    options.setUseSimpleFileListing(true);
-    // If more command line options need to be passed to DistCP then,
-    // Create options instance using OptionParser.parse and set default options
-    // on the returned instance.
-    // with the arguments as sent in by the Derived Service
-    return options;
-  }
 
-  protected Boolean executeDistCp(DistCpOptions options, String serviceName)
+  protected Boolean executeDistCp(String serviceName,
+      Map<String, FileStatus> fileCopyList)
       throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
     conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
         "_" + getDestCluster().getName());
-    
-    //TODO: this is a placeholder map to compile as of now. Need to be replaced
-    // by actual map object.
-    Map<String, FileStatus> fileCopyList = null;
-    DistCp distCp = new DatabusDistCp(conf, options, fileCopyList);
+    // TODO remove null from next line
+    DistCp distCp = new DatabusDistCp(conf, null, fileCopyList);
     try {
       distCp.execute();
     } catch (Exception e) {
@@ -196,20 +172,16 @@ public abstract class DistcpBaseService extends AbstractService {
   protected abstract byte[] createCheckPoint(String stream) throws IOException;
 
   /*
-   * @param Map<Path, FileSystem> consumePaths - list of files which contain
-   * fully qualified path of minute level files which have to be pulled
-   * 
-   * @param Path tmp - Temporary Location path on Cluster to where files have to
-   * be pulled
+   * Return a map of destination path,source path file status
+   * Since the map uses destination path as the key,no conflicting duplicates 
+   * paths woule be passed on to distcp
    * 
    * @return
    */
-  //TODO change the signature of this method to return a map<String,FileStatus>
-  take input boolean is mirror
-  protected Path getDistCPInputFile(Map<Path, FileSystem> consumePaths, Path tmp)
+  protected Map<String, FileStatus> getDistCPInputFile()
       throws Exception {
     String checkPointValue = null;
-    Set<Path> pathsToProcess = new LinkedHashSet<Path>();
+    Map<String,FileStatus> result = new HashMap<String, FileStatus>();
     for (String stream : streamsToProcess) {
       byte[] value = provider.read(getCheckPointKey(stream));
       if (value != null)
@@ -227,37 +199,52 @@ public abstract class DistcpBaseService extends AbstractService {
       Date lastDate = CalendarHelper.getDateFromStreamDir(inputPath,
           lastProcessed);
       LOG.info("Data processed till [" + lastDate + "] for stream " + stream);
-      Path nextPath = CalendarHelper.getNextMinutPathFromDate(lastDate,
+      Path nextPath = CalendarHelper.getNextMinutePathFromDate(lastDate,
           inputPath);
       Date nextDate = CalendarHelper.addAMinute(lastDate);
       // if next to next path exist than only add the next path so that the path
       // being added to disctp input is not the current path
-      Path nextToNextPath = CalendarHelper.getNextMinutPathFromDate(nextDate,
+      Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
           inputPath);
       Path lastPathAdded = null;
-      while (srcFs.exists(nextToNextPath)) {
-        LOG.debug("Adding path [" + nextPath
-            + "] to the list of paths to be processed");
-        pathsToProcess.add(nextPath);
+      FileStatus[] nextPathFileStatus=srcFs.listStatus(nextPath);
+      FileStatus[] nextToNextPathFileStatus;
+      while ((nextToNextPathFileStatus=srcFs.listStatus(nextToNextPath))!=null) {
+        if(nextPathFileStatus.length==0){
+          LOG.info(nextPath + " is an empty directory");
+          FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
+          String destnPath= getFinalDestinationPath(srcFileStatus);
+          if(destnPath!=null){
+            LOG.info("Adding to input of Distcp.Move ["+nextPath+"] to "+destnPath);
+            result.put(destnPath,srcFileStatus);
+          }
+        }
+        else{
+          for(FileStatus fStatus:nextPathFileStatus){
+            String destnPath = getFinalDestinationPath(fStatus);
+            if(destnPath!=null){
+              LOG.info("Adding to input of Distcp.Move ["+fStatus.getPath()+"] to "+destnPath);
+              result.put(destnPath,fStatus);
+            }
+          }
+        } 
         lastPathAdded = nextPath;
         nextPath = nextToNextPath;
         nextDate = CalendarHelper.addAMinute(nextDate);
-        nextToNextPath = CalendarHelper.getNextMinutPathFromDate(nextDate,
+        nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
             inputPath);
+        nextPathFileStatus=nextToNextPathFileStatus;
+        nextToNextPathFileStatus=null;
       }
       if (lastPathAdded != null) {
         checkPointPaths.put(stream, lastPathAdded);
       }
 
     }
-    Path tmpDistCPPath = createInputFileForDISCTP(destFs, srcCluster.getName(),
-        tmp,
-        pathsToProcess);
-    if (tmpDistCPPath != null)
-      return tmpDistCPPath.makeQualified(destFs);
-    else
-      return null;
+    return result;
   }
+  
+  protected abstract String getFinalDestinationPath(FileStatus srcPath);
 
   protected String getCheckPointKey(String stream) {
     return getClass().getSimpleName() + srcCluster.getName() + stream;

@@ -45,21 +45,24 @@ public abstract class AbstractService implements Service, Runnable {
 	protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
 	    "yyyy/MM/dd, hh:mm");
 	private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
+	protected final Set<String> streamsToProcess;
 
-  public AbstractService(String name, DatabusConfig config) {
-    this(name, config, DEFAULT_RUN_INTERVAL);
+  public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
   }
 
   public AbstractService(String name, DatabusConfig config,
-                         long runIntervalInMsec) {
+                         long runIntervalInMsec,Set<String> streamsToProcess) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
+    this.streamsToProcess=streamsToProcess;
   }
 
   public AbstractService(String name, DatabusConfig config,
-                         long runIntervalInMsec, CheckpointProvider provider) {
-    this(name, config, runIntervalInMsec);
+      long runIntervalInMsec, CheckpointProvider provider,
+      Set<String> streamsToProcess) {
+    this(name, config, runIntervalInMsec, streamsToProcess);
     this.checkpointProvider = provider;
   }
 

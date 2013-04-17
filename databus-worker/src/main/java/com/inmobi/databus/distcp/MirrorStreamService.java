@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -88,25 +87,22 @@ public class MirrorStreamService extends DistcpBaseService {
         return;
       }
 
-      Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
-      if (inputFilePath == null) {
+      Map<String, FileStatus> fileCopyListing = getDistCPInputFile();
+      if (fileCopyListing.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
         + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
         + getDestCluster().getHdfsUrl() + "]");
         return;
       }
 
-      LOG.warn("Starting a Mirrored distcp pull from ["
-      + inputFilePath.toString() + "] " + "Cluster ["
+      LOG.warn("Starting a Mirrored distcp pull from Cluster ["
       + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
       + getDestCluster().getHdfsUrl() + "] " + " Path ["
       + tmpOut.toString() + "]");
 
-      DistCpOptions options = getDistCpOptions(inputFilePath, tmpOut);
-      options.setPreserveSrcPath(true);
 
       try {
-        if (!executeDistCp(options, "MirrorStreamService"))
+        if (!executeDistCp("MirrorStreamService", fileCopyListing))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Problem in Mirrored distcp..skipping commit for this run",
@@ -320,5 +316,13 @@ public class MirrorStreamService extends DistcpBaseService {
     return last.getPath();
 
 
+  }
+
+  /*
+   * Full path needs to be preserved for mirror stream
+   */
+  @Override
+  protected String getFinalDestinationPath(FileStatus srcPath) {
+    return srcPath.getPath().toUri().getPath();
   }
 }

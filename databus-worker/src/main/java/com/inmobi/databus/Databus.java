@@ -167,17 +167,20 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
+      Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
       throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
         new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+      Set<String> streamsToProcess) throws
       Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
-        currentCluster, new FSCheckpointProvider(dstCluster.getCheckpointDir()));
+        currentCluster,
+        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
+        streamsToProcess);
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,

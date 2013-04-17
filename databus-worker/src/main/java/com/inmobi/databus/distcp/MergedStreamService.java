@@ -100,21 +100,20 @@ public class MergedStreamService extends DistcpBaseService {
         }
       }
 
-      Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
-      if (inputFilePath == null) {
+      Map<String, FileStatus> fileCopyListing = getDistCPInputFile();
+      if (fileCopyListing.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
             + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
         return;
       }
-      LOG.warn("Starting a distcp pull from [" + inputFilePath.toString()
-          + "] " + "Cluster [" + getSrcCluster().getHdfsUrl() + "]"
+      LOG.warn("Starting a distcp pull from Cluster ["
+          + getSrcCluster().getHdfsUrl() + "]"
           + " to Cluster [" + getDestCluster().getHdfsUrl() + "] " + " Path ["
           + tmpOut.toString() + "]");
 
       try {
-        if (!executeDistCp(getDistCpOptions(inputFilePath, tmpOut), 
-            "MergedStreamService"))
+        if (!executeDistCp("MergedStreamService", fileCopyListing))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Error in distcp", e);
@@ -417,6 +416,15 @@ public class MergedStreamService extends DistcpBaseService {
       }
     }
     return null;
+
+  }
+
+  @Override
+  protected String getFinalDestinationPath(FileStatus srcPath) {
+    if (srcPath.isDir())
+      return null;
+    else
+      return srcPath.getPath().getName();
 
   }
 
