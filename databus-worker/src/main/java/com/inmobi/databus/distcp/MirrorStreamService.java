@@ -266,11 +266,13 @@ public class MirrorStreamService extends DistcpBaseService {
     Path finalSrcDir = new Path(srcCluster.getFinalDestDirRoot());
     Path streamFinalSrctDir = new Path(finalSrcDir, stream);
 
-    Path lastMirroredPath = getLastMirroredPath(getDestFs(), streamFinalDestDir);
+    Path lastMirroredPath = getFirstOrLastPath(getDestFs(), streamFinalDestDir,
+        true);
     Path lastMergedPathOnSrc = null;
     if (lastMirroredPath == null) {
       LOG.info("Cannot compute the checkpoint from the destination data");
-      lastMergedPathOnSrc = getLastMirroredPath(getSrcFs(), streamFinalSrctDir);
+      lastMergedPathOnSrc = getFirstOrLastPath(getSrcFs(), streamFinalSrctDir,
+          false);
       if (lastMergedPathOnSrc != null) {
         LOG.info("Computed the checkpoint from the source cluster's data");
         URI uri = lastMergedPathOnSrc.toUri();
@@ -298,7 +300,8 @@ public class MirrorStreamService extends DistcpBaseService {
     return value;
   }
 
-  private Path getLastMirroredPath(FileSystem fs, Path streamFinalDestDir)
+  private Path getFirstOrLastPath(FileSystem fs, Path streamFinalDestDir,
+      boolean returnLast)
       throws IOException {
     FileStatus streamRoot;
     List<FileStatus> streamPaths = new ArrayList<FileStatus>();
@@ -307,13 +310,15 @@ public class MirrorStreamService extends DistcpBaseService {
     if (streamPaths.size() == 0)
       return null;
     DatePathComparator comparator = new DatePathComparator();
-    FileStatus last = streamPaths.get(0);
+    FileStatus result = streamPaths.get(0);
     for (int i = 1; i < streamPaths.size(); i++) {
-      if (comparator.compare(streamPaths.get(i), last) > 0)
-        last = streamPaths.get(i);
+      if (returnLast && comparator.compare(streamPaths.get(i), result) > 0)
+        result = streamPaths.get(i);
+      else if (!returnLast
+          && comparator.compare(streamPaths.get(i), result) < 0)
+        result = streamPaths.get(i);
     }
-      // return the last path from the sorted list
-    return last.getPath();
+    return result.getPath();
 
 
   }
