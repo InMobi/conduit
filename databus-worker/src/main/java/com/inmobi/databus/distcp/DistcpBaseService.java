@@ -13,7 +13,6 @@
  */
 package com.inmobi.databus.distcp;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Calendar;
@@ -28,7 +27,6 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -101,7 +99,10 @@ public abstract class DistcpBaseService extends AbstractService {
     conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
         "_" + getDestCluster().getName());
     
-    DistCpOptions options = new DistCpOptions(new Path(""), targetPath);
+    // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
+    // since DatabusDistCp writes listing file using fileListingMap instead of
+    // relying on sourceFileListing path. Passing a dummy value.
+    DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
       distCp.execute();
@@ -259,83 +260,6 @@ public abstract class DistcpBaseService extends AbstractService {
       provider.checkpoint(getCheckPointKey(entry.getKey()), entry.getValue()
           .toString().getBytes());
     }
-  }
-
-
-  /*
-   * Helper function to find next minute directory given a path eg: Path p =
-   * "hdfsUrl/databus/streams/<streamName>/2013/01/10/12/33"
-   */
-  private Path getNextMinuteDirectory(Path p) {
-    String rootString = srcCluster.getRootDir();
-    Path root = new Path(rootString);// this will clean the root path string of
-                                     // all extra slashes(/)
-    // eg: root = "hdfsUrl/databus/"
-    LOG.debug("Path given to getNextMinuteDirectory function [" + p + "]");
-    String path = p.toString();
-    // if it is a valid path than this condition should be true
-    if (path.length() >= root.toString().length() + 1) {
-      // tmpPath will have value of form
-      // "streams/<streamName>/2013/01/10/12/33"
-      String tmpPath = path.substring(root.toString().length() + 1);
-      String tmp[] = tmpPath.split(File.separator);
-      if (tmp.length >= 2) {
-        // tmp[0] value should either be streams or steam_local and tmp[1] value
-        // will be name of topic
-        Path pathTillStream = new Path(root, tmp[0]);
-        Path pathTillTopic = new Path(pathTillStream, tmp[1]);
-        // pathTillTopic value will be of form
-        // hdfsUrl/databus/streams/<streamName>/
-        Date pathDate = CalendarHelper.getDateFromStreamDir(pathTillTopic, p);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(pathDate);
-        calendar.add(Calendar.MINUTE, 1);
-        Date nextdate = calendar.getTime();
-        String suffix = Cluster.getDateAsYYYYMMDDHHMNPath(nextdate);
-        Path nextPath = new Path(pathTillTopic, suffix);
-        return nextPath;
-      }
-    }
-
-    return null;
-  }
-
-
-
-
-  /*
-   * Helper method for getDistCPInputFile if none of the paths are VALID then it
-   * does not create an empty file on <clusterName> but returns a null
-   * 
-   * @param FileSystem - where to create file i.e. srcFs or destFs
-   * 
-   * @param String - sourceCluster from where we are pulling files from
-   * 
-   * @param Path - tmpLocation on sourceCluster
-   * 
-   * @param Set<String> - set of sourceFiles need to be pulled
-   */
-  private Path createInputFileForDISCTP(FileSystem fs, String clusterName,
-      Path tmp, Set<Path> minFilesSet) throws IOException {
-    if (minFilesSet.size() > 0) {
-      Path tmpPath = null;
-      FSDataOutputStream out = null;
-      try {
-        tmpPath = new Path(tmp, clusterName
-            + new Long(System.currentTimeMillis()).toString());
-        out = fs.create(tmpPath);
-        for (Path minFile : minFilesSet) {
-          out.write(minFile.toString().getBytes());
-          out.write('\n');
-        }
-      } finally {
-        if (out != null) {
-          out.close();
-        }
-      }
-      return tmpPath;
-    } else
-      return null;
   }
 
   public Cluster getCurrentCluster() {

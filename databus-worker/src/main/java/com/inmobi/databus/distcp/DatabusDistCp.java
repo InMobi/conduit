@@ -33,7 +33,7 @@ import com.inmobi.databus.utils.FileUtil;
 
 /**
  * This class extends DistCp class and overrides createInputFileListing()
- * method to write the listing file directly using the file listing map
+ * method that writes the listing file directly using the file listing map
  * passed by merge/mirror stream service.
  */
 public class DatabusDistCp extends DistCp {
