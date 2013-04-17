@@ -316,7 +316,10 @@ public class MirrorStreamService extends DistcpBaseService {
           && comparator.compare(streamPaths.get(i), result) < 0)
         result = streamPaths.get(i);
     }
-    return result.getPath();
+    if (!result.isDir())
+      return result.getPath().getParent();
+    else
+      return result.getPath();
 
 
   }

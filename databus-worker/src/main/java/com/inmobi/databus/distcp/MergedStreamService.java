@@ -387,8 +387,12 @@ public class MergedStreamService extends DistcpBaseService {
         continue;
       if (current.getPath().getName()
           .equals(destnPath.getPath().getName())) {
-        LOG.debug("Path found at " + srcFiles.get(i).getPath());
-        return srcFiles.get(i).getPath();
+        FileStatus result = srcFiles.get(i);
+        LOG.debug("Path found at " + result.getPath());
+        if (!result.isDir())
+          return result.getPath().getParent();
+        else
+          return result.getPath();
       }
     }
     LOG.debug("Path not found " + destnPath.getPath());
