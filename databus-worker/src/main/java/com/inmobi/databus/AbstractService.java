@@ -66,6 +66,14 @@ public abstract class AbstractService implements Service, Runnable {
     this.checkpointProvider = provider;
   }
 
+  protected final static String getServiceName(Set<String> streamsToProcess) {
+    String servicename = "";
+    for (String stream : streamsToProcess) {
+      servicename += stream + "@";
+    }
+    return servicename;
+  }
+
   public DatabusConfig getConfig() {
     return config;
   }

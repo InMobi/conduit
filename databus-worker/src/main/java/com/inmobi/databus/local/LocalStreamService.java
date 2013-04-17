@@ -14,7 +14,6 @@
 package com.inmobi.databus.local;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -73,7 +72,6 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
   private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
-  private final List<String> streamsToProcess;
   private final String streamsToProcessName;
 
   // The amount of data expected to be processed by each mapper, such that
@@ -88,17 +86,16 @@ public class LocalStreamService extends AbstractService implements
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      List<String> streamsToProcess) throws IOException {
+      Set<String> streamsToProcess) throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config,
         DEFAULT_RUN_INTERVAL,
-        provider);
+        provider, streamsToProcess);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
     else
       this.currentCluster = currentCluster;
-    this.streamsToProcess = streamsToProcess;
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
@@ -108,13 +105,7 @@ public class LocalStreamService extends AbstractService implements
   }
 
 
-  private static final String getServiceName(List<String> streamsToProcess) {
-    String servicename = "";
-    for (String stream : streamsToProcess) {
-      servicename += stream + "@";
-    }
-    return servicename;
-  }
+
   private void cleanUpTmp(FileSystem fs) throws Exception {
     if (fs.exists(tmpPath)) {
       LOG.info("Deleting tmpPath recursively [" + tmpPath + "]");

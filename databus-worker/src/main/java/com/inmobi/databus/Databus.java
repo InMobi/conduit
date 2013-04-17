@@ -95,7 +95,7 @@ public class Databus implements Service, DatabusConstants {
         copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
 
         Iterator<String> iterator = cluster.getSourceStreams().iterator();
-        List<String> streamsToProcess = new ArrayList<String>();
+        Set<String> streamsToProcess = new HashSet<String>();
         while (iterator.hasNext()) {
           for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
             streamsToProcess.add(iterator.next());
@@ -103,13 +103,15 @@ public class Databus implements Service, DatabusConstants {
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
                 streamsToProcess));
-            streamsToProcess = new ArrayList<String>();
+            streamsToProcess = new HashSet<String>();
           }
         }
       }
 
 			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
 			Set<String> mirroredRemoteClusters = new HashSet<String>();
+      Set<String> mergedStreams = new HashSet<String>();
+      Set<String> mirrorStreams = new HashSet<String>();
       for (DestinationStream cStream : cluster.getDestinationStreams().values()) {
         //Start MergedStreamConsumerService instances for this cluster for each cluster
         //from where it has to fetch a partial stream and is hosting a primary stream
@@ -120,22 +122,26 @@ public class Databus implements Service, DatabusConstants {
         .getSourceClusters()) {
           if (cStream.isPrimary())
 						mergedStreamRemoteClusters.add(cName);
+          mergedStreams.add(cStream.getName());
         }
         if (!cStream.isPrimary())  {
           Cluster primaryCluster = config.getPrimaryClusterForDestinationStream(cStream.getName());
           if (primaryCluster != null)
 						mirroredRemoteClusters.add(primaryCluster.getName());
+          mirrorStreams.add(cStream.getName());
         }
       }
 
 
 			for (String remote : mergedStreamRemoteClusters) {
         services.add(getMergedStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster));
+            config.getClusters().get(remote), cluster, currentCluster,
+            mergedStreams));
       }
 			for (String remote : mirroredRemoteClusters) {
         services.add(getMirrorStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster));
+            config.getClusters().get(remote), cluster, currentCluster,
+            mirrorStreams));
       }
     }
 
@@ -184,10 +190,13 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+      Set<String> streamsToProcess) throws
       Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
-        currentCluster, new FSCheckpointProvider(dstCluster.getCheckpointDir()));
+        currentCluster,
+        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
+        streamsToProcess);
   }
 
   @Override
