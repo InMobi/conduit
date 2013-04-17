@@ -1,8 +1,6 @@
 package com.inmobi.databus.distcp;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -135,8 +133,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     
     DatabusConfigParser parser = new DatabusConfigParser(filename);
     DatabusConfig config = parser.getConfig();
-    List<String> streamsToProcess = new ArrayList<String>();
-    streamsToProcess.addAll(config.getSourceStreams().keySet());
+    Set<String> streamsToProcessLocal = new HashSet<String>();
+    streamsToProcessLocal.addAll(config.getSourceStreams().keySet());
 
     Cluster currentCluster = null;
     if (currentClusterName != null) {
@@ -165,7 +163,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster,new FSCheckpointProvider(cluster
-.getCheckpointDir()), streamsToProcess);
+.getCheckpointDir()), streamsToProcessLocal);
       localStreamServices.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
@@ -187,6 +185,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     
       Set<String> mergedStreamRemoteClusters = new HashSet<String>();
       Set<String> mirroredRemoteClusters = new HashSet<String>();
+      Set<String> mergedStreams = new HashSet<String>();
+      Set<String> mirrorStreams = new HashSet<String>();
       for (DestinationStream cStream : cluster.getValue().getDestinationStreams().values()) {
         //Start MergedStreamConsumerService instances for this cluster for each cluster
         //from where it has to fetch a partial stream and is hosting a primary stream
@@ -197,12 +197,14 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
         .getSourceClusters()) {
           if (cStream.isPrimary())
             mergedStreamRemoteClusters.add(cName);
+          mergedStreams.add(cStream.getName());
         }
         if (!cStream.isPrimary())  {
           Cluster primaryCluster =
               config.getPrimaryClusterForDestinationStream(cStream.getName());
           if (primaryCluster != null)
             mirroredRemoteClusters.add(primaryCluster.getName());
+          mirrorStreams.add(cStream.getName());
         }
       }
   
@@ -210,7 +212,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
         TestMergedStreamService remoteMergeService =
             new TestMergedStreamService(config,
                 config.getClusters().get(remote), cluster.getValue(),
-                currentCluster);
+            currentCluster, mergedStreams);
         mergedStreamServices.add(remoteMergeService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMergeService.getCurrentCluster(),
@@ -223,7 +225,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
         TestMirrorStreamService remoteMirrorService =
             new TestMirrorStreamService(config,
                 config.getClusters().get(remote), cluster.getValue(),
-                currentCluster);
+            currentCluster, mirrorStreams);
         mirrorStreamServices.add(remoteMirrorService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMirrorService.getCurrentCluster(),
