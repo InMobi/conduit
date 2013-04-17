@@ -164,15 +164,6 @@ public class CalendarHelper {
   }
 
   public static Path getPathFromDate(Date date, Path dirPrefix) {
-
-    // Calendar calendar = Calendar.getInstance();
-    // calendar.setTime(date);
-    // String suffix = calendar.get(Calendar.YEAR) + File.separator
-    // // TODO check better way to find month
-    // + (calendar.get(Calendar.MONTH) + 1) + File.separator
-    // + calendar.get(Calendar.DAY_OF_MONTH) + File.separator
-    // + calendar.get(Calendar.HOUR_OF_DAY) + File.separator
-    // + calendar.get(Calendar.MINUTE);
     DateFormat dateFormat = new SimpleDateFormat(minDirFormatStr);
     String suffix = dateFormat.format(date);
     return new Path(dirPrefix, suffix);

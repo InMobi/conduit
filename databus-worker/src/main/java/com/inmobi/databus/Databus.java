@@ -18,9 +18,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -110,25 +112,41 @@ public class Databus implements Service, DatabusConstants {
 
 			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
 			Set<String> mirroredRemoteClusters = new HashSet<String>();
-      Set<String> mergedStreams = new HashSet<String>();
-      Set<String> mirrorStreams = new HashSet<String>();
+      Map<String, Set<String>> mergedSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
+      Map<String, Set<String>> mirrorSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
       for (DestinationStream cStream : cluster.getDestinationStreams().values()) {
         //Start MergedStreamConsumerService instances for this cluster for each cluster
         //from where it has to fetch a partial stream and is hosting a primary stream
         //Start MirroredStreamConsumerService instances for this cluster for each cluster
         //from where it has to mirror mergedStreams
 
+        if (cStream.isPrimary()) {
         for (String cName : config.getSourceStreams().get(cStream.getName())
         .getSourceClusters()) {
-          if (cStream.isPrimary())
 						mergedStreamRemoteClusters.add(cName);
-          mergedStreams.add(cStream.getName());
+            if (mergedSrcClusterToStreamsMap.get(cName) == null) {
+              Set<String> tmp = new HashSet<String>();
+              tmp.add(cStream.getName());
+              mergedSrcClusterToStreamsMap.put(cName, tmp);
+            } else {
+              mergedSrcClusterToStreamsMap.get(cName).add(cStream.getName());
+            }
+          }
         }
         if (!cStream.isPrimary())  {
           Cluster primaryCluster = config.getPrimaryClusterForDestinationStream(cStream.getName());
-          if (primaryCluster != null)
+          if (primaryCluster != null) {
 						mirroredRemoteClusters.add(primaryCluster.getName());
-          mirrorStreams.add(cStream.getName());
+            String clusterName = primaryCluster.getName();
+            if (mirrorSrcClusterToStreamsMap.get(clusterName) == null) {
+              Set<String> tmp = new HashSet<String>();
+              tmp.add(cStream.getName());
+              mirrorSrcClusterToStreamsMap.put(clusterName, tmp);
+            } else {
+              mirrorSrcClusterToStreamsMap.get(clusterName).add(
+                  cStream.getName());
+            }
+          }
         }
       }
 
@@ -136,12 +154,12 @@ public class Databus implements Service, DatabusConstants {
 			for (String remote : mergedStreamRemoteClusters) {
         services.add(getMergedStreamService(config,
             config.getClusters().get(remote), cluster, currentCluster,
-            mergedStreams));
+            mergedSrcClusterToStreamsMap.get(remote)));
       }
 			for (String remote : mirroredRemoteClusters) {
         services.add(getMirrorStreamService(config,
             config.getClusters().get(remote), cluster, currentCluster,
-            mirrorStreams));
+            mirrorSrcClusterToStreamsMap.get(remote)));
       }
     }
 
