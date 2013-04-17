@@ -52,6 +52,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
+import com.inmobi.databus.utils.FileUtil;
 
 
 /*
@@ -302,26 +303,28 @@ public class LocalStreamService extends AbstractService implements
 
   }
 
-  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
+  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
+      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
     trashSet, checkpointPaths);
+    
+    // if file listing is empty, simply return
+    if (fileListing.isEmpty()) {
+      return 0;
+    }
     
     // the total size of data present in all files
     long totalSize = 0;
     SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
       inputPath, Text.class, FileStatus.class);
     try {
-      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
-          .iterator();
+      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
-        if (out == null) {
-          out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-              inputPath, Text.class, entry.getKey().getClass());
-        }
-        out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
+        FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
+        out.append(new Text(entry.getValue()), status);
         
         // Create a sync point after each entry. This will ensure that SequenceFile
         // Reader can work at file entry level granularity, given that SequenceFile
@@ -336,28 +339,6 @@ public class LocalStreamService extends AbstractService implements
     
     return totalSize;
   }
-
-  // This method is taken from DistCp SimpleCopyListing class.
-  private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
-    // if the file is not an instance of RawLocaleFileStatus, simply return it
-    if (fileStatus.getClass() == FileStatus.class) {
-      return fileStatus;
-    }
-    
-    // Else if it is a local file, we need to convert it to an instance of 
-    // FileStatus class. The reason is that SequenceFile.Writer/Reader does 
-    // an exact match for FileStatus class.
-    FileStatus status = new FileStatus();
-    
-    buffer.reset();
-    DataOutputStream out = new DataOutputStream(buffer);
-    fileStatus.write(out);
-    
-    in.reset(buffer.toByteArray(), 0, buffer.size());
-    status.readFields(in);
-    return status;
-  }
-
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,

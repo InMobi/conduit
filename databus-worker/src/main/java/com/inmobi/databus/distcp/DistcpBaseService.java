@@ -120,7 +120,11 @@ public abstract class DistcpBaseService extends AbstractService {
     Configuration conf = currentCluster.getHadoopConf();
     conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
         "_" + getDestCluster().getName());
-    DistCp distCp = new DistCp(conf, options);
+    
+    //TODO: this is a placeholder map to compile as of now. Need to be replaced
+    // by actual map object.
+    Map<String, FileStatus> fileCopyList = null;
+    DistCp distCp = new DatabusDistCp(conf, options, fileCopyList);
     try {
       distCp.execute();
     } catch (Exception e) {
