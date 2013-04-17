@@ -95,7 +95,7 @@ public class MirrorStreamService extends DistcpBaseService {
         return;
       }
 
-      LOG.warn("Starting a Mirrored distcp pull from Cluster ["
+      LOG.info("Starting a Mirrored distcp pull from Cluster ["
       + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
       + getDestCluster().getHdfsUrl() + "] " + " Path ["
       + tmpOut.toString() + "]");

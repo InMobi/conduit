@@ -18,12 +18,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -199,7 +197,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
           cluster.getDataDir());
       fs.delete(new Path(cluster.getRootDir() + "/databus-checkpoint"), true);
 
-      List<String> streamsToProcess = new ArrayList<String>();
+      Set<String> streamsToProcess = new HashSet<String>();
       streamsToProcess.add("stream1");
       streamsToProcess.add("stream2");
       TestLocalStreamService service = new TestLocalStreamService(null,
@@ -356,7 +354,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
     DatabusConfig databusConfig = buildTestDatabusConfig();
     Cluster cluster = ClusterTest.buildLocalCluster();
-    List<String> streamsToProcess = new ArrayList<String>();
+    Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(databusConfig.getSourceStreams().keySet());
     TestLocalStreamService service = new TestLocalStreamService(
         databusConfig, cluster, null, new FSCheckpointProvider(
@@ -420,7 +418,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   public void testCopyMapperImplMethod() throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(
         "test-lss-databus-s3n.xml");
-    List<String> streamsToProcess = new ArrayList<String>();
+    Set<String> streamsToProcess = new HashSet<String>();
     DatabusConfig config = parser.getConfig();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
 
@@ -460,7 +458,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(configName);
     DatabusConfig config = parser.getConfig();
-    List<String> streamsToProcess = new ArrayList<String>();
+    Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
     Set<String> clustersToProcess = new HashSet<String>();
     Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
@@ -507,7 +505,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
     DatabusConfigParser parser = new DatabusConfigParser(fileName);
     DatabusConfig config = parser.getConfig();
-    List<String> streamsToProcess = new ArrayList<String>();
+    Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
 
     Set<String> clustersToProcess = new HashSet<String>();
