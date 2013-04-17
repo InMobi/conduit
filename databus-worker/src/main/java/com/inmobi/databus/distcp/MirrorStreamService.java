@@ -57,7 +57,6 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected Path getInputPath() throws IOException {
-    // return getSrcCluster().getMirrorConsumePath(getDestCluster());
     String finalDestDir = getSrcCluster().getFinalDestDirRoot();
 
     return new Path(finalDestDir);

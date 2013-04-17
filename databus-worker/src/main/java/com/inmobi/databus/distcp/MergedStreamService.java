@@ -308,7 +308,7 @@ public class MergedStreamService extends DistcpBaseService {
   private String toStringOfFileStatus(List<FileStatus> list) {
     StringBuffer str = new StringBuffer();
     for (FileStatus f : list) {
-      str.append(f.getPath().toString());
+      str.append(f.getPath().toString() + ",");
     }
     return str.toString();
   }
@@ -318,16 +318,16 @@ public class MergedStreamService extends DistcpBaseService {
     LOG.info("Finding checkpoint for merge stream from SrcCluster "
         + srcCluster.getName() + " to Destination cluster "
         + destCluster.getName() + " for stream " + stream);
-    String destnCluster = destCluster.getName();
-    List<FileStatus> destnFiles = recursiveListingOfLocalFinalDir(destnCluster,
-        stream);
+    Path pathToBeListed = new Path(destCluster.getFinalDestDirRoot(), stream);
+    List<FileStatus> destnFiles = recursiveListingOfDir(destCluster,
+        pathToBeListed);
     Collections.sort(destnFiles, new DatePathComparator());
     LOG.debug("File found on destination after sorting for stream" + stream
         + " are " + toStringOfFileStatus(destnFiles));
     Path lastLocalPathOnSrc = null;
-    String cluster = srcCluster.getName();
-      List<FileStatus> sourceFiles = recursiveListingOfLocalFinalDir(cluster,
-          stream);
+    pathToBeListed = new Path(srcCluster.getLocalFinalDestDirRoot(), stream);
+    List<FileStatus> sourceFiles = recursiveListingOfDir(srcCluster,
+        pathToBeListed);
       Collections.sort(sourceFiles, new DatePathComparator());
     LOG.debug("File found on source after sorting for stream" + stream
         + " are " + toStringOfFileStatus(sourceFiles));
@@ -358,8 +358,8 @@ public class MergedStreamService extends DistcpBaseService {
             + " first path at the source");
         } else {
           Date currentDate = new Date();
-        String localPathWithStream = srcCluster
-              .getLocalFinalDestDirRoot() + File.separator + stream;
+        String localPathWithStream = srcCluster.getLocalFinalDestDirRoot()
+            + File.separator + stream;
           Path currentPath = CalendarHelper.getPathFromDate(currentDate,
               new Path(localPathWithStream));
         lastLocalPathOnSrc = currentPath;
@@ -400,24 +400,19 @@ public class MergedStreamService extends DistcpBaseService {
 
   }
 
-  private List<FileStatus> recursiveListingOfLocalFinalDir(String cluster,
-      String stream) {
-    Cluster currentCluster = config.getClusters().get(cluster);
-    if (currentCluster != null) {
-      String localFinalDir = currentCluster.getLocalFinalDestDirRoot();
-      Path localFinalDirStream = new Path(localFinalDir, stream);
+  private List<FileStatus> recursiveListingOfDir(Cluster cluster, Path path) {
+      
       try {
-        FileSystem currentFs = FileSystem.get(currentCluster.getHadoopConf());
-        FileStatus streamDir = currentFs.getFileStatus(localFinalDirStream);
+        FileSystem currentFs = FileSystem.get(cluster.getHadoopConf());
+      FileStatus streamDir = currentFs.getFileStatus(path);
         List<FileStatus> filestatus = new ArrayList<FileStatus>();
         createListing(currentFs, streamDir, filestatus);
         return filestatus;
       } catch (IOException ie) {
         LOG.error(
             "IOException while doing recursive listing to create checkpoint on cluster "
-                + cluster + " for stream " + stream, ie);
+                + cluster , ie);
       }
-    }
     return null;
 
   }

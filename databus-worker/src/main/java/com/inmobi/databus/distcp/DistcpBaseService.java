@@ -197,7 +197,7 @@ public abstract class DistcpBaseService extends AbstractService {
       Path lastProcessed = new Path(checkPointValue);
       LOG.info("Last processed path for stream [" + stream + "]" + " is ["
           + lastProcessed + "]");
-      Path inputPath = getInputPath();
+      Path inputPath = new Path(getInputPath(), stream);
       Date lastDate = CalendarHelper.getDateFromStreamDir(inputPath,
           lastProcessed);
       LOG.info("Data processed till [" + lastDate + "] for stream " + stream);
