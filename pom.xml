@@ -196,6 +196,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.12</version>
         <configuration>
+          <argLine>-Djava.security.krb5.realm= -Djava.security.krb5.kdc=</argLine>
           <excludedGroups>${excluded.testng.groups}</excludedGroups> 
           <forkedProcessTimeoutInSeconds>7200</forkedProcessTimeoutInSeconds>
         </configuration>

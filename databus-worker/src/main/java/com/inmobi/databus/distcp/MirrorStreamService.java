@@ -68,9 +68,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
     try {
       boolean skipCommit = false;
-      LinkedHashMap<Path, FileSystem> consumePaths = new LinkedHashMap<Path,
-      FileSystem>();
-
+      
       Path tmpOut = new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
       + getSrcCluster().getName() + "_" + getDestCluster().getName())
       .makeQualified(getDestFs());
@@ -87,8 +85,8 @@ public class MirrorStreamService extends DistcpBaseService {
         return;
       }
 
-      Map<String, FileStatus> fileCopyListing = getDistCPInputFile();
-      if (fileCopyListing.size() == 0) {
+      Map<String, FileStatus> fileListingMap = getDistCPInputFile();
+      if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
         + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
         + getDestCluster().getHdfsUrl() + "]");
@@ -102,7 +100,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
 
       try {
-        if (!executeDistCp("MirrorStreamService", fileCopyListing))
+        if (!executeDistCp("MirrorStreamService", fileListingMap, tmpOut))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Problem in Mirrored distcp..skipping commit for this run",
