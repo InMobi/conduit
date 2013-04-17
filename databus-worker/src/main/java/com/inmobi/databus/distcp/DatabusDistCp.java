@@ -27,6 +27,7 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
+import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.databus.utils.FileUtil;
@@ -40,8 +41,8 @@ public class DatabusDistCp extends DistCp {
   
   private static final Log LOG = LogFactory.getLog(DistCp.class);
   
-  // The fileList map contains key as the destination name, 
-  // and source as FileStatus
+  // The fileListing map contains key as the destination file name, 
+  // and value as source FileStatus
   private Map<String, FileStatus> fileListingMap = null;
   // counter for the total number of paths to be copied
   private long totalPaths = 0;
@@ -57,15 +58,16 @@ public class DatabusDistCp extends DistCp {
     this.fileListingMap = fileListingMap;
   }
   
-  //TODO: handle any distp counters related logic that need to be added here
+  @Override
   protected Path createInputFileListing(Job job) throws IOException {
     // get the file path where copy listing file has to be saved
     Path fileListingPath = getFileListingPath();
+    Configuration config = getConf();
     
     SequenceFile.Writer fileListWriter = null;
     try {
-      fileListWriter = SequenceFile.createWriter(fileListingPath.getFileSystem(getConf()),
-          getConf(), fileListingPath, Text.class, FileStatus.class, 
+      fileListWriter = SequenceFile.createWriter(fileListingPath.getFileSystem(config),
+          config, fileListingPath, Text.class, FileStatus.class, 
           SequenceFile.CompressionType.NONE);
       
       for (Map.Entry<String, FileStatus> entry : fileListingMap.entrySet()) {
@@ -90,6 +92,11 @@ public class DatabusDistCp extends DistCp {
     LOG.info("Number of bytes considered for copy: " + totalBytesToCopy
             + " (Actual number of bytes copied depends on whether any files are "
             + "skipped or overwritten.)");
+    
+    // set distcp configurations
+    config.set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH, fileListingPath.toString());
+    config.setLong(DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalBytesToCopy);
+    config.setLong(DistCpConstants.CONF_LABEL_TOTAL_NUMBER_OF_RECORDS, totalPaths);
     
     return fileListingPath;
   }
