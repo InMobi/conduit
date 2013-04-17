@@ -13,22 +13,13 @@
 */
 package com.inmobi.databus;
 
-import java.util.TreeSet;
-
-import java.util.Set;
-
-import java.util.ArrayList;
-
-import java.util.List;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +35,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final long DEFAULT_RUN_INTERVAL = 60000;
 
   private final String name;
-  private final DatabusConfig config;
+  protected final DatabusConfig config;
   protected final long runIntervalInMsec;
   protected Thread thread;
   protected volatile boolean stopped = false;

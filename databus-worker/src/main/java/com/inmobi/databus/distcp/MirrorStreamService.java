@@ -16,9 +16,9 @@ package com.inmobi.databus.distcp;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +34,7 @@ import org.apache.hadoop.tools.DistCpOptions;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
@@ -252,22 +253,7 @@ public class MirrorStreamService extends DistcpBaseService {
   }
 
 
-  void createListing(FileSystem fs, FileStatus fileStatus,
-                             List<FileStatus> results) throws IOException {
-    if (fileStatus.isDir()) {
-      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
-      if (stats.length == 0) {
-        results.add(fileStatus);
-        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      }
-      for (FileStatus stat : stats) {
-        createListing(fs, stat, results);
-      }
-    } else {
-      LOG.debug("createListing :: Adding [" + fileStatus.getPath()+ "]");
-      results.add(fileStatus);
-    }
-  }
+
 
   /*
    * Method to create checkpoint in cases when checkpoint for a stream is not
@@ -287,23 +273,30 @@ public class MirrorStreamService extends DistcpBaseService {
     Path lastMirroredPath = getLastMirroredPath(getDestFs(), streamFinalDestDir);
     Path lastMergedPathOnSrc = null;
     if (lastMirroredPath == null) {
+      LOG.info("Cannot compute the checkpoint from the destination data");
       lastMergedPathOnSrc = getLastMirroredPath(getSrcFs(), streamFinalSrctDir);
       if (lastMergedPathOnSrc != null) {
-        try {
-          URI uri = new URI(lastMergedPathOnSrc.toString());
-          String relativePathString = uri.getPath();
-          lastMirroredPath = getDestFs().makeQualified(
-              new Path(relativePathString));
-        } catch (URISyntaxException e) {
-          LOG.error(
-              "Last merged path computed from the source cluster has invalid URI Syntax;Path is ["
-                  + lastMergedPathOnSrc + "]", e);
-        }
-
+        LOG.info("Computed the checkpoint from the source cluster's data");
+        URI uri = lastMergedPathOnSrc.toUri();
+        String relativePathString = uri.getPath();
+        lastMirroredPath = getDestFs().makeQualified(
+            new Path(relativePathString));
+      } else {
+        LOG.info("Cannot compute checkpoint from either destination or source data hence checkpointing current date");
+        Date currentDate = new Date();
+        String localPathWithStream = srcCluster.getLocalFinalDestDirRoot()
+            + File.separator + stream;
+        Path currentPath = CalendarHelper.getPathFromDate(currentDate,
+            new Path(localPathWithStream));
+        lastMirroredPath = currentPath;
       }
+    } else {
+      LOG.info("Checkpoint was calculated from the destination data,making the path qualified w.r.t source");
+      URI uri = lastMirroredPath.toUri();
+      String relativePath = uri.getPath();
+      FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
+      lastMirroredPath = srcFs.makeQualified(new Path(relativePath));
     }
-    if (lastMirroredPath == null)
-      return null;
     byte[] value = lastMirroredPath.toString().getBytes(); 
     provider.checkpoint(getCheckPointKey(stream), value);
     return value;

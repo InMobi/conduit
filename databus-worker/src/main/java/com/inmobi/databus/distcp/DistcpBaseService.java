@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -29,6 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCp;
@@ -198,6 +200,8 @@ public abstract class DistcpBaseService extends AbstractService {
    * 
    * @return
    */
+  //TODO change the signature of this method to return a map<String,FileStatus>
+  take input boolean is mirror
   protected Path getDistCPInputFile(Map<Path, FileSystem> consumePaths, Path tmp)
       throws Exception {
     String checkPointValue = null;
@@ -344,5 +348,22 @@ public abstract class DistcpBaseService extends AbstractService {
   public Cluster getCurrentCluster() {
     // for tests
     return currentCluster;
+  }
+
+  void createListing(FileSystem fs, FileStatus fileStatus,
+      List<FileStatus> results) throws IOException {
+    if (fileStatus.isDir()) {
+      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
+      if (stats.length == 0) {
+        results.add(fileStatus);
+        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
+      }
+      for (FileStatus stat : stats) {
+        createListing(fs, stat, results);
+      }
+    } else {
+      LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
+      results.add(fileStatus);
+    }
   }
 }

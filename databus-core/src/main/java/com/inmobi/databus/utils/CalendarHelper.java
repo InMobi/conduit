@@ -176,11 +176,8 @@ public class CalendarHelper {
 
   }
 
-  public static Path getNextMinutPathFromDate(Date date, Path dirPrefix) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTime(date);
-    calendar.add(Calendar.MINUTE, 1);
-    return getPathFromDate(calendar.getTime(), dirPrefix);
+  public static Path getNextMinutePathFromDate(Date date, Path dirPrefix) {
+    return getPathFromDate(addAMinute(date), dirPrefix);
   }
 
   public static Date addAMinute(Date date) {

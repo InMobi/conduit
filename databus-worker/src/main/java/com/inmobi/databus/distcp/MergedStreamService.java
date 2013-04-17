@@ -16,6 +16,8 @@ package com.inmobi.databus.distcp;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,6 +35,8 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.DatePathComparator;
 
 /*
  * Handles MergedStreams for a Cluster
@@ -303,10 +307,117 @@ public class MergedStreamService extends DistcpBaseService {
 
   }
 
+  private String toStringOfFileStatus(List<FileStatus> list) {
+    StringBuffer str = new StringBuffer();
+    for (FileStatus f : list) {
+      str.append(f.getPath().toString());
+    }
+    return str.toString();
+  }
+
   @Override
   protected byte[] createCheckPoint(String stream) {
-    // TODO Auto-generated method stub
+    LOG.info("Finding checkpoint for merge stream from SrcCluster "
+        + srcCluster.getName() + " to Destination cluster "
+        + destCluster.getName() + " for stream " + stream);
+    String destnCluster = destCluster.getName();
+    List<FileStatus> destnFiles = recursiveListingOfLocalFinalDir(destnCluster,
+        stream);
+    Collections.sort(destnFiles, new DatePathComparator());
+    LOG.debug("File found on destination after sorting for stream" + stream
+        + " are " + toStringOfFileStatus(destnFiles));
+    Path lastLocalPathOnSrc = null;
+    String cluster = srcCluster.getName();
+      List<FileStatus> sourceFiles = recursiveListingOfLocalFinalDir(cluster,
+          stream);
+      Collections.sort(sourceFiles, new DatePathComparator());
+    LOG.debug("File found on source after sorting for stream" + stream
+        + " are " + toStringOfFileStatus(sourceFiles));
+      for (int i = destnFiles.size() - 1; i >= 0; i--) {
+        FileStatus current = destnFiles.get(i);
+        if(current.isDir())
+          continue;
+      lastLocalPathOnSrc = searchFileInSource(current, sourceFiles);
+      if (lastLocalPathOnSrc != null) {
+          break;
+        }
+      }
+    if (lastLocalPathOnSrc == null) {
+        /*
+         * We cannot figure out the last processed local path because either
+         * 1)There were no files for this stream on destination 2) None of the
+         * files on destination was found on source cluster In both these cases
+         * checkpointing the starting of the stream and if there are no source
+         * files than checkpoint the current time
+         */
+        if (sourceFiles.size() != 0) {
+          FileStatus firstPath = sourceFiles.get(0);
+          if (firstPath.isDir())
+          lastLocalPathOnSrc = firstPath.getPath();
+          else
+          lastLocalPathOnSrc = firstPath.getPath().getParent();
+        LOG.info("Checkpoint couldn't be figured out hence checkpointing the"
+            + " first path at the source");
+        } else {
+          Date currentDate = new Date();
+        String localPathWithStream = srcCluster
+              .getLocalFinalDestDirRoot() + File.separator + stream;
+          Path currentPath = CalendarHelper.getPathFromDate(currentDate,
+              new Path(localPathWithStream));
+        lastLocalPathOnSrc = currentPath;
+        LOG.info("Checkpointing the current time");
+        }
+
+      }
+    byte[] value = lastLocalPathOnSrc.toString().getBytes(); 
+    provider.checkpoint(getCheckPointKey(stream), value);
+    LOG.info("The checkpoint value is " + new String(value));
+    return value;
+  }
+
+
+  /*
+   * This method would search just the last part of the file in the source
+   * cluster file .Expects the list to be sorted
+   */
+  private Path searchFileInSource(FileStatus destnPath,
+      List<FileStatus> srcFiles) {
+    LOG.debug("Searching path "+destnPath.getPath().toString()+" at the source");
+    for (int i = srcFiles.size() - 1; i >= 0; i--) {
+      FileStatus current = srcFiles.get(i);
+      if (current.isDir())
+        continue;
+      if (current.getPath().getName()
+          .equals(destnPath.getPath().getName())) {
+        LOG.debug("Path found at " + srcFiles.get(i).getPath());
+        return srcFiles.get(i).getPath();
+      }
+    }
+    LOG.debug("Path not found " + destnPath.getPath());
     return null;
 
   }
+
+  private List<FileStatus> recursiveListingOfLocalFinalDir(String cluster,
+      String stream) {
+    Cluster currentCluster = config.getClusters().get(cluster);
+    if (currentCluster != null) {
+      String localFinalDir = currentCluster.getLocalFinalDestDirRoot();
+      Path localFinalDirStream = new Path(localFinalDir, stream);
+      try {
+        FileSystem currentFs = FileSystem.get(currentCluster.getHadoopConf());
+        FileStatus streamDir = currentFs.getFileStatus(localFinalDirStream);
+        List<FileStatus> filestatus = new ArrayList<FileStatus>();
+        createListing(currentFs, streamDir, filestatus);
+        return filestatus;
+      } catch (IOException ie) {
+        LOG.error(
+            "IOException while doing recursive listing to create checkpoint on cluster "
+                + cluster + " for stream " + stream, ie);
+      }
+    }
+    return null;
+
+  }
+
 }
