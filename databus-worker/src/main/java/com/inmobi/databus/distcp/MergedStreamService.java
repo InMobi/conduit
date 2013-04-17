@@ -61,7 +61,6 @@ public class MergedStreamService extends DistcpBaseService {
   public void execute() throws Exception {
     try {
       boolean skipCommit = false;
-      Map<Path, FileSystem> consumePaths = new HashMap<Path, FileSystem>();
       missingDirsCommittedPaths = new LinkedHashMap<String, Set<Path>>();
 
       Path tmpOut = new Path(getDestCluster().getTmpPath(),
@@ -100,8 +99,8 @@ public class MergedStreamService extends DistcpBaseService {
         }
       }
 
-      Map<String, FileStatus> fileCopyListing = getDistCPInputFile();
-      if (fileCopyListing.size() == 0) {
+      Map<String, FileStatus> fileListingMap = getDistCPInputFile();
+      if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
             + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
@@ -113,7 +112,7 @@ public class MergedStreamService extends DistcpBaseService {
           + tmpOut.toString() + "]");
 
       try {
-        if (!executeDistCp("MergedStreamService", fileCopyListing))
+        if (!executeDistCp("MergedStreamService", fileListingMap, tmpOut))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Error in distcp", e);

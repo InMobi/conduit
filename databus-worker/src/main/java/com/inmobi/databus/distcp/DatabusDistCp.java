@@ -17,6 +17,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
@@ -31,12 +33,16 @@ import com.inmobi.databus.utils.FileUtil;
 
 /**
  * This class extends DistCp class and overrides createInputFileListing()
- * method.
+ * method to write the listing file directly using the file listing map
+ * passed by merge/mirror stream service.
  */
 public class DatabusDistCp extends DistCp {
+  
+  private static final Log LOG = LogFactory.getLog(DistCp.class);
+  
   // The fileList map contains key as the destination name, 
   // and source as FileStatus
-  private Map<String, FileStatus> fileCopyList = null;
+  private Map<String, FileStatus> fileListingMap = null;
   // counter for the total number of paths to be copied
   private long totalPaths = 0;
   //counter for the total bytes to be copied
@@ -45,10 +51,10 @@ public class DatabusDistCp extends DistCp {
   private DataInputBuffer in = new DataInputBuffer();
 
   public DatabusDistCp(Configuration configuration, DistCpOptions inputOptions,
-      Map<String, FileStatus> fileCopyList)
+      Map<String, FileStatus> fileListingMap)
       throws Exception {
     super(configuration, inputOptions);
-    this.fileCopyList = fileCopyList;
+    this.fileListingMap = fileListingMap;
   }
   
   //TODO: handle any distp counters related logic that need to be added here
@@ -62,7 +68,7 @@ public class DatabusDistCp extends DistCp {
           getConf(), fileListingPath, Text.class, FileStatus.class, 
           SequenceFile.CompressionType.NONE);
       
-      for (Map.Entry<String, FileStatus> entry : fileCopyList.entrySet()) {
+      for (Map.Entry<String, FileStatus> entry : fileListingMap.entrySet()) {
         FileStatus status = FileUtil.getFileStatus(entry.getValue(), buffer, in);
         fileListWriter.append(new Text(entry.getKey()), status);
         
@@ -79,6 +85,11 @@ public class DatabusDistCp extends DistCp {
         fileListWriter.close();
       }
     }
+    
+    LOG.info("Number of paths considered for copy: " + totalPaths);
+    LOG.info("Number of bytes considered for copy: " + totalBytesToCopy
+            + " (Actual number of bytes copied depends on whether any files are "
+            + "skipped or overwritten.)");
     
     return fileListingPath;
   }

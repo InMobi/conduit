@@ -34,6 +34,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpConstants;
+import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -91,16 +92,17 @@ public abstract class DistcpBaseService extends AbstractService {
 
 
 
-  protected Boolean executeDistCp(String serviceName,
-      Map<String, FileStatus> fileCopyList)
+  protected Boolean executeDistCp(String serviceName, 
+      Map<String, FileStatus> fileListingMap, Path targetPath)
       throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
     conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
         "_" + getDestCluster().getName());
-    // TODO remove null from next line
-    DistCp distCp = new DatabusDistCp(conf, null, fileCopyList);
+    
+    DistCpOptions options = new DistCpOptions(new Path(""), targetPath);
+    DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
       distCp.execute();
     } catch (Exception e) {
