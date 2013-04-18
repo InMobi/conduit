@@ -174,9 +174,9 @@ public abstract class DistcpBaseService extends AbstractService {
   protected abstract byte[] createCheckPoint(String stream) throws IOException;
 
   /*
-   * Return a map of destination path,source path file status
-   * Since the map uses destination path as the key,no conflicting duplicates 
-   * paths woule be passed on to distcp
+   * Return a map of destination path,source path file status Since the map uses
+   * destination path as the key,no conflicting duplicates paths would be passed
+   * on to distcp
    * 
    * @return
    */
@@ -209,9 +209,10 @@ public abstract class DistcpBaseService extends AbstractService {
       Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
           inputPath);
       Path lastPathAdded = null;
-      FileStatus[] nextPathFileStatus=srcFs.listStatus(nextPath);
+      FileStatus[] nextPathFileStatus = listStatusAsPerHDFS(srcFs, nextPath);
       FileStatus[] nextToNextPathFileStatus;
-      while ((nextToNextPathFileStatus=srcFs.listStatus(nextToNextPath))!=null) {
+      while ((nextToNextPathFileStatus = listStatusAsPerHDFS(srcFs,
+          nextToNextPath)) != null) {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
           FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
@@ -245,7 +246,26 @@ public abstract class DistcpBaseService extends AbstractService {
     }
     return result;
   }
-  
+
+  /*
+   * FileSystem.listStatus behaves differently for different filesystem This
+   * helper method would ensure a consistent behaviour which is 1) If the path
+   * is a dir and has data return list of filestatus 2) If the path is a dir but
+   * is empty return empty list 3) If the path doesn't exist return null
+   * Different behaviors by different filesystem are HDFS S3N Local Dir With
+   * Data Array Array Array Empty Directory Empty Array null Empty Array Non
+   * Existent Path null null Empty Array
+   */
+  private FileStatus[] listStatusAsPerHDFS(FileSystem fs, Path p)
+      throws IOException {
+    FileStatus[] fStatus = fs.listStatus(p);
+    if (fStatus != null && fStatus.length > 0)
+      return fStatus;
+    if (fs.exists(p))
+      return new FileStatus[0];
+    return null;
+
+  }
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
 
   protected String getCheckPointKey(String stream) {

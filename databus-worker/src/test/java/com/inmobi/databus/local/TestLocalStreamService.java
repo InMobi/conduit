@@ -280,8 +280,16 @@ public class TestLocalStreamService extends LocalStreamService implements
         } catch (NumberFormatException e) {
           
         }
+        // Since merge will only pick the data if next minute directory is
+        // present hence creating an empty next minute directory
+        Date lastPathDate = CalendarHelper.getDateFromStreamDir(new Path(
+            streamPrefix), latestPath);
+        Path nextPath = CalendarHelper.getNextMinutePathFromDate(lastPathDate,
+            new Path(streamPrefix));
+        fs.create(nextPath);
       }
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
+
     } catch (Exception e) {
       e.printStackTrace();
       throw new Error("Error in LocalStreamService Test PostExecute");
