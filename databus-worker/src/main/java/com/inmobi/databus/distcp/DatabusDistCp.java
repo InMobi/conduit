@@ -62,7 +62,7 @@ public class DatabusDistCp extends DistCp {
   protected Path createInputFileListing(Job job) throws IOException {
     // get the file path where copy listing file has to be saved
     Path fileListingPath = getFileListingPath();
-    Configuration config = getConf();
+    Configuration config = job.getConfiguration();
     
     SequenceFile.Writer fileListWriter = null;
     try {
