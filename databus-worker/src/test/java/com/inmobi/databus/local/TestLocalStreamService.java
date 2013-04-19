@@ -282,11 +282,13 @@ public class TestLocalStreamService extends LocalStreamService implements
         }
         // Since merge will only pick the data if next minute directory is
         // present hence creating an empty next minute directory
+        LOG.debug("Last path created in local stream is [" + latestPath + "]");
         Date lastPathDate = CalendarHelper.getDateFromStreamDir(new Path(
             streamPrefix), latestPath);
         Path nextPath = CalendarHelper.getNextMinutePathFromDate(lastPathDate,
             new Path(streamPrefix));
-        fs.create(nextPath);
+        LOG.debug("Creating empty path in local stream " + nextPath);
+        fs.mkdirs(nextPath);
       }
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
 

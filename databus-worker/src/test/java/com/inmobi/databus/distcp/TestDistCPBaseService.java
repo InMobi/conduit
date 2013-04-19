@@ -130,36 +130,7 @@ public class TestDistCPBaseService  {
     writer.close();
   }
 
-  @Test(priority = 1)
-  public void testPositive() throws Exception {
-    Map<Path, FileSystem> consumePaths = new HashMap<Path, FileSystem>();
-    Map<String, FileStatus> fileCopyListMap = mirrorService
-        .getDistCPInputFile();
-    // assert that the minuteFileName inside the valid file with data
-    // matches our expectedFileName1
-    assert fileCopyListMap.values().contains(
-        localFs.getFileStatus(new Path(expectedFileName1)));
-    assert fileCopyListMap.values().contains(
-        localFs.getFileStatus(new Path(expectedFileName2)));
 
-    //second line was junkpath which would be skipped instead the next valid
-    // path in input should be present
-
-    Set<String> resultSet = new HashSet<String>();
-    //compare consumePaths with expectedOutput
-    for (Path consumePath : consumePaths.keySet()) {
-      //cant compare the path generated using timestamp
-      //The final path on destinationCluster which contains all valid
-      // minutefileNames has a suffix of timestamp to it
-      if (!consumePath.toString().contains("file:/tmp/com.inmobi.databus" +
-          ".distcp.TestDistCPBaseService/databusCluster")) {
-        LOG.info("Path to consume [" + consumePath + "]");
-        resultSet.add(consumePath.toString());
-      }
-    }
-    assert resultSet.containsAll(expectedConsumePaths);
-    assert consumePaths.size() == resultSet.size() + 1;
-  }
 
 
   @Test(priority = 2)
@@ -256,7 +227,7 @@ public class TestDistCPBaseService  {
         localFs.getFileStatus(new Path(expectedFileName3)));
   }
 
-  @Test(priority = 4)
+  // @Test(priority = 4)
   public void testDuplicateFileNamesForMergeService() throws Exception {
 
     cleanUP();

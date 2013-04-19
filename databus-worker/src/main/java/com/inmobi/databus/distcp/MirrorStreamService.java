@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,6 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
@@ -249,15 +247,16 @@ public class MirrorStreamService extends DistcpBaseService {
 
 
   /*
-   * Method to create checkpoint in cases when checkpoint for a stream is not
-   * present First this method would check on the destination FS to compute the
-   * last mirrored path;if found would checkpoint that .If not found than it
-   * would check on the source cluster to compute the last merged path and would
-   * checkpoint its equivalent on destination cluster. This method can return
-   * null in cases where its not able to calculate the checkpoint
+   * Method to get the starting directory in cases when checkpoint for a stream
+   * is not present or is invalid. First this method would check on the
+   * destination FS to compute the last mirrored path;if found would return it
+   * equivalent on source cluster If not found than it would check on the source
+   * cluster to compute the first merged path and would return that. This method
+   * can return null in cases where its not able to calculate the starting
+   * directory
    */
   @Override
-  protected byte[] createCheckPoint(String stream) throws IOException {
+  protected Path getStartingDirectory(String stream) throws IOException {
     Path finalDestDir = new Path(destCluster.getFinalDestDirRoot());
     Path streamFinalDestDir = new Path(finalDestDir, stream);
     Path finalSrcDir = new Path(srcCluster.getFinalDestDirRoot());
@@ -266,40 +265,31 @@ public class MirrorStreamService extends DistcpBaseService {
     Path lastMirroredPath = getFirstOrLastPath(getDestFs(), streamFinalDestDir,
         true);
     Path lastMergedPathOnSrc = null;
+    Path result;
     if (lastMirroredPath == null) {
-      LOG.info("Cannot compute the checkpoint from the destination data");
+      LOG.info("Cannot compute the starting directory from the destination data");
       lastMergedPathOnSrc = getFirstOrLastPath(getSrcFs(), streamFinalSrctDir,
           false);
-      if (lastMergedPathOnSrc != null) {
-        LOG.info("Computed the checkpoint from the source cluster's data");
-        URI uri = lastMergedPathOnSrc.toUri();
-        String relativePathString = uri.getPath();
-        lastMirroredPath = getDestFs().makeQualified(
-            new Path(relativePathString));
-      } else {
-        LOG.info("Cannot compute checkpoint from either destination or source data hence checkpointing current date");
-        Date currentDate = new Date();
-        String localPathWithStream = srcCluster.getLocalFinalDestDirRoot()
-            + File.separator + stream;
-        Path currentPath = CalendarHelper.getPathFromDate(currentDate,
-            new Path(localPathWithStream));
-        lastMirroredPath = currentPath;
-      }
+      if (lastMergedPathOnSrc == null) {
+        LOG.info("Cannot compute starting directory  from either destination or source data for stream "
+            + stream);
+        return null;
+      } else
+        result = lastMergedPathOnSrc;
     } else {
-      LOG.info("Checkpoint was calculated from the destination data,making the path qualified w.r.t source");
+      LOG.info("Starting directory was calculated from the destination data,making the path qualified w.r.t source");
       URI uri = lastMirroredPath.toUri();
       String relativePath = uri.getPath();
-      FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
-      lastMirroredPath = srcFs.makeQualified(new Path(relativePath));
+      result = getSrcFs().makeQualified(new Path(relativePath));
     }
-    byte[] value = lastMirroredPath.toString().getBytes(); 
-    provider.checkpoint(getCheckPointKey(stream), value);
-    return value;
+    return result;
   }
 
   private Path getFirstOrLastPath(FileSystem fs, Path streamFinalDestDir,
       boolean returnLast)
       throws IOException {
+    if (!fs.exists(streamFinalDestDir))
+      return null;
     FileStatus streamRoot;
     List<FileStatus> streamPaths = new ArrayList<FileStatus>();
       streamRoot = fs.getFileStatus(streamFinalDestDir);
@@ -307,14 +297,24 @@ public class MirrorStreamService extends DistcpBaseService {
     if (streamPaths.size() == 0)
       return null;
     DatePathComparator comparator = new DatePathComparator();
-    FileStatus result = streamPaths.get(0);
-    for (int i = 1; i < streamPaths.size(); i++) {
-      if (returnLast && comparator.compare(streamPaths.get(i), result) > 0)
-        result = streamPaths.get(i);
+    FileStatus result = null;// not assigning the first element to result here
+                             // because first element may not be of form
+                             // yy/mm/dd/hh/mm
+    for (int i = 0; i < streamPaths.size(); i++) {
+      FileStatus current = streamPaths.get(i);
+      // skip all those paths which are not of the format yy/mm/dd/hh/mm
+      if (current.getPath().depth() < streamFinalDestDir.depth() + 5)
+        continue;
+      if (result == null)
+        result = current;
+      if (returnLast && comparator.compare(current, result) > 0)
+        result = current;
       else if (!returnLast
-          && comparator.compare(streamPaths.get(i), result) < 0)
-        result = streamPaths.get(i);
+ && comparator.compare(current, result) < 0)
+        result = current;
     }
+    if (result == null)// if all the paths are invalid
+      return null;
     if (!result.isDir())
       return result.getPath().getParent();
     else

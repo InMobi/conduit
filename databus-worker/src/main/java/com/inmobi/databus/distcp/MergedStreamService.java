@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,7 +34,6 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
 /*
@@ -313,24 +311,58 @@ public class MergedStreamService extends DistcpBaseService {
     return str.toString();
   }
 
+  private boolean isValidYYMMDDHHMMPath(Path prefix, Path path) {
+    if (path.depth() < prefix.depth() + 5)
+      return false;
+    return true;
+  }
+
+  private void filterInvalidPaths(List<FileStatus> listOfFileStatus, Path prefix) {
+    Iterator<FileStatus> iterator = listOfFileStatus.iterator();
+    while (iterator.hasNext()) {
+      if (!isValidYYMMDDHHMMPath(prefix, iterator.next().getPath()))
+        iterator.remove();
+    }
+  }
   @Override
-  protected byte[] createCheckPoint(String stream) {
-    LOG.info("Finding checkpoint for merge stream from SrcCluster "
+  protected Path getStartingDirectory(String stream) {
+    LOG.info("Finding starting directory for merge stream from SrcCluster "
         + srcCluster.getName() + " to Destination cluster "
         + destCluster.getName() + " for stream " + stream);
     Path pathToBeListed = new Path(destCluster.getFinalDestDirRoot(), stream);
-    List<FileStatus> destnFiles = recursiveListingOfDir(destCluster,
-        pathToBeListed);
-    Collections.sort(destnFiles, new DatePathComparator());
-    LOG.debug("File found on destination after sorting for stream" + stream
-        + " are " + toStringOfFileStatus(destnFiles));
+    List<FileStatus> destnFiles = null;
+    try {
+      if (getDestFs().exists(pathToBeListed)) {
+        // TODO decide between removing invalid paths after recursive ls or
+        // while ls
+        destnFiles = recursiveListingOfDir(destCluster, pathToBeListed);
+        filterInvalidPaths(destnFiles, pathToBeListed);
+        Collections.sort(destnFiles, new DatePathComparator());
+        LOG.debug("File found on destination after sorting for stream" + stream
+            + " are " + toStringOfFileStatus(destnFiles));
+      }
+    } catch (IOException e) {
+      LOG.error("Error while listing path" + pathToBeListed
+          + " on destination Fs");
+    }
     Path lastLocalPathOnSrc = null;
     pathToBeListed = new Path(srcCluster.getLocalFinalDestDirRoot(), stream);
-    List<FileStatus> sourceFiles = recursiveListingOfDir(srcCluster,
-        pathToBeListed);
-      Collections.sort(sourceFiles, new DatePathComparator());
-    LOG.debug("File found on source after sorting for stream" + stream
-        + " are " + toStringOfFileStatus(sourceFiles));
+    List<FileStatus> sourceFiles = null;
+    try {
+      if(getSrcFs().exists(pathToBeListed)){
+      sourceFiles= recursiveListingOfDir(srcCluster,
+          pathToBeListed);
+        filterInvalidPaths(sourceFiles, pathToBeListed);
+        Collections.sort(sourceFiles, new DatePathComparator());
+      LOG.debug("File found on source after sorting for stream" + stream
+          + " are " + toStringOfFileStatus(sourceFiles));
+      }
+    } catch (IOException e) {
+      LOG.error("Error while listing path" + pathToBeListed
+          + " on source Fs");
+    }
+
+    if (destnFiles != null && sourceFiles != null) {
       for (int i = destnFiles.size() - 1; i >= 0; i--) {
         FileStatus current = destnFiles.get(i);
         if(current.isDir())
@@ -340,37 +372,32 @@ public class MergedStreamService extends DistcpBaseService {
           break;
         }
       }
+    }
     if (lastLocalPathOnSrc == null) {
-        /*
-         * We cannot figure out the last processed local path because either
-         * 1)There were no files for this stream on destination 2) None of the
-         * files on destination was found on source cluster In both these cases
-         * checkpointing the starting of the stream and if there are no source
-         * files than checkpoint the current time
-         */
-        if (sourceFiles.size() != 0) {
-          FileStatus firstPath = sourceFiles.get(0);
-          if (firstPath.isDir())
+      /*
+       * We cannot figure out the last processed local path because either
+       * 1)There were no files for this stream on destination 2) None of the
+       * files on destination was found on source cluster In both these cases
+       * checkpointing the starting of the stream and if there are no source
+       * files than checkpoint the current time
+       */
+      if (sourceFiles != null && sourceFiles.size() != 0) {
+        FileStatus firstPath = sourceFiles.get(0);
+        if (firstPath.isDir())
           lastLocalPathOnSrc = firstPath.getPath();
-          else
+        else
           lastLocalPathOnSrc = firstPath.getPath().getParent();
-        LOG.info("Checkpoint couldn't be figured out hence checkpointing the"
+        LOG.info("Starting directory couldn't be figured out hence returning the"
             + " first path at the source");
-        } else {
-          Date currentDate = new Date();
-        String localPathWithStream = srcCluster.getLocalFinalDestDirRoot()
-            + File.separator + stream;
-          Path currentPath = CalendarHelper.getPathFromDate(currentDate,
-              new Path(localPathWithStream));
-        lastLocalPathOnSrc = currentPath;
-        LOG.info("Checkpointing the current time");
-        }
-
+      } else {
+        LOG.info("No start directory can be computed for stream " + stream);
+        return null;
       }
-    byte[] value = lastLocalPathOnSrc.toString().getBytes(); 
-    provider.checkpoint(getCheckPointKey(stream), value);
-    LOG.info("The checkpoint value is " + new String(value));
-    return value;
+
+    }
+    LOG.info("The start value is " + lastLocalPathOnSrc + " for stream "
+        + stream);
+    return lastLocalPathOnSrc;
   }
 
 
@@ -422,7 +449,7 @@ public class MergedStreamService extends DistcpBaseService {
     if (srcPath.isDir())
       return null;
     else
-      return srcPath.getPath().getName();
+      return File.separator + srcPath.getPath().getName();
 
   }
 

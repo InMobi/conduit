@@ -172,7 +172,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   }
 
-  protected abstract byte[] createCheckPoint(String stream) throws IOException;
+  protected abstract Path getStartingDirectory(String stream) throws IOException;
 
   /*
    * Return a map of destination path,source path file status Since the map uses
@@ -183,28 +183,36 @@ public abstract class DistcpBaseService extends AbstractService {
    */
   protected Map<String, FileStatus> getDistCPInputFile()
       throws Exception {
-    String checkPointValue = null;
     Map<String,FileStatus> result = new HashMap<String, FileStatus>();
     for (String stream : streamsToProcess) {
       byte[] value = provider.read(getCheckPointKey(stream));
-      if (value != null)
-        checkPointValue = new String(value);
-      else {
-        LOG.info("No checkpoint found for stream [" + stream + "]");
-        checkPointValue = new String(createCheckPoint(stream));
-        LOG.info("CheckPoint value created for stream [" + stream + "] is "
-            + checkPointValue);
-      }
-      Path lastProcessed = new Path(checkPointValue);
-      LOG.info("Last processed path for stream [" + stream + "]" + " is ["
-          + lastProcessed + "]");
       Path inputPath = new Path(getInputPath(), stream);
-      Date lastDate = CalendarHelper.getDateFromStreamDir(inputPath,
-          lastProcessed);
-      LOG.info("Data processed till [" + lastDate + "] for stream " + stream);
-      Path nextPath = CalendarHelper.getNextMinutePathFromDate(lastDate,
-          inputPath);
-      Date nextDate = CalendarHelper.addAMinute(lastDate);
+      Path lastCheckPointPath = null;
+      Path nextPath = null;
+      if (value != null) {
+        String checkPointValue = new String(value);
+        lastCheckPointPath = new Path(checkPointValue);
+        if (!getSrcFs().exists(lastCheckPointPath)) {
+          LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
+              + "] for stream " + stream + ";Ignoring it");
+        } else {
+          Date lastDate = CalendarHelper.getDateFromStreamDir(inputPath,
+              lastCheckPointPath);
+          nextPath = CalendarHelper.getNextMinutePathFromDate(lastDate,
+              inputPath);
+        }
+      }
+      if (nextPath == null) {
+        LOG.info("Finding the starting directoryfor stream [" + stream + "]");
+        nextPath = getStartingDirectory(stream);
+        if (nextPath == null) {
+          LOG.debug("No start directory found,returning the empty result");
+          return result;
+        }
+      }
+      LOG.info("Starting directory for stream [" + stream + "]" + " is ["
+          + nextPath + "]");
+      Date nextDate = CalendarHelper.getDateFromStreamDir(inputPath, nextPath);
       // if next to next path exist than only add the next path so that the path
       // being added to disctp input is not the current path
       Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,

@@ -25,6 +25,8 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
+import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.DatePathComparator;
 
 public class TestMergedStreamService extends MergedStreamService
     implements AbstractServiceTest {
@@ -49,21 +51,35 @@ public class TestMergedStreamService extends MergedStreamService
     this.fs = FileSystem.getLocal(new Configuration());
   }
   
-  public static void getAllFiles(Path listPath, FileSystem fs, 
+  /*
+   * Returns the last file path
+   */
+  public static FileStatus getAllFiles(Path listPath, FileSystem fs,
       List<String> fileList) 
           throws IOException {
+    FileStatus lastFile = null;
+    DatePathComparator comparator = new DatePathComparator();
     FileStatus[] fileStatuses = fs.listStatus(listPath);
+
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + listPath);
+      if (fs.exists(listPath))
+      lastFile = fs.getFileStatus(listPath);
     } else {
+
       for (FileStatus file : fileStatuses) { 
         if (file.isDir()) {
-          getAllFiles(file.getPath(), fs, fileList);
-        } else { 
+          lastFile = getAllFiles(file.getPath(), fs, fileList);
+        } else {
+          if (lastFile == null)
+            lastFile = fileStatuses[0];
+          if (comparator.compare(file, lastFile) > 0)
+            lastFile = file;
           fileList.add(file.getPath().getName());
         }
       } 
     }
+    return lastFile;
   }
   
   @Override
@@ -129,7 +145,19 @@ public class TestMergedStreamService extends MergedStreamService
             LOG.debug("Verifying Merged Paths in Stream for directory "
                 + commitpath);
             List<String> commitPaths = new ArrayList<String>();
-            getAllFiles(new Path(commitpath), fs, commitPaths);
+            FileStatus lastFile = getAllFiles(new Path(commitpath), fs,
+                commitPaths);
+            // creating an extra empty directory so that data processed by
+            // merged in current directory can be picked by mirror
+            LOG.debug("Last file created in merge service is " + lastFile);
+            if (lastFile != null) {
+              Date lastPathDate = CalendarHelper.getDateFromStreamDir(new Path(
+                  commitpath), lastFile.getPath());
+              Path nextPath = CalendarHelper.getNextMinutePathFromDate(
+                  lastPathDate, new Path(commitpath));
+              fs.mkdirs(nextPath);
+            }
+
             try {
               LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
                   + commitPaths.size());
@@ -141,8 +169,10 @@ public class TestMergedStreamService extends MergedStreamService
               }
             } catch (NumberFormatException e) {
             }
+
           }
         }
+
       }
     } catch (Exception e) {
       e.printStackTrace();
