@@ -159,18 +159,6 @@ public abstract class DistcpBaseService extends AbstractService {
     return (runIntervalInSec - currentSec) * 1000;
   }
 
-  protected void doFinalCommit(Map<Path, FileSystem> consumePaths)
-      throws Exception {
-    // commit distcp consume Path from remote cluster
-    Set<Map.Entry<Path, FileSystem>> consumeEntries = consumePaths.entrySet();
-    for (Map.Entry<Path, FileSystem> consumePathEntry : consumeEntries) {
-      FileSystem fileSystem = consumePathEntry.getValue();
-      Path consumePath = consumePathEntry.getKey();
-      fileSystem.delete(consumePath);
-      LOG.debug("Deleting/Commiting [" + consumePath + "]");
-    }
-
-  }
 
   protected abstract Path getStartingDirectory(String stream) throws IOException;
 
@@ -191,8 +179,13 @@ public abstract class DistcpBaseService extends AbstractService {
       Path nextPath = null;
       if (value != null) {
         String checkPointValue = new String(value);
+        // creating a path object from empty string throws exception;hence
+        // checking for it
+        if (checkPointValue.trim() != null) {
         lastCheckPointPath = new Path(checkPointValue);
-        if (!getSrcFs().exists(lastCheckPointPath)) {
+        }
+        if (lastCheckPointPath == null
+            || !getSrcFs().exists(lastCheckPointPath)) {
           LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
               + "] for stream " + stream + ";Ignoring it");
         } else {
@@ -295,7 +288,7 @@ public abstract class DistcpBaseService extends AbstractService {
     return currentCluster;
   }
 
-  void createListing(FileSystem fs, FileStatus fileStatus,
+  public static void createListing(FileSystem fs, FileStatus fileStatus,
       List<FileStatus> results) throws IOException {
     if (fileStatus.isDir()) {
       FileStatus[] stats = fs.listStatus(fileStatus.getPath());
