@@ -41,6 +41,9 @@ public class CalendarHelper {
   // TODO - all date/time should be returned in a common time zone GMT
 
   public static Date getDateFromStreamDir(Path streamDirPrefix, Path dir) {
+    // logger.debug("GetDateFromStreamDir called with prefix [" +
+    // streamDirPrefix
+    // + "] and Path as [" + dir + "]");
     String pathStr = dir.toString();
     int startIndex = streamDirPrefix.toString().length() + 1;
     /* logger.debug("StartIndex [" + startIndex + "] PathStr [" + pathStr
@@ -161,6 +164,24 @@ public class CalendarHelper {
     } catch(Exception e){
     }
     return calendar;
+  }
+
+  public static Path getPathFromDate(Date date, Path dirPrefix) {
+    DateFormat dateFormat = new SimpleDateFormat(minDirFormatStr);
+    String suffix = dateFormat.format(date);
+    return new Path(dirPrefix, suffix);
+
+  }
+
+  public static Path getNextMinutePathFromDate(Date date, Path dirPrefix) {
+    return getPathFromDate(addAMinute(date), dirPrefix);
+  }
+
+  public static Date addAMinute(Date date) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    calendar.add(Calendar.MINUTE, 1);
+    return calendar.getTime();
   }
 
 }

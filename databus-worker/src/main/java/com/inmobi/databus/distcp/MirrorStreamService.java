@@ -15,6 +15,7 @@ package com.inmobi.databus.distcp;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,15 +23,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.utils.DatePathComparator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.tools.DistCpOptions;
+
+import com.inmobi.databus.CheckpointProvider;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
  * (i)   1 Mirror Thread per src DatabusConfig.Cluster from where streams need to be mirrored on destCluster
@@ -44,14 +46,18 @@ public class MirrorStreamService extends DistcpBaseService {
 
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
                              Cluster destinationCluster,
-                             Cluster currentCluster) throws Exception {
+ Cluster currentCluster,
+      CheckpointProvider provider, Set<String> streamsToProcess)
+      throws Exception {
     super(config, MirrorStreamService.class.getName(), srcCluster,
-    destinationCluster, currentCluster);
+        destinationCluster, currentCluster, provider, streamsToProcess);
   }
 
   @Override
   protected Path getInputPath() throws IOException {
-    return getSrcCluster().getMirrorConsumePath(getDestCluster());
+    String finalDestDir = getSrcCluster().getFinalDestDirRoot();
+
+    return new Path(finalDestDir);
   }
 
   @Override
@@ -59,9 +65,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
     try {
       boolean skipCommit = false;
-      LinkedHashMap<Path, FileSystem> consumePaths = new LinkedHashMap<Path,
-      FileSystem>();
-
+      
       Path tmpOut = new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
       + getSrcCluster().getName() + "_" + getDestCluster().getName())
       .makeQualified(getDestFs());
@@ -78,25 +82,22 @@ public class MirrorStreamService extends DistcpBaseService {
         return;
       }
 
-      Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
-      if (inputFilePath == null) {
+      Map<String, FileStatus> fileListingMap = getDistCPInputFile();
+      if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
         + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
         + getDestCluster().getHdfsUrl() + "]");
         return;
       }
 
-      LOG.warn("Starting a Mirrored distcp pull from ["
-      + inputFilePath.toString() + "] " + "Cluster ["
+      LOG.info("Starting a Mirrored distcp pull from Cluster ["
       + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
       + getDestCluster().getHdfsUrl() + "] " + " Path ["
       + tmpOut.toString() + "]");
 
-      DistCpOptions options = getDistCpOptions(inputFilePath, tmpOut);
-      options.setPreserveSrcPath(true);
 
       try {
-        if (!executeDistCp(options, "MirrorStreamService"))
+        if (!executeDistCp("MirrorStreamService", fileListingMap, tmpOut))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Problem in Mirrored distcp..skipping commit for this run",
@@ -106,7 +107,8 @@ public class MirrorStreamService extends DistcpBaseService {
       if (!skipCommit) {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
         doLocalCommit(commitPaths);
-        doFinalCommit(consumePaths);
+        // doFinalCommit(consumePaths);
+        finalizeCheckPoints();
       }
       getDestFs().delete(tmpOut, true);
       LOG.debug("Cleanup [" + tmpOut + "]");
@@ -242,29 +244,90 @@ public class MirrorStreamService extends DistcpBaseService {
   }
 
 
-  void createListing(FileSystem fs, FileStatus fileStatus,
-                             List<FileStatus> results) throws IOException {
-    if (fileStatus.isDir()) {
-      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
-      if (stats.length == 0) {
-        results.add(fileStatus);
-        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      }
-      for (FileStatus stat : stats) {
-        createListing(fs, stat, results);
-      }
+
+
+  /*
+   * Method to get the starting directory in cases when checkpoint for a stream
+   * is not present or is invalid. First this method would check on the
+   * destination FS to compute the last mirrored path;if found would return it
+   * equivalent on source cluster If not found than it would check on the source
+   * cluster to compute the first merged path and would return that. This method
+   * can return null in cases where its not able to calculate the starting
+   * directory
+   */
+  @Override
+  protected Path getStartingDirectory(String stream) throws IOException {
+    Path finalDestDir = new Path(destCluster.getFinalDestDirRoot());
+    Path streamFinalDestDir = new Path(finalDestDir, stream);
+    Path finalSrcDir = new Path(srcCluster.getFinalDestDirRoot());
+    Path streamFinalSrctDir = new Path(finalSrcDir, stream);
+
+    Path lastMirroredPath = getFirstOrLastPath(getDestFs(), streamFinalDestDir,
+        true);
+    Path lastMergedPathOnSrc = null;
+    Path result;
+    if (lastMirroredPath == null) {
+      LOG.info("Cannot compute the starting directory from the destination data");
+      lastMergedPathOnSrc = getFirstOrLastPath(getSrcFs(), streamFinalSrctDir,
+          false);
+      if (lastMergedPathOnSrc == null) {
+        LOG.info("Cannot compute starting directory  from either destination or source data for stream "
+            + stream);
+        return null;
+      } else
+        result = lastMergedPathOnSrc;
     } else {
-      LOG.debug("createListing :: Adding [" + fileStatus.getPath()+ "]");
-      results.add(fileStatus);
+      LOG.info("Starting directory was calculated from the destination data,making the path qualified w.r.t source");
+      URI uri = lastMirroredPath.toUri();
+      String relativePath = uri.getPath();
+      result = getSrcFs().makeQualified(new Path(relativePath));
     }
+    return result;
   }
 
-  @Override
-  public void filterMinFilePaths(Set<String> minFilesSet) {
-    // No-op method for mirror stream service as we don't need to
-    // filter any minute file paths as mirror stream service
-    // is expected to exactly replicate the source cluster
-    return;
+  private Path getFirstOrLastPath(FileSystem fs, Path streamFinalDestDir,
+      boolean returnLast)
+      throws IOException {
+    if (!fs.exists(streamFinalDestDir))
+      return null;
+    FileStatus streamRoot;
+    List<FileStatus> streamPaths = new ArrayList<FileStatus>();
+      streamRoot = fs.getFileStatus(streamFinalDestDir);
+      createListing(fs, streamRoot, streamPaths);
+    if (streamPaths.size() == 0)
+      return null;
+    DatePathComparator comparator = new DatePathComparator();
+    FileStatus result = null;// not assigning the first element to result here
+                             // because first element may not be of form
+                             // yy/mm/dd/hh/mm
+    for (int i = 0; i < streamPaths.size(); i++) {
+      FileStatus current = streamPaths.get(i);
+      // skip all those paths which are not of the format yy/mm/dd/hh/mm
+      if (current.getPath().depth() < streamFinalDestDir.depth() + 5)
+        continue;
+      if (result == null)
+        result = current;
+      if (returnLast && comparator.compare(current, result) > 0)
+        result = current;
+      else if (!returnLast
+ && comparator.compare(current, result) < 0)
+        result = current;
+    }
+    if (result == null)// if all the paths are invalid
+      return null;
+    if (!result.isDir())
+      return result.getPath().getParent();
+    else
+      return result.getPath();
 
+
+  }
+
+  /*
+   * Full path needs to be preserved for mirror stream
+   */
+  @Override
+  protected String getFinalDestinationPath(FileStatus srcPath) {
+    return srcPath.getPath().toUri().getPath();
   }
 }

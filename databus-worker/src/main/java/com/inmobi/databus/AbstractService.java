@@ -13,22 +13,13 @@
 */
 package com.inmobi.databus;
 
-import java.util.TreeSet;
-
-import java.util.Set;
-
-import java.util.ArrayList;
-
-import java.util.List;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +35,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final long DEFAULT_RUN_INTERVAL = 60000;
 
   private final String name;
-  private final DatabusConfig config;
+  protected final DatabusConfig config;
   protected final long runIntervalInMsec;
   protected Thread thread;
   protected volatile boolean stopped = false;
@@ -54,22 +45,33 @@ public abstract class AbstractService implements Service, Runnable {
 	protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
 	    "yyyy/MM/dd, hh:mm");
 	private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
+	protected final Set<String> streamsToProcess;
 
-  public AbstractService(String name, DatabusConfig config) {
-    this(name, config, DEFAULT_RUN_INTERVAL);
+  public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
   }
 
   public AbstractService(String name, DatabusConfig config,
-                         long runIntervalInMsec) {
+                         long runIntervalInMsec,Set<String> streamsToProcess) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
+    this.streamsToProcess=streamsToProcess;
   }
 
   public AbstractService(String name, DatabusConfig config,
-                         long runIntervalInMsec, CheckpointProvider provider) {
-    this(name, config, runIntervalInMsec);
+      long runIntervalInMsec, CheckpointProvider provider,
+      Set<String> streamsToProcess) {
+    this(name, config, runIntervalInMsec, streamsToProcess);
     this.checkpointProvider = provider;
+  }
+
+  protected final static String getServiceName(Set<String> streamsToProcess) {
+    String servicename = "";
+    for (String stream : streamsToProcess) {
+      servicename += stream + "@";
+    }
+    return servicename;
   }
 
   public DatabusConfig getConfig() {

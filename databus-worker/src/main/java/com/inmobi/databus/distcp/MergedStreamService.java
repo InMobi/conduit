@@ -16,6 +16,7 @@ package com.inmobi.databus.distcp;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,13 +27,14 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.DatePathComparator;
 
 /*
  * Handles MergedStreams for a Cluster
@@ -42,21 +44,22 @@ public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
   private Map<String, Set<Path>> missingDirsCommittedPaths;
-  private Set<String> primaryCategories;
+
+  // private Set<String> primaryCategories;
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster) throws Exception {
+      Cluster destinationCluster, Cluster currentCluster,
+      CheckpointProvider provider, Set<String> streamsToProcess)
+      throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster);
-    primaryCategories = destinationCluster.getPrimaryDestinationStreams();
+        destinationCluster, currentCluster, provider,streamsToProcess);
   }
 
   @Override
   public void execute() throws Exception {
     try {
       boolean skipCommit = false;
-      Map<Path, FileSystem> consumePaths = new HashMap<Path, FileSystem>();
-      missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
+      missingDirsCommittedPaths = new LinkedHashMap<String, Set<Path>>();
 
       Path tmpOut = new Path(getDestCluster().getTmpPath(),
           "distcp_mergedStream_" + getSrcCluster().getName() + "_"
@@ -85,30 +88,29 @@ public class MergedStreamService extends DistcpBaseService {
         will be added to mirror consumer file again */
         long commitTime = getDestCluster().getCommitTime();
         preparePublishMissingPaths(missingDirsCommittedPaths, commitTime, 
-            primaryCategories);
+            streamsToProcess);
         if (missingDirsCommittedPaths.size() > 0) {
-          LOG.info("Adding Missing Directories to the mirror consumer file and" +
-              " publishing the missing paths"+ missingDirsCommittedPaths.size());
-          commitMirroredConsumerPaths(missingDirsCommittedPaths, tmp);
+          LOG.info("Total number of stream for which missing paths to be published "
+              + missingDirsCommittedPaths.size());
+          LOG.debug("Missing paths published " + missingDirsCommittedPaths);
           commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, commitTime);
         }
       }
 
-      Path inputFilePath = getDistCPInputFile(consumePaths, tmp);
-      if (inputFilePath == null) {
+      Map<String, FileStatus> fileListingMap = getDistCPInputFile();
+      if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
             + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
         return;
       }
-      LOG.warn("Starting a distcp pull from [" + inputFilePath.toString()
-          + "] " + "Cluster [" + getSrcCluster().getHdfsUrl() + "]"
+      LOG.info("Starting a distcp pull from Cluster ["
+          + getSrcCluster().getHdfsUrl() + "]"
           + " to Cluster [" + getDestCluster().getHdfsUrl() + "] " + " Path ["
           + tmpOut.toString() + "]");
 
       try {
-        if (!executeDistCp(getDistCpOptions(inputFilePath, tmpOut), 
-            "MergedStreamService"))
+        if (!executeDistCp("MergedStreamService", fileListingMap, tmpOut))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Error in distcp", e);
@@ -127,7 +129,7 @@ public class MergedStreamService extends DistcpBaseService {
           // called which is a MR job and can take time hence this call ensures
           // all missing paths are added till this time
           preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
-              primaryCategories);
+              streamsToProcess);
           commitPaths = createLocalCommitPaths(tmpOut, commitTime, 
               categoriesToCommit, tobeCommittedPaths);
           for (Map.Entry<String, Set<Path>> entry : missingDirsCommittedPaths
@@ -141,7 +143,7 @@ public class MergedStreamService extends DistcpBaseService {
           }
 
           // Prepare paths for MirrorStreamConsumerService
-          commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
+          // commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
           commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, 
               commitTime);
           // category, Set of Paths to commit
@@ -151,7 +153,8 @@ public class MergedStreamService extends DistcpBaseService {
 
         // Cleanup happens in parallel without sync
         // no race is there in consumePaths, tmpOut
-        doFinalCommit(consumePaths);
+        // doFinalCommit(consumePaths);
+        finalizeCheckPoints();
       }
       // rmv tmpOut cleanup
       getDestFs().delete(tmpOut, true);
@@ -161,6 +164,7 @@ public class MergedStreamService extends DistcpBaseService {
       throw new Exception(e);
     }
   }
+
 
   private void preparePublishMissingPaths(
       Map<String, Set<Path>> missingDirsCommittedPaths, long commitTime,
@@ -196,77 +200,6 @@ public class MergedStreamService extends DistcpBaseService {
     }
   }
 
-  /*
-   * @param Map<String, Set<Path>> commitedPaths - Stream Name, It's committed
-   * Path.
-   * tmpConsumePath: hdfsUrl/<rootDir>/system/tmp/
-   * distcp_mergedStream_<sourceCluster>_<destinationCluster>/tmp/
-   * src_sourceCluster_via_destinationCluster_mirrorto_consumername_streamname
-   * final Mirror Path: hdfsUrl/<rootDir>/system/mirrors/<consumerCluster>/
-   * src_<sourceCluster>_via_<destinationCluster>_mirrorto_<consumerName>_
-   * <streamName>_filestatus
-   */
-  private void commitMirroredConsumerPaths(
-      Map<String, Set<Path>> tobeCommittedPaths, Path tmp) throws Exception {
-    // Map of Stream and clusters where it's mirrored
-    Map<String, Set<Cluster>> mirrorStreamConsumers = new HashMap<String, 
-        Set<Cluster>>();
-    Map<Path, Path> mirrorCommitPaths = new LinkedHashMap<Path, Path>();
-    // for each stream in committedPaths
-    for (String stream : tobeCommittedPaths.keySet()) {
-      // for each cluster
-      for (Cluster cluster : getConfig().getClusters().values()) {
-        // is this stream to be mirrored on this cluster
-        if (cluster.getMirroredStreams().contains(stream)) {
-          Set<Cluster> mirrorConsumers = mirrorStreamConsumers.get(stream);
-          if (mirrorConsumers == null)
-            mirrorConsumers = new HashSet<Cluster>();
-          mirrorConsumers.add(cluster);
-          mirrorStreamConsumers.put(stream, mirrorConsumers);
-        }
-      }
-    } // for each stream
-
-    // Commit paths for each consumer
-    for (String stream : tobeCommittedPaths.keySet()) {
-      // consumers for this stream
-      Set<Cluster> consumers = mirrorStreamConsumers.get(stream);
-      Path tmpConsumerPath;
-      if (consumers == null || consumers.size() == 0) {
-        LOG.warn(" Consumers is empty for stream [" + stream + "]");
-        continue;
-      }
-      if (tobeCommittedPaths.get(stream).size() == 0) {
-        continue;
-      }
-      for (Cluster consumer : consumers) {
-        // commit paths for this consumer, this stream
-        // adding srcCluster avoids two Remote Copiers creating same filename
-        String tmpPath = "src_" + getSrcCluster().getName() + "_via_"
-            + getDestCluster().getName() + "_mirrorto_" + consumer.getName()
-            + "_" + stream;
-        tmpConsumerPath = new Path(tmp, tmpPath);
-        FSDataOutputStream out = getDestFs().create(tmpConsumerPath);
-        try {
-          for (Path path : tobeCommittedPaths.get(stream)) {
-            LOG.debug("Writing Mirror Commit Path [" + path.toString() + "]");
-            out.writeBytes(path.toString());
-            out.writeBytes("\n");
-          }
-        } finally {
-          out.close();
-        }
-        // Two MergedStreamConsumers will write file for same consumer within
-        // the same time
-        // adding srcCLuster name avoids that conflict
-        Path finalMirrorPath = new Path(getDestCluster().getMirrorConsumePath(
-            consumer), tmpPath + "_"
-                + new Long(System.currentTimeMillis()).toString());
-        mirrorCommitPaths.put(tmpConsumerPath, finalMirrorPath);
-      } // for each consumer
-    } // for each stream
-    doLocalCommit(mirrorCommitPaths);
-  }
 
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)
       throws Exception {
@@ -365,27 +298,159 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   protected Path getInputPath() throws IOException {
-    return getSrcCluster().getConsumePath(getDestCluster());
+    String finalDestDir = getSrcCluster().getLocalFinalDestDirRoot();
+    return new Path(finalDestDir);
+
   }
 
-  private void removePathWithDuplicateFileNames(Set<String> minFilesSet) {
-    Set<String> fileNameSet = new HashSet<String>();
-    Iterator<String> iterator = minFilesSet.iterator();
+  private String toStringOfFileStatus(List<FileStatus> list) {
+    StringBuffer str = new StringBuffer();
+    for (FileStatus f : list) {
+      str.append(f.getPath().toString() + ",");
+    }
+    return str.toString();
+  }
+
+  private boolean isValidYYMMDDHHMMPath(Path prefix, Path path) {
+    if (path.depth() < prefix.depth() + 5)
+      return false;
+    return true;
+  }
+
+  private void filterInvalidPaths(List<FileStatus> listOfFileStatus, Path prefix) {
+    Iterator<FileStatus> iterator = listOfFileStatus.iterator();
     while (iterator.hasNext()) {
-      Path p = new Path(iterator.next());
-      if (fileNameSet.contains(p.getName())) {
-        LOG.info("Removing duplicate path [" + p + "]");
+      if (!isValidYYMMDDHHMMPath(prefix, iterator.next().getPath()))
         iterator.remove();
-      } else
-        fileNameSet.add(p.getName());
+    }
+  }
+  @Override
+  protected Path getStartingDirectory(String stream) {
+    LOG.info("Finding starting directory for merge stream from SrcCluster "
+        + srcCluster.getName() + " to Destination cluster "
+        + destCluster.getName() + " for stream " + stream);
+    Path pathToBeListed = new Path(destCluster.getFinalDestDirRoot(), stream);
+    List<FileStatus> destnFiles = null;
+    try {
+      if (getDestFs().exists(pathToBeListed)) {
+        // TODO decide between removing invalid paths after recursive ls or
+        // while ls
+        destnFiles = recursiveListingOfDir(destCluster, pathToBeListed);
+        filterInvalidPaths(destnFiles, pathToBeListed);
+        Collections.sort(destnFiles, new DatePathComparator());
+        LOG.debug("File found on destination after sorting for stream" + stream
+            + " are " + toStringOfFileStatus(destnFiles));
+      }
+    } catch (IOException e) {
+      LOG.error("Error while listing path" + pathToBeListed
+          + " on destination Fs");
+    }
+    Path lastLocalPathOnSrc = null;
+    pathToBeListed = new Path(srcCluster.getLocalFinalDestDirRoot(), stream);
+    List<FileStatus> sourceFiles = null;
+    try {
+      if(getSrcFs().exists(pathToBeListed)){
+      sourceFiles= recursiveListingOfDir(srcCluster,
+          pathToBeListed);
+        filterInvalidPaths(sourceFiles, pathToBeListed);
+        Collections.sort(sourceFiles, new DatePathComparator());
+      LOG.debug("File found on source after sorting for stream" + stream
+          + " are " + toStringOfFileStatus(sourceFiles));
+      }
+    } catch (IOException e) {
+      LOG.error("Error while listing path" + pathToBeListed
+          + " on source Fs");
+    }
+
+    if (destnFiles != null && sourceFiles != null) {
+      for (int i = destnFiles.size() - 1; i >= 0; i--) {
+        FileStatus current = destnFiles.get(i);
+        if(current.isDir())
+          continue;
+      lastLocalPathOnSrc = searchFileInSource(current, sourceFiles);
+      if (lastLocalPathOnSrc != null) {
+          break;
+        }
+      }
+    }
+    if (lastLocalPathOnSrc == null) {
+      /*
+       * We cannot figure out the last processed local path because either
+       * 1)There were no files for this stream on destination 2) None of the
+       * files on destination was found on source cluster In both these cases
+       * checkpointing the starting of the stream and if there are no source
+       * files than checkpoint the current time
+       */
+      if (sourceFiles != null && sourceFiles.size() != 0) {
+        FileStatus firstPath = sourceFiles.get(0);
+        if (firstPath.isDir())
+          lastLocalPathOnSrc = firstPath.getPath();
+        else
+          lastLocalPathOnSrc = firstPath.getPath().getParent();
+        LOG.info("Starting directory couldn't be figured out hence returning the"
+            + " first path at the source");
+      } else {
+        LOG.info("No start directory can be computed for stream " + stream);
+        return null;
+      }
 
     }
+    LOG.info("The start value is " + lastLocalPathOnSrc + " for stream "
+        + stream);
+    return lastLocalPathOnSrc;
+  }
+
+
+  /*
+   * This method would search just the last part of the file in the source
+   * cluster file .Expects the list to be sorted
+   */
+  private Path searchFileInSource(FileStatus destnPath,
+      List<FileStatus> srcFiles) {
+    LOG.debug("Searching path "+destnPath.getPath().toString()+" at the source");
+    for (int i = srcFiles.size() - 1; i >= 0; i--) {
+      FileStatus current = srcFiles.get(i);
+      if (current.isDir())
+        continue;
+      if (current.getPath().getName()
+          .equals(destnPath.getPath().getName())) {
+        FileStatus result = srcFiles.get(i);
+        LOG.debug("Path found at " + result.getPath());
+        if (!result.isDir())
+          return result.getPath().getParent();
+        else
+          return result.getPath();
+      }
+    }
+    LOG.debug("Path not found " + destnPath.getPath());
+    return null;
+
+  }
+
+  private List<FileStatus> recursiveListingOfDir(Cluster cluster, Path path) {
+      
+      try {
+        FileSystem currentFs = FileSystem.get(cluster.getHadoopConf());
+      FileStatus streamDir = currentFs.getFileStatus(path);
+        List<FileStatus> filestatus = new ArrayList<FileStatus>();
+        createListing(currentFs, streamDir, filestatus);
+        return filestatus;
+      } catch (IOException ie) {
+        LOG.error(
+            "IOException while doing recursive listing to create checkpoint on cluster "
+                + cluster , ie);
+      }
+    return null;
+
   }
 
   @Override
-  public void filterMinFilePaths(Set<String> minFilesSet) {
-    // remove all the minute file paths which have the duplicate 'filename'
-    removePathWithDuplicateFileNames(minFilesSet);
+  protected String getFinalDestinationPath(FileStatus srcPath) {
+    if (srcPath.isDir())
+      return null;
+    else
+      return File.separator + srcPath.getPath().getName();
 
   }
+
 }

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,7 +85,7 @@ public class PublishMissingPathsTest {
   public void testPublishMissingPaths() throws Exception {
     DatabusConfigParser configParser = new DatabusConfigParser(
         "test-lss-pub-databus.xml");
-    List<String> streamsToProcess = new ArrayList<String>();
+    Set<String> streamsToProcess = new HashSet<String>();
     DatabusConfig config = configParser.getConfig();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
     FileSystem fs = FileSystem.getLocal(new Configuration());
