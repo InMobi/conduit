@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,6 +35,7 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
 /*
@@ -210,7 +212,7 @@ public class MergedStreamService extends DistcpBaseService {
         String fileName = allFiles[i].getPath().getName();
         if (fileName != null) {
           String category = getCategoryFromFileName(fileName,
-              getDestCluster().getPrimaryDestinationStreams());
+ streamsToProcess);
           if (category != null) {
             Path intermediatePath = new Path(tmpOut, category);
             if (!getDestFs().exists(intermediatePath))
@@ -324,6 +326,15 @@ public class MergedStreamService extends DistcpBaseService {
         iterator.remove();
     }
   }
+
+  /**
+   * This method would first try to find the starting directory by comparing the
+   * destination files with source files. For eg: If a file
+   * /streams/2013/04/22/16/40/a.gz is present on destination than a.gz would be
+   * searched in the all the folders of source. One minute would be added to the
+   * found path and would be returned. If we cannot compute the starting
+   * directory by this way than the first path on the source would be returned.
+   */
   @Override
   protected Path getStartingDirectory(String stream) {
     LOG.info("Finding starting directory for merge stream from SrcCluster "
@@ -393,6 +404,16 @@ public class MergedStreamService extends DistcpBaseService {
         LOG.info("No start directory can be computed for stream " + stream);
         return null;
       }
+
+    } else {
+      // Starting path was computed from source files;adding one minute to the
+      // found path to get the starting directory
+      Path streamLevelLocalDir = new Path(getSrcCluster()
+          .getLocalFinalDestDirRoot() + stream);
+      Date date = CalendarHelper.getDateFromStreamDir(streamLevelLocalDir,
+          lastLocalPathOnSrc);
+      lastLocalPathOnSrc = CalendarHelper.getNextMinutePathFromDate(date,
+          streamLevelLocalDir);
 
     }
     LOG.info("The start value is " + lastLocalPathOnSrc + " for stream "

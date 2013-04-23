@@ -15,9 +15,9 @@ package com.inmobi.databus.distcp;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
@@ -249,11 +250,11 @@ public class MirrorStreamService extends DistcpBaseService {
   /*
    * Method to get the starting directory in cases when checkpoint for a stream
    * is not present or is invalid. First this method would check on the
-   * destination FS to compute the last mirrored path;if found would return it
-   * equivalent on source cluster If not found than it would check on the source
-   * cluster to compute the first merged path and would return that. This method
-   * can return null in cases where its not able to calculate the starting
-   * directory
+   * destination FS to compute the last mirrored path;if found would add one
+   * minute to the path return its equivalent on source cluster.If not found
+   * than it would check on the source cluster to compute the first merged path
+   * and would return that. This method can return null in cases where its not
+   * able to calculate the starting directory
    */
   @Override
   protected Path getStartingDirectory(String stream) throws IOException {
@@ -278,9 +279,16 @@ public class MirrorStreamService extends DistcpBaseService {
         result = lastMergedPathOnSrc;
     } else {
       LOG.info("Starting directory was calculated from the destination data,making the path qualified w.r.t source");
-      URI uri = lastMirroredPath.toUri();
-      String relativePath = uri.getPath();
-      result = getSrcFs().makeQualified(new Path(relativePath));
+      // Path was found on destination,adding a minute to this path and making
+      // it qualified w.r.t source as well
+      Path streamLevelFinalDir = new Path(getDestCluster()
+          .getFinalDestDirRoot() + stream);
+      Path streamLevelFinalSrcDir = new Path(getSrcCluster()
+          .getFinalDestDirRoot() + stream);
+      Date date = CalendarHelper.getDateFromStreamDir(streamLevelFinalDir,
+          lastMirroredPath);
+      result = CalendarHelper.getNextMinutePathFromDate(date,
+          streamLevelFinalSrcDir);
     }
     return result;
   }
