@@ -123,15 +123,16 @@ public class MirrorStreamDataConsistencyValidation {
     int j;
     int mergedStreamLen = mergedStreamDirPath.length();
     int mirrorStreamLen = mirrorStreamDirPath.length();
-    Iterator<Entry<Path, FileStatus>> mergedStreamIter = 
-        mergedStreamFiles.entrySet().iterator();
-    Iterator<Entry<Path, FileStatus>> mirrorStreamIter = 
-        mirrorStreamFiles.entrySet().iterator();
     
-    for(i=0, j=0 ; i < mergedStreamFiles.size() && 
-        j < mirrorStreamFiles.size(); i++, j++) {
-      Entry<Path, FileStatus> mergedStreamEntry = mergedStreamIter.next();
-      Entry<Path, FileStatus> mirrorStreamEntry = mirrorStreamIter.next();
+    Entry<Path, FileStatus> [] mergedStreamPaths = 
+        (Entry<Path, FileStatus> [])mergedStreamFiles.entrySet().toArray();
+    Entry<Path, FileStatus> [] mirrorStreamPaths = 
+        (Entry<Path, FileStatus> [])mirrorStreamFiles.entrySet().toArray();
+    
+    for(i=0, j=0 ; i < mergedStreamPaths.length && 
+        j < mirrorStreamPaths.length; i++, j++) {
+      Entry<Path, FileStatus> mergedStreamEntry = mergedStreamPaths[i];
+      Entry<Path, FileStatus> mirrorStreamEntry = mirrorStreamPaths[j];
       
       Path mergedStreamFilePath = mergedStreamEntry.getKey();
       Path mirrorStreamFilePath = mirrorStreamEntry.getKey();
@@ -177,14 +178,14 @@ public class MirrorStreamDataConsistencyValidation {
        */
       if(i == mergedStreamFiles.size() ) {
         for(;j < mirrorStreamFiles.size(); j++) {
-          Path mirrorStreamFilePath = mirrorStreamIter.next().getKey();
+          Path mirrorStreamFilePath = mirrorStreamPaths[j].getKey();
           System.out.println("Extra files are in the Mirrored Stream: " + 
               mirrorStreamFilePath);	
           inconsistentData.add(mirrorStreamFilePath);
         }
       } else {
         for( ; i < mergedStreamFiles.size(); i++) {
-          Path mergedStreamFilePath = mergedStreamIter.next().getKey();
+          Path mergedStreamFilePath = mergedStreamPaths[i].getKey();
           System.out.println("To be Mirrored files: " + mergedStreamFilePath);	
           inconsistentData.add(mergedStreamFilePath);
         }
@@ -204,14 +205,15 @@ public class MirrorStreamDataConsistencyValidation {
     FileStatus[] fileStatuses = fs.listStatus(dir);
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + dir);
-      // get the file status for empty directory
+      // add an entry with key as Path and value as FileStatus of empty dir
       fileListingMap.put(dir, fs.getFileStatus(dir));
     } else {
       for (FileStatus file : fileStatuses) {
         if (file.isDir()) {
           doRecursiveListing(file.getPath(), fileListingMap, fs);
         } else {
-          fileListingMap.put(dir, file);
+          // add an entry with key as Path and value as FileStatus of file
+          fileListingMap.put(file.getPath(), file);
         }
       } 
     }
@@ -223,6 +225,7 @@ public class MirrorStreamDataConsistencyValidation {
     boolean copyMissingPaths = false;
     
     if (args.length == 2) {
+      // get all stream names
       FileSystem fs = mirrorStreamDirs.get(0).getFileSystem(new Configuration());
       FileStatus[] fileStatuses = fs.listStatus(mirrorStreamDirs.get(0));
       if (fileStatuses != null && fileStatuses.length != 0) {
@@ -235,6 +238,16 @@ public class MirrorStreamDataConsistencyValidation {
     } else if (args.length == 3) {
       if (args[2].equalsIgnoreCase("-fix")) {
         copyMissingPaths = true;
+        // get all stream names
+        FileSystem fs = mirrorStreamDirs.get(0).getFileSystem(new Configuration());
+        FileStatus[] fileStatuses = fs.listStatus(mirrorStreamDirs.get(0));
+        if (fileStatuses != null && fileStatuses.length != 0) {
+          for (FileStatus file : fileStatuses) {  
+            streamNames.add(file.getPath().getName());
+          } 
+        } else {
+          System.out.println("There are no stream names in the mirrored stream");
+        }
       } else {
         // the 3rd argument is a list of stream names
         for (String streamname : args[2].split(",")) {
@@ -242,6 +255,10 @@ public class MirrorStreamDataConsistencyValidation {
         }
       }
     } else if (args.length == 4) {
+      // the 3rd argument is a list of stream names
+      for (String streamname : args[2].split(",")) {
+        streamNames.add(streamname);
+      }
       // the 4th argument is whether missing paths need to be copied
       if (args[3].equalsIgnoreCase("-fix")) {
         copyMissingPaths = true;
