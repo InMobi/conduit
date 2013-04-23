@@ -1,10 +1,11 @@
 package com.inmobi.databus.utils;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,14 +46,14 @@ public class MirrorStreamDataConsistencyValidation {
   public List<Path> processListingStreams(String streamName, 
       boolean copyMissingPaths) throws IOException {
     List<Path> inconsistentData = new ArrayList<Path>();
-    List<Path> filesInMergedStream = new ArrayList<Path>();
+    TreeMap<Path, FileStatus> filesInMergedStream = new TreeMap<Path, FileStatus>();
     mergedStreamListing(streamName, filesInMergedStream);
     mirrorStreamListing(streamName, inconsistentData, filesInMergedStream, 
         copyMissingPaths);
     return inconsistentData;
   }
 
-  public void mergedStreamListing(String streamName, List<Path> 
+  public void mergedStreamListing(String streamName, TreeMap<Path, FileStatus>  
   filesInMergedStream) throws IOException {
     Path completeMergedStreamDirPath = new Path(mergedStreamDirPath,
         streamName);
@@ -61,37 +62,44 @@ public class MirrorStreamDataConsistencyValidation {
         new Configuration());
     doRecursiveListing(completeMergedStreamDirPath, filesInMergedStream,
         mergedFS);             
-    Iterator<Path> it = filesInMergedStream.iterator();
+    Iterator<Path> it = filesInMergedStream.keySet().iterator();
     while (it.hasNext()) {
       LOG.debug(" files in merged stream : " + (it.next()));
     }
   }
 
-  public void mirrorStreamListing(String streamName, List<Path> 
-  inconsistentData, List<Path> filesInMergedStream, boolean copyMissingPaths)
+  public void mirrorStreamListing(String streamName, List<Path> inconsistentData,
+      TreeMap<Path, FileStatus> filesInMergedStream, boolean copyMissingPaths)
       throws IOException {
     Path mirrorStreamDirPath;
     FileSystem mirroredFs;
     for (int i = 0; i < mirrorStreamDirs.size(); i++) {
-      List<Path> filesInMirroredStream = new ArrayList<Path>();
+      TreeMap<Path, FileStatus> filesInMirroredStream = new TreeMap<Path, FileStatus>();
       mirrorStreamDirPath = new Path(mirrorStreamDirs.get(i), streamName);
       mirroredFs = mirrorStreamDirPath.getFileSystem(new Configuration());
       LOG.info("mirroredStream Path : " + mirrorStreamDirPath);
+      
       doRecursiveListing(mirrorStreamDirPath, filesInMirroredStream, mirroredFs);
-      Iterator<Path> it = filesInMirroredStream.iterator();
+      
+      Iterator<Path> it = filesInMirroredStream.keySet().iterator();
       while (it.hasNext() ) {
         LOG.debug(" files in mirrored stream: " + (it.next()));
       }
       System.out.println("stream name:" + streamName);
       
-      List<Path> toBeCopiedPaths = new ArrayList<Path>();
+      TreeMap<Path, FileStatus> toBeCopiedPaths = new TreeMap<Path, FileStatus>();
       compareMergedAndMirror(filesInMergedStream, filesInMirroredStream, 
           mirrorStreamDirs.get(i).toString(), mergedStreamDirPath.
           toString(), inconsistentData, toBeCopiedPaths);
       
       // check if there are missing paths that need to be copied to mirror stream
       if (toBeCopiedPaths.size() > 0 && copyMissingPaths) {
+        it = toBeCopiedPaths.keySet().iterator();
+        while (it.hasNext()) {
+          LOG.debug(" To be copied path: " + (it.next()));
+        }
         
+        //TODO: perform distcp copy of missing paths
       }
     }
   }
@@ -107,47 +115,61 @@ public class MirrorStreamDataConsistencyValidation {
    * 			  minute dirs paths only
    * @param inconsistentData : stores all the missed paths and data replay paths
    */
-  void compareMergedAndMirror(List<Path> mergedStreamFiles, 
-      List<Path> mirrorStreamFiles, String mirrorStreamDirPath, 
+  void compareMergedAndMirror(TreeMap<Path, FileStatus> mergedStreamFiles, 
+      TreeMap<Path, FileStatus> mirrorStreamFiles, String mirrorStreamDirPath, 
       String mergedStreamDirPath, List<Path> inconsistentData,
-      List<Path> toBeCopiedPaths) {
+      TreeMap<Path, FileStatus> toBeCopiedPaths) {
     int i;
     int j;
     int mergedStreamLen = mergedStreamDirPath.length();
     int mirrorStreamLen = mirrorStreamDirPath.length();
+    Iterator<Entry<Path, FileStatus>> mergedStreamIter = 
+        mergedStreamFiles.entrySet().iterator();
+    Iterator<Entry<Path, FileStatus>> mirrorStreamIter = 
+        mirrorStreamFiles.entrySet().iterator();
+    
     for(i=0, j=0 ; i < mergedStreamFiles.size() && 
         j < mirrorStreamFiles.size(); i++, j++) {
-      String mergedStreamfilePath = mergedStreamFiles.get(i).toString().
+      Entry<Path, FileStatus> mergedStreamEntry = mergedStreamIter.next();
+      Entry<Path, FileStatus> mirrorStreamEntry = mirrorStreamIter.next();
+      
+      Path mergedStreamFilePath = mergedStreamEntry.getKey();
+      Path mirrorStreamFilePath = mirrorStreamEntry.getKey();
+      
+      String mergedStreamFileRelPath = mergedStreamFilePath.toString().
           substring(mergedStreamLen);
-      String mirrorStreamfilePath = mirrorStreamFiles.get(j).toString().
+      String mirrorStreamFileRelPath = mirrorStreamFilePath.toString().
           substring(mirrorStreamLen);
-      if(!mergedStreamfilePath.equals(mirrorStreamfilePath)) {
-        if(mergedStreamfilePath.compareTo(mirrorStreamfilePath) < 0) {
+      
+      if(!mergedStreamFileRelPath.equals(mirrorStreamFileRelPath)) {
+        if(mergedStreamFileRelPath.compareTo(mirrorStreamFileRelPath) < 0) {
           if (j == 0) {
             System.out.println("purged path in the mirror stream" + 
-                mergedStreamFiles.get(i));
+                mergedStreamFilePath);
           } else {
-            System.out.println("Missing file path : " + mergedStreamFiles.get(i));
-            toBeCopiedPaths.add(mergedStreamFiles.get(i));
+            System.out.println("Missing file path : " + mergedStreamFilePath);
+            
+            // Add the entry for missing file in the toBeCopied map
+            toBeCopiedPaths.put(new Path(mergedStreamFileRelPath), 
+                mergedStreamEntry.getValue());
           }
-          inconsistentData.add(mergedStreamFiles.get(i));
+          inconsistentData.add(mergedStreamFilePath);
           --j;
         } else {
           if (i == 0) {
             System.out.println("purged path in the merged stream" + 
-                mirrorStreamFiles.get(j));
+               mirrorStreamFilePath);
           } else {
-            System.out.println("Data Replica : " + mirrorStreamFiles.get(j));
+            System.out.println("Data Replica : " + mirrorStreamFilePath);
           }
-          inconsistentData.add(mirrorStreamFiles.get(j));
+          inconsistentData.add(mirrorStreamFilePath);
           --i;
         }
       } else {
         // System.out.println("match between   " + i + " and  " + j);
       }	   
     }	
-    if((i == j) && i== mergedStreamFiles.size() && j == mirrorStreamFiles.
-        size()) {
+    if((i == j) && i== mergedStreamFiles.size() && j == mirrorStreamFiles.size()) {
       System.out.println("There are no missing paths");
     } else {
       /* check whether there are any missing file paths or extra dummy files  
@@ -155,14 +177,16 @@ public class MirrorStreamDataConsistencyValidation {
        */
       if(i == mergedStreamFiles.size() ) {
         for(;j < mirrorStreamFiles.size(); j++) {
+          Path mirrorStreamFilePath = mirrorStreamIter.next().getKey();
           System.out.println("Extra files are in the Mirrored Stream: " + 
-              mirrorStreamFiles.get(j));	
-          inconsistentData.add(mirrorStreamFiles.get(j));
+              mirrorStreamFilePath);	
+          inconsistentData.add(mirrorStreamFilePath);
         }
       } else {
         for( ; i < mergedStreamFiles.size(); i++) {
-          System.out.println("To be Mirrored files: " + mergedStreamFiles.get(i));	
-          inconsistentData.add(mergedStreamFiles.get(i));
+          Path mergedStreamFilePath = mergedStreamIter.next().getKey();
+          System.out.println("To be Mirrored files: " + mergedStreamFilePath);	
+          inconsistentData.add(mergedStreamFilePath);
         }
       }
     } 
@@ -172,25 +196,25 @@ public class MirrorStreamDataConsistencyValidation {
    * It lists all the dirs and file paths which are presented in 
    * the stream directory
    * @param dir : stream directory path 
-   * @param listoffiles : stores all the files and directories 
+   * @param fileListingMap : map with key as dest path and value as source FileStatus
    * @param fs : FileSystem object
    */
-  public void doRecursiveListing(Path dir, List<Path> listOfFiles, 
+  public void doRecursiveListing(Path dir, TreeMap<Path, FileStatus> fileListingMap,
       FileSystem fs) throws IOException {
     FileStatus[] fileStatuses = fs.listStatus(dir);
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + dir);
-      listOfFiles.add(dir);
+      // get the file status for empty directory
+      fileListingMap.put(dir, fs.getFileStatus(dir));
     } else {
-      for (FileStatus file : fileStatuses) { 
+      for (FileStatus file : fileStatuses) {
         if (file.isDir()) {
-          doRecursiveListing(file.getPath(), listOfFiles, fs);
+          doRecursiveListing(file.getPath(), fileListingMap, fs);
         } else {
-          listOfFiles.add(file.getPath());
+          fileListingMap.put(dir, file);
         }
       } 
     }
-    Collections.sort(listOfFiles);
   }
 
   public List<Path> run(String [] args) throws Exception {
@@ -209,7 +233,7 @@ public class MirrorStreamDataConsistencyValidation {
         System.out.println("There are no stream names in the mirrored stream");
       }
     } else if (args.length == 3) {
-      if (args[2].equalsIgnoreCase("-copy")) {
+      if (args[2].equalsIgnoreCase("-fix")) {
         copyMissingPaths = true;
       } else {
         // the 3rd argument is a list of stream names
@@ -219,7 +243,7 @@ public class MirrorStreamDataConsistencyValidation {
       }
     } else if (args.length == 4) {
       // the 4th argument is whether missing paths need to be copied
-      if (args[3].equalsIgnoreCase("-copy")) {
+      if (args[3].equalsIgnoreCase("-fix")) {
         copyMissingPaths = true;
       }
     }
@@ -238,7 +262,7 @@ public class MirrorStreamDataConsistencyValidation {
         + " <mergedstream root-dir>"
         + " <mirrorstream root-dir (comma separated list)>"
         + " [<streamname (comma separated list)>]"
-        + " [-copy (needs shutdown of merge and mirror databus workers) ");
+        + " [-fix (needs shutdown of merge and mirror databus workers) ");
   }
   
   public static void main(String args[]) throws Exception {

@@ -251,7 +251,7 @@ public class TestMirrorStreamDataConsistency {
 			    throws Exception {
 		List<Path> inconsistentdata = new ArrayList<Path>();
 		for (String streamName : streamNames) {
-			inconsistentdata.addAll(obj.processListingStreams(streamName));
+			inconsistentdata.addAll(obj.processListingStreams(streamName, false));
 		}
 		Assert.assertEquals(inconsistentdata.size(), expectedPaths.size());
 		Assert.assertTrue(inconsistentdata.containsAll(expectedPaths));
