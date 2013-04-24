@@ -48,6 +48,8 @@ public class Databus implements Service, DatabusConstants {
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
+  private static int numStreamsMergeService = 5;
+  private static int numStreamsMirrorService = 1;
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -152,14 +154,38 @@ public class Databus implements Service, DatabusConstants {
 
 
 			for (String remote : mergedStreamRemoteClusters) {
-        services.add(getMergedStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster,
-            mergedSrcClusterToStreamsMap.get(remote)));
+
+        Iterator<String> iterator = mergedSrcClusterToStreamsMap.get(remote)
+            .iterator();
+        Set<String> streamsToProcess = new HashSet<String>();
+        while (iterator.hasNext()) {
+          for (int i = 0; i < numStreamsMergeService && iterator.hasNext(); i++) {
+            streamsToProcess.add(iterator.next());
+          }
+          if (streamsToProcess.size() > 0) {
+            services.add(getMergedStreamService(config, config.getClusters()
+                .get(remote), cluster, currentCluster, streamsToProcess));
+            streamsToProcess = new HashSet<String>();
+          }
+        }
+
       }
 			for (String remote : mirroredRemoteClusters) {
-        services.add(getMirrorStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster,
-            mirrorSrcClusterToStreamsMap.get(remote)));
+
+        Iterator<String> iterator = mirrorSrcClusterToStreamsMap.get(remote)
+            .iterator();
+        Set<String> streamsToProcess = new HashSet<String>();
+        while (iterator.hasNext()) {
+          for (int i = 0; i < numStreamsMirrorService && iterator.hasNext(); i++) {
+            streamsToProcess.add(iterator.next());
+          }
+          if (streamsToProcess.size() > 0) {
+            services.add(getMirrorStreamService(config, config.getClusters()
+                .get(remote), cluster, currentCluster, streamsToProcess));
+            streamsToProcess = new HashSet<String>();
+          }
+        }
+
       }
     }
 
@@ -281,6 +307,15 @@ public class Databus implements Service, DatabusConstants {
       if (streamperLocal != null) {
         numStreamsLocalService = Integer.parseInt(streamperLocal);
       }
+      String streamperMerge = prop.getProperty(STREAMS_PER_MERGE);
+      if (streamperMerge != null) {
+        numStreamsMergeService = Integer.parseInt(streamperMerge);
+      }
+      String streamperMirror = prop.getProperty(STREAMS_PER_MIRROR);
+      if (streamperMirror != null) {
+        numStreamsMirrorService = Integer.parseInt(streamperMirror);
+      }
+
       String log4jFile = getProperty(prop, LOG4J_FILE);
       if (log4jFile == null) {
         LOG.error("log4j.properties incorrectly defined");

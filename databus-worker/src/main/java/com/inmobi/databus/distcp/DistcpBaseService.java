@@ -96,8 +96,7 @@ public abstract class DistcpBaseService extends AbstractService {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
-    conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
-        "_" + getDestCluster().getName());
+    conf.set("mapred.job.name", serviceName);
     
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of

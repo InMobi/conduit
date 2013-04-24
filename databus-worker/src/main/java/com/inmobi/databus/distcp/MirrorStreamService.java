@@ -50,7 +50,8 @@ public class MirrorStreamService extends DistcpBaseService {
  Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
       throws Exception {
-    super(config, MirrorStreamService.class.getName(), srcCluster,
+    super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
+        srcCluster,
         destinationCluster, currentCluster, provider, streamsToProcess);
   }
 
@@ -68,7 +69,8 @@ public class MirrorStreamService extends DistcpBaseService {
       boolean skipCommit = false;
       
       Path tmpOut = new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
-      + getSrcCluster().getName() + "_" + getDestCluster().getName())
+          + getSrcCluster().getName() + "_" + getDestCluster().getName() + "_"
+          + getServiceName(streamsToProcess))
       .makeQualified(getDestFs());
       // CleanuptmpOut before every run
       if (getDestFs().exists(tmpOut))
@@ -98,7 +100,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
 
       try {
-        if (!executeDistCp("MirrorStreamService", fileListingMap, tmpOut))
+        if (!executeDistCp(this.getName(), fileListingMap, tmpOut))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Problem in Mirrored distcp..skipping commit for this run",
@@ -108,7 +110,6 @@ public class MirrorStreamService extends DistcpBaseService {
       if (!skipCommit) {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
         doLocalCommit(commitPaths);
-        // doFinalCommit(consumePaths);
         finalizeCheckPoints();
       }
       getDestFs().delete(tmpOut, true);

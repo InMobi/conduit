@@ -53,7 +53,8 @@ public class MergedStreamService extends DistcpBaseService {
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
       throws Exception {
-    super(config, MergedStreamService.class.getName(), srcCluster,
+    super(config, "MergeStreamService_" + getServiceName(streamsToProcess),
+        srcCluster,
         destinationCluster, currentCluster, provider,streamsToProcess);
   }
 
@@ -65,7 +66,8 @@ public class MergedStreamService extends DistcpBaseService {
 
       Path tmpOut = new Path(getDestCluster().getTmpPath(),
           "distcp_mergedStream_" + getSrcCluster().getName() + "_"
-              + getDestCluster().getName()).makeQualified(getDestFs());
+              + getDestCluster().getName() + "_"
+              + getServiceName(streamsToProcess)).makeQualified(getDestFs());
       // CleanuptmpOut before every run
       if (getDestFs().exists(tmpOut))
         getDestFs().delete(tmpOut, true);
@@ -112,7 +114,7 @@ public class MergedStreamService extends DistcpBaseService {
           + tmpOut.toString() + "]");
 
       try {
-        if (!executeDistCp("MergedStreamService", fileListingMap, tmpOut))
+        if (!executeDistCp(getName(), fileListingMap, tmpOut))
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Error in distcp", e);
@@ -143,9 +145,6 @@ public class MergedStreamService extends DistcpBaseService {
               tobeCommittedPaths.put(entry.getKey(), entry.getValue());
             }
           }
-
-          // Prepare paths for MirrorStreamConsumerService
-          // commitMirroredConsumerPaths(tobeCommittedPaths, tmp);
           commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, 
               commitTime);
           // category, Set of Paths to commit
