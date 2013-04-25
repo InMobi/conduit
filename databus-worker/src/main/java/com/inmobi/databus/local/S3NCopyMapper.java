@@ -5,6 +5,7 @@ import com.inmobi.databus.utils.S3FileSystemHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -29,7 +30,7 @@ import java.io.IOException;
  * </code>
  */
 
-public class S3NCopyMapper extends Mapper<Text, Text, Text,
+public class S3NCopyMapper extends Mapper<Text, FileStatus, Text,
     Text> implements ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
@@ -46,10 +47,10 @@ public class S3NCopyMapper extends Mapper<Text, Text, Text,
 
 
   @Override
-  public void map(Text key, Text value, Context context) throws IOException,
+  public void map(Text key, FileStatus value, Context context) throws IOException,
     InterruptedException {
-    Path src = new Path(key.toString());
-    String dest = value.toString();
+    Path src = value.getPath();
+    String dest = key.toString();
     String collector = src.getParent().getName();
 
     if (srcConf == null) {
