@@ -51,6 +51,7 @@ public class Databus implements Service, DatabusConstants {
   private static int numStreamsMergeService = 5;
   private static int numStreamsMirrorService = 1;
 
+
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
     this(config, clustersToProcess);
@@ -314,6 +315,10 @@ public class Databus implements Service, DatabusConstants {
       String streamperMirror = prop.getProperty(STREAMS_PER_MIRROR);
       if (streamperMirror != null) {
         numStreamsMirrorService = Integer.parseInt(streamperMirror);
+      }
+      String numOfDirPerDistcpService = prop.getProperty(NUM_DIR_PER_DISTCP);
+      if (numOfDirPerDistcpService != null) {
+        System.setProperty(NUM_DIR_PER_DISTCP, numOfDirPerDistcpService);
       }
 
       String log4jFile = getProperty(prop, LOG4J_FILE);
