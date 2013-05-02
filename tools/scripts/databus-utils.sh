@@ -3,6 +3,7 @@ DATABUS_MIRROR_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.MirrorStreamDat
 DATABUS_ORDERLY_CREATION_FILES_CLASS="com.inmobi.databus.utils.OrderlyCreationOfDirs"
 DATABUS_MERGE_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.MergeStreamDataConsistency"
 DATABUS_LOCAL_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.LocalStreamDataConsistency"
+DATABUS_VALIDATION_CLASS="com.inmobi.databus.validator.DatabusValidator"
 #functions
 info() {
   local msg=$1
@@ -33,6 +34,8 @@ USAGE: $0 mirrorstreamdataconsistency <mergedstreamroot-dir> <mirrorstreamroot-d
        $0 orderlycreated <root-dirs (comma separated list)> [<basedir (comma separated list)>] [<streamname (comma separated list)>]
        $0 mergestreamdataconsistency <local stream root-dirs (comma separated list)> <merge stream root-dir> [<streamNames (comma separated list)>]
        $0 localstreamdataconsistency <root-dirs (comma separated list)>
+       $0 checkstream -verify [-stream (comma separated stream names)] [-mode (comma separated stream modes: {local,merge,mirror})] [-cluster (comma separated cluster names)] <-conf <databus.xml file path>>
+       $0 checkstream -fix <-stream (stream name)> <-mode (stream mode: {local,merge,mirror})> <-cluster (cluster name)> <-conf (databus.xml file path)> [NOTE: THIS NEEDS SHUTDOWN OF TARGET DATABUS WORKERS]
 EOF
 }
 
@@ -81,6 +84,9 @@ case "$mode" in
     ;;
   localstreamdataconsistency)
     opt_local=1;
+    ;;
+  -checkstream)
+    opt_validate=1;
     ;;
   *)
     error "Unknown or unspecified command '$mode'"
@@ -137,6 +143,8 @@ elif [ -n "$opt_local_merge" ] ; then
   run_databus $DATABUS_MERGE_STREAM_VALIDATION_CLASS $args
 elif [ -n "$opt_local" ] ; then
   run_databus $DATABUS_LOCAL_STREAM_VALIDATION_CLASS $args
+elif [ -n "$opt_validate" ] ; then
+  run_databus $DATABUS_VALIDATION_CLASS $args
 #  echo $args
 else
   error "This message should never appear" 1

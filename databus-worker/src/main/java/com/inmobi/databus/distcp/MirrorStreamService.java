@@ -60,6 +60,13 @@ public class MirrorStreamService extends DistcpBaseService {
 
     return new Path(finalDestDir);
   }
+  
+  @Override
+  protected Path getDistCpTargetPath() {
+    return new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
+        + getSrcCluster().getName() + "_" + getDestCluster().getName())
+        .makeQualified(getDestFs());
+  }
 
   @Override
   protected void execute() throws Exception {
@@ -67,9 +74,7 @@ public class MirrorStreamService extends DistcpBaseService {
     try {
       boolean skipCommit = false;
       
-      Path tmpOut = new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
-      + getSrcCluster().getName() + "_" + getDestCluster().getName())
-      .makeQualified(getDestFs());
+      Path tmpOut = getDistCpTargetPath();
       // CleanuptmpOut before every run
       if (getDestFs().exists(tmpOut))
         getDestFs().delete(tmpOut, true);

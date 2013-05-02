@@ -121,6 +121,11 @@ public abstract class DistcpBaseService extends AbstractService {
    * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
+  
+  /*
+   * @return the target path where distcp will copy paths from source cluster 
+   */
+  protected abstract Path getDistCpTargetPath();
 
   /*
    * @param filename should be of the format
