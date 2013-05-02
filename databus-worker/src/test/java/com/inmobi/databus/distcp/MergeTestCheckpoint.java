@@ -26,14 +26,15 @@ import org.testng.annotations.Test;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
-public class MergeMirrorTestCheckpoint {
+public class MergeTestCheckpoint {
 
   private static final Log LOG = LogFactory
-      .getLog(MergeMirrorTestCheckpoint.class);
+      .getLog(MergeTestCheckpoint.class);
   private static final NumberFormat idFormat = NumberFormat.getInstance();
   static {
     idFormat.setGroupingUsed(false);
@@ -187,7 +188,26 @@ public class MergeMirrorTestCheckpoint {
     Map<String, List<Path>> srcPathList = createLocalData(config);
     Map<String, List<String>> srcToRemote = launchMergeServices(config);
     assertAllPathsOnSrcPresentOnDest(srcPathList, srcToRemote, config);
-    // TODO assert for correct checkpoint
+
+    String checkPointKey1 = TestMergedStreamService.class.getSimpleName()
+        + "testcluster1" + "test1";
+    String checkPointKey2 = TestMergedStreamService.class.getSimpleName()
+        + "testcluster2" + "test1";
+
+    Cluster destnCluster1 = config.getClusters().get("testcluster1");
+    List<Path> pathsCreated1 = srcPathList.get("testcluster1");
+    List<Path> pathsCreated2 = srcPathList.get("testcluster2");
+    FSCheckpointProvider provider = new FSCheckpointProvider(
+        destnCluster1.getCheckpointDir());
+    byte[] value = provider.read(checkPointKey1);
+    String checkPointString = new String(value);
+    assert (pathsCreated1.get(2).getParent().toString()
+        .equals(checkPointString));
+    value = provider.read(checkPointKey2);
+    checkPointString = new String(value);
+
+    assert (pathsCreated2.get(2).getParent().toString()
+        .equals(checkPointString));
 
   }
 
@@ -221,7 +241,7 @@ public class MergeMirrorTestCheckpoint {
     // should skip first two files from source=testcluster1
 
     FileStatus pathToBeListed = remoteFs.getFileStatus(new Path(destnCluster
-        .getFinalDestDirRoot()));
+        .getFinalDestDirRoot(), "test1"));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
     assert (results.size() == 7);// 1 path was created as part of setup and 6
@@ -249,12 +269,131 @@ public class MergeMirrorTestCheckpoint {
   }
 
   @Test
-  public void testMergeNoCheckPointSourceDataPresentInDiffDirOnDest() {
+  public void testMergeNoCheckPointSourceDataPresentInDiffDirOnDest()
+      throws Exception {
+
+    DatabusConfig config = setup("test-mss-databus.xml");
+    Map<String, List<Path>> srcPathList = createLocalData(config);
+    // create one of the files which has been created on source on the
+    // destination;than merge should only pull data from next directory of
+    // source
+    List<Path> pathsOnLocal1 = srcPathList.get("testcluster1");
+    String fileName1 = pathsOnLocal1.get(0).getName();
+    Cluster destnCluster1 = config.getClusters().get("testcluster1");
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(new Date());
+    calendar.add(Calendar.MINUTE, -1);
+    String destDir1 = Cluster.getDestDir(destnCluster1.getFinalDestDirRoot(),
+        "test1", calendar.getTime().getTime());
+    Path fileToBeCreated1 = new Path(destDir1 + File.separator + fileName1);
+    FileSystem remoteFs = FileSystem.get(destnCluster1.getHadoopConf());
+    remoteFs.create(fileToBeCreated1);
+
+    List<Path> pathsOnLocal2 = srcPathList.get("testcluster2");
+    String fileName2 = pathsOnLocal2.get(0).getName();
+    calendar.setTime(new Date());
+    calendar.add(Calendar.MINUTE, -3);
+    String destDir2 = Cluster.getDestDir(destnCluster1.getFinalDestDirRoot(),
+        "test1", calendar.getTime().getTime());
+    Path fileToBeCreated2 = new Path(destDir2 + File.separator + fileName2);
+    remoteFs.create(fileToBeCreated2);
+
+    launchMergeServices(config);
+    // Last directory on target should have only 4 files instead of 8 as it
+    // should skip first two files from both sources
+
+    FileStatus pathToBeListed = remoteFs.getFileStatus(new Path(destnCluster1
+        .getFinalDestDirRoot()));
+    List<FileStatus> results = new ArrayList<FileStatus>();
+    DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
+    assert (results.size() == 6);// 2 paths were created as part of setup and 4
+                                 // were copied via merge
+    Collections.sort(results, new DatePathComparator());
+    assert (!results.get(1).getPath().getParent()
+        .equals(results.get(2).getPath().getParent()));// second path and other
+                                                       // paths should be
+                                                       // different directories
+    assert (!results.get(0).getPath().getParent()
+        .equals(results.get(1).getPath().getParent()));// first and second path
+                                                       // should be in diff
+                                                       // directory as they have
+                                                       // been create in diff
+                                                       // directories
 
   }
 
   @Test
-  public void testMergeWithCheckPoint() {
+  public void testMergeWithCheckPoint() throws Exception {
+    DatabusConfig config = setup("test-mss-databus.xml");
+    Map<String, List<Path>> srcPathList = createLocalData(config);
+    Cluster destnCluster1 = config.getClusters().get("testcluster1");
+    List<Path> pathsCreated1 = srcPathList.get("testcluster1");
+    List<Path> pathsCreated2 = srcPathList.get("testcluster2");
+    FSCheckpointProvider provider = new FSCheckpointProvider(
+        destnCluster1.getCheckpointDir());
+    String checkPointKey1 = TestMergedStreamService.class.getSimpleName()
+        + "testcluster1" + "test1";
+    String checkPointKey2 = TestMergedStreamService.class.getSimpleName()
+        + "testcluster2" + "test1";
+    Path checkPointPath1 = pathsCreated1.get(0).getParent();
+    Path checkPointPath2 = pathsCreated2.get(0).getParent();
+    provider.checkpoint(checkPointKey1, checkPointPath1.toString().getBytes());
+    provider.checkpoint(checkPointKey2, checkPointPath2.toString().getBytes());
+
+    launchMergeServices(config);
+    Path pathToBeListed = new Path(destnCluster1.getFinalDestDirRoot()
+        + "test1");
+
+    FileSystem remoteFs = FileSystem.get(destnCluster1.getHadoopConf());
+    List<FileStatus> results = new ArrayList<FileStatus>();
+    DistcpBaseService.createListing(remoteFs,
+        remoteFs.getFileStatus(pathToBeListed), results);
+
+    assert (results.size() == 4);
+
+    byte[] value = provider.read(checkPointKey1);
+    String checkPointString = new String(value);
+    assert (pathsCreated1.get(2).getParent().toString()
+        .equals(checkPointString));
+    value = provider.read(checkPointKey2);
+    checkPointString = new String(value);
+
+    assert (pathsCreated2.get(2).getParent().toString()
+        .equals(checkPointString));
+
+  }
+
+  @Test
+  public void testMergetNoChkPointEmptyDirAtSource() throws Exception {
+    DatabusConfig config = setup("test-mss-databus.xml");
+    Cluster destnCluster1 = config.getClusters().get("testcluster1");
+    FileSystem remoteFs1 = FileSystem.get(destnCluster1.getHadoopConf());
+    Cluster destnCluster2 = config.getClusters().get("testcluster2");
+    FileSystem remoteFs2 = FileSystem.get(destnCluster1.getHadoopConf());
+
+    Date date = new Date();
+    Path path = CalendarHelper.getPathFromDate(date,
+        new Path(destnCluster2.getLocalFinalDestDirRoot() + "test1"));
+    String filenameStr1 = new String("testcluster2" + "-" + "test1" + "-"
+        + getDateAsYYYYMMDDHHmm(date) + "_" + idFormat.format(1));
+    Path file1 = new Path(path, filenameStr1 + ".gz");
+    // created a file on testcluster 2
+    remoteFs2.create(file1);
+    Date nextDate = CalendarHelper.addAMinute(date);
+    Path path1 = CalendarHelper.getPathFromDate(nextDate, new Path(
+        destnCluster2.getLocalFinalDestDirRoot() + "test1"));
+    remoteFs2.mkdirs(path1);
+
+    Path emptyPath = CalendarHelper.getPathFromDate(date, new Path(
+        destnCluster1.getLocalFinalDestDirRoot() + "test1"));
+    remoteFs1.mkdirs(emptyPath);
+    launchMergeServices(config);
+    List<FileStatus> results = new ArrayList<FileStatus>();
+    Path pathToBeListed = new Path(destnCluster1.getFinalDestDirRoot()
+        + "test1");
+    FileStatus fToBeListed = remoteFs1.getFileStatus(pathToBeListed);
+    DistcpBaseService.createListing(remoteFs1, fToBeListed, results);
+    assert (results.size() == 1);
 
   }
 }
