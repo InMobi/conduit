@@ -292,6 +292,7 @@ public abstract class DistcpBaseService extends AbstractService {
       provider.checkpoint(getCheckPointKey(entry.getKey()), entry.getValue()
           .toString().getBytes());
     }
+    checkPointPaths.clear();
   }
 
   public Cluster getCurrentCluster() {
@@ -303,7 +304,9 @@ public abstract class DistcpBaseService extends AbstractService {
       List<FileStatus> results) throws IOException {
     if (fileStatus.isDir()) {
       FileStatus[] stats = fs.listStatus(fileStatus.getPath());
-      if (stats.length == 0) {
+      // stats can be null in case where purger deleted the path while this
+      // method was called
+      if (stats != null && stats.length == 0) {
         results.add(fileStatus);
         LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
       }

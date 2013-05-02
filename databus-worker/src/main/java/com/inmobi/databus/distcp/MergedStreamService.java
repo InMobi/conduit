@@ -106,6 +106,7 @@ public class MergedStreamService extends DistcpBaseService {
         LOG.warn("No data to pull from " + "Cluster ["
             + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
+        finalizeCheckPoints();
         return;
       }
       LOG.info("Starting a distcp pull from Cluster ["

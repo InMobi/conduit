@@ -90,6 +90,7 @@ public class MirrorStreamService extends DistcpBaseService {
         LOG.warn("No data to pull from " + "Cluster ["
         + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
         + getDestCluster().getHdfsUrl() + "]");
+        finalizeCheckPoints();
         return;
       }
 
@@ -294,6 +295,21 @@ public class MirrorStreamService extends DistcpBaseService {
     return result;
   }
 
+  private void recursiveListingTillMinuteDir(FileSystem fs,
+      FileStatus fileStatus, List<FileStatus> results, int depth)
+      throws IOException {
+    if (depth == 5) {
+      results.add(fileStatus);
+      return;
+    }
+    if (fileStatus.isDir()) {
+      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
+      for (FileStatus stat : stats) {
+        recursiveListingTillMinuteDir(fs, stat, results, depth + 1);
+      }
+    }
+  }
+
   private Path getFirstOrLastPath(FileSystem fs, Path streamFinalDestDir,
       boolean returnLast)
       throws IOException {
@@ -302,28 +318,28 @@ public class MirrorStreamService extends DistcpBaseService {
     FileStatus streamRoot;
     List<FileStatus> streamPaths = new ArrayList<FileStatus>();
       streamRoot = fs.getFileStatus(streamFinalDestDir);
-      createListing(fs, streamRoot, streamPaths);
+    recursiveListingTillMinuteDir(fs, streamRoot, streamPaths, 0);
     if (streamPaths.size() == 0)
       return null;
     DatePathComparator comparator = new DatePathComparator();
-    FileStatus result = null;// not assigning the first element to result here
-                             // because first element may not be of form
-                             // yy/mm/dd/hh/mm
+    /*
+     * FileStatus result = null;// not assigning the first element to result
+     * here // because first element may not be of form // yy/mm/dd/hh/mm
+     */
+    FileStatus result = streamPaths.get(0);
     for (int i = 0; i < streamPaths.size(); i++) {
       FileStatus current = streamPaths.get(i);
       // skip all those paths which are not of the format yy/mm/dd/hh/mm
-      if (current.getPath().depth() < streamFinalDestDir.depth() + 5)
-        continue;
-      if (result == null)
-        result = current;
+      // if (current.getPath().depth() < streamFinalDestDir.depth() + 5)
+      // continue;
       if (returnLast && comparator.compare(current, result) > 0)
         result = current;
       else if (!returnLast
  && comparator.compare(current, result) < 0)
         result = current;
     }
-    if (result == null)// if all the paths are invalid
-      return null;
+    // if (result == null)// if all the paths are invalid
+    // return null;
     if (!result.isDir())
       return result.getPath().getParent();
     else
