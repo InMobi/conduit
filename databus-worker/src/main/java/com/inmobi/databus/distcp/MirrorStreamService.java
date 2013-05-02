@@ -322,24 +322,15 @@ public class MirrorStreamService extends DistcpBaseService {
     if (streamPaths.size() == 0)
       return null;
     DatePathComparator comparator = new DatePathComparator();
-    /*
-     * FileStatus result = null;// not assigning the first element to result
-     * here // because first element may not be of form // yy/mm/dd/hh/mm
-     */
     FileStatus result = streamPaths.get(0);
     for (int i = 0; i < streamPaths.size(); i++) {
       FileStatus current = streamPaths.get(i);
-      // skip all those paths which are not of the format yy/mm/dd/hh/mm
-      // if (current.getPath().depth() < streamFinalDestDir.depth() + 5)
-      // continue;
       if (returnLast && comparator.compare(current, result) > 0)
         result = current;
       else if (!returnLast
  && comparator.compare(current, result) < 0)
         result = current;
     }
-    // if (result == null)// if all the paths are invalid
-    // return null;
     if (!result.isDir())
       return result.getPath().getParent();
     else

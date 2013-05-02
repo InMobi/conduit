@@ -50,6 +50,7 @@ public class Databus implements Service, DatabusConstants {
   private static int numStreamsLocalService = 5;
   private static int numStreamsMergeService = 5;
   private static int numStreamsMirrorService = 1;
+  private static boolean isPurgerEnabled = true;
 
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
@@ -192,7 +193,7 @@ public class Databus implements Service, DatabusConstants {
 
     //Start a DataPurgerService for this Cluster/Clusters to process
     Iterator<String> it = clustersToProcess.iterator();
-    while(it.hasNext()) {
+    while (isPurgerEnabled && it.hasNext()) {
       String  clusterName = it.next();
       Cluster cluster =  config.getClusters().get(clusterName);
       LOG.info("Starting Purger for Cluster [" + clusterName + "]");
@@ -303,7 +304,9 @@ public class Databus implements Service, DatabusConstants {
       String cfgFile = args[0].trim();
       Properties prop = new Properties();
       prop.load(new FileReader(cfgFile));
-
+      String purgerEnabled = prop.getProperty(PERGER_ENABLED);
+      if (purgerEnabled != null)
+        isPurgerEnabled = Boolean.parseBoolean(purgerEnabled);
       String streamperLocal = prop.getProperty(STREAMS_PER_LOCALSERVICE);
       if (streamperLocal != null) {
         numStreamsLocalService = Integer.parseInt(streamperLocal);
