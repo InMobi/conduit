@@ -80,7 +80,11 @@ public class FileUtil {
   }
   
   // This method is taken from DistCp SimpleCopyListing class.
+<<<<<<< HEAD
   public static FileStatus getFileStatus(FileStatus fileStatus, 
+=======
+  public static FileStatus getFileStatus(FileStatus fileStatus,
+>>>>>>> f5f0b18f36f3ea3c417e46d8a45154e54b51e2b5
       ByteArrayOutputStream buffer, DataInputBuffer in) throws IOException {
     // if the file is not an instance of RawLocaleFileStatus, simply return it
     if (fileStatus.getClass() == FileStatus.class) {

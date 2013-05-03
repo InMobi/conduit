@@ -187,10 +187,11 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
+     <!--  <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
+        <version>0.9-SNAPSHOT</version>
+      </plugin> -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
