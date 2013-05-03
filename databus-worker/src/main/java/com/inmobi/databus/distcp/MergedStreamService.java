@@ -53,9 +53,9 @@ public class MergedStreamService extends DistcpBaseService {
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
       throws Exception {
-    super(config, "MergeStreamService_" + getServiceName(streamsToProcess),
-        srcCluster,
-        destinationCluster, currentCluster, provider,streamsToProcess);
+    super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
+        srcCluster, destinationCluster, currentCluster, provider,
+        streamsToProcess);
   }
 
   @Override
@@ -82,22 +82,25 @@ public class MergedStreamService extends DistcpBaseService {
       }
 
       synchronized (getDestCluster()) {
-        /*missing paths are added to mirror consumer file first and those missing
-        paths are published next. If failure occurs in the current run, 
-        missing paths will be recalculated and added to the map. Even if 
-        databus is restarted while publishing the missing paths or writing to 
-        mirror consumer file, there will be no holes in mirror stream. The only 
-        disadvantage when failure occurs before publishing missing paths to 
-        dest cluster is missing paths which were calculated in the previous run 
-        will be added to mirror consumer file again */
+        /*
+         * missing paths are added to mirror consumer file first and those
+         * missing paths are published next. If failure occurs in the current
+         * run, missing paths will be recalculated and added to the map. Even if
+         * databus is restarted while publishing the missing paths or writing to
+         * mirror consumer file, there will be no holes in mirror stream. The
+         * only disadvantage when failure occurs before publishing missing paths
+         * to dest cluster is missing paths which were calculated in the
+         * previous run will be added to mirror consumer file again
+         */
         long commitTime = getDestCluster().getCommitTime();
-        preparePublishMissingPaths(missingDirsCommittedPaths, commitTime, 
+        preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
             streamsToProcess);
         if (missingDirsCommittedPaths.size() > 0) {
           LOG.info("Total number of stream for which missing paths to be published "
               + missingDirsCommittedPaths.size());
           LOG.debug("Missing paths published " + missingDirsCommittedPaths);
-          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, commitTime);
+          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths,
+              commitTime);
         }
       }
 
@@ -110,8 +113,8 @@ public class MergedStreamService extends DistcpBaseService {
         return;
       }
       LOG.info("Starting a distcp pull from Cluster ["
-          + getSrcCluster().getHdfsUrl() + "]"
-          + " to Cluster [" + getDestCluster().getHdfsUrl() + "] " + " Path ["
+          + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+          + getDestCluster().getHdfsUrl() + "] " + " Path ["
           + tmpOut.toString() + "]");
 
       try {
@@ -127,7 +130,7 @@ public class MergedStreamService extends DistcpBaseService {
       // if success
       if (!skipCommit) {
         Map<String, List<Path>> categoriesToCommit = prepareForCommit(tmpOut);
-        tobeCommittedPaths =  new HashMap<String, Set<Path>>();
+        tobeCommittedPaths = new HashMap<String, Set<Path>>();
         synchronized (getDestCluster()) {
           long commitTime = getDestCluster().getCommitTime();
           // between the last addPublishMissinPaths and this call,distcp is
@@ -135,27 +138,22 @@ public class MergedStreamService extends DistcpBaseService {
           // all missing paths are added till this time
           preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
               streamsToProcess);
-          commitPaths = createLocalCommitPaths(tmpOut, commitTime, 
+          commitPaths = createLocalCommitPaths(tmpOut, commitTime,
               categoriesToCommit, tobeCommittedPaths);
           for (Map.Entry<String, Set<Path>> entry : missingDirsCommittedPaths
               .entrySet()) {
             Set<Path> filesList = tobeCommittedPaths.get(entry.getKey());
             if (filesList != null) {
               filesList.addAll(entry.getValue());
-            } else { 
+            } else {
               tobeCommittedPaths.put(entry.getKey(), entry.getValue());
             }
           }
-          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths, 
+          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths,
               commitTime);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths);
         }
-
-
-        // Cleanup happens in parallel without sync
-        // no race is there in consumePaths, tmpOut
-        // doFinalCommit(consumePaths);
         finalizeCheckPoints();
       }
       // rmv tmpOut cleanup
@@ -167,14 +165,12 @@ public class MergedStreamService extends DistcpBaseService {
     }
   }
 
-
   private void preparePublishMissingPaths(
       Map<String, Set<Path>> missingDirsCommittedPaths, long commitTime,
-      Set<String> categoriesToCommit) 
-          throws Exception {
+      Set<String> categoriesToCommit) throws Exception {
     Map<String, Set<Path>> missingDirsforCategory = null;
 
-    if(categoriesToCommit!=null) {
+    if (categoriesToCommit != null) {
       missingDirsforCategory = new HashMap<String, Set<Path>>();
       for (String category : categoriesToCommit) {
         Set<Path> missingDirectories = publishMissingPaths(getDestFs(),
@@ -182,8 +178,8 @@ public class MergedStreamService extends DistcpBaseService {
         missingDirsforCategory.put(category, missingDirectories);
       }
     } else {
-      missingDirsforCategory = publishMissingPaths(
-          getDestFs(), getDestCluster().getFinalDestDirRoot(), commitTime);
+      missingDirsforCategory = publishMissingPaths(getDestFs(),
+          getDestCluster().getFinalDestDirRoot(), commitTime);
     }
 
     if (missingDirsforCategory != null) {
@@ -192,8 +188,8 @@ public class MergedStreamService extends DistcpBaseService {
         LOG.debug("Add Missing Directories to Commit Path: "
             + entry.getValue().size());
         if (missingDirsCommittedPaths.get(entry.getKey()) != null) {
-          Set<Path> missingPaths = missingDirsCommittedPaths.get(entry
-              .getKey());
+          Set<Path> missingPaths = missingDirsCommittedPaths
+              .get(entry.getKey());
           missingPaths.addAll(entry.getValue());
         } else {
           missingDirsCommittedPaths.put(entry.getKey(), entry.getValue());
@@ -201,7 +197,6 @@ public class MergedStreamService extends DistcpBaseService {
       }
     }
   }
-
 
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)
       throws Exception {
@@ -211,27 +206,27 @@ public class MergedStreamService extends DistcpBaseService {
       for (int i = 0; i < allFiles.length; i++) {
         String fileName = allFiles[i].getPath().getName();
         if (fileName != null) {
-          String category = getCategoryFromFileName(fileName,
- streamsToProcess);
+          String category = getCategoryFromFileName(fileName, streamsToProcess);
           if (category != null) {
             Path intermediatePath = new Path(tmpOut, category);
             if (!getDestFs().exists(intermediatePath))
               getDestFs().mkdirs(intermediatePath);
             Path source = allFiles[i].getPath().makeQualified(getDestFs());
 
-            Path intermediateFilePath = new Path(
-                intermediatePath.makeQualified(getDestFs()).toString() +
-                    File.separator + fileName);
+            Path intermediateFilePath = new Path(intermediatePath
+                .makeQualified(getDestFs()).toString()
+                + File.separator
+                + fileName);
             if (getDestFs().rename(source, intermediateFilePath) == false) {
-              LOG.warn("Failed to Rename [" + source + "] to [" +
-                  intermediateFilePath + "]");
-              LOG.warn("Aborting Tranasction prepareForCommit to avoid data " +
-                  "LOSS. Retry would happen in next run");
-              throw new Exception("Rename [" + source + "] to [" +
-                  intermediateFilePath + "]");
+              LOG.warn("Failed to Rename [" + source + "] to ["
+                  + intermediateFilePath + "]");
+              LOG.warn("Aborting Tranasction prepareForCommit to avoid data "
+                  + "LOSS. Retry would happen in next run");
+              throw new Exception("Rename [" + source + "] to ["
+                  + intermediateFilePath + "]");
             }
-            LOG.debug("Moving [" + source + "] to intermediateFilePath [" +
-                intermediateFilePath + "]");
+            LOG.debug("Moving [" + source + "] to intermediateFilePath ["
+                + intermediateFilePath + "]");
             List<Path> fileList = categoriesToCommit.get(category);
             if (fileList == null) {
               fileList = new ArrayList<Path>();
@@ -248,14 +243,13 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   /*
-   * @returns Map<Path, Path> - Map of filePath, destinationPath committed
-   * for stream
-   * destinationPath : hdfsUrl/<rootdir>/streams/<category>/YYYY/MM/HH/MN/filename
+   * @returns Map<Path, Path> - Map of filePath, destinationPath committed for
+   * stream destinationPath :
+   * hdfsUrl/<rootdir>/streams/<category>/YYYY/MM/HH/MN/filename
    */
-  public Map<Path, Path> createLocalCommitPaths(Path tmpOut, long commitTime, 
-      Map<String, List<Path>> categoriesToCommit, 
-      Map<String, Set<Path>> tobeCommittedPaths) 
-          throws Exception {
+  public Map<Path, Path> createLocalCommitPaths(Path tmpOut, long commitTime,
+      Map<String, List<Path>> categoriesToCommit,
+      Map<String, Set<Path>> tobeCommittedPaths) throws Exception {
     FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
 
     // find final destination paths
@@ -360,26 +354,24 @@ public class MergedStreamService extends DistcpBaseService {
     pathToBeListed = new Path(srcCluster.getLocalFinalDestDirRoot(), stream);
     List<FileStatus> sourceFiles = null;
     try {
-      if(getSrcFs().exists(pathToBeListed)){
-      sourceFiles= recursiveListingOfDir(srcCluster,
-          pathToBeListed);
+      if (getSrcFs().exists(pathToBeListed)) {
+        sourceFiles = recursiveListingOfDir(srcCluster, pathToBeListed);
         filterInvalidPaths(sourceFiles, pathToBeListed);
         Collections.sort(sourceFiles, new DatePathComparator());
-      LOG.debug("File found on source after sorting for stream" + stream
-          + " are " + toStringOfFileStatus(sourceFiles));
+        LOG.debug("File found on source after sorting for stream" + stream
+            + " are " + toStringOfFileStatus(sourceFiles));
       }
     } catch (IOException e) {
-      LOG.error("Error while listing path" + pathToBeListed
-          + " on source Fs");
+      LOG.error("Error while listing path" + pathToBeListed + " on source Fs");
     }
 
     if (destnFiles != null && sourceFiles != null) {
       for (int i = destnFiles.size() - 1; i >= 0; i--) {
         FileStatus current = destnFiles.get(i);
-        if(current.isDir())
+        if (current.isDir())
           continue;
-      lastLocalPathOnSrc = searchFileInSource(current, sourceFiles);
-      if (lastLocalPathOnSrc != null) {
+        lastLocalPathOnSrc = searchFileInSource(current, sourceFiles);
+        if (lastLocalPathOnSrc != null) {
           break;
         }
       }
@@ -421,20 +413,19 @@ public class MergedStreamService extends DistcpBaseService {
     return lastLocalPathOnSrc;
   }
 
-
   /*
    * This method would search just the last part of the file in the source
    * cluster file .Expects the list to be sorted
    */
   private Path searchFileInSource(FileStatus destnPath,
       List<FileStatus> srcFiles) {
-    LOG.debug("Searching path "+destnPath.getPath().toString()+" at the source");
+    LOG.debug("Searching path " + destnPath.getPath().toString()
+        + " at the source");
     for (int i = srcFiles.size() - 1; i >= 0; i--) {
       FileStatus current = srcFiles.get(i);
       if (current.isDir())
         continue;
-      if (current.getPath().getName()
-          .equals(destnPath.getPath().getName())) {
+      if (current.getPath().getName().equals(destnPath.getPath().getName())) {
         FileStatus result = srcFiles.get(i);
         LOG.debug("Path found at " + result.getPath());
         if (!result.isDir())
@@ -449,18 +440,18 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   private List<FileStatus> recursiveListingOfDir(Cluster cluster, Path path) {
-      
-      try {
-        FileSystem currentFs = FileSystem.get(cluster.getHadoopConf());
+
+    try {
+      FileSystem currentFs = FileSystem.get(cluster.getHadoopConf());
       FileStatus streamDir = currentFs.getFileStatus(path);
-        List<FileStatus> filestatus = new ArrayList<FileStatus>();
-        createListing(currentFs, streamDir, filestatus);
-        return filestatus;
-      } catch (IOException ie) {
-        LOG.error(
-            "IOException while doing recursive listing to create checkpoint on cluster "
-                + cluster , ie);
-      }
+      List<FileStatus> filestatus = new ArrayList<FileStatus>();
+      createListing(currentFs, streamDir, filestatus);
+      return filestatus;
+    } catch (IOException ie) {
+      LOG.error(
+          "IOException while doing recursive listing to create checkpoint on cluster "
+              + cluster, ie);
+    }
     return null;
 
   }
