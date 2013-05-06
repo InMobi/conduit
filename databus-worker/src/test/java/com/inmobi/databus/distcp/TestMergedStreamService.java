@@ -145,18 +145,6 @@ public class TestMergedStreamService extends MergedStreamService
             List<String> commitPaths = new ArrayList<String>();
             FileStatus lastFile = getAllFiles(new Path(commitpath), fs,
                 commitPaths);
-            // creating an extra empty directory so that data processed by
-            // merged in current directory can be picked by mirror
-//            LOG.debug("Last file created in merge service is "
-//                + lastFile.getPath());
-//            if (lastFile != null) {
-//              Date lastPathDate = CalendarHelper.getDateFromStreamDir(new Path(
-//                  commitpath), lastFile.getPath());
-//              Path nextPath = CalendarHelper.getNextMinutePathFromDate(
-//                  lastPathDate, new Path(commitpath));
-//              LOG.debug("Empty directory created by postexecute is" + nextPath);
-//              fs.mkdirs(nextPath);
-            // }
 
             try {
               LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
