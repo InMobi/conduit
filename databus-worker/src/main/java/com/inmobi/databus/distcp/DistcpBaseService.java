@@ -38,6 +38,7 @@ import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
 
 public abstract class DistcpBaseService extends AbstractService {
@@ -50,8 +51,10 @@ public abstract class DistcpBaseService extends AbstractService {
   protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
   protected final CheckpointProvider provider;
   protected Map<String, Path> checkPointPaths = new HashMap<String, Path>();
+  private static final int DEFAULT_NUM_DIR_PER_DISTCP = 30;
 
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService.class);
+  private final int numOfDirPerDistcp;
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
@@ -70,6 +73,12 @@ public abstract class DistcpBaseService extends AbstractService {
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
     this.provider = provider;
+    String tmp;
+    if ((tmp = System.getProperty(DatabusConstants.NUM_DIR_PER_DISTCP)) != null) {
+      numOfDirPerDistcp = Integer.parseInt(tmp);
+    } else
+      numOfDirPerDistcp = DEFAULT_NUM_DIR_PER_DISTCP;
+
   }
 
   protected Cluster getSrcCluster() {
@@ -96,8 +105,7 @@ public abstract class DistcpBaseService extends AbstractService {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
-    conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
-        "_" + getDestCluster().getName());
+    conf.set("mapred.job.name", serviceName);
     
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of
@@ -177,6 +185,7 @@ public abstract class DistcpBaseService extends AbstractService {
   protected Map<String, FileStatus> getDistCPInputFile()
       throws Exception {
     Map<String,FileStatus> result = new HashMap<String, FileStatus>();
+    int pathsAlreadyAdded = 0;
     for (String stream : streamsToProcess) {
       byte[] value = provider.read(getCheckPointKey(stream));
       Path inputPath = new Path(getInputPath(), stream);
@@ -218,7 +227,8 @@ public abstract class DistcpBaseService extends AbstractService {
       Path lastPathAdded = null;
       FileStatus[] nextPathFileStatus = listStatusAsPerHDFS(srcFs, nextPath);
       FileStatus[] nextToNextPathFileStatus;
-      while ((nextToNextPathFileStatus = listStatusAsPerHDFS(srcFs,
+      while (pathsAlreadyAdded <= numOfDirPerDistcp
+          && (nextToNextPathFileStatus = listStatusAsPerHDFS(srcFs,
           nextToNextPath)) != null) {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
@@ -238,6 +248,7 @@ public abstract class DistcpBaseService extends AbstractService {
             }
           }
         } 
+        pathsAlreadyAdded++;
         lastPathAdded = nextPath;
         nextPath = nextToNextPath;
         nextDate = CalendarHelper.addAMinute(nextDate);
@@ -286,6 +297,7 @@ public abstract class DistcpBaseService extends AbstractService {
       provider.checkpoint(getCheckPointKey(entry.getKey()), entry.getValue()
           .toString().getBytes());
     }
+    checkPointPaths.clear();
   }
 
   public Cluster getCurrentCluster() {
@@ -297,7 +309,9 @@ public abstract class DistcpBaseService extends AbstractService {
       List<FileStatus> results) throws IOException {
     if (fileStatus.isDir()) {
       FileStatus[] stats = fs.listStatus(fileStatus.getPath());
-      if (stats.length == 0) {
+      // stats can be null in case where purger deleted the path while this
+      // method was called
+      if (stats != null && stats.length == 0) {
         results.add(fileStatus);
         LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
       }

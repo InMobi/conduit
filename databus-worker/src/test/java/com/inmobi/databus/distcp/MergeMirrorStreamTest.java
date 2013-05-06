@@ -3,11 +3,10 @@ package com.inmobi.databus.distcp;
 import java.util.HashSet;
 import java.util.Set;
 
-import junit.framework.Assert;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
+import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -15,6 +14,7 @@ import org.testng.annotations.Test;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.DestinationStream;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
@@ -135,6 +135,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     DatabusConfig config = parser.getConfig();
     Set<String> streamsToProcessLocal = new HashSet<String>();
     streamsToProcessLocal.addAll(config.getSourceStreams().keySet());
+    System.setProperty(DatabusConstants.NUM_DIR_PER_DISTCP, "200");
 
     Cluster currentCluster = null;
     if (currentClusterName != null) {
