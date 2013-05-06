@@ -1,9 +1,7 @@
 package com.inmobi.databus.local;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,7 +44,7 @@ public class TestCreateListing {
   @Test
   public void testCreateListing1() throws Exception{
 
-    List<String> streamsToProcess = new ArrayList<String>();
+    Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.add("stream1");
     Path collectorPath = new Path(rootDir, "data/stream1/collector1");
     localFs.mkdirs(collectorPath);
