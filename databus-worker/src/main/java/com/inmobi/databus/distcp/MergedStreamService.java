@@ -44,14 +44,13 @@ import com.inmobi.databus.utils.DatePathComparator;
 public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
-  private Map<String, Set<Path>> missingDirsCommittedPaths;
 
   // private Set<String> primaryCategories;
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
-      throws Exception {
+          throws Exception {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
@@ -61,7 +60,6 @@ public class MergedStreamService extends DistcpBaseService {
   public void execute() throws Exception {
     try {
       boolean skipCommit = false;
-      missingDirsCommittedPaths = new LinkedHashMap<String, Set<Path>>();
 
       Path tmpOut = new Path(getDestCluster().getTmpPath(),
           "distcp_mergedStream_" + getSrcCluster().getName() + "_"
@@ -87,15 +85,7 @@ public class MergedStreamService extends DistcpBaseService {
          * previous run will be added to mirror consumer file again
          */
         long commitTime = getDestCluster().getCommitTime();
-        preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
-            streamsToProcess);
-        if (missingDirsCommittedPaths.size() > 0) {
-          LOG.info("Total number of stream for which missing paths to be published "
-              + missingDirsCommittedPaths.size());
-          LOG.debug("Missing paths published " + missingDirsCommittedPaths);
-          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths,
-              commitTime);
-        }
+        publishMissingPaths(commitTime, streamsToProcess);
       }
 
       Map<String, FileStatus> fileListingMap = getDistCPInputFile();
@@ -128,12 +118,9 @@ public class MergedStreamService extends DistcpBaseService {
           // between the last addPublishMissinPaths and this call,distcp is
           // called which is a MR job and can take time hence this call ensures
           // all missing paths are added till this time
-          preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
-              streamsToProcess);
+          publishMissingPaths(commitTime, streamsToProcess);
           commitPaths = createLocalCommitPaths(tmpOut, commitTime,
               categoriesToCommit);
-          commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths,
-              commitTime);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths);
         }
@@ -148,37 +135,10 @@ public class MergedStreamService extends DistcpBaseService {
     }
   }
 
-  private void preparePublishMissingPaths(
-      Map<String, Set<Path>> missingDirsCommittedPaths, long commitTime,
+  private void publishMissingPaths(long commitTime,
       Set<String> categoriesToCommit) throws Exception {
-    Map<String, Set<Path>> missingDirsforCategory = null;
-
-    if (categoriesToCommit != null) {
-      missingDirsforCategory = new HashMap<String, Set<Path>>();
-      for (String category : categoriesToCommit) {
-        Set<Path> missingDirectories = publishMissingPaths(getDestFs(),
-            getDestCluster().getFinalDestDirRoot(), commitTime, category);
-        missingDirsforCategory.put(category, missingDirectories);
-      }
-    } else {
-      missingDirsforCategory = publishMissingPaths(getDestFs(),
-          getDestCluster().getFinalDestDirRoot(), commitTime);
-    }
-
-    if (missingDirsforCategory != null) {
-      for (Map.Entry<String, Set<Path>> entry : missingDirsforCategory
-          .entrySet()) {
-        LOG.debug("Add Missing Directories to Commit Path: "
-            + entry.getValue().size());
-        if (missingDirsCommittedPaths.get(entry.getKey()) != null) {
-          Set<Path> missingPaths = missingDirsCommittedPaths
-              .get(entry.getKey());
-          missingPaths.addAll(entry.getValue());
-        } else {
-          missingDirsCommittedPaths.put(entry.getKey(), entry.getValue());
-        }
-      }
-    }
+    publishMissingPaths(getDestFs(),
+        getDestCluster().getFinalDestDirRoot(), commitTime, categoriesToCommit);
   }
 
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)

@@ -21,52 +21,6 @@ import com.inmobi.databus.local.TestLocalStreamService;
 public class PublishMissingPathsTest {
   
   private static Logger LOG = Logger.getLogger(PublishMissingPathsTest.class);
-
-  public static void testPublishMissingPaths(AbstractServiceTest service,
-      boolean local)
-      throws Exception {
-
-    FileSystem fs = FileSystem.getLocal(new Configuration());
-    Calendar behinddate = new GregorianCalendar();
-    Calendar todaysdate = new GregorianCalendar();
-
-    String basePath = null;
-    if (local)
-      basePath = service.getCluster().getLocalFinalDestDirRoot();
-    else
-      basePath = service.getCluster().getFinalDestDirRoot();
-    
-    behinddate
-        .setTimeInMillis(behinddate.getTimeInMillis() - (3600 * 2 * 1000));
-    behinddate.set(Calendar.SECOND, 0);
-    
-    LOG.debug("Difference between times streams_publish: "
-        + String.valueOf(todaysdate.getTimeInMillis()
-            - behinddate.getTimeInMillis()));
-    String basepublishPaths = basePath + "streams_publish" + File.separator;
-    String publishPaths = basepublishPaths
-        + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
-    
-    LOG.debug("Create Missing Directory for streams_publish: " + publishPaths);
-
-    fs.mkdirs(new Path(publishPaths));
-    long commitTime = service.getCluster().getCommitTime();
-    service.publishMissingPaths(commitTime);
-    
-    VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
-        basepublishPaths);
-    
-    /*
-     * todaysdate.add(Calendar.HOUR_OF_DAY, 2);
-     * 
-     * service.publishMissingPaths();
-     * 
-     * VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
-     * basepublishPaths);
-     */
-    
-    fs.delete(new Path(basepublishPaths), true);
-  }
   
   public static void VerifyMissingPublishPaths(FileSystem fs, long todaysdate,
       Calendar behinddate, String basepublishPaths) throws Exception {
@@ -115,13 +69,9 @@ public class PublishMissingPathsTest {
     fs.mkdirs(new Path(publishPaths));
     {
       Calendar todaysdate = new GregorianCalendar();
-      long commitTime = cluster.getCommitTime();
-      Map<String, Set<Path>> missingDirCommittedPaths = new HashMap<String,
-          Set<Path>>();
-      
-      service.publishMissingPaths(fs, missingDirCommittedPaths, commitTime);
-      service.commitPublishMissingPaths(fs, missingDirCommittedPaths, commitTime);
-      
+      long commitTime = cluster.getCommitTime();      
+      service.publishMissingPaths(fs,
+          cluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);
     }
@@ -129,11 +79,8 @@ public class PublishMissingPathsTest {
     {
       Calendar todaysdate = new GregorianCalendar();
       long commitTime = cluster.getCommitTime();
-      Map<String, Set<Path>> missingDirCommittedPaths = new HashMap<String,
-          Set<Path>>();
-      service.publishMissingPaths(fs, missingDirCommittedPaths, commitTime);
-      service.commitPublishMissingPaths(fs, missingDirCommittedPaths, commitTime);
-
+      service.publishMissingPaths(fs,
+          cluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);
     }

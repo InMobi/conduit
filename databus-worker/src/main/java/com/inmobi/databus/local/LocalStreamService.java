@@ -60,7 +60,7 @@ import com.inmobi.databus.utils.FileUtil;
  */
 
 public class LocalStreamService extends AbstractService implements
-    ConfigConstants {
+ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
 
@@ -70,8 +70,6 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
-  private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
-  private final String streamsToProcessName;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -100,7 +98,6 @@ public class LocalStreamService extends AbstractService implements
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
-    streamsToProcessName = getServiceName(streamsToProcess);
   }
 
 
@@ -128,14 +125,8 @@ public class LocalStreamService extends AbstractService implements
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
 
-      for (String stream : streamsToProcess) {
-        Set<Path> missingPaths = publishMissingPaths(fs,
-            srcCluster.getLocalFinalDestDirRoot(), commitTime, stream);
-        if (null != missingPaths && missingPaths.size() > 0) {
-          missingDirsCommittedPaths.put(stream, missingPaths);
-        }
-      }
-      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
+      publishMissingPaths(fs,
+          srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
@@ -192,16 +183,8 @@ public class LocalStreamService extends AbstractService implements
         LOG.debug("Moving [" + file.getPath() + "] to [" + destPath + "]");
         mvPaths.put(file.getPath(), destPath);
       }
-      Set<Path> missingdirectories = missingDirsCommittedPaths
-          .get(categoryName);
-      Set<Path> publishMissingDirs = publishMissingPaths(fs,
+      publishMissingPaths(fs,
           srcCluster.getLocalFinalDestDirRoot(), commitTime, categoryName);
-      if (missingdirectories != null) {
-        missingdirectories.addAll(publishMissingDirs);
-      } else {
-        missingDirsCommittedPaths.put(categoryName, publishMissingDirs);
-      }
-      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
     }
     return mvPaths;
   }
@@ -243,35 +226,35 @@ public class LocalStreamService extends AbstractService implements
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
-    trashSet, checkpointPaths);
-    
+        trashSet, checkpointPaths);
+
     // if file listing is empty, simply return
     if (fileListing.isEmpty()) {
       return 0;
     }
-    
+
     // the total size of data present in all files
     long totalSize = 0;
     SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-      inputPath, Text.class, FileStatus.class);
+        inputPath, Text.class, FileStatus.class);
     try {
       Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
         FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
         out.append(new Text(entry.getValue()), status);
-        
+
         // Create a sync point after each entry. This will ensure that SequenceFile
         // Reader can work at file entry level granularity, given that SequenceFile
         // Reader reads from the starting of sync point.
         out.sync();
-        
+
         totalSize += entry.getKey().getLen();
       }
     } finally {
       out.close();
     }
-    
+
     return totalSize;
   }
 
@@ -293,7 +276,7 @@ public class LocalStreamService extends AbstractService implements
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
       Map<String, FileStatus> checkpointPaths, long lastFileTimeout)
-      throws IOException {
+          throws IOException {
     List<FileStatus> streamsFileStatus = new ArrayList<FileStatus>();
     FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
     for (String stream : streamsToProcess) {
@@ -381,7 +364,7 @@ public class LocalStreamService extends AbstractService implements
     } catch (IOException e) {
       LOG.error(
           "Unable to find if file is empty or not [" + fileStatus.getPath()
-              + "]", e);
+          + "]", e);
     } finally {
       if (in != null) {
         try {
@@ -492,14 +475,14 @@ public class LocalStreamService extends AbstractService implements
   protected void setBytesPerMapper(long bytesPerMapper) {
     BYTES_PER_MAPPER = bytesPerMapper;
   }
-  
+
   /*
     The visiblity of method is set to protected to enable unit testing
    */
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
-   
+
     Job job = new Job(conf);
     job.setJobName(jobName);
     //DistributedCache.addFileToClassPath(inputFormatJarDestPath, job.getConfiguration());
@@ -519,7 +502,7 @@ public class LocalStreamService extends AbstractService implements
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
     job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
-    
+
     // set configurations needed for UniformSizeInputFormat
     int numMaps = getNumMapsForJob(totalSize);
     job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
@@ -532,7 +515,7 @@ public class LocalStreamService extends AbstractService implements
 
     return job;
   }
-  
+
   private int getNumMapsForJob(long totalSize) {
     String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
     if (mbPerMapper != null) {

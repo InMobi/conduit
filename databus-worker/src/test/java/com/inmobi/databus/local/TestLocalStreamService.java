@@ -317,15 +317,6 @@ public class TestLocalStreamService extends LocalStreamService implements
     }
   }
   
-  public void publishMissingPaths(FileSystem fs,
-      Map<String, Set<Path>> missingDirCommittedPaths, long commitTime) 
-          throws Exception {
-    if (missingDirCommittedPaths != null) {
-      missingDirCommittedPaths.putAll(super.publishMissingPaths(fs,
-          srcCluster.getLocalFinalDestDirRoot(), commitTime));
-    }
-  }
-  
   public void runExecute() throws Exception {
     super.execute();
   }
@@ -349,11 +340,6 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public FileSystem getFileSystem() {
     return fs;
-  }
-
-  @Override
-  public void publishMissingPaths(long commitTime) throws Exception {
-    super.publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot(), commitTime);
   }
 }
 
