@@ -227,17 +227,5 @@ public class TestDistCPBaseService  {
         localFs.getFileStatus(new Path(expectedFileName3)));
   }
 
-  // @Test(priority = 4)
-  public void testDuplicateFileNamesForMergeService() throws Exception {
-
-    cleanUP();
-    createDataWithDuplicateFileNames(mergeService);
-    Map<String, FileStatus> fileCopyList = mergeService.getDistCPInputFile();
-    // assert that both the paths are present
-    assert (fileCopyList.size() == 1);
-    assert (fileCopyList.values().contains(
-        localFs.getFileStatus(new Path(expectedFileName1))) || fileCopyList
-        .values().contains(localFs.getFileStatus(new Path(expectedFileName3))));
-  }
 
 }

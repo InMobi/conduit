@@ -1,16 +1,16 @@
 /*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.inmobi.databus.distcp;
 
 import java.io.File;
@@ -46,12 +46,12 @@ public class MirrorStreamService extends DistcpBaseService {
   private static final Log LOG = LogFactory.getLog(MirrorStreamService.class);
 
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
-                             Cluster destinationCluster,
- Cluster currentCluster,
+      Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
       throws Exception {
-    super(config, MirrorStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster, provider, streamsToProcess);
+    super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
+        srcCluster, destinationCluster, currentCluster, provider,
+        streamsToProcess);
   }
 
   @Override
@@ -64,8 +64,8 @@ public class MirrorStreamService extends DistcpBaseService {
   @Override
   protected Path getDistCpTargetPath() {
     return new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
-        + getSrcCluster().getName() + "_" + getDestCluster().getName())
-        .makeQualified(getDestFs());
+        + getSrcCluster().getName() + "_" + getDestCluster().getName() + "_"
+        + getServiceName(streamsToProcess)).makeQualified(getDestFs());
   }
 
   @Override
@@ -73,7 +73,6 @@ public class MirrorStreamService extends DistcpBaseService {
 
     try {
       boolean skipCommit = false;
-      
       Path tmpOut = getDistCpTargetPath();
       // CleanuptmpOut before every run
       if (getDestFs().exists(tmpOut))
@@ -82,38 +81,31 @@ public class MirrorStreamService extends DistcpBaseService {
         LOG.warn("Cannot create [" + tmpOut + "]..skipping this run");
         return;
       }
-      Path tmp = new Path(tmpOut, "tmp");
-      if (!getDestFs().mkdirs(tmp)) {
-        LOG.warn("Cannot create [" + tmp + "]..skipping this run");
-        return;
-      }
 
       Map<String, FileStatus> fileListingMap = getDistCPInputFile();
       if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
-        + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
-        + getDestCluster().getHdfsUrl() + "]");
+            + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+            + getDestCluster().getHdfsUrl() + "]");
+        finalizeCheckPoints();
         return;
       }
 
       LOG.info("Starting a Mirrored distcp pull from Cluster ["
-      + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
-      + getDestCluster().getHdfsUrl() + "] " + " Path ["
-      + tmpOut.toString() + "]");
-
+          + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+          + getDestCluster().getHdfsUrl() + "] " + " Path ["
+          + tmpOut.toString() + "]");
 
       try {
-        if (!executeDistCp("MirrorStreamService", fileListingMap, tmpOut))
+        if (!executeDistCp(this.getName(), fileListingMap, tmpOut))
           skipCommit = true;
       } catch (Throwable e) {
-        LOG.warn("Problem in Mirrored distcp..skipping commit for this run",
-        e);
+        LOG.warn("Problem in Mirrored distcp..skipping commit for this run", e);
         skipCommit = true;
       }
       if (!skipCommit) {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
         doLocalCommit(commitPaths);
-        // doFinalCommit(consumePaths);
         finalizeCheckPoints();
       }
       getDestFs().delete(tmpOut, true);
@@ -128,7 +120,7 @@ public class MirrorStreamService extends DistcpBaseService {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey() + "] to [" + entry.getValue()
-      +"]");
+          + "]");
       if (entry.getKey().isDir()) {
         getDestFs().mkdirs(entry.getValue());
       } else {
@@ -140,9 +132,9 @@ public class MirrorStreamService extends DistcpBaseService {
         getDestFs().mkdirs(entry.getValue().getParent());
         if (getDestFs().rename(entry.getKey().getPath(), entry.getValue()) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
-          + "data loss. Partial data replay could happen in next run");
+              + "data loss. Partial data replay could happen in next run");
           throw new Exception("Rename failed from [" + entry.getKey() + "] to "
-          + "[" + entry.getValue() + "]");
+              + "[" + entry.getValue() + "]");
         }
       }
     }
@@ -153,73 +145,72 @@ public class MirrorStreamService extends DistcpBaseService {
    * 
    * @param Path - tmpOut
    */
-  LinkedHashMap<FileStatus, Path> prepareForCommit(Path tmpOut) throws Exception {
+  LinkedHashMap<FileStatus, Path> prepareForCommit(Path tmpOut)
+      throws Exception {
     /*
      * tmpOut would be like -
      * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/ After
      * distcp paths inside tmpOut would be eg:
-     *
+     * 
      * /databus/system/distcp_mirror_ua1_uj1
      * /databus/streams/<streamName>/2012/1/13/15/7/
      * <hostname>-<streamName>-2012-01-16-07-21_00000.gz
-     *
+     * 
      * tmpStreamRoot eg: /databus/system/distcp_mirror_<srcCluster>_
      * <destCluster>/databus/streams/
      */
 
     Path tmpStreamRoot = new Path(tmpOut.makeQualified(getDestFs()).toString()
-    + File.separator + getSrcCluster().getUnqaulifiedFinalDestDirRoot());
+        + File.separator + getSrcCluster().getUnqaulifiedFinalDestDirRoot());
     LOG.debug("tmpStreamRoot [" + tmpStreamRoot + "]");
 
-     /* tmpStreamRoot eg -
-      * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/databus
-      * /streams/
-      *
-      * multiple streams can get mirrored from the same cluster
-      * streams can get processed in any order but we have to retain order
-      * of paths within a stream*/
+    /*
+     * tmpStreamRoot eg -
+     * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/databus
+     * /streams/
+     * 
+     * multiple streams can get mirrored from the same cluster streams can get
+     * processed in any order but we have to retain order of paths within a
+     * stream
+     */
     FileStatus[] fileStatuses = getDestFs().listStatus(tmpStreamRoot);
 
-    //Retain the order of commitPaths
+    // Retain the order of commitPaths
     LinkedHashMap<FileStatus, Path> commitPaths = new LinkedHashMap<FileStatus, Path>();
     if (fileStatuses != null) {
       for (FileStatus streamRoot : fileStatuses) {
-        //for each stream : list the path in order of YYYY/mm/DD/HH/MM
-        LOG.debug("StreamRoot [" + streamRoot.getPath() + "] streamName [" +
-        streamRoot.getPath().getName() + "]");
+        // for each stream : list the path in order of YYYY/mm/DD/HH/MM
+        LOG.debug("StreamRoot [" + streamRoot.getPath() + "] streamName ["
+            + streamRoot.getPath().getName() + "]");
         List<FileStatus> streamPaths = new ArrayList<FileStatus>();
         createListing(getDestFs(), streamRoot, streamPaths);
         Collections.sort(streamPaths, new DatePathComparator());
-        LOG.debug("createListing size: [" + streamPaths.size() +"]");
+        LOG.debug("createListing size: [" + streamPaths.size() + "]");
         createCommitPaths(commitPaths, streamPaths);
       }
     }
     return commitPaths;
   }
 
-
-
-
   private void createCommitPaths(LinkedHashMap<FileStatus, Path> commitPaths,
-                                 List<FileStatus> streamPaths) {
-   /*  Path eg in streamPaths -
-    *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
-    *  /<streamName>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
-    *  -21_00000.gz
-    *
-    * or it could be an emptyDir like
-    *  /* Path eg in streamPaths -
-    *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
-    *  /<streamName>/2012/1/13/15/7/
-    *
-    */
+      List<FileStatus> streamPaths) {
+    /*
+     * Path eg in streamPaths -
+     * /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+     * /<streamName>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
+     * -21_00000.gz
+     * 
+     * or it could be an emptyDir like /* Path eg in streamPaths -
+     * /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+     * /<streamName>/2012/1/13/15/7/
+     */
 
     for (FileStatus fileStatus : streamPaths) {
       String fileName = null;
 
       Path prefixDir = null;
       if (fileStatus.isDir()) {
-        //empty directory
+        // empty directory
         prefixDir = fileStatus.getPath();
       } else {
         fileName = fileStatus.getPath().getName();
@@ -227,30 +218,28 @@ public class MirrorStreamService extends DistcpBaseService {
       }
 
       Path min = prefixDir;
-      Path hr =  min.getParent() ;
+      Path hr = min.getParent();
       Path day = hr.getParent();
       Path month = day.getParent();
       Path year = month.getParent();
       Path streamName = year.getParent();
 
-      String finalPath = getDestCluster().getFinalDestDirRoot() + File
-      .separator + streamName.getName() + File.separator + year.getName() + File
-      .separator + month.getName() + File.separator + day.getName() + File
-      .separator + hr.getName() + File.separator + min.getName();
+      String finalPath = getDestCluster().getFinalDestDirRoot()
+          + File.separator + streamName.getName() + File.separator
+          + year.getName() + File.separator + month.getName() + File.separator
+          + day.getName() + File.separator + hr.getName() + File.separator
+          + min.getName();
 
       if (fileName != null) {
         finalPath += File.separator + fileName;
       }
 
       commitPaths.put(fileStatus, new Path(finalPath));
-      LOG.debug("Going to commit [" + fileStatus.getPath() + "] to [" +
-      finalPath + "]");
+      LOG.debug("Going to commit [" + fileStatus.getPath() + "] to ["
+          + finalPath + "]");
     }
 
   }
-
-
-
 
   /*
    * Method to get the starting directory in cases when checkpoint for a stream
@@ -286,53 +275,55 @@ public class MirrorStreamService extends DistcpBaseService {
       LOG.info("Starting directory was calculated from the destination data,making the path qualified w.r.t source");
       // Path was found on destination,adding a minute to this path and making
       // it qualified w.r.t source as well
-      Path streamLevelFinalDir = new Path(getDestCluster()
-          .getFinalDestDirRoot() + stream);
-      Path streamLevelFinalSrcDir = new Path(getSrcCluster()
-          .getFinalDestDirRoot() + stream);
-      Date date = CalendarHelper.getDateFromStreamDir(streamLevelFinalDir,
+
+      Date date = CalendarHelper.getDateFromStreamDir(streamFinalDestDir,
           lastMirroredPath);
       result = CalendarHelper.getNextMinutePathFromDate(date,
-          streamLevelFinalSrcDir);
+          streamFinalSrctDir);
     }
     return result;
   }
 
-  private Path getFirstOrLastPath(FileSystem fs, Path streamFinalDestDir,
-      boolean returnLast)
+  private void recursiveListingTillMinuteDir(FileSystem fs,
+      FileStatus fileStatus, List<FileStatus> results, int depth)
       throws IOException {
+    if (fileStatus.isDir()) {
+      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
+      if (stats != null) {
+        for (FileStatus stat : stats) {
+          if (depth == 4) {
+            results.add(stat);
+          } else {
+            recursiveListingTillMinuteDir(fs, stat, results, depth + 1);
+          }
+        }
+      }
+    }
+  }
+
+  private Path getFirstOrLastPath(FileSystem fs, Path streamFinalDestDir,
+      boolean returnLast) throws IOException {
     if (!fs.exists(streamFinalDestDir))
       return null;
     FileStatus streamRoot;
     List<FileStatus> streamPaths = new ArrayList<FileStatus>();
-      streamRoot = fs.getFileStatus(streamFinalDestDir);
-      createListing(fs, streamRoot, streamPaths);
+    streamRoot = fs.getFileStatus(streamFinalDestDir);
+    recursiveListingTillMinuteDir(fs, streamRoot, streamPaths, 0);
     if (streamPaths.size() == 0)
       return null;
     DatePathComparator comparator = new DatePathComparator();
-    FileStatus result = null;// not assigning the first element to result here
-                             // because first element may not be of form
-                             // yy/mm/dd/hh/mm
+    FileStatus result = streamPaths.get(0);
     for (int i = 0; i < streamPaths.size(); i++) {
       FileStatus current = streamPaths.get(i);
-      // skip all those paths which are not of the format yy/mm/dd/hh/mm
-      if (current.getPath().depth() < streamFinalDestDir.depth() + 5)
-        continue;
-      if (result == null)
-        result = current;
       if (returnLast && comparator.compare(current, result) > 0)
         result = current;
-      else if (!returnLast
- && comparator.compare(current, result) < 0)
+      else if (!returnLast && comparator.compare(current, result) < 0)
         result = current;
     }
-    if (result == null)// if all the paths are invalid
-      return null;
     if (!result.isDir())
       return result.getPath().getParent();
     else
       return result.getPath();
-
 
   }
 

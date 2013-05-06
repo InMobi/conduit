@@ -85,7 +85,6 @@ public class TestMergedStreamService extends MergedStreamService
   @Override
   protected void preExecute() throws Exception {
     try {
-      // PublishMissingPathsTest.testPublishMissingPaths(this, false);
       if (files != null)
         files.clear();
       files = null;
@@ -197,12 +196,6 @@ public class TestMergedStreamService extends MergedStreamService
     postExecute();
   }
 
-  @Override
-  public void publishMissingPaths(long commitTime) throws Exception {
-    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot(), 
-        commitTime);
-  }
-  
   @Override
   public Cluster getCluster() {
     return destinationCluster;
