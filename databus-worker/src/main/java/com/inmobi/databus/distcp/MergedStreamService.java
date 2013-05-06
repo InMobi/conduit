@@ -74,16 +74,6 @@ public class MergedStreamService extends DistcpBaseService {
       }
 
       synchronized (getDestCluster()) {
-        /*
-         * missing paths are added to mirror consumer file first and those
-         * missing paths are published next. If failure occurs in the current
-         * run, missing paths will be recalculated and added to the map. Even if
-         * databus is restarted while publishing the missing paths or writing to
-         * mirror consumer file, there will be no holes in mirror stream. The
-         * only disadvantage when failure occurs before publishing missing paths
-         * to dest cluster is missing paths which were calculated in the
-         * previous run will be added to mirror consumer file again
-         */
         long commitTime = getDestCluster().getCommitTime();
         publishMissingPaths(commitTime, streamsToProcess);
       }
