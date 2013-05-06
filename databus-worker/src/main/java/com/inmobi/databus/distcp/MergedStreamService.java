@@ -74,11 +74,6 @@ public class MergedStreamService extends DistcpBaseService {
         LOG.warn("Cannot create [" + tmpOut + "]..skipping this run");
         return;
       }
-      Path tmp = new Path(tmpOut, "tmp");
-      if (!getDestFs().mkdirs(tmp)) {
-        LOG.warn("Cannot create [" + tmp + "]..skipping this run");
-        return;
-      }
 
       synchronized (getDestCluster()) {
         /*
