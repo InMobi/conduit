@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -125,12 +124,10 @@ public class MergedStreamService extends DistcpBaseService {
         LOG.warn("Problem in MergedStream distcp PULL..skipping commit for this run");
         skipCommit = true;
       }
-      Map<String, Set<Path>> tobeCommittedPaths = null;
       Map<Path, Path> commitPaths = new HashMap<Path, Path>();
       // if success
       if (!skipCommit) {
         Map<String, List<Path>> categoriesToCommit = prepareForCommit(tmpOut);
-        tobeCommittedPaths = new HashMap<String, Set<Path>>();
         synchronized (getDestCluster()) {
           long commitTime = getDestCluster().getCommitTime();
           // between the last addPublishMissinPaths and this call,distcp is
@@ -139,16 +136,7 @@ public class MergedStreamService extends DistcpBaseService {
           preparePublishMissingPaths(missingDirsCommittedPaths, commitTime,
               streamsToProcess);
           commitPaths = createLocalCommitPaths(tmpOut, commitTime,
-              categoriesToCommit, tobeCommittedPaths);
-          for (Map.Entry<String, Set<Path>> entry : missingDirsCommittedPaths
-              .entrySet()) {
-            Set<Path> filesList = tobeCommittedPaths.get(entry.getKey());
-            if (filesList != null) {
-              filesList.addAll(entry.getValue());
-            } else {
-              tobeCommittedPaths.put(entry.getKey(), entry.getValue());
-            }
-          }
+              categoriesToCommit);
           commitPublishMissingPaths(getDestFs(), missingDirsCommittedPaths,
               commitTime);
           // category, Set of Paths to commit
@@ -248,8 +236,7 @@ public class MergedStreamService extends DistcpBaseService {
    * hdfsUrl/<rootdir>/streams/<category>/YYYY/MM/HH/MN/filename
    */
   public Map<Path, Path> createLocalCommitPaths(Path tmpOut, long commitTime,
-      Map<String, List<Path>> categoriesToCommit,
-      Map<String, Set<Path>> tobeCommittedPaths) throws Exception {
+      Map<String, List<Path>> categoriesToCommit) throws Exception {
     FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
 
     // find final destination paths
@@ -267,12 +254,6 @@ public class MergedStreamService extends DistcpBaseService {
             category, commitTime));
         Path commitPath = new Path(destParentPath, filePath.getName());
         mvPaths.put(filePath, commitPath);
-        Set<Path> commitPaths = tobeCommittedPaths.get(category);
-        if (commitPaths == null) {
-          commitPaths = new HashSet<Path>();
-        }
-        commitPaths.add(commitPath);
-        tobeCommittedPaths.put(category, commitPaths);
       }
     }
     return mvPaths;

@@ -32,7 +32,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -204,62 +203,7 @@ public class LocalStreamService extends AbstractService implements
       }
       commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
     }
-
-    // find input files for consumer
-    Map<Path, Path> consumerCommitPaths = new HashMap<Path, Path>();
-    for (Cluster clusterEntry : getConfig().getClusters().values()) {
-      Set<String> destStreams = clusterEntry.getDestinationStreams().keySet();
-      boolean consumeCluster = false;
-      for (String destStream : destStreams) {
-        if (clusterEntry.getPrimaryDestinationStreams().contains(destStream)
-            && srcCluster.getSourceStreams().contains(destStream)) {
-          consumeCluster = true;
-        }
-      }
-
-      if (consumeCluster) {
-        Path tmpConsumerPath = new Path(tmpPath, clusterEntry.getName());
-        boolean isFileOpened = false;
-        FSDataOutputStream out = null;
-        try {
-          for (Path destPath : mvPaths.values()) {
-            String category = getCategoryFromDestPath(destPath);
-            if (clusterEntry.getPrimaryDestinationStreams().contains(category)) {
-              if (!isFileOpened) {
-                out = fs.create(tmpConsumerPath);
-                isFileOpened = true;
-              }
-              out.writeBytes(destPath.toString());
-              LOG.debug("Adding [" + destPath + "]  for consumer ["
-                  + clusterEntry.getName() + "] to commit Paths in ["
-                  + tmpConsumerPath + "]");
-
-              out.writeBytes("\n");
-            }
-          }
-        } finally {
-          if (isFileOpened) {
-            out.close();
-            // Multiple localstream threads can merge different streams to the
-            // same destination cluster. To avoid conflict of filename in
-            // /databus/system/consumers/{clusterName}/
-            // suffix it with streams contained in the file
-            Path finalConsumerPath = new Path(
-                srcCluster.getConsumePath(clusterEntry), Long.toString(System
-                    .currentTimeMillis()) + "_" + streamsToProcessName);
-            LOG.debug("Moving [" + tmpConsumerPath + "] to [ "
-                + finalConsumerPath + "]");
-            consumerCommitPaths.put(tmpConsumerPath, finalConsumerPath);
-          }
-        }
-      }
-    }
-
-    Map<Path, Path> commitPaths = new LinkedHashMap<Path, Path>();
-    commitPaths.putAll(mvPaths);
-    commitPaths.putAll(consumerCommitPaths);
-
-    return commitPaths;
+    return mvPaths;
   }
 
   Map<Path, Path> populateTrashCommitPaths(Set<FileStatus> trashSet) {
