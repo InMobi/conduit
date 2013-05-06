@@ -25,7 +25,6 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
-import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
 public class TestMergedStreamService extends MergedStreamService
@@ -146,16 +145,6 @@ public class TestMergedStreamService extends MergedStreamService
             List<String> commitPaths = new ArrayList<String>();
             FileStatus lastFile = getAllFiles(new Path(commitpath), fs,
                 commitPaths);
-            // creating an extra empty directory so that data processed by
-            // merged in current directory can be picked by mirror
-            LOG.debug("Last file created in merge service is " + lastFile);
-            if (lastFile != null) {
-              Date lastPathDate = CalendarHelper.getDateFromStreamDir(new Path(
-                  commitpath), lastFile.getPath());
-              Path nextPath = CalendarHelper.getNextMinutePathFromDate(
-                  lastPathDate, new Path(commitpath));
-              fs.mkdirs(nextPath);
-            }
 
             try {
               LOG.debug("Checking in Path for Merged mapred Output, No. of files: "

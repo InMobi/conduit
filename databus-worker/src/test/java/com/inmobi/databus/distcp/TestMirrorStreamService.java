@@ -2,6 +2,8 @@ package com.inmobi.databus.distcp;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
@@ -21,6 +24,8 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
+import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.DatePathComparator;
 
 public class TestMirrorStreamService extends MirrorStreamService
     implements AbstractServiceTest {
@@ -63,6 +68,26 @@ public class TestMirrorStreamService extends MirrorStreamService
             + sstream.getValue().getName();     
         TestMergedStreamService.getAllFiles(new Path(listPath), fs, filesList);
         files.put(sstream.getValue().getName(), filesList);
+
+        for (String stream : streamsToProcess) {
+          Cluster srcCluster = config
+              .getPrimaryClusterForDestinationStream(stream);
+          Path streamLevelPath = new Path(srcCluster.getFinalDestDirRoot(),
+              stream);
+          List<FileStatus> results = new ArrayList<FileStatus>();
+          createListing(getSrcFs(), getSrcFs().getFileStatus(streamLevelPath),
+              results);
+          Collections.sort(results, new DatePathComparator());
+          FileStatus lastFile = results.get(results.size() - 1);
+          LOG.info("Last path created for stream " + stream + " in merger is "
+              + lastFile.getPath());
+          Date lastPathDate = CalendarHelper.getDateFromStreamDir(
+              streamLevelPath, lastFile.getPath());
+          Path nextPath = CalendarHelper.getNextMinutePathFromDate(
+              lastPathDate, streamLevelPath);
+          LOG.debug("Empty directory created by preExecute is" + nextPath);
+          fs.mkdirs(nextPath);
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
