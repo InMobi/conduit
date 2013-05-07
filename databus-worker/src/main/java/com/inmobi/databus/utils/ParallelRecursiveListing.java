@@ -90,7 +90,6 @@ public class ParallelRecursiveListing {
       System.out.println("The result contains entries: " + result.size() + 
           " time taken (ms): " + Long.toString(endTime - startTime));
     } catch (IOException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
@@ -112,12 +111,12 @@ public class ParallelRecursiveListing {
     public void run() {
       // check whether the list has any pending path
       while (true) {
-        Path p = null;
+        Path path = null;
 
         synchronized (pendingPaths) {
           // if pending list contains an entry, remove it and increment the counter
-          p = pendingPaths.poll();
-          if (p != null) {
+          path = pendingPaths.poll();
+          if (path != null) {
             numListingsInProgress++;
           } else {
             if (numListingsInProgress == 0) {
@@ -135,46 +134,48 @@ public class ParallelRecursiveListing {
           }
         }
         
-        if (p == null) {
+        if (path == null) {
           continue;
         }
         
         // perform listing for the path
         FileStatus[] fileStatuses = null;
         try {
-          fileStatuses = fs.listStatus(p);
+          fileStatuses = FileUtil.listStatusAsPerHDFS(fs, path);
         } catch (IOException e) {
           LOG.debug("Error encountered while listing file status for path ["
-              + p + "]. Reason: " + e.getMessage());
+              + path + "]. Reason: " + e.getMessage());
           decrementCounter();
           continue;
         }
-        if (fileStatuses == null || fileStatuses.length == 0) {
-          LOG.debug("No files in directory: " + p);
-          // add the FileStatus of empty dir
-          if (includeEmptyDir) {
-            try {
-              fileListing.add(fs.getFileStatus(p));
-            } catch (IOException e) {
-              LOG.debug("Error encountered while listing file status for path ["
-                  + p + "]. Reason: " + e.getMessage());
-              decrementCounter();
-              continue;
+        if (fileStatuses != null) {
+          if (fileStatuses.length == 0) {
+            LOG.debug("No files in directory: " + path);
+            // add the FileStatus of empty dir
+            if (includeEmptyDir) {
+              try {
+                fileListing.add(fs.getFileStatus(path));
+              } catch (IOException e) {
+                LOG.debug("Error encountered while listing file status for path ["
+                    + path + "]. Reason: " + e.getMessage());
+                decrementCounter();
+                continue;
+              }
             }
-          }
-        } else {
-          for (FileStatus status : fileStatuses) {
-            // check whether fileStatus passes the start/end time criteria
-            if (!pathWithinTimeRange(status.getPath())) {
-              continue;
-            }
-            if (status.isDir()) {
-              // if the child is a dir, add it to the dir list. All child dirs
-              // will then be added together to the pending list.
-              dirList.add(status);
-            } else {
-              // if it is a file, add it to the worker file listing set
-              fileListing.add(status);
+          } else {
+            for (FileStatus status : fileStatuses) {
+              // check whether fileStatus passes the start/end time criteria
+              if (!pathWithinTimeRange(status.getPath())) {
+                continue;
+              }
+              if (status.isDir()) {
+                // if the child is a dir, add it to the dir list. All child dirs
+                // will then be added together to the pending list.
+                dirList.add(status);
+              } else {
+                // if it is a file, add it to the worker file listing set
+                fileListing.add(status);
+              }
             }
           }
         }
