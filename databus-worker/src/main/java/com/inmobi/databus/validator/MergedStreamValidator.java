@@ -29,11 +29,13 @@ public class MergedStreamValidator {
   Set<Path> inconsistencyData = new TreeSet<Path>();
   List<Cluster> srcClusterList = null;
   Cluster mergeCluster = null;
-  Date startTime = null;
-  Date stopTime = null;
+  private Date startTime = null;
+  private Date stopTime = null;
+  private int numThreads;
 
   public MergedStreamValidator(DatabusConfig databusConfig, String streamName,
-      String clusterName, boolean fix, Date startTime, Date stopTime) {
+      String clusterName, boolean fix, Date startTime, Date stopTime,
+      int numThreads) {
     this.databusConfig = databusConfig;
     this.streamName = streamName;
     this.fix = fix;
@@ -45,6 +47,7 @@ public class MergedStreamValidator {
     mergeCluster = databusConfig.getClusters().get(clusterName);
     this.startTime = startTime;
     this.stopTime = stopTime;
+    this.numThreads = numThreads;
   }
 
   public void execute() throws Exception {
@@ -53,7 +56,7 @@ public class MergedStreamValidator {
     Path mergePath = new Path(mergeCluster.getFinalDestDirRoot(), streamName);
     FileSystem mergedFs = FileSystem.get(mergeCluster.getHadoopConf());
     ParallelRecursiveListing mergeParallelListing = 
-        new ParallelRecursiveListing(100, null, null);
+        new ParallelRecursiveListing(numThreads, null, null);
     List<FileStatus> mergeStreamFileSttuses = 
         mergeParallelListing.getListing(mergePath, mergedFs, false);
     findDuplicates(mergeStreamFileSttuses, mergeStreamFileListing);
@@ -72,7 +75,7 @@ public class MergedStreamValidator {
           Cluster.getDateAsYYYYMMDDHHMNPath(stopTime));
 
       ParallelRecursiveListing localParallelListing =
-          new ParallelRecursiveListing(100, startPath, endPath);
+          new ParallelRecursiveListing(numThreads, startPath, endPath);
       List<FileStatus> localStreamFileStatuses =
           localParallelListing.getListing(localStreamPath, localFs, false);
       findDuplicates(localStreamFileStatuses, localStreamFileListing);

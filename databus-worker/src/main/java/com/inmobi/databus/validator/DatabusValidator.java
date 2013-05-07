@@ -25,6 +25,7 @@ public class DatabusValidator {
         "[-cluster (comma separated cluster names)]" +
         "<-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)>" +
         "<-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)>" +
+        "[-numThreads (number of threads for parallel listing)]" +
         "<-conf (databus.xml file path)>");
     System.out.println("-fix " +
         "<-stream (stream name)>" +
@@ -32,6 +33,7 @@ public class DatabusValidator {
         "<-cluster (cluster name)>" +
         "<-start (YYYY/MM/DD/HH/mm)>" +
         "<-stop (YYYY/MM/DD/HH/mm)>" +
+        "[-numThreads (number of threads for parallel listing)]" +
         "<-conf (databus.xml file path)>");
   }
 
@@ -50,6 +52,7 @@ public class DatabusValidator {
     String absoluteStopTime = null;
     String relStopTime = null;
     String databusXmlFile = null;
+    int numThreads = -1;
 
     if (args[0].equalsIgnoreCase("-verify")) {
       verify = true;
@@ -83,6 +86,8 @@ public class DatabusValidator {
       } else if (args[i].equalsIgnoreCase("relstop")) {
         relStopTime = args[i+1];
         i += 2;
+      } else if (args[i].equalsIgnoreCase("numThreads")) {
+        numThreads = Integer.parseInt(args[i+1]);
       } else if (args[i].equalsIgnoreCase("-conf")) {
         databusXmlFile = args[i+1];
         i += 2;
@@ -112,7 +117,7 @@ public class DatabusValidator {
     DatabusConfig config = configParser.getConfig();
 
     StreamsValidator streamsValidator = new StreamsValidator(config,
-        streams, modes, clusters, startTime, stopTime);
+        streams, modes, clusters, startTime, stopTime, numThreads);
     // perform streams verification
     streamsValidator.validateStreams(fix);
   }
