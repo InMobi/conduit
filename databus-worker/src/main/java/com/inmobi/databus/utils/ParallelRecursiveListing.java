@@ -21,16 +21,25 @@ public class ParallelRecursiveListing {
   // list containing the pending paths to be recursively listed
   private LinkedList<Path> pendingPaths = new LinkedList<Path>();
   private int numListingsInProgress = 0;
+  //TODO: initialize these paths
+  private Path startPath = null;
+  private Path endPath = null;
 
-  public ParallelRecursiveListing(int numThreads) {
+  public ParallelRecursiveListing(int numThreads, Path startPath, Path endPath) {
     this.numThreads = numThreads;
+    this.startPath = startPath;
+    this.endPath = endPath;
   }
-  
+
   public List<FileStatus> getListing(Path dir, FileSystem fs,
       boolean includeEmptyDir) {
-    // add the starting path in the pending list
-    pendingPaths.add(dir);
-    
+    List<FileStatus> result = new ArrayList<FileStatus>();
+    if (pathWithinTimeRange(dir)) {
+      // add the starting path in the pending list
+      pendingPaths.add(dir);
+    } else {
+      return result;
+    }
     // create a list of workers to perform recursive listing
     listingWorkers = new ListingWorker[numThreads];
     for (int i = 0; i < numThreads; i++) {
@@ -53,22 +62,24 @@ public class ParallelRecursiveListing {
     }
     
     // add the file listings of each worker thread
-    List<FileStatus> result = new ArrayList<FileStatus>();
     for (int i = 0; i < numThreads; i++) {
       result.addAll(listingWorkers[i].getFileStatus());
     }
-    
+
     // sort the file listings
     Collections.sort(result, new DatePathComparator());
     return result;
   }
-  
+
   public static void main(String[] args) {
     String pathStr = args[0];
     int numThreads = Integer.parseInt(args[1]);
     boolean includeEmptyDir = Integer.parseInt(args[2]) == 0 ? false : true;
-    
-    ParallelRecursiveListing listing = new ParallelRecursiveListing(numThreads);
+    String startTimeStr = args[3];
+    String stopTimeStr = args[4];
+
+    ParallelRecursiveListing listing = new ParallelRecursiveListing(numThreads,
+        new Path(pathStr, startTimeStr), new Path(pathStr, stopTimeStr));
     Path dir = new Path(pathStr);
     FileSystem fs = null;
     List<FileStatus> result = null;
@@ -103,7 +114,7 @@ public class ParallelRecursiveListing {
       // check whether the list has any pending path
       while (true) {
         Path p = null;
-        
+
         synchronized (pendingPaths) {
           // if pending list contains an entry, remove it and increment the counter
           p = pendingPaths.poll();
@@ -154,6 +165,10 @@ public class ParallelRecursiveListing {
           }
         } else {
           for (FileStatus status : fileStatuses) {
+            // check whether fileStatus passes the start/end time criteria
+            if (!pathWithinTimeRange(status.getPath())) {
+              continue;
+            }
             if (status.isDir()) {
               // if the child is a dir, add it to the dir list. All child dirs
               // will then be added together to the pending list.
@@ -187,6 +202,42 @@ public class ParallelRecursiveListing {
         numListingsInProgress--;
         pendingPaths.notifyAll();
       }
+    }
+  }
+
+  private boolean pathWithinTimeRange(Path path) {
+    if (startPath == null || endPath == null) {
+      return true;
+    }
+    /* check whether the path falls between start and end path.
+     * First, find whether path is after the startPath and before endPath
+     * Find whether the path is prefix of startPath (this check is for including
+     *  files for a given startTime)
+     *  Ex: startPath : rootDir/streams/streamName/2013/05/06/10/05/
+     *      endPath : rootDir/streams/streamName/2013/05/06/12/25/
+     *      path : rootDir/streams/streamName/2013/05/06/10/05
+     *                                                      ..
+     *                                                      ..
+     *                                                      /59
+     *                                                   /11/00
+     *                                                   ......
+     *                                                   /12/24
+     *     Find all the paths between 10th hour 5th minute and
+     *     12th hour 25 minute files. Include 10th hr 5th minute and
+     *     exclude 12th hr 25th minute.
+     *
+     *    1) "rootDir/streams/streamName/2013/05/06/10/01" is before the start path
+     *    and not prefix of start path so this path is not lies between start
+     *    and end path.
+     *    2) rootDir/streams/streamName/2013/05/06/10/05 is not before the
+     *    start time but it is prefix of start Path so consider this path for
+     *    listing
+     */
+    if ((path.compareTo(startPath) > 0 && path.compareTo(endPath) < 0) ||
+        (startPath.toString().startsWith(path.toString()))) {
+      return true;
+    } else {
+      return false;
     }
   }
 }

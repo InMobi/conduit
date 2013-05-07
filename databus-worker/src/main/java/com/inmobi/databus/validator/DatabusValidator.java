@@ -108,11 +108,12 @@ public class DatabusValidator {
     }
 
     // validate the mandatory options
-    if (databusXmlFile == null ||
-        (absoluteStartTime == null && relStartTime == null) ||
-        (absoluteStopTime == null && relStopTime == null) ||
-        (fix && (streams == null || modes == null || clusters == null ||
-        absoluteStartTime == null || absoluteStopTime == null))) {
+    if (databusXmlFile == null
+        || !isTimeProvided(absoluteStartTime, relStartTime)
+        || !isTimeProvided(absoluteStopTime, relStopTime)
+        || (fix
+            && (streams == null || modes == null || clusters == null
+            || absoluteStartTime == null || absoluteStopTime == null))) {
       printUsage();
       System.exit(-1);
     }
@@ -129,6 +130,11 @@ public class DatabusValidator {
         streams, modes, clusters, startTime, stopTime);
     // perform streams verification
     streamsValidator.validateStreams(fix);
+  }
+
+  private static boolean isTimeProvided(String absoluteTime,
+      String relTime) {
+    return (absoluteTime != null || relTime != null);
   }
   
   private static Date getTime(String absoluteTime, String relTime)

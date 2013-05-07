@@ -102,6 +102,9 @@ public class StreamsValidator {
       }
       
       // TODO: perform merge stream validation
+      MergedStreamValidator mergeValidator = new MergedStreamValidator(
+          databusConfig, stream, clusterName, fix, startTime, stopTime);
+      mergeValidator.execute();
     }
   }
 
@@ -115,8 +118,8 @@ public class StreamsValidator {
         continue;
       }
       // add start time and stop time
-      MirrorStreamValidator mirrorValidator = new MirrorStreamValidator(databusConfig, 
-          stream, clusterName, fix);
+      MirrorStreamValidator mirrorValidator = new MirrorStreamValidator(
+          databusConfig, stream, clusterName, fix, startTime, stopTime);
       mirrorValidator.execute();
     }
   }
