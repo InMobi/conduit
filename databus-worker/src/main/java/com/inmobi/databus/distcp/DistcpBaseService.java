@@ -40,6 +40,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.FileUtil;
 
 public abstract class DistcpBaseService extends AbstractService {
 
@@ -187,6 +188,7 @@ public abstract class DistcpBaseService extends AbstractService {
     Map<String,FileStatus> result = new HashMap<String, FileStatus>();
     int pathsAlreadyAdded = 0;
     for (String stream : streamsToProcess) {
+      LOG.info("Processing stream " + stream);
       byte[] value = provider.read(getCheckPointKey(stream));
       Path inputPath = new Path(getInputPath(), stream);
       Path lastCheckPointPath = null;
@@ -214,7 +216,7 @@ public abstract class DistcpBaseService extends AbstractService {
         nextPath = getStartingDirectory(stream);
         if (nextPath == null) {
           LOG.debug("No start directory found,returning the empty result");
-          return result;
+          continue;
         }
       }
       LOG.info("Starting directory for stream [" + stream + "]" + " is ["
@@ -225,10 +227,10 @@ public abstract class DistcpBaseService extends AbstractService {
       Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
           inputPath);
       Path lastPathAdded = null;
-      FileStatus[] nextPathFileStatus = listStatusAsPerHDFS(srcFs, nextPath);
+      FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
       FileStatus[] nextToNextPathFileStatus;
       while (pathsAlreadyAdded <= numOfDirPerDistcp
-          && (nextToNextPathFileStatus = listStatusAsPerHDFS(srcFs,
+          && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
           nextToNextPath)) != null) {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
@@ -265,25 +267,6 @@ public abstract class DistcpBaseService extends AbstractService {
     return result;
   }
 
-  /*
-   * FileSystem.listStatus behaves differently for different filesystem This
-   * helper method would ensure a consistent behaviour which is 1) If the path
-   * is a dir and has data return list of filestatus 2) If the path is a dir but
-   * is empty return empty list 3) If the path doesn't exist return null
-   * Different behaviors by different filesystem are HDFS S3N Local Dir With
-   * Data Array Array Array Empty Directory Empty Array null Empty Array Non
-   * Existent Path null null Empty Array
-   */
-  private FileStatus[] listStatusAsPerHDFS(FileSystem fs, Path p)
-      throws IOException {
-    FileStatus[] fStatus = fs.listStatus(p);
-    if (fStatus != null && fStatus.length > 0)
-      return fStatus;
-    if (fs.exists(p))
-      return new FileStatus[0];
-    return null;
-
-  }
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
 
   protected String getCheckPointKey(String stream) {

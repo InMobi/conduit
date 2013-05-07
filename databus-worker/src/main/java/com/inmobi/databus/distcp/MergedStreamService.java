@@ -57,7 +57,7 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   @Override
-  public Path getDistCpTargetPath() {
+  protected Path getDistCpTargetPath() {
     return new Path(getDestCluster().getTmpPath(),
         "distcp_mergedStream_" + getSrcCluster().getName() + "_"
         + getDestCluster().getName() + "_"

@@ -30,7 +30,7 @@ public class CalendarHelper {
   static String minDirFormatStr = "yyyy" + File.separator + "MM" +
       File.separator + "dd" + File.separator + "HH" + File.separator +"mm";
 
-  static final ThreadLocal<DateFormat> minDirFormat =
+  public static final ThreadLocal<DateFormat> minDirFormat =
       new ThreadLocal<DateFormat>() {
         @Override
         protected SimpleDateFormat initialValue() {
