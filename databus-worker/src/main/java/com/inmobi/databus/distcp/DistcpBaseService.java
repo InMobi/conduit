@@ -187,6 +187,7 @@ public abstract class DistcpBaseService extends AbstractService {
     Map<String,FileStatus> result = new HashMap<String, FileStatus>();
     int pathsAlreadyAdded = 0;
     for (String stream : streamsToProcess) {
+      LOG.info("Processing stream " + stream);
       byte[] value = provider.read(getCheckPointKey(stream));
       Path inputPath = new Path(getInputPath(), stream);
       Path lastCheckPointPath = null;
@@ -214,7 +215,7 @@ public abstract class DistcpBaseService extends AbstractService {
         nextPath = getStartingDirectory(stream);
         if (nextPath == null) {
           LOG.debug("No start directory found,returning the empty result");
-          return result;
+          continue;
         }
       }
       LOG.info("Starting directory for stream [" + stream + "]" + " is ["
