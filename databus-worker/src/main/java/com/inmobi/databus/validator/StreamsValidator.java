@@ -101,7 +101,6 @@ public class StreamsValidator {
         continue;
       }
       
-      // TODO: perform merge stream validation
       MergedStreamValidator mergeValidator = new MergedStreamValidator(
           databusConfig, stream, clusterName, fix, startTime, stopTime);
       mergeValidator.execute();

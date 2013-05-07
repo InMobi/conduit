@@ -1,18 +1,14 @@
 package com.inmobi.databus.validator;
 
-import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import bsh.ParseException;
-
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.utils.CalendarHelper;
 
 public class DatabusValidator {
   private static final Log LOG = LogFactory.getLog(DatabusValidator.class);
@@ -20,17 +16,6 @@ public class DatabusValidator {
 
   public DatabusValidator() {
   }
-  
-  public static String minDirFormatStr = "yyyy" + File.separator + "MM" +
-      File.separator + "dd" + File.separator + "HH" + File.separator +"mm";
-
-  public static final ThreadLocal<DateFormat> minDirFormat =
-      new ThreadLocal<DateFormat>() {
-    @Override
-    protected SimpleDateFormat initialValue() {
-      return new SimpleDateFormat(minDirFormatStr);
-    }
-  };
 
   private static void printUsage() {
     System.out.println("Usage: ");
@@ -132,13 +117,18 @@ public class DatabusValidator {
     streamsValidator.validateStreams(fix);
   }
 
+  /**
+   * @returns true if only one absolute/relative time is provided
+   *          false if both are provided or none are provided
+   */
   private static boolean isTimeProvided(String absoluteTime,
       String relTime) {
-    return (absoluteTime != null || relTime != null);
+    return ((absoluteTime != null && relTime == null) ||
+            (relTime != null && absoluteTime == null));
   }
   
   private static Date getTime(String absoluteTime, String relTime)
-      throws ParseException {
+      throws Exception {
     Calendar cal = Calendar.getInstance();
     if (relTime != null) {
       int minutes = Integer.valueOf(relTime);
@@ -146,9 +136,10 @@ public class DatabusValidator {
       return cal.getTime();
     } else {
       try {
-        return minDirFormat.get().parse(absoluteTime);
-      } catch (java.text.ParseException e) {
-        throw new ParseException("given time is not in the specified format ");
+        return CalendarHelper.minDirFormat.get().parse(absoluteTime);
+      } catch (Exception e) {
+        throw new IllegalArgumentException("given time [" + absoluteTime +
+            "] is not in the specified format.");
       }
     }
   }

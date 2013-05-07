@@ -21,7 +21,6 @@ public class ParallelRecursiveListing {
   // list containing the pending paths to be recursively listed
   private LinkedList<Path> pendingPaths = new LinkedList<Path>();
   private int numListingsInProgress = 0;
-  //TODO: initialize these paths
   private Path startPath = null;
   private Path endPath = null;
 
