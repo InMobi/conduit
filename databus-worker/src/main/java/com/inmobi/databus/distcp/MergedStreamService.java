@@ -57,14 +57,19 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   @Override
+  public Path getDistCpTargetPath() {
+    return new Path(getDestCluster().getTmpPath(),
+        "distcp_mergedStream_" + getSrcCluster().getName() + "_"
+        + getDestCluster().getName() + "_"
+        + getServiceName(streamsToProcess)).makeQualified(getDestFs());
+  }
+  
+  @Override
   public void execute() throws Exception {
     try {
       boolean skipCommit = false;
 
-      Path tmpOut = new Path(getDestCluster().getTmpPath(),
-          "distcp_mergedStream_" + getSrcCluster().getName() + "_"
-              + getDestCluster().getName() + "_"
-              + getServiceName(streamsToProcess)).makeQualified(getDestFs());
+      Path tmpOut = getDistCpTargetPath();
       // CleanuptmpOut before every run
       if (getDestFs().exists(tmpOut))
         getDestFs().delete(tmpOut, true);
