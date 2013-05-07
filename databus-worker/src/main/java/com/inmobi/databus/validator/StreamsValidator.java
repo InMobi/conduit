@@ -1,6 +1,7 @@
 package com.inmobi.databus.validator;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -15,9 +16,11 @@ public class StreamsValidator {
   private List<String> streams = new ArrayList<String>();
   private List<String> modes = new ArrayList<String>();
   private List<String> clusters = new ArrayList<String>();
+  private Date startTime;
+  private Date stopTime;
 
   public StreamsValidator(DatabusConfig databusConfig, String streamNames, 
-      String modeNames, String clusterNames) {
+      String modeNames, String clusterNames, Date startTime, Date stopTime) {
     this.databusConfig = databusConfig;
 
     if (streamNames == null || streamNames.isEmpty()) {
@@ -52,6 +55,10 @@ public class StreamsValidator {
         clusters.add(cluster);
       }
     }
+    // start time
+    this.startTime = startTime;
+    // stop time
+    this.stopTime = stopTime;
   }
 
   public void validateStreams(boolean fix) throws Exception {
@@ -94,7 +101,9 @@ public class StreamsValidator {
         continue;
       }
       
-      // TODO: perform merge stream validation
+      MergedStreamValidator mergeValidator = new MergedStreamValidator(
+          databusConfig, stream, clusterName, fix, startTime, stopTime);
+      mergeValidator.execute();
     }
   }
 
@@ -107,9 +116,9 @@ public class StreamsValidator {
             "] is not running in [MIRROR] mode on cluster [" + clusterName + "]");
         continue;
       }
-      
-      MirrorStreamValidator mirrorValidator = new MirrorStreamValidator(databusConfig, 
-          stream, clusterName, fix);
+      // add start time and stop time
+      MirrorStreamValidator mirrorValidator = new MirrorStreamValidator(
+          databusConfig, stream, clusterName, fix, startTime, stopTime);
       mirrorValidator.execute();
     }
   }
