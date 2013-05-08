@@ -101,6 +101,7 @@ public class DatabusValidator {
         i += 2;
       } else if (args[i].equalsIgnoreCase("-numThreads")) {
         numThreads = Integer.parseInt(args[i+1]);
+        i += 2;
       } else if (args[i].equalsIgnoreCase("-conf")) {
         databusXmlFile = args[i+1];
         i += 2;

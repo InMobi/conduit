@@ -34,7 +34,7 @@ USAGE: $0 mirrorstreamdataconsistency <mergedstreamroot-dir> <mirrorstreamroot-d
        $0 orderlycreated <root-dirs (comma separated list)> [<basedir (comma separated list)>] [<streamname (comma separated list)>]
        $0 mergestreamdataconsistency <local stream root-dirs (comma separated list)> <merge stream root-dir> [<streamNames (comma separated list)>]
        $0 localstreamdataconsistency <root-dirs (comma separated list)>
-       $0 admin -verify [-stream (comma separated stream names)] [-mode (comma separated stream modes: {local,merge,mirror})] [-cluster (comma separated cluster names)] <-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)> <-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)> [-numThreads (number of threads for parallel listing)] <-conf <databus.xml file path>>
+       $0 admin -verify [-stream (comma separated stream names)] [-mode (comma separated stream modes: {local,merge,mirror})] [-cluster (comma separated cluster names)] <-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)> <-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)> [-numThreads (number of threads for parallel listing)] <-conf (databus.xml file path)>
        $0 admin -fix <-stream (stream name)> <-mode (stream mode: {local,merge,mirror})> <-cluster (cluster name)> <-start (YYYY/MM/DD/HH/mm)> <-stop (YYYY/MM/DD/HH/mm)> [-numThreads (number of threads for parallel listing)] <-conf (databus.xml file path)> [NOTE: THIS NEEDS SHUTDOWN OF TARGET DATABUS WORKERS]
 EOF
 }
