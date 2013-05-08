@@ -26,6 +26,7 @@ public class DatabusValidator {
         "[-cluster (comma separated cluster names)]" +
         "<-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)>" +
         "<-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)>" +
+        "[-numThreads (number of threads for parallel listing)]" +
         "<-conf (databus.xml file path)>");
     System.out.println("-fix " +
         "<-stream (stream name)>" +
@@ -33,6 +34,7 @@ public class DatabusValidator {
         "<-cluster (cluster name)>" +
         "<-start (YYYY/MM/DD/HH/mm)>" +
         "<-stop (YYYY/MM/DD/HH/mm)>" +
+        "[-numThreads (number of threads for parallel listing)]" +
         "<-conf (databus.xml file path)>");
     System.out.println("-checkpoint" +
         "<-stream (stream name)>" +
@@ -57,6 +59,7 @@ public class DatabusValidator {
     String absoluteStopTime = null;
     String relStopTime = null;
     String databusXmlFile = null;
+    int numThreads = 100;
     String destnCluster = null;
     String srcCluster = null;
     String dateString = null;
@@ -90,11 +93,14 @@ public class DatabusValidator {
       } else if (args[i].equalsIgnoreCase("-relstart")) {
         relStartTime = args[i+1];
         i += 2;
-      } else if (args[i].equalsIgnoreCase("absoluteStopTime")) {
+      } else if (args[i].equalsIgnoreCase("-stop")) {
         absoluteStopTime = args[i+1];
         i += 2;
-      } else if (args[i].equalsIgnoreCase("relstop")) {
+      } else if (args[i].equalsIgnoreCase("-relstop")) {
         relStopTime = args[i+1];
+        i += 2;
+      } else if (args[i].equalsIgnoreCase("-numThreads")) {
+        numThreads = Integer.parseInt(args[i+1]);
         i += 2;
       } else if (args[i].equalsIgnoreCase("-conf")) {
         databusXmlFile = args[i+1];
@@ -142,7 +148,7 @@ public class DatabusValidator {
           .createCheckPoint();
     } else {
     StreamsValidator streamsValidator = new StreamsValidator(config,
-        streams, modes, clusters, startTime, stopTime);
+        streams, modes, clusters, startTime, stopTime, numThreads);
     // perform streams verification
     streamsValidator.validateStreams(fix);
     }

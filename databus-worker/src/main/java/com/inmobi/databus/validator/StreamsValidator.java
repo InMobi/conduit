@@ -18,9 +18,11 @@ public class StreamsValidator {
   private List<String> clusters = new ArrayList<String>();
   private Date startTime;
   private Date stopTime;
+  private int numThreads;
 
   public StreamsValidator(DatabusConfig databusConfig, String streamNames, 
-      String modeNames, String clusterNames, Date startTime, Date stopTime) {
+      String modeNames, String clusterNames, Date startTime, Date stopTime,
+      int numThreads) {
     this.databusConfig = databusConfig;
 
     if (streamNames == null || streamNames.isEmpty()) {
@@ -55,10 +57,9 @@ public class StreamsValidator {
         clusters.add(cluster);
       }
     }
-    // start time
     this.startTime = startTime;
-    // stop time
     this.stopTime = stopTime;
+    this.numThreads = numThreads;
   }
 
   public void validateStreams(boolean fix) throws Exception {
@@ -102,7 +103,8 @@ public class StreamsValidator {
       }
       
       MergedStreamValidator mergeValidator = new MergedStreamValidator(
-          databusConfig, stream, clusterName, fix, startTime, stopTime);
+          databusConfig, stream, clusterName, fix, startTime, stopTime,
+          numThreads);
       mergeValidator.execute();
     }
   }
@@ -118,7 +120,8 @@ public class StreamsValidator {
       }
       // add start time and stop time
       MirrorStreamValidator mirrorValidator = new MirrorStreamValidator(
-          databusConfig, stream, clusterName, fix, startTime, stopTime);
+          databusConfig, stream, clusterName, fix, startTime, stopTime,
+          numThreads);
       mirrorValidator.execute();
     }
   }

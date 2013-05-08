@@ -30,10 +30,11 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   Cluster mirrorCluster = null;
   private Date startTime = null;
   private Date stopTime = null;
+  private int numThreads;
 
   public MirrorStreamValidator(DatabusConfig databusConfig, 
       String streamName, String clusterName, boolean fix, Date startTime,
-      Date stopTime) {
+      Date stopTime, int numThreads) {
     this.databusConfig = databusConfig;
     this.streamName = streamName;
     this.fix = fix;  
@@ -43,6 +44,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     mirrorCluster = databusConfig.getClusters().get(clusterName);
     this.startTime = startTime;
     this.stopTime = stopTime;
+    this.numThreads = numThreads;
   }
   
   /**
@@ -66,7 +68,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
      * list all files in merged stream using ParallelRecursiveListing utility
      */
     ParallelRecursiveListing mergeParallelListing = 
-        new ParallelRecursiveListing(100, startPath, endPath);
+        new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mergedStreamFiles = mergeParallelListing.getListing(
         mergedPath, mergedFs, true);
     findDuplicates(mergedStreamFiles, mergeStreamFileMap);
@@ -81,7 +83,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
      * list all files in mirror stream using ParallelRecursiveListing utility
      */
     ParallelRecursiveListing mirrorParallelListing =
-        new ParallelRecursiveListing(100, startPath, endPath);
+        new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mirrorStreamFiles = mirrorParallelListing.getListing(
         mirrorPath, mirrorFs, true);
     findDuplicates(mirrorStreamFiles, mirrorStreamFileMap);
