@@ -91,6 +91,41 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       localStreamFileListing.clear();
     }   
   }
+  
+  protected void findDuplicates(List<FileStatus> listOfFileStatuses,
+      Map<String, FileStatus> streamListingMap) {
+    String fileName;
+    for (FileStatus fileStatus : listOfFileStatuses) {
+      fileName = fileStatus.getPath().getName();
+      if (streamListingMap.containsKey(fileName)) {
+        Path duplicatePath;
+        Path existingPath = streamListingMap.get(fileName).getPath();
+        Path currentPath = fileStatus.getPath();
+        if (existingPath.compareTo(currentPath) < 0) {
+          duplicatePath = currentPath;
+        } else {
+          duplicatePath = existingPath;
+          // insert this entry into the map because this file was created first
+          streamListingMap.put(fileName, fileStatus);
+        }
+        LOG.debug("Duplicate file " + duplicatePath);
+      } else {
+        streamListingMap.put(fileName, fileStatus);
+      }
+    }
+  }
+  
+  protected void findMissingPaths(Map<String, FileStatus> srcListingMap,
+      Map<String, FileStatus> destListingMap) {
+    String fileName = null;
+    for (Map.Entry<String, FileStatus> srcEntry : srcListingMap.entrySet()) {
+      fileName = srcEntry.getKey();
+      if (!destListingMap.containsKey(fileName)) {
+        LOG.debug("Missing path " + srcEntry.getValue().getPath());
+        missingPaths.put(fileName, srcEntry.getValue());
+      }
+    }
+  }
 
   private void validateStartTime(Cluster srcCluster) {
     int retentionHours = databusConfig.getSourceStreams().
@@ -113,7 +148,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     // copy the missing paths through distcp and commit the copied paths
     mergeFixService.execute();
   }
-  
+
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
     if (srcPath.isDir())
