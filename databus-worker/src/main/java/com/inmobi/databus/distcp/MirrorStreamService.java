@@ -63,7 +63,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected void execute() throws Exception {
-
+    LOG.info("Starting a run of service " + getName());
     try {
       boolean skipCommit = false;
 
