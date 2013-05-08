@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.CheckPointCreator;
 
 public class DatabusValidator {
   private static final Log LOG = LogFactory.getLog(DatabusValidator.class);
@@ -33,6 +34,11 @@ public class DatabusValidator {
         "<-start (YYYY/MM/DD/HH/mm)>" +
         "<-stop (YYYY/MM/DD/HH/mm)>" +
         "<-conf (databus.xml file path)>");
+    System.out.println("-checkpoint" +
+        "<-stream (stream name)>" +
+        "<-destCluster (destination cluster)" +
+        "[-srcCluster (source cluster) ]" +
+        "<-date (YYYY/MM/DD/HH/mm)>");
   }
 
   public static void main(String[] args) throws Exception {
@@ -42,6 +48,7 @@ public class DatabusValidator {
     }
     boolean verify = false;
     boolean fix = false;
+    boolean createCheckpoint = false;
     String streams = null;
     String modes = null;
     String clusters = null;
@@ -50,11 +57,17 @@ public class DatabusValidator {
     String absoluteStopTime = null;
     String relStopTime = null;
     String databusXmlFile = null;
+    String destnCluster = null;
+    String srcCluster = null;
+    String dateString = null;
+    Date date = null;
 
     if (args[0].equalsIgnoreCase("-verify")) {
       verify = true;
     } else if (args[0].equalsIgnoreCase("-fix")) {
       fix = true;
+    } else if (args[0].equalsIgnoreCase("-checkpoint")) {
+      createCheckpoint = true;
     } else {
       printUsage();
       System.exit(-1);
@@ -86,14 +99,28 @@ public class DatabusValidator {
       } else if (args[i].equalsIgnoreCase("-conf")) {
         databusXmlFile = args[i+1];
         i += 2;
+      } else if (args[i].equalsIgnoreCase("-destCluster")) {
+        destnCluster = args[i + 1];
+        i += 2;
+      } else if (args[i].equalsIgnoreCase("-srcCluster")) {
+        srcCluster = args[i + 1];
+        i += 2;
+      } else if (args[i].equalsIgnoreCase("-date")) {
+        dateString = args[i + 1];
+        i += 2;
       } else {
         printUsage();
         System.exit(-1);
       }
     }
-
     // validate the mandatory options
-    if (databusXmlFile == null
+    if (createCheckpoint) {
+      if (databusXmlFile == null || dateString == null || streams == null
+          || destnCluster == null) {
+        printUsage();
+        System.exit(-1);
+      }
+    } else if (databusXmlFile == null
         || !isTimeProvided(absoluteStartTime, relStartTime)
         || !isTimeProvided(absoluteStopTime, relStopTime)
         || (fix
@@ -105,16 +132,20 @@ public class DatabusValidator {
     
     Date startTime = getTime(absoluteStartTime, relStartTime);
     Date stopTime = getTime(absoluteStopTime, relStopTime);
-
+    date = CalendarHelper.minDirFormat.get().parse(dateString);
     // parse databus.xml
     DatabusConfigParser configParser =
         new DatabusConfigParser(databusXmlFile);
     DatabusConfig config = configParser.getConfig();
-
+    if (createCheckpoint) {
+      new CheckPointCreator(config, srcCluster, destnCluster, streams, date)
+          .createCheckPoint();
+    } else {
     StreamsValidator streamsValidator = new StreamsValidator(config,
         streams, modes, clusters, startTime, stopTime);
     // perform streams verification
     streamsValidator.validateStreams(fix);
+    }
   }
 
   /**
