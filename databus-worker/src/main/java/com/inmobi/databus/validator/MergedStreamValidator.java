@@ -1,5 +1,6 @@
 package com.inmobi.databus.validator;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -20,12 +21,11 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.utils.ParallelRecursiveListing;
 
-public class MergedStreamValidator {
+public class MergedStreamValidator extends AbstractStreamValidator {
   private static final Log LOG = LogFactory.getLog(MergedStreamValidator.class);
   private DatabusConfig databusConfig = null;
   private String streamName = null;
   private boolean fix = false;
-  Map<String, FileStatus> missingPaths = new TreeMap<String, FileStatus>();
   Set<Path> inconsistencyData = new TreeSet<Path>();
   List<Cluster> srcClusterList = null;
   Cluster mergeCluster = null;
@@ -103,40 +103,6 @@ public class MergedStreamValidator {
     }
   }
 
-  private void findDuplicates(List<FileStatus> listOfFlieStatuses,
-      Map<String, FileStatus> streamListingMap) {
-    String fileName;
-    for (FileStatus fileStatus : listOfFlieStatuses) {
-      fileName = fileStatus.getPath().getName();
-      if (streamListingMap.containsKey(fileName)) {
-        Path duplicatePath;
-        Path existingPath = streamListingMap.get(fileName).getPath();
-        Path currentPath = fileStatus.getPath();
-        if (existingPath.compareTo(currentPath) < 0) {
-          duplicatePath = currentPath;
-        } else {
-          duplicatePath = existingPath;
-          streamListingMap.put(fileName, fileStatus);
-        }
-        LOG.debug("duplicate file " + duplicatePath);
-      } else {
-        streamListingMap.put(fileName, fileStatus);
-      }
-    }
-  }
-
-  private void findMissingPaths(Map<String, FileStatus> localStreamFileListing,
-      Map<String, FileStatus> mergeStreamFileListing) {
-    Set<Map.Entry<String, FileStatus>> localStreamEntries =
-        localStreamFileListing.entrySet();
-    Set<String> mergeStreamFiles = mergeStreamFileListing.keySet();
-    for (Map.Entry<String, FileStatus> localEntry : localStreamEntries) {
-      if (!mergeStreamFiles.contains(localEntry.getKey())) {
-        missingPaths.put(localEntry.getKey(), localEntry.getValue());
-      }
-    }
-  }
-
   private void copyMissingPaths(Cluster srcCluster)
       throws Exception {
     // create an instance of MergedStreamFixService and invoke execute
@@ -146,6 +112,15 @@ public class MergedStreamValidator {
         databusConfig, srcCluster, mergeCluster, streamsToProcess);
     // copy the missing paths through distcp and commit the copied paths
     mergeFixService.execute();
+  }
+  
+  @Override
+  protected String getFinalDestinationPath(FileStatus srcPath) {
+    if (srcPath.isDir())
+      return null;
+    else
+      return File.separator + srcPath.getPath().getName();
+
   }
 
   class MergedStreamFixService extends MergedStreamService {
@@ -175,7 +150,7 @@ public class MergedStreamValidator {
 
     @Override
     protected void finalizeCheckPoints() {
-      //TODO:
+      LOG.debug("Skipping update of checkpoints in Merge Stream Fix Service run");
     }
   }
 }

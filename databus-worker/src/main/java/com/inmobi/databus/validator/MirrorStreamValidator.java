@@ -20,7 +20,7 @@ import com.inmobi.databus.DestinationStream;
 import com.inmobi.databus.distcp.MirrorStreamService;
 import com.inmobi.databus.utils.ParallelRecursiveListing;
 
-public class MirrorStreamValidator {
+public class MirrorStreamValidator extends AbstractStreamValidator {
   private static final Log LOG = LogFactory.getLog(MirrorStreamValidator.class);
   private DatabusConfig databusConfig = null;
   private String streamName = null;
@@ -108,41 +108,6 @@ public class MirrorStreamValidator {
     return new Path(streamPath, Cluster.getDateAsYYYYMMDDHHMNPath(
         startTime));
   }
-  
-  private void findDuplicates(List<FileStatus> listOfFileStatuses,
-      Map<String, FileStatus> streamListingMap) {
-    String fileName;
-    for (FileStatus currentFileStatus : listOfFileStatuses) {
-      fileName = currentFileStatus.getPath().toUri().getPath();
-      if (streamListingMap.containsKey(fileName)) {
-        Path duplicatePath;
-        Path existingPath = streamListingMap.get(fileName).getPath();
-        Path currentPath = currentFileStatus.getPath();
-        if (existingPath.compareTo(currentPath) < 0) {
-          duplicatePath = currentPath;
-        } else {
-          duplicatePath = existingPath;
-          // insert this entry into the map because this file was created first
-          streamListingMap.put(fileName, currentFileStatus);
-        }
-        LOG.debug("Duplicate file " + duplicatePath);
-      } else {
-        streamListingMap.put(fileName, currentFileStatus);
-      }
-    }
-  }
-
-  private void findMissingPaths(Map<String, FileStatus> mergeStreamFileMap,
-      Map<String, FileStatus> mirrorStreamFileMap) {
-    String fileName = null;
-    for (Map.Entry<String, FileStatus> entry : mergeStreamFileMap.entrySet()) {
-      fileName = entry.getKey();
-      if (!mirrorStreamFileMap.containsKey(fileName)) {
-        LOG.debug("Missing path " + entry.getValue().getPath());
-        missingPaths.put(fileName, entry.getValue());
-      }
-    }
-  }
 
   private void validateStartTime(Cluster cluster) throws Exception {
     int retentionHours = Integer.MAX_VALUE;
@@ -171,6 +136,14 @@ public class MirrorStreamValidator {
     mirrorFixService.execute();
   }
   
+  /*
+   * Full path needs to be preserved for mirror stream
+   */
+  @Override
+  protected String getFinalDestinationPath(FileStatus srcPath) {
+    return srcPath.getPath().toUri().getPath();
+  }
+  
   class MirrorStreamFixService extends MirrorStreamService {
     public MirrorStreamFixService(DatabusConfig databusConfig, Cluster srcCluster,
         Cluster destCluster, Set<String> streamsToProcess) throws Exception {
@@ -197,7 +170,7 @@ public class MirrorStreamValidator {
     
     @Override
     protected void finalizeCheckPoints() {
-      LOG.debug("Skipping update of checkpoints in mirror stream fix service run");
+      LOG.debug("Skipping update of checkpoints in Mirror Stream Fix Service run");
     }
   }
 }
