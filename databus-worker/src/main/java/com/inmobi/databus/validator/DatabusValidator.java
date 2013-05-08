@@ -52,7 +52,7 @@ public class DatabusValidator {
     String absoluteStopTime = null;
     String relStopTime = null;
     String databusXmlFile = null;
-    int numThreads = -1;
+    int numThreads = 100;
 
     if (args[0].equalsIgnoreCase("-verify")) {
       verify = true;

@@ -18,7 +18,7 @@ public class StreamsValidator {
   private List<String> clusters = new ArrayList<String>();
   private Date startTime;
   private Date stopTime;
-  private int numThreads = 100;
+  private int numThreads;
 
   public StreamsValidator(DatabusConfig databusConfig, String streamNames, 
       String modeNames, String clusterNames, Date startTime, Date stopTime,
@@ -59,9 +59,7 @@ public class StreamsValidator {
     }
     this.startTime = startTime;
     this.stopTime = stopTime;
-    if (numThreads != -1) {
-      this.numThreads = numThreads;
-    }
+    this.numThreads = numThreads;
   }
 
   public void validateStreams(boolean fix) throws Exception {
