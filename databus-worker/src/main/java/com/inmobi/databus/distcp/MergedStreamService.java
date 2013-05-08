@@ -66,6 +66,7 @@ public class MergedStreamService extends DistcpBaseService {
   
   @Override
   public void execute() throws Exception {
+    LOG.info("Starting a run of service " + getName());
     try {
       boolean skipCommit = false;
 
