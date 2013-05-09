@@ -25,13 +25,6 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   private DatabusConfig databusConfig = null;
   private String streamName = null;
   private boolean fix = false;
-  Map<String, FileStatus> missingPaths = new TreeMap<String, FileStatus>();
-  /**
-   * @return the missingPaths
-   */
-  public Map<String, FileStatus> getMissingPaths() {
-    return missingPaths;
-  }
 
   Cluster mergedCluster = null;
   Cluster mirrorCluster = null;
