@@ -117,10 +117,11 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
 
   private void prepareMapFromList(List<FileStatus> streamFiles,
       Map<String, FileStatus> srcListingMap, Cluster cluster) {
+    String mergeRootDir = cluster.getRootDir();
+    int mergeRootDirLen = mergeRootDir.length();
     for (FileStatus fileStatus : streamFiles) {
-      String mergeRootDir = cluster.getRootDir();
       String fileNameKey = fileStatus.getPath().toString().substring(
-          mergeRootDir.length());
+          mergeRootDirLen);
       srcListingMap.put(fileNameKey, fileStatus);
     }
   }
