@@ -1,6 +1,7 @@
 package com.inmobi.databus.validator;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -27,7 +28,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   private String streamName = null;
   private boolean fix = false;
   Set<Path> inconsistencyData = new TreeSet<Path>();
-  List<Cluster> srcClusterList = null;
+  List<Cluster> srcClusterList = new ArrayList<Cluster>();
   Cluster mergeCluster = null;
   private Date startTime = null;
   private Date stopTime = null;
@@ -122,7 +123,8 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       fileName = srcEntry.getKey();
       if (!destListingMap.containsKey(fileName)) {
         LOG.debug("Missing path " + srcEntry.getValue().getPath());
-        missingPaths.put(fileName, srcEntry.getValue());
+        missingPaths.put(getFinalDestinationPath(srcEntry.getValue()),
+            srcEntry.getValue());
       }
     }
   }
