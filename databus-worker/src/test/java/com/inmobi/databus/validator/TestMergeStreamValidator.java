@@ -1,6 +1,7 @@
 package com.inmobi.databus.validator;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Set;
 
@@ -70,21 +71,43 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
         }
       }
       if (mergedCluster != null) {
+        testStartDateBeyondRetention(date, stopDate, config, streamName,
+            mergedCluster);
+        testMergeStreamValidatorVerify(date, nextDate, config, streamName,
+            mergedCluster, false, false);
         testMergeStreamValidatorVerify(date, stopDate, config, streamName,
-            mergedCluster, false);
+            mergedCluster, false, true);
         testMergeValidatorFix(date, stopDate, config, streamName, mergedCluster);
         testMergeStreamValidatorVerify(date, stopDate, config, streamName,
-            mergedCluster, true);
+            mergedCluster, true, true);
       }
     }
     cleanUp(config);
   }
 
+  private void testStartDateBeyondRetention(Date date, Date stopDate,
+      DatabusConfig config, String streamName, Cluster mergedCluster)
+          throws Exception {
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+    cal.add(Calendar.HOUR_OF_DAY, -50);
+    MergedStreamValidator mergeStreamValidator =
+        new MergedStreamValidator(config, streamName,
+            mergedCluster.getName(), true, cal.getTime(), stopDate, 10);
+    Throwable th = null;
+    try {
+      mergeStreamValidator.execute();
+    } catch (Exception e) {
+      th = e;
+      e.printStackTrace();
+    }
+    Assert.assertTrue(th instanceof IllegalArgumentException);
+  }
+
   private void testMergeValidatorFix(Date date, Date stopDate,
       DatabusConfig config, String streamName, Cluster mergedCluster)
           throws Exception {
-    MergedStreamValidator mergeStreamValidator;
-    mergeStreamValidator =
+    MergedStreamValidator mergeStreamValidator =
         new MergedStreamValidator(config, streamName,
             mergedCluster.getName(), true, date, stopDate, 10);
     mergeStreamValidator.execute();
@@ -92,7 +115,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
 
   private void testMergeStreamValidatorVerify(Date date, Date stopDate,
       DatabusConfig config, String streamName, Cluster mergeCluster,
-      boolean reverify)
+      boolean reverify, boolean listedAllFiles)
           throws Exception {
     MergedStreamValidator mergeStreamValidator =
         new MergedStreamValidator(config, streamName,
@@ -101,8 +124,13 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     if (reverify) {
       Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(), 0);
     } else {
-      Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(),
-          missingPaths.size());
+      if (listedAllFiles) {
+        Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(),
+            missingPaths.size());
+      } else {
+        Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(),
+            missingPaths.size()/2);
+      }
     }
   }
 }

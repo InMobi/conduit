@@ -5,6 +5,7 @@ import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -71,7 +72,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
   }
 
   @Test
-  public void testMergeStreamValidator() throws Exception {
+  public void testMirrorStreamValidator() throws Exception {
     Date date = new Date();
     Date nextDate = CalendarHelper.addAMinute(date);
     Date stopDate = CalendarHelper.addAMinute(nextDate);
@@ -84,33 +85,62 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
       for (Cluster cluster : config.getClusters().values()) {
         if (cluster.getMirroredStreams().contains(streamName)) {
           createMirrorData(config, streamName, cluster, date);
+          testStartTimeBeyondRetention(config,streamName, cluster.getName(),date,
+              nextDate);
+          testMirrorValidatorVerify(config,streamName, cluster.getName(),date,
+              nextDate, false, false);
           // verify : it tests what all are the missing paths
           testMirrorValidatorVerify(config,streamName, cluster.getName(),date,
-              stopDate, false);
+              stopDate, false, true);
           // fix : It copies all the missing paths to mirror cluster
           testMirrorValidatorFix(config,streamName, cluster.getName(), date,
               stopDate);
           // reverify : should not contain any missing paths after fixing
           testMirrorValidatorVerify(config,streamName, cluster.getName(),date,
-              stopDate, true);
+              stopDate, true, true);
         }
       }
     }
     cleanUp(config);
   }
 
+  private void testStartTimeBeyondRetention(DatabusConfig config,
+      String streamName, String mirrorClusterName, Date startTime,
+      Date stopTime)
+          throws Exception {
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(startTime);
+    cal.add(Calendar.HOUR_OF_DAY, -50);
+    MirrorStreamValidator mirrorStreamValidator =
+        new MirrorStreamValidator(config, streamName,
+            mirrorClusterName, true, cal.getTime(), stopTime, 10);
+    Throwable th = null;
+    try {
+      mirrorStreamValidator.execute();
+    } catch (Exception e) {
+      th = e;
+      e.printStackTrace();
+    }
+    Assert.assertTrue(th instanceof IllegalArgumentException);
+  }
+
   private void testMirrorValidatorVerify(DatabusConfig config,
       String streamName, String mirrorClusterName, Date startTime,
-      Date stopTime, boolean reverify)
-          throws Exception {  
+      Date stopTime, boolean reverify, boolean listedAllFiles)
+          throws Exception {
     MirrorStreamValidator mirrorStreamValidator = new MirrorStreamValidator(
         config, streamName, mirrorClusterName, false, startTime, stopTime, 10);
     mirrorStreamValidator.execute();
     if (reverify) {
       Assert.assertEquals(mirrorStreamValidator.getMissingPaths().size(), 0);
     } else {
-      Assert.assertEquals(mirrorStreamValidator.getMissingPaths().size(),
-          missingPaths.size());
+      if (listedAllFiles) {
+        Assert.assertEquals(mirrorStreamValidator.getMissingPaths().size(),
+            missingPaths.size());
+      } else {
+        Assert.assertEquals(mirrorStreamValidator.getMissingPaths().size(),
+            missingPaths.size()/2);
+      }
     }
   }
 
