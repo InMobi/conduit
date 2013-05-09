@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,12 +26,20 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   private DatabusConfig databusConfig = null;
   private String streamName = null;
   private boolean fix = false;
-  Set<Path> inconsistencyData = new TreeSet<Path>();
+  List<Path> duplicateFiles = new ArrayList<Path>();
+
   List<Cluster> srcClusterList = new ArrayList<Cluster>();
   Cluster mergeCluster = null;
   private Date startTime = null;
   private Date stopTime = null;
   private int numThreads;
+
+  /**
+   * @return the duplicateFiles
+   */
+  public List<Path> getDuplicateFiles() {
+    return duplicateFiles;
+  }
 
   public MergedStreamValidator(DatabusConfig databusConfig, String streamName,
       String clusterName, boolean fix, Date startTime, Date stopTime,
@@ -92,7 +99,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       localStreamFileListing.clear();
     }   
   }
-  
+
   protected void findDuplicates(List<FileStatus> listOfFileStatuses,
       Map<String, FileStatus> streamListingMap) {
     String fileName;
@@ -109,13 +116,14 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           // insert this entry into the map because this file was created first
           streamListingMap.put(fileName, fileStatus);
         }
+        duplicateFiles.add(duplicatePath);
         LOG.debug("Duplicate file " + duplicatePath);
       } else {
         streamListingMap.put(fileName, fileStatus);
       }
     }
   }
-  
+
   protected void findMissingPaths(Map<String, FileStatus> srcListingMap,
       Map<String, FileStatus> destListingMap) {
     String fileName = null;
@@ -171,8 +179,8 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     protected Path getDistCpTargetPath() {
       return new Path(getDestCluster().getTmpPath(),
           "distcp_mergedStream_fix_" + getSrcCluster().getName() + "_"
-          + getDestCluster().getName() + "_"
-          + getServiceName(streamsToProcess)).makeQualified(getDestFs());
+              + getDestCluster().getName() + "_"
+              + getServiceName(streamsToProcess)).makeQualified(getDestFs());
     }
 
     @Override

@@ -20,6 +20,7 @@ public class AbstractTestStreamValidator {
 
   protected static final NumberFormat idFormat = NumberFormat.getInstance();
   protected List<Path> missingPaths = new ArrayList<Path>();
+  protected List<Path> duplicateFiles = new ArrayList<Path>();
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
@@ -43,7 +44,7 @@ public class AbstractTestStreamValidator {
     return config;
   }
 
-  protected void createFiles(FileSystem fs, Date date, String streamName,
+  protected Path createFiles(FileSystem fs, Date date, String streamName,
       String clusterName, Path path, int i) throws IOException {
     String fileNameStr = new String(clusterName + "-" + streamName + "-" +
         getDateAsYYYYMMDDHHmm(date)+ "_" + idFormat.format(i));
@@ -53,14 +54,22 @@ public class AbstractTestStreamValidator {
     } catch (IOException e) {
       e.printStackTrace();
     }
+    return file;
   }
 
   protected void createData(FileSystem fs, Path dir, Date date,
-      String streamName, String clusterName, int numFiles, int incrementNumber)
+      String streamName, String clusterName, int numFiles, int incrementNumber,
+      boolean createDuplicates)
           throws IOException {
     Path path = CalendarHelper.getPathFromDate(date, dir);
     for (int i = 1; i <= numFiles; i = i + incrementNumber) {
       createFiles(fs, date, streamName, clusterName, path, i);
+      if(createDuplicates) {
+        Date nextDate = CalendarHelper.addAMinute(date);
+        Path duplicatePath = CalendarHelper.getPathFromDate(nextDate, dir);
+        duplicateFiles.add(
+            createFiles(fs, date, streamName, clusterName, duplicatePath, i));
+      }
       if (incrementNumber != 1) {
         for (int j = i + 1; (j < i + incrementNumber) && (i != numFiles); j++) {
           // these are the missing paths

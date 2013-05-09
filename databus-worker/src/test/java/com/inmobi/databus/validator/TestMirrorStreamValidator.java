@@ -22,7 +22,6 @@ import org.testng.annotations.Test;
 
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 
@@ -47,9 +46,9 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
         FileSystem fs = FileSystem.getLocal(new Configuration());
         Path streamLevelDir = new Path(primaryCluster.getFinalDestDirRoot()
             + stream);
-        createData(fs, streamLevelDir, date, stream, cluster,5, 1);
+        createData(fs, streamLevelDir, date, stream, cluster,5, 1, false);
         Date nextDate = CalendarHelper.addAMinute(date);
-        createData(fs, streamLevelDir, nextDate, stream, cluster, 5, 1);
+        createData(fs, streamLevelDir, nextDate, stream, cluster, 5, 1, false);
         // Add a dummy empty directory in the end
         Date lastDate = CalendarHelper.addAMinute(nextDate);
         fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
@@ -65,9 +64,9 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
       FileSystem fs = FileSystem.getLocal(new Configuration());
       Path streamLevelDir = new Path(mirrorCluster.getFinalDestDirRoot()
           + streamName);
-      createData(fs, streamLevelDir, date, streamName, srcCluster, 5, 2);
+      createData(fs, streamLevelDir, date, streamName, srcCluster, 5, 2, false);
       Date nextDate = CalendarHelper.addAMinute(date);
-      createData(fs, streamLevelDir, nextDate, streamName, srcCluster, 5, 2);
+      createData(fs, streamLevelDir, nextDate, streamName, srcCluster, 5, 2, false);
     }
   }
 
@@ -85,8 +84,10 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
       for (Cluster cluster : config.getClusters().values()) {
         if (cluster.getMirroredStreams().contains(streamName)) {
           createMirrorData(config, streamName, cluster, date);
+          //check whether given start time is valid
           testStartTimeBeyondRetention(config,streamName, cluster.getName(),date,
               nextDate);
+          // it tests missing paths for given a specific period
           testMirrorValidatorVerify(config,streamName, cluster.getName(),date,
               nextDate, false, false);
           // verify : it tests what all are the missing paths

@@ -25,9 +25,9 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     FileSystem fs = FileSystem.getLocal(new Configuration());
     Path streamLevelDir = new Path(cluster.getLocalFinalDestDirRoot()
         + stream);
-    createData(fs, streamLevelDir, date, stream, cluster.getName(), 5 , 1);
+    createData(fs, streamLevelDir, date, stream, cluster.getName(), 5 , 1, false);
     Date nextDate = CalendarHelper.addAMinute(date);
-    createData(fs, streamLevelDir, nextDate, stream, cluster.getName(), 5, 1);
+    createData(fs, streamLevelDir, nextDate, stream, cluster.getName(), 5, 1, false);
     // Add a dummy empty directory in the end
     Date lastDate = CalendarHelper.addAMinute(nextDate);
     fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
@@ -41,9 +41,9 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
       FileSystem fs = FileSystem.getLocal(new Configuration());
       Path streamLevelDir = new Path(primaryCluster.getFinalDestDirRoot()
           + stream);
-      createData(fs, streamLevelDir, date, stream, cluster, 5, 2);
+      createData(fs, streamLevelDir, date, stream, cluster, 5, 2, true);
       Date nextDate = CalendarHelper.addAMinute(date);
-      createData(fs, streamLevelDir, nextDate, stream, cluster, 5, 2);
+      createData(fs, streamLevelDir, nextDate, stream, cluster, 5, 2, true);
       // Add a dummy empty directory in the end
       Date lastDate = CalendarHelper.addAMinute(nextDate);
       fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
@@ -132,5 +132,9 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
             missingPaths.size()/2);
       }
     }
+    Assert.assertEquals(duplicateFiles.size(),
+        mergeStreamValidator.getDuplicateFiles().size());
+    Assert.assertTrue(duplicateFiles.containsAll(
+        mergeStreamValidator.getDuplicateFiles()));
   }
 }
