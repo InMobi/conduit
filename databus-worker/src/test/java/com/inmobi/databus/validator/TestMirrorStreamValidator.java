@@ -32,13 +32,6 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
   public TestMirrorStreamValidator() {
   }
 
-  public void cleanUp(DatabusConfig config) throws IOException {
-    for (Cluster cluster : config.getClusters().values()) {
-      FileSystem fs = FileSystem.get(cluster.getHadoopConf());
-      fs.delete(new Path(cluster.getRootDir()), true);
-    }
-  }
-
   private void createMergeData(DatabusConfig config, Date date)
       throws IOException {
     Map<String, Cluster> primaryClusters = new HashMap<String, Cluster>();
@@ -83,6 +76,8 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     Date nextDate = CalendarHelper.addAMinute(date);
     Date stopDate = CalendarHelper.addAMinute(nextDate);
     DatabusConfig config = setup("test-mirror-validator-databus.xml");
+    // clean up all root dir before generating test data
+    cleanUp(config);
     createMergeData(config, date);
     Set<String> streamsSet = config.getSourceStreams().keySet();
     for (String streamName : streamsSet) {

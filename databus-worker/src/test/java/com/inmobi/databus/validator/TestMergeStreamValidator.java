@@ -55,6 +55,8 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     Date nextDate = CalendarHelper.addAMinute(date);
     Date stopDate = CalendarHelper.addAMinute(nextDate);
     DatabusConfig config = setup("test-merge-validator-databus.xml");
+    // clean up root dir before generating test data
+    cleanUp(config);
     Set<String> streamsSet = config.getSourceStreams().keySet();
     for (String streamName : streamsSet) {
       Cluster mergedCluster = null;
@@ -70,9 +72,12 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
       if (mergedCluster != null) {
         testMergeStreamValidatorVerify(date, stopDate, config, streamName,
             mergedCluster, false);
-        testMergeValidatorFix(date, stopDate, config, streamName, mergedCluster); 
+        testMergeValidatorFix(date, stopDate, config, streamName, mergedCluster);
+        testMergeStreamValidatorVerify(date, stopDate, config, streamName,
+            mergedCluster, true);
       }
     }
+    cleanUp(config);
   }
 
   private void testMergeValidatorFix(Date date, Date stopDate,

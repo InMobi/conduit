@@ -72,4 +72,11 @@ public class AbstractTestStreamValidator {
       }
     }
   }
+
+  protected void cleanUp(DatabusConfig config) throws IOException {
+    for (Cluster cluster : config.getClusters().values()) {
+      FileSystem fs = FileSystem.get(cluster.getHadoopConf());
+      fs.delete(new Path(cluster.getRootDir()), true);
+    }
+  }
 }
