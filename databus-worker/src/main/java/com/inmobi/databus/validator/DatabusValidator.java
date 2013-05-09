@@ -38,9 +38,10 @@ public class DatabusValidator {
         "<-conf (databus.xml file path)>");
     System.out.println("-checkpoint" +
         "<-stream (stream name)>" +
-        "<-destCluster (destination cluster)" +
+        "<-destCluster (destination cluster)>" +
         "[-srcCluster (source cluster) ]" +
-        "<-date (YYYY/MM/DD/HH/mm)>");
+        "<-date (YYYY/MM/DD/HH/mm)>" +
+        "<-conf (databus.xml file path)>");
   }
 
   public static void main(String[] args) throws Exception {
@@ -135,18 +136,17 @@ public class DatabusValidator {
       printUsage();
       System.exit(-1);
     }
-    
-    Date startTime = getTime(absoluteStartTime, relStartTime);
-    Date stopTime = getTime(absoluteStopTime, relStopTime);
-    date = CalendarHelper.minDirFormat.get().parse(dateString);
     // parse databus.xml
     DatabusConfigParser configParser =
         new DatabusConfigParser(databusXmlFile);
     DatabusConfig config = configParser.getConfig();
     if (createCheckpoint) {
+      date = CalendarHelper.minDirFormat.get().parse(dateString);
       new CheckPointCreator(config, srcCluster, destnCluster, streams, date)
           .createCheckPoint();
     } else {
+      Date startTime = getTime(absoluteStartTime, relStartTime);
+      Date stopTime = getTime(absoluteStopTime, relStopTime);
     StreamsValidator streamsValidator = new StreamsValidator(config,
         streams, modes, clusters, startTime, stopTime, numThreads);
     // perform streams verification

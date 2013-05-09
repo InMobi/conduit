@@ -35,7 +35,7 @@ public class CheckPointCreator {
 
   }
 
-  private String getCheckPointKey(String stream, String srcCluster,
+  String getCheckPointKey(String stream, String srcCluster,
       boolean isMerge) {
     if (isMerge)
       return "MergedStreamService" + srcCluster + stream;
@@ -48,26 +48,30 @@ public class CheckPointCreator {
     CheckpointProvider provider = new FSCheckpointProvider(
         destinationCluster.getCheckpointDir());
     boolean isMerge = false;
-    if (srcCluster == null) {// no src clusters provided;create checkpoint for
-                             // all src clusters
       Set<String> mergingStream = destinationCluster
           .getPrimaryDestinationStreams();
       if (mergingStream.contains(stream)) {
         // stream is getting merged here
+      if (srcCluster == null) {// no src clusters provided;create checkpoint for
+        // all src clusters
         SourceStream srcStream = config.getSourceStreams().get(stream);
         sourceClusters.addAll(srcStream.getSourceClusters());
+      }
         isMerge = true;
       } else if (destinationCluster.getDestinationStreams().containsKey(stream)) {
         // stream is getting mirrored since its a destination stream and not
         // primary destination
+      if (srcCluster == null) {// no src clusters provided;create checkpoint for
+        // all src clusters
         sourceClusters.add(config.getPrimaryClusterForDestinationStream(stream)
             .getName());
+      }
         isMerge = false;
       } else {
         LOG.error("Stream " + stream + " is not destination stream of cluster "
             + destnCluster);
       }
-    } else {
+    if (srcCluster != null) {
       sourceClusters.add(srcCluster);
     }
     for (String source : sourceClusters) {
