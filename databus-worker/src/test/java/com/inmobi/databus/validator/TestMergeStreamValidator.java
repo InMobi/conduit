@@ -54,7 +54,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     Date date = new Date();
     Date nextDate = CalendarHelper.addAMinute(date);
     Date stopDate = CalendarHelper.addAMinute(nextDate);
-    DatabusConfig config = setup("test-mirror-validator-databus.xml");
+    DatabusConfig config = setup("test-merge-validator-databus.xml");
     Set<String> streamsSet = config.getSourceStreams().keySet();
     for (String streamName : streamsSet) {
       Cluster mergedCluster = null;
