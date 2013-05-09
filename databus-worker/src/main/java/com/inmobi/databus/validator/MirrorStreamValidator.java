@@ -60,7 +60,6 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
 
     // perform recursive listing of paths in source cluster
     Path mergedPath = new Path(mergedCluster.getFinalDestDirRoot(), streamName);
-    Map<String, FileStatus> mergeStreamFileMap = new TreeMap<String, FileStatus>();
     FileSystem mergedFs = FileSystem.get(mergedCluster.getHadoopConf());
     Path startPath = getstartPath(mergedPath);
     Path endPath = getEndPath(mergedPath);
@@ -71,10 +70,11 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
         new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mergedStreamFiles = mergeParallelListing.getListing(
         mergedPath, mergedFs, true);
+    //this will just identify whether any holes present in merge stream
+    findHoles(mergedStreamFiles, mergedPath, false, mergedFs);
 
     // perform recursive listing of paths in target cluster
     Path mirrorPath = new Path(mirrorCluster.getFinalDestDirRoot(), streamName);
-    Map<String, FileStatus> mirrorStreamFileMap = new TreeMap<String, FileStatus>();
     FileSystem mirrorFs = FileSystem.get(mirrorCluster.getHadoopConf());
     startPath = getstartPath(mirrorPath);
     endPath = getEndPath(mirrorPath);
@@ -85,7 +85,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
         new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mirrorStreamFiles = mirrorParallelListing.getListing(
         mirrorPath, mirrorFs, true);
-    String rootDir = mirrorCluster.getRootDir();
+    findHoles(mirrorStreamFiles, mirrorPath, false, mirrorFs);
 
     // find the missing paths
     findMissingPaths(mergedStreamFiles, mirrorStreamFiles);
@@ -95,6 +95,8 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
       LOG.debug("Number of missing paths to be copied: " + missingPaths.size());      
       // copy the missing paths
       copyMissingPaths();
+      findHoles(mergedStreamFiles, mirrorPath, true, mergedFs);
+      findHoles(mirrorStreamFiles, mirrorPath, true, mirrorFs);
     }
   }
 

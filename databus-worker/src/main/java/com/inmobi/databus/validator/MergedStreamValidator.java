@@ -67,7 +67,11 @@ public class MergedStreamValidator extends AbstractStreamValidator {
         new ParallelRecursiveListing(numThreads, null, null);
     List<FileStatus> mergeStreamFileSttuses = 
         mergeParallelListing.getListing(mergePath, mergedFs, false);
+    //find duplicates on merged cluster
     findDuplicates(mergeStreamFileSttuses, mergeStreamFileListing);
+    
+    findHoles(mergeStreamFileSttuses, mergePath, false, mergedFs);
+    boolean fillHolesInMegreCluster = true;
 
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
     // perform recursive listing on each source cluster
@@ -87,11 +91,18 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       List<FileStatus> localStreamFileStatuses =
           localParallelListing.getListing(localStreamPath, localFs, false);
       findDuplicates(localStreamFileStatuses, localStreamFileListing);
+      
+      findHoles(localStreamFileStatuses, localStreamPath, false, localFs);
 
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
 
       if (!missingPaths.isEmpty() && fix) {
         copyMissingPaths(srcCluster);
+        findHoles(localStreamFileStatuses, localStreamPath, true, localFs);
+        if (fillHolesInMegreCluster) {
+          findHoles(mergeStreamFileSttuses, mergePath, true, mergedFs);
+          fillHolesInMegreCluster = false;
+        }
         // clear missing paths list
         missingPaths.clear();
       }
