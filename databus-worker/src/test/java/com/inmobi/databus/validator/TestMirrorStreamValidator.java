@@ -63,12 +63,11 @@ public class TestMirrorStreamValidator {
     return config;
   }
 
-  private List<Path> createData(FileSystem fs, Path dir, Date date,
+  private void createData(FileSystem fs, Path dir, Date date,
       String streamName, String clusterName, int numFiles, int incrementNumber) {
     Path path = CalendarHelper.getPathFromDate(date, dir);
-    List<Path> paths = new ArrayList<Path>();
     for (int i = 1; i <= numFiles; i = i + incrementNumber) {
-      createFiles(fs, date, streamName, clusterName, path, paths, i);
+      createFiles(fs, date, streamName, clusterName, path, i);
       if (incrementNumber != 1) {
         for (int j = i + 1; (j < i + incrementNumber) && (i != numFiles); j++) {
           // these are the missing paths
@@ -79,15 +78,13 @@ public class TestMirrorStreamValidator {
         }
       }
     }
-    return paths;
   }
 
   private void createFiles(FileSystem fs, Date date, String streamName,
-      String clusterName, Path path, List<Path> paths, int i) {
+      String clusterName, Path path, int i) {
     String fileNameStr = new String(clusterName + "-" + streamName + "-" +
         getDateAsYYYYMMDDHHmm(date)+ "_" + idFormat.format(i));
     Path file = new Path(path, fileNameStr + ".gz");
-    paths.add(file);
     try {
       fs.create(file);
     } catch (IOException e) {
@@ -103,18 +100,15 @@ public class TestMirrorStreamValidator {
           config.getPrimaryClusterForDestinationStream(stream.getName()));
     }
     for (String stream : primaryClusters.keySet()) {
-      List<Path> paths = new ArrayList<Path>();
       Cluster primaryCluster = primaryClusters.get(stream);
       for (String cluster : config.getSourceStreams().get(stream)
           .getSourceClusters()) {
         FileSystem fs = FileSystem.getLocal(new Configuration());
         Path streamLevelDir = new Path(primaryCluster.getFinalDestDirRoot()
             + stream);
-        paths.addAll(createData(fs, streamLevelDir, date, stream, cluster,
-            5, 1));
+        createData(fs, streamLevelDir, date, stream, cluster,5, 1);
         Date nextDate = CalendarHelper.addAMinute(date);
-        paths.addAll(createData(fs, streamLevelDir, nextDate, stream, cluster,
-            5, 1));
+        createData(fs, streamLevelDir, nextDate, stream, cluster, 5, 1);
         // Add a dummy empty directory in the end
         Date lastDate = CalendarHelper.addAMinute(nextDate);
         fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
