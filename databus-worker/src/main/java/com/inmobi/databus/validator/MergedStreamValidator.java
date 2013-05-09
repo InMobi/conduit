@@ -170,7 +170,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     @Override
     protected Path getDistCpTargetPath() {
       return new Path(getDestCluster().getTmpPath(),
-          "distcp_mergedStream_fix" + getSrcCluster().getName() + "_"
+          "distcp_mergedStream_fix_" + getSrcCluster().getName() + "_"
           + getDestCluster().getName() + "_"
           + getServiceName(streamsToProcess)).makeQualified(getDestFs());
     }
