@@ -28,7 +28,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   private boolean fix = false;
   List<Path> holesInMerge = new ArrayList<Path>();
   List<Path> holesInMirror = new ArrayList<Path>();
-  
+
   Cluster mergedCluster = null;
   Cluster mirrorCluster = null;
   private Date startTime = null;
@@ -75,6 +75,9 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
         mergedPath, mergedFs, true);
     //this will just identify whether any holes present in merge stream
     holesInMerge.addAll(findHoles(mergedStreamFiles, mergedPath, false, mergedFs));
+    if (!holesInMerge.isEmpty()) {
+      LOG.info("holes in [ " + mergedCluster.getName() + " ] " + holesInMerge);
+    }
 
     // perform recursive listing of paths in target cluster
     Path mirrorPath = new Path(mirrorCluster.getFinalDestDirRoot(), streamName);
@@ -88,14 +91,18 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
         new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mirrorStreamFiles = mirrorParallelListing.getListing(
         mirrorPath, mirrorFs, true);
+    // find holes on mirror cluster
     holesInMirror.addAll(findHoles(mirrorStreamFiles, mirrorPath, false, mirrorFs));
+    if (!holesInMirror.isEmpty()) {
+      LOG.info("holes in [ " + mirrorCluster.getName() + " ] " + holesInMirror);
+    }
 
     // find the missing paths
     findMissingPaths(mergedStreamFiles, mirrorStreamFiles);
 
     // check if there are missing paths that need to be copied to mirror stream
     if (fix && missingPaths.size() > 0) {
-      LOG.debug("Number of missing paths to be copied: " + missingPaths.size());      
+      LOG.info("Number of missing paths to be copied: " + missingPaths.size());      
       // copy the missing paths
       copyMissingPaths();
       holesInMerge = findHoles(mergedStreamFiles, mergedPath, true, mergedFs);
@@ -114,7 +121,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
       fileName = srcEntry.getKey();
       if (!destListingMap.containsKey(fileName)) {
         FileStatus srcFileStatus = srcEntry.getValue();
-        LOG.debug("Missing path " + srcFileStatus.getPath());
+        LOG.info("Missing path " + srcFileStatus.getPath());
         missingPaths.put(getFinalDestinationPath(srcFileStatus), srcFileStatus);
       }
     }
@@ -175,11 +182,11 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   protected String getFinalDestinationPath(FileStatus srcPath) {
     return srcPath.getPath().toUri().getPath();
   }
-  
+
   public List<Path> getHolesInMerge() {
     return holesInMerge;
   }
-  
+
   public List<Path> getHolesInMirror() {
     return holesInMirror;
   }

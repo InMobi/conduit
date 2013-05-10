@@ -37,7 +37,7 @@ public abstract class AbstractStreamValidator {
     prepareListWithOnlyDirs(listOfFileStatuses, listOfDirs);
     Collections.sort(listOfDirs);
     if (listOfDirs.isEmpty()) {
-      return null;
+      return holes;
     }
     Path previousFile = null;
     Calendar cal = Calendar.getInstance();

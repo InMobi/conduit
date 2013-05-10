@@ -71,6 +71,9 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
     holesInMerge.addAll(findHoles(listOfAllFilesForHolesCheck, mergePath, false,
         mergedFs));
+    if (!holesInMerge.isEmpty()) {
+      LOG.info("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
+    }
     boolean fillHolesInMegreCluster = true;
 
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
@@ -91,13 +94,20 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       List<FileStatus> localStreamFileStatuses =
           localParallelListing.getListing(localStreamPath, localFs, false);
       findDuplicates(localStreamFileStatuses, localStreamFileListing);
+
+      // find holes on source cluster
       List<FileStatus> listOfAllLocalFilesForHolesCheck = 
           listAllFilesInSteamForFindingHoles(localStreamPath, localFs,
               localParallelListing);
+      List<Path> holesInLocalCluster = findHoles(listOfAllLocalFilesForHolesCheck,
+          localStreamPath, false, localFs);
+      if (!holesInLocalCluster.isEmpty()) {
+        holesInLocal.addAll(holesInLocalCluster);
+        LOG.info("holes in [ " + srcCluster.getName() + " ] "
+            + holesInLocalCluster);
+      }
 
-      holesInLocal.addAll(findHoles(listOfAllLocalFilesForHolesCheck,
-          localStreamPath, false, localFs));
-
+      //find missing paths on merge cluster
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
 
       if (!missingPaths.isEmpty() && fix) {
@@ -137,7 +147,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           streamListingMap.put(fileName, fileStatus);
         }
         duplicateFiles.add(duplicatePath);
-        LOG.debug("Duplicate file " + duplicatePath);
+        LOG.info("Duplicate file " + duplicatePath);
       } else {
         streamListingMap.put(fileName, fileStatus);
       }
@@ -150,7 +160,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     for (Map.Entry<String, FileStatus> srcEntry : srcListingMap.entrySet()) {
       fileName = srcEntry.getKey();
       if (!destListingMap.containsKey(fileName)) {
-        LOG.debug("Missing path " + srcEntry.getValue().getPath());
+        LOG.info("Missing path " + srcEntry.getValue().getPath());
         missingPaths.put(getFinalDestinationPath(srcEntry.getValue()),
             srcEntry.getValue());
       }
