@@ -101,12 +101,18 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     findMissingPaths(mergedStreamFiles, mirrorStreamFiles);
 
     // check if there are missing paths that need to be copied to mirror stream
-    if (fix && missingPaths.size() > 0) {
-      LOG.info("Number of missing paths to be copied: " + missingPaths.size());      
-      // copy the missing paths
-      copyMissingPaths();
-      fixHoles(holesInMerge, mergedFs);
-      fixHoles(holesInMirror, mirrorFs);
+    if (fix) {
+      if (!missingPaths.isEmpty()) {
+        LOG.info("Number of missing paths to be copied: " + missingPaths.size());      
+        // copy the missing paths
+        copyMissingPaths();
+      }
+      if (!holesInMerge.isEmpty()) {
+        fixHoles(holesInMerge, mergedFs);
+      }
+      if (!holesInMirror.isEmpty()) {
+        fixHoles(holesInMirror, mirrorFs);
+      }
     }
   }
 
