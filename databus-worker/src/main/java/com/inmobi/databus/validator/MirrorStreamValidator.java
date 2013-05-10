@@ -74,7 +74,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     List<FileStatus> mergedStreamFiles = mergeParallelListing.getListing(
         mergedPath, mergedFs, true);
     //this will just identify whether any holes present in merge stream
-    holesInMerge.addAll(findHoles(mergedStreamFiles, mergedPath, false, mergedFs));
+    holesInMerge.addAll(findHoles(mergedStreamFiles, mergedPath, mergedFs));
     if (!holesInMerge.isEmpty()) {
       LOG.info("holes in [ " + mergedCluster.getName() + " ] " + holesInMerge);
     }
@@ -92,7 +92,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     List<FileStatus> mirrorStreamFiles = mirrorParallelListing.getListing(
         mirrorPath, mirrorFs, true);
     // find holes on mirror cluster
-    holesInMirror.addAll(findHoles(mirrorStreamFiles, mirrorPath, false, mirrorFs));
+    holesInMirror.addAll(findHoles(mirrorStreamFiles, mirrorPath, mirrorFs));
     if (!holesInMirror.isEmpty()) {
       LOG.info("holes in [ " + mirrorCluster.getName() + " ] " + holesInMirror);
     }
@@ -105,8 +105,8 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
       LOG.info("Number of missing paths to be copied: " + missingPaths.size());      
       // copy the missing paths
       copyMissingPaths();
-      holesInMerge = findHoles(mergedStreamFiles, mergedPath, true, mergedFs);
-      holesInMirror = findHoles(mirrorStreamFiles, mirrorPath, true, mirrorFs);
+      fixHoles(holesInMerge, mergedFs);
+      fixHoles(holesInMirror, mirrorFs);
     }
   }
 

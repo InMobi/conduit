@@ -28,9 +28,17 @@ public abstract class AbstractStreamValidator {
   public Map<String, FileStatus> getMissingPaths() {
     return missingPaths;
   }
+  
+  protected void fixHoles(List<Path> holesList, FileSystem fs)
+      throws IOException {
+    for (Path holePath : holesList) {
+      fs.mkdirs(holePath);
+    }
+    holesList.clear();
+  }
 
   protected List<Path> findHoles(List<FileStatus> listOfFileStatuses,
-      Path streamDir, boolean fillHoles, FileSystem fs) throws IOException {
+      Path streamDir, FileSystem fs) throws IOException {
     List<Path> holes = new ArrayList<Path>();
     List<Path> listOfDirs = new ArrayList<Path>();
     // prepare a list of dirs from list of all files
@@ -46,8 +54,8 @@ public abstract class AbstractStreamValidator {
       // read first file and set time stamp of file.
       if (previousFile == null) {
         previousFile = currentFile;
-        Date previousFileTimeStamp = CalendarHelper.getDateFromStreamDir(streamDir,
-            previousFile);
+        Date previousFileTimeStamp = CalendarHelper.getDateFromStreamDir(
+            streamDir, previousFile);
         cal.setTime(previousFileTimeStamp);
         continue;
       }
@@ -58,9 +66,6 @@ public abstract class AbstractStreamValidator {
         missingPath = new Path(streamDir,
             Cluster.getDateAsYYYYMMDDHHMNPath(cal.getTime()));
         holes.add(missingPath);
-        if (fillHoles && !fs.exists(missingPath)) {
-          fs.mkdirs(missingPath);
-        }
         cal.add(Calendar.MINUTE, 1);
       }
     }

@@ -69,12 +69,10 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     //find duplicates on merged cluster
     findDuplicates(mergeStreamFileSttuses, mergeStreamFileListing);
 
-    holesInMerge.addAll(findHoles(listOfAllFilesForHolesCheck, mergePath, false,
-        mergedFs));
+    holesInMerge.addAll(findHoles(listOfAllFilesForHolesCheck, mergePath, mergedFs));
     if (!holesInMerge.isEmpty()) {
       LOG.info("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
     }
-    boolean fillHolesInMegreCluster = true;
 
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
     // perform recursive listing on each source cluster
@@ -100,7 +98,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           listAllFilesInSteamForFindingHoles(localStreamPath, localFs,
               localParallelListing);
       List<Path> holesInLocalCluster = findHoles(listOfAllLocalFilesForHolesCheck,
-          localStreamPath, false, localFs);
+          localStreamPath, localFs);
       if (!holesInLocalCluster.isEmpty()) {
         holesInLocal.addAll(holesInLocalCluster);
         LOG.info("holes in [ " + srcCluster.getName() + " ] "
@@ -112,11 +110,8 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
       if (!missingPaths.isEmpty() && fix) {
         copyMissingPaths(srcCluster);
-        holesInLocal = findHoles(listOfAllLocalFilesForHolesCheck, localStreamPath, true, localFs);
-        if (fillHolesInMegreCluster) {
-          holesInMerge = findHoles(listOfAllFilesForHolesCheck, mergePath, true, mergedFs);
-          fillHolesInMegreCluster = false;
-        }
+        fixHoles(holesInLocalCluster, localFs);
+        fixHoles(holesInMerge, mergedFs);
         // clear missing paths list
         missingPaths.clear();
       }
