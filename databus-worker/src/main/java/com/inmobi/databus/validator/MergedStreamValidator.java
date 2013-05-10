@@ -61,15 +61,16 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     FileSystem mergedFs = FileSystem.get(mergeCluster.getHadoopConf());
     ParallelRecursiveListing mergeParallelListing = 
         new ParallelRecursiveListing(numThreads, null, null);
-    List<FileStatus> mergeStreamFileSttuses = 
-        mergeParallelListing.getListing(mergePath, mergedFs, false);
-    List<FileStatus> listOfAllFilesForHolesCheck = 
-        listAllFilesInSteamForFindingHoles(mergePath, mergedFs,
-            mergeParallelListing);
+    List<FileStatus> mergeStreamFileStatuses = 
+        mergeParallelListing.getListing(mergePath, mergedFs, true);
+    List<FileStatus> listOfFilesInMerge = new ArrayList<FileStatus>();
+    // preparing a list which contains only files
+    prepareListofDirsAndFiles(mergeStreamFileStatuses, listOfFilesInMerge);
+   
     //find duplicates on merged cluster
-    findDuplicates(mergeStreamFileSttuses, mergeStreamFileListing);
+    findDuplicates(listOfFilesInMerge, mergeStreamFileListing);
 
-    holesInMerge.addAll(findHoles(listOfAllFilesForHolesCheck, mergePath, mergedFs));
+    holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
     if (!holesInMerge.isEmpty()) {
       LOG.info("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
     }
@@ -90,14 +91,15 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       ParallelRecursiveListing localParallelListing =
           new ParallelRecursiveListing(numThreads, startPath, endPath);
       List<FileStatus> localStreamFileStatuses =
-          localParallelListing.getListing(localStreamPath, localFs, false);
-      findDuplicates(localStreamFileStatuses, localStreamFileListing);
-
-      // find holes on source cluster
-      List<FileStatus> listOfAllLocalFilesForHolesCheck = 
-          listAllFilesInSteamForFindingHoles(localStreamPath, localFs,
-              localParallelListing);
-      List<Path> holesInLocalCluster = findHoles(listOfAllLocalFilesForHolesCheck,
+          localParallelListing.getListing(localStreamPath, localFs, true);
+      List<FileStatus> listOfFilesInLocal = new ArrayList<FileStatus>();
+      // prepare a list which contains only files
+      prepareListofDirsAndFiles(localStreamFileStatuses, listOfFilesInLocal);
+      
+      findDuplicates(listOfFilesInLocal, localStreamFileListing);
+      
+      //find holes on source cluster
+      List<Path> holesInLocalCluster = findHoles(localStreamFileStatuses,
           localStreamPath, localFs);
       if (!holesInLocalCluster.isEmpty()) {
         holesInLocal.addAll(holesInLocalCluster);
@@ -120,9 +122,14 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     }   
   }
 
-  private List<FileStatus> listAllFilesInSteamForFindingHoles(Path mergePath,
-      FileSystem mergedFs, ParallelRecursiveListing mergeParallelListing) {
-    return mergeParallelListing.getListing(mergePath, mergedFs, true);
+  private void prepareListofDirsAndFiles(
+      List<FileStatus> streamFileStatuses,
+      List<FileStatus> listWithOnlyFiles) {
+      for (FileStatus fileStatus : streamFileStatuses) {
+        if (!fileStatus.isDir()) {
+          listWithOnlyFiles.add(fileStatus);
+        }
+      }   
   }
 
   protected void findDuplicates(List<FileStatus> listOfFileStatuses,
