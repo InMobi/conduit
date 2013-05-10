@@ -197,7 +197,7 @@ public abstract class DistcpBaseService extends AbstractService {
         String checkPointValue = new String(value);
         // creating a path object from empty string throws exception;hence
         // checking for it
-        if (checkPointValue.trim() != null) {
+        if (!checkPointValue.trim().equals("")) {
         lastCheckPointPath = new Path(checkPointValue);
         }
         if (lastCheckPointPath == null
@@ -294,12 +294,14 @@ public abstract class DistcpBaseService extends AbstractService {
       FileStatus[] stats = fs.listStatus(fileStatus.getPath());
       // stats can be null in case where purger deleted the path while this
       // method was called
-      if (stats != null && stats.length == 0) {
+      if (stats != null) {
+        if (stats.length == 0) {
         results.add(fileStatus);
         LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
       }
       for (FileStatus stat : stats) {
         createListing(fs, stat, results);
+      }
       }
     } else {
       LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
