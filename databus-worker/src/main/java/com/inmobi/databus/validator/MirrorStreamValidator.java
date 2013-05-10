@@ -217,7 +217,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
 
     @Override
     protected void finalizeCheckPoints() {
-      LOG.debug("Skipping update of checkpoints in Mirror Stream Fix Service run");
+      LOG.info("Skipping update of checkpoints in Mirror Stream Fix Service run");
     }
   }
 }

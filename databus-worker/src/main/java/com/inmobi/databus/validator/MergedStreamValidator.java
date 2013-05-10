@@ -63,12 +63,9 @@ public class MergedStreamValidator extends AbstractStreamValidator {
         new ParallelRecursiveListing(numThreads, null, null);
     List<FileStatus> mergeStreamFileStatuses = 
         mergeParallelListing.getListing(mergePath, mergedFs, true);
-    List<FileStatus> listOfFilesInMerge = new ArrayList<FileStatus>();
-    // preparing a list which contains only files
-    prepareListofDirsAndFiles(mergeStreamFileStatuses, listOfFilesInMerge);
    
     //find duplicates on merged cluster
-    findDuplicates(listOfFilesInMerge, mergeStreamFileListing);
+    findDuplicates(mergeStreamFileStatuses, mergeStreamFileListing);
 
     holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
     if (!holesInMerge.isEmpty()) {
@@ -92,11 +89,8 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           new ParallelRecursiveListing(numThreads, startPath, endPath);
       List<FileStatus> localStreamFileStatuses =
           localParallelListing.getListing(localStreamPath, localFs, true);
-      List<FileStatus> listOfFilesInLocal = new ArrayList<FileStatus>();
-      // prepare a list which contains only files
-      prepareListofDirsAndFiles(localStreamFileStatuses, listOfFilesInLocal);
       
-      findDuplicates(listOfFilesInLocal, localStreamFileListing);
+      findDuplicates(localStreamFileStatuses, localStreamFileListing);
       
       //find holes on source cluster
       List<Path> holesInLocalCluster = findHoles(localStreamFileStatuses,
@@ -121,21 +115,14 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       localStreamFileListing.clear();
     }   
   }
-
-  private void prepareListofDirsAndFiles(
-      List<FileStatus> streamFileStatuses,
-      List<FileStatus> listWithOnlyFiles) {
-      for (FileStatus fileStatus : streamFileStatuses) {
-        if (!fileStatus.isDir()) {
-          listWithOnlyFiles.add(fileStatus);
-        }
-      }   
-  }
-
+  
   protected void findDuplicates(List<FileStatus> listOfFileStatuses,
       Map<String, FileStatus> streamListingMap) {
     String fileName;
     for (FileStatus fileStatus : listOfFileStatuses) {
+      if (fileStatus.isDir()) {
+        continue;
+      }
       fileName = fileStatus.getPath().getName();
       if (streamListingMap.containsKey(fileName)) {
         Path duplicatePath;
@@ -239,7 +226,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
     @Override
     protected void finalizeCheckPoints() {
-      LOG.debug("Skipping update of checkpoints in Merge Stream Fix Service run");
+      LOG.info("Skipping update of checkpoints in Merge Stream Fix Service run");
     }
   }
 }
