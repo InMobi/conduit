@@ -102,9 +102,9 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
       if (!missingPaths.isEmpty() && fix) {
         copyMissingPaths(srcCluster);
-        findHoles(listOfAllLocalFilesForHolesCheck, localStreamPath, true, localFs);
+        holesInLocal = findHoles(listOfAllLocalFilesForHolesCheck, localStreamPath, true, localFs);
         if (fillHolesInMegreCluster) {
-          findHoles(listOfAllFilesForHolesCheck, mergePath, true, mergedFs);
+          holesInMerge = findHoles(listOfAllFilesForHolesCheck, mergePath, true, mergedFs);
           fillHolesInMegreCluster = false;
         }
         // clear missing paths list
@@ -199,7 +199,6 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   public List<Path> getHolesInMerge() {
     return holesInMerge;
   }
-
 
   class MergedStreamFixService extends MergedStreamService {
     public MergedStreamFixService(DatabusConfig config, Cluster srcCluster,

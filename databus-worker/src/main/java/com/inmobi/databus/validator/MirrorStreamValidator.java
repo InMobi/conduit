@@ -1,5 +1,6 @@
 package com.inmobi.databus.validator;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -25,7 +26,9 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   private DatabusConfig databusConfig = null;
   private String streamName = null;
   private boolean fix = false;
-
+  List<Path> holesInMerge = new ArrayList<Path>();
+  List<Path> holesInMirror = new ArrayList<Path>();
+  
   Cluster mergedCluster = null;
   Cluster mirrorCluster = null;
   private Date startTime = null;
@@ -71,7 +74,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     List<FileStatus> mergedStreamFiles = mergeParallelListing.getListing(
         mergedPath, mergedFs, true);
     //this will just identify whether any holes present in merge stream
-    findHoles(mergedStreamFiles, mergedPath, false, mergedFs);
+    holesInMerge.addAll(findHoles(mergedStreamFiles, mergedPath, false, mergedFs));
 
     // perform recursive listing of paths in target cluster
     Path mirrorPath = new Path(mirrorCluster.getFinalDestDirRoot(), streamName);
@@ -85,7 +88,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
         new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mirrorStreamFiles = mirrorParallelListing.getListing(
         mirrorPath, mirrorFs, true);
-    findHoles(mirrorStreamFiles, mirrorPath, false, mirrorFs);
+    holesInMirror.addAll(findHoles(mirrorStreamFiles, mirrorPath, false, mirrorFs));
 
     // find the missing paths
     findMissingPaths(mergedStreamFiles, mirrorStreamFiles);
@@ -95,8 +98,8 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
       LOG.debug("Number of missing paths to be copied: " + missingPaths.size());      
       // copy the missing paths
       copyMissingPaths();
-      findHoles(mergedStreamFiles, mirrorPath, true, mergedFs);
-      findHoles(mirrorStreamFiles, mirrorPath, true, mirrorFs);
+      holesInMerge = findHoles(mergedStreamFiles, mergedPath, true, mergedFs);
+      holesInMirror = findHoles(mirrorStreamFiles, mirrorPath, true, mirrorFs);
     }
   }
 
@@ -171,6 +174,14 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
     return srcPath.getPath().toUri().getPath();
+  }
+  
+  public List<Path> getHolesInMerge() {
+    return holesInMerge;
+  }
+  
+  public List<Path> getHolesInMirror() {
+    return holesInMirror;
   }
 
   class MirrorStreamFixService extends MirrorStreamService {
