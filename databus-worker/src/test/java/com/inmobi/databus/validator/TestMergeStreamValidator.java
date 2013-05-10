@@ -1,8 +1,10 @@
 package com.inmobi.databus.validator;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -19,42 +21,68 @@ import com.inmobi.databus.utils.CalendarHelper;
 
 public class TestMergeStreamValidator extends AbstractTestStreamValidator {
   private static final Log LOG = LogFactory.getLog(TestMergeStreamValidator.class);
+  List<Path> holesInLocal = new ArrayList<Path>();
+  List<Path> holesInMerge = new ArrayList<Path>();
 
   private void createLocalData(DatabusConfig config,
       Date date, Cluster cluster, String stream) throws IOException {
     FileSystem fs = FileSystem.getLocal(new Configuration());
     Path streamLevelDir = new Path(cluster.getLocalFinalDestDirRoot()
         + stream);
-    createData(fs, streamLevelDir, date, stream, cluster.getName(), 5 , 1);
+    createData(fs, streamLevelDir, date, stream, cluster.getName(), 5 , 1, false);
     Date nextDate = CalendarHelper.addAMinute(date);
-    createData(fs, streamLevelDir, nextDate, stream, cluster.getName(), 5, 1);
-    // Add a dummy empty directory in the end
+    createData(fs, streamLevelDir, nextDate, stream, cluster.getName(), 5, 1, false);
+    createHolesInLocal(fs, streamLevelDir, nextDate);
+  }
+
+  private void createHolesInLocal(FileSystem fs, Path streamLevelDir, Date nextDate)
+      throws IOException {
+    // create two holes and a dummy empty directory in the end
     Date lastDate = CalendarHelper.addAMinute(nextDate);
+    for (int i = 0; i < 2; i++) {
+      holesInLocal.add(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
+      lastDate = CalendarHelper.addAMinute(lastDate);
+    }
     fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
   }
 
   private void createMergeData(DatabusConfig config, Date date,
       Cluster primaryCluster, String stream)
           throws IOException {
+    Path streamLevelDir = null;
+    FileSystem fs = null;
     for (String cluster : config.getSourceStreams().get(stream)
         .getSourceClusters()) {
-      FileSystem fs = FileSystem.getLocal(new Configuration());
-      Path streamLevelDir = new Path(primaryCluster.getFinalDestDirRoot()
+      fs = FileSystem.getLocal(new Configuration());
+      streamLevelDir = new Path(primaryCluster.getFinalDestDirRoot()
           + stream);
-      createData(fs, streamLevelDir, date, stream, cluster, 5, 2);
+      createData(fs, streamLevelDir, date, stream, cluster, 5, 2, true);
       Date nextDate = CalendarHelper.addAMinute(date);
-      createData(fs, streamLevelDir, nextDate, stream, cluster, 5, 2);
-      // Add a dummy empty directory in the end
-      Date lastDate = CalendarHelper.addAMinute(nextDate);
-      fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
+      createData(fs, streamLevelDir, nextDate, stream, cluster, 5, 2, true);    
     }
+    Date nextDate = CalendarHelper.addAMinute(date);
+    createHolesInMerge(fs, streamLevelDir, nextDate);
+  }
+
+  private void createHolesInMerge(FileSystem fs, Path streamLevelDir, Date nextDate)
+      throws IOException {
+    // create a dummy empty directory in the end
+    Date lastDate = CalendarHelper.addAMinute(nextDate);
+    lastDate = CalendarHelper.addAMinute(lastDate);
+    holesInMerge.add(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
+    lastDate = CalendarHelper.addAMinute(lastDate);
+    fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
   }
 
   @Test
   public void testMergeStreamValidator() throws Exception {
     Date date = new Date();
-    Date nextDate = CalendarHelper.addAMinute(date);
-    Date stopDate = CalendarHelper.addAMinute(nextDate);
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+    cal.add(Calendar.MINUTE, 1);
+    Date nextDate = cal.getTime();
+    cal.add(Calendar.MINUTE, 4);
+    Date stopDate = cal.getTime();
     DatabusConfig config = setup("test-merge-validator-databus.xml");
     // clean up root dir before generating test data
     cleanUp(config);
@@ -73,6 +101,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
       if (mergedCluster != null) {
         testStartDateBeyondRetention(date, stopDate, config, streamName,
             mergedCluster);
+
         testMergeStreamValidatorVerify(date, nextDate, config, streamName,
             mergedCluster, false, false);
         testMergeStreamValidatorVerify(date, stopDate, config, streamName,
@@ -123,14 +152,22 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     mergeStreamValidator.execute();
     if (reverify) {
       Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(), 0);
+      Assert.assertEquals(mergeStreamValidator.getHolesInLocal().size(), 0);
+      Assert.assertEquals(mergeStreamValidator.getHolesInMerge().size(), 0);
     } else {
       if (listedAllFiles) {
         Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(),
             missingPaths.size());
+        Assert.assertEquals(holesInLocal, mergeStreamValidator.getHolesInLocal());
+        Assert.assertEquals(holesInMerge, mergeStreamValidator.getHolesInMerge());
       } else {
         Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(),
             missingPaths.size()/2);
       }
     }
+    Assert.assertEquals(duplicateFiles.size(),
+        mergeStreamValidator.getDuplicateFiles().size());
+    Assert.assertTrue(duplicateFiles.containsAll(
+        mergeStreamValidator.getDuplicateFiles()));
   }
 }

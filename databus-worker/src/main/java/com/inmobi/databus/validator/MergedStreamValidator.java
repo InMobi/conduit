@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,7 +26,11 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   private DatabusConfig databusConfig = null;
   private String streamName = null;
   private boolean fix = false;
-  Set<Path> inconsistencyData = new TreeSet<Path>();
+  List<Path> duplicateFiles = new ArrayList<Path>();
+  List<Path> holesInMerge = new ArrayList<Path>();
+
+  List<Path> holesInLocal = new ArrayList<Path>();
+
   List<Cluster> srcClusterList = new ArrayList<Cluster>();
   Cluster mergeCluster = null;
   private Date startTime = null;
@@ -58,9 +61,16 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     FileSystem mergedFs = FileSystem.get(mergeCluster.getHadoopConf());
     ParallelRecursiveListing mergeParallelListing = 
         new ParallelRecursiveListing(numThreads, null, null);
-    List<FileStatus> mergeStreamFileSttuses = 
-        mergeParallelListing.getListing(mergePath, mergedFs, false);
-    findDuplicates(mergeStreamFileSttuses, mergeStreamFileListing);
+    List<FileStatus> mergeStreamFileStatuses = 
+        mergeParallelListing.getListing(mergePath, mergedFs, true);
+   
+    //find duplicates on merged cluster
+    findDuplicates(mergeStreamFileStatuses, mergeStreamFileListing);
+
+    holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
+    if (!holesInMerge.isEmpty()) {
+      LOG.info("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
+    }  
 
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
     // perform recursive listing on each source cluster
@@ -78,25 +88,43 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       ParallelRecursiveListing localParallelListing =
           new ParallelRecursiveListing(numThreads, startPath, endPath);
       List<FileStatus> localStreamFileStatuses =
-          localParallelListing.getListing(localStreamPath, localFs, false);
+          localParallelListing.getListing(localStreamPath, localFs, true);
+      
       findDuplicates(localStreamFileStatuses, localStreamFileListing);
+      
+      //find holes on source cluster
+      List<Path> holesInLocalCluster = findHoles(localStreamFileStatuses,
+          localStreamPath, localFs);
+      if (!holesInLocalCluster.isEmpty()) {
+        holesInLocal.addAll(holesInLocalCluster);
+        LOG.info("holes in [ " + srcCluster.getName() + " ] "
+            + holesInLocalCluster);
+      }
 
+      //find missing paths on merge cluster
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
 
       if (!missingPaths.isEmpty() && fix) {
         copyMissingPaths(srcCluster);
+        fixHoles(holesInLocalCluster, localFs);
         // clear missing paths list
         missingPaths.clear();
       }
       // clear the localStream file list map
       localStreamFileListing.clear();
-    }   
+    }
+    if (fix && !holesInMerge.isEmpty()) {
+      fixHoles(holesInMerge, mergedFs);
+    }
   }
   
   protected void findDuplicates(List<FileStatus> listOfFileStatuses,
       Map<String, FileStatus> streamListingMap) {
     String fileName;
     for (FileStatus fileStatus : listOfFileStatuses) {
+      if (fileStatus.isDir()) {
+        continue;
+      }
       fileName = fileStatus.getPath().getName();
       if (streamListingMap.containsKey(fileName)) {
         Path duplicatePath;
@@ -109,20 +137,21 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           // insert this entry into the map because this file was created first
           streamListingMap.put(fileName, fileStatus);
         }
-        LOG.debug("Duplicate file " + duplicatePath);
+        duplicateFiles.add(duplicatePath);
+        LOG.info("Duplicate file " + duplicatePath);
       } else {
         streamListingMap.put(fileName, fileStatus);
       }
     }
   }
-  
+
   protected void findMissingPaths(Map<String, FileStatus> srcListingMap,
       Map<String, FileStatus> destListingMap) {
     String fileName = null;
     for (Map.Entry<String, FileStatus> srcEntry : srcListingMap.entrySet()) {
       fileName = srcEntry.getKey();
       if (!destListingMap.containsKey(fileName)) {
-        LOG.debug("Missing path " + srcEntry.getValue().getPath());
+        LOG.info("Missing path " + srcEntry.getValue().getPath());
         missingPaths.put(getFinalDestinationPath(srcEntry.getValue()),
             srcEntry.getValue());
       }
@@ -160,6 +189,18 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
   }
 
+  public List<Path> getDuplicateFiles() {
+    return duplicateFiles;
+  }
+
+  public List<Path> getHolesInLocal() {
+    return holesInLocal;
+  }
+
+  public List<Path> getHolesInMerge() {
+    return holesInMerge;
+  }
+
   class MergedStreamFixService extends MergedStreamService {
     public MergedStreamFixService(DatabusConfig config, Cluster srcCluster,
         Cluster destinationCluster, Set<String> streamsToProcess)
@@ -171,8 +212,8 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     protected Path getDistCpTargetPath() {
       return new Path(getDestCluster().getTmpPath(),
           "distcp_mergedStream_fix_" + getSrcCluster().getName() + "_"
-          + getDestCluster().getName() + "_"
-          + getServiceName(streamsToProcess)).makeQualified(getDestFs());
+              + getDestCluster().getName() + "_"
+              + getServiceName(streamsToProcess)).makeQualified(getDestFs());
     }
 
     @Override
@@ -187,7 +228,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
     @Override
     protected void finalizeCheckPoints() {
-      LOG.debug("Skipping update of checkpoints in Merge Stream Fix Service run");
+      LOG.info("Skipping update of checkpoints in Merge Stream Fix Service run");
     }
   }
 }
