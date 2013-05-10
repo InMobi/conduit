@@ -105,6 +105,9 @@ while [ -n "$*" ] ; do
     -D*)
       JAVA_OPTS="${JAVA_OPTS} $arg"
       ;;
+    -X*)
+      JAVA_OPTS="${JAVA_OPTS} $arg"
+      ;;
     *)
       args="$args $arg"
       ;;
