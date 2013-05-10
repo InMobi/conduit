@@ -44,7 +44,7 @@ public class AbstractTestStreamValidator {
     return config;
   }
 
-  protected Path createFiles(FileSystem fs, Date date, String streamName,
+  protected Path createFile(FileSystem fs, Date date, String streamName,
       String clusterName, Path path, int i) throws IOException {
     String fileNameStr = new String(clusterName + "-" + streamName + "-" +
         getDateAsYYYYMMDDHHmm(date)+ "_" + idFormat.format(i));
@@ -63,12 +63,12 @@ public class AbstractTestStreamValidator {
           throws IOException {
     Path path = CalendarHelper.getPathFromDate(date, dir);
     for (int i = 1; i <= numFiles; i = i + incrementNumber) {
-      createFiles(fs, date, streamName, clusterName, path, i);
+      createFile(fs, date, streamName, clusterName, path, i);
       if(createDuplicates) {
         Date nextDate = CalendarHelper.addAMinute(date);
         Path duplicatePath = CalendarHelper.getPathFromDate(nextDate, dir);
         duplicateFiles.add(
-            createFiles(fs, date, streamName, clusterName, duplicatePath, i));
+            createFile(fs, date, streamName, clusterName, duplicatePath, i));
       }
       if (incrementNumber != 1) {
         for (int j = i + 1; (j < i + incrementNumber) && (i != numFiles); j++) {
