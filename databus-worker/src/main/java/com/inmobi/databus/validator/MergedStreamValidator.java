@@ -27,19 +27,15 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   private String streamName = null;
   private boolean fix = false;
   List<Path> duplicateFiles = new ArrayList<Path>();
+  List<Path> holesInMerge = new ArrayList<Path>();
+
+  List<Path> holesInLocal = new ArrayList<Path>();
 
   List<Cluster> srcClusterList = new ArrayList<Cluster>();
   Cluster mergeCluster = null;
   private Date startTime = null;
   private Date stopTime = null;
   private int numThreads;
-
-  /**
-   * @return the duplicateFiles
-   */
-  public List<Path> getDuplicateFiles() {
-    return duplicateFiles;
-  }
 
   public MergedStreamValidator(DatabusConfig databusConfig, String streamName,
       String clusterName, boolean fix, Date startTime, Date stopTime,
@@ -67,10 +63,14 @@ public class MergedStreamValidator extends AbstractStreamValidator {
         new ParallelRecursiveListing(numThreads, null, null);
     List<FileStatus> mergeStreamFileSttuses = 
         mergeParallelListing.getListing(mergePath, mergedFs, false);
+    List<FileStatus> listOfAllFilesForHolesCheck = 
+        listAllFilesInSteamForFindingHoles(mergePath, mergedFs,
+            mergeParallelListing);
     //find duplicates on merged cluster
     findDuplicates(mergeStreamFileSttuses, mergeStreamFileListing);
-    
-    findHoles(mergeStreamFileSttuses, mergePath, false, mergedFs);
+
+    holesInMerge.addAll(findHoles(listOfAllFilesForHolesCheck, mergePath, false,
+        mergedFs));
     boolean fillHolesInMegreCluster = true;
 
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
@@ -91,16 +91,20 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       List<FileStatus> localStreamFileStatuses =
           localParallelListing.getListing(localStreamPath, localFs, false);
       findDuplicates(localStreamFileStatuses, localStreamFileListing);
-      
-      findHoles(localStreamFileStatuses, localStreamPath, false, localFs);
+      List<FileStatus> listOfAllLocalFilesForHolesCheck = 
+          listAllFilesInSteamForFindingHoles(localStreamPath, localFs,
+              localParallelListing);
+
+      holesInLocal.addAll(findHoles(listOfAllLocalFilesForHolesCheck,
+          localStreamPath, false, localFs));
 
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
 
       if (!missingPaths.isEmpty() && fix) {
         copyMissingPaths(srcCluster);
-        findHoles(localStreamFileStatuses, localStreamPath, true, localFs);
+        findHoles(listOfAllLocalFilesForHolesCheck, localStreamPath, true, localFs);
         if (fillHolesInMegreCluster) {
-          findHoles(mergeStreamFileSttuses, mergePath, true, mergedFs);
+          findHoles(listOfAllFilesForHolesCheck, mergePath, true, mergedFs);
           fillHolesInMegreCluster = false;
         }
         // clear missing paths list
@@ -109,6 +113,11 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       // clear the localStream file list map
       localStreamFileListing.clear();
     }   
+  }
+
+  private List<FileStatus> listAllFilesInSteamForFindingHoles(Path mergePath,
+      FileSystem mergedFs, ParallelRecursiveListing mergeParallelListing) {
+    return mergeParallelListing.getListing(mergePath, mergedFs, true);
   }
 
   protected void findDuplicates(List<FileStatus> listOfFileStatuses,
@@ -178,6 +187,19 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       return File.separator + srcPath.getPath().getName();
 
   }
+
+  public List<Path> getDuplicateFiles() {
+    return duplicateFiles;
+  }
+
+  public List<Path> getHolesInLocal() {
+    return holesInLocal;
+  }
+
+  public List<Path> getHolesInMerge() {
+    return holesInMerge;
+  }
+
 
   class MergedStreamFixService extends MergedStreamService {
     public MergedStreamFixService(DatabusConfig config, Cluster srcCluster,

@@ -33,6 +33,7 @@ public abstract class AbstractStreamValidator {
       Path streamDir, boolean fillHoles, FileSystem fs) throws IOException {
     List<Path> holes = new ArrayList<Path>();
     List<Path> listOfDirs = new ArrayList<Path>();
+    // prepare a list of dirs from list of all files
     prepareListWithOnlyDirs(listOfFileStatuses, listOfDirs);
     Collections.sort(listOfDirs);
     if (listOfDirs.isEmpty()) {
