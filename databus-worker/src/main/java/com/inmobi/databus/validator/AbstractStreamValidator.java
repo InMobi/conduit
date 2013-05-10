@@ -32,7 +32,9 @@ public abstract class AbstractStreamValidator {
   protected void fixHoles(List<Path> holesList, FileSystem fs)
       throws IOException {
     for (Path holePath : holesList) {
-      fs.mkdirs(holePath);
+      if (!fs.exists(holePath)) {
+        fs.mkdirs(holePath);
+      }
     }
     holesList.clear();
   }
