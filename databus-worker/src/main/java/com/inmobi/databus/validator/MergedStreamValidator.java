@@ -70,7 +70,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
     if (!holesInMerge.isEmpty()) {
       LOG.info("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
-    }
+    }  
 
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
     // perform recursive listing on each source cluster
@@ -107,13 +107,15 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       if (!missingPaths.isEmpty() && fix) {
         copyMissingPaths(srcCluster);
         fixHoles(holesInLocalCluster, localFs);
-        fixHoles(holesInMerge, mergedFs);
         // clear missing paths list
         missingPaths.clear();
       }
       // clear the localStream file list map
       localStreamFileListing.clear();
-    }   
+    }
+    if (fix && !holesInMerge.isEmpty()) {
+      fixHoles(holesInMerge, mergedFs);
+    }
   }
   
   protected void findDuplicates(List<FileStatus> listOfFileStatuses,
