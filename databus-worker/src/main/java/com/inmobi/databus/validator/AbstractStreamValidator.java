@@ -44,7 +44,7 @@ public abstract class AbstractStreamValidator {
     List<Path> holes = new ArrayList<Path>();
     List<Path> listOfDirs = new ArrayList<Path>();
     // prepare a list of dirs from list of all files
-    prepareListWithOnlyDirs(listOfFileStatuses, listOfDirs);
+    prepareListWithOnlyDirs(listOfFileStatuses, listOfDirs, streamDir);
     Collections.sort(listOfDirs);
     if (listOfDirs.isEmpty()) {
       return holes;
@@ -75,16 +75,28 @@ public abstract class AbstractStreamValidator {
   }
 
   private void prepareListWithOnlyDirs(List<FileStatus> listOfFileStatuses,
-      List<Path> listOfDirs) {
+      List<Path> listOfDirs, Path streamDir) {
     for (FileStatus fileStatus : listOfFileStatuses) {
-      if (fileStatus.isDir()) {
-        listOfDirs.add(fileStatus.getPath());
+      Path filePath = fileStatus.getPath();
+      if (fileStatus.isDir() && isMinuteDir(filePath, streamDir)) {
+        listOfDirs.add(filePath);
       } else {
-        if (!listOfDirs.contains(fileStatus.getPath().getParent())) {
-          listOfDirs.add(fileStatus.getPath().getParent());
+        Path parentPath = filePath.getParent();
+        if (!listOfDirs.contains(parentPath) &&
+            isMinuteDir(parentPath, streamDir)) {
+          listOfDirs.add(parentPath);
         }
       }
     }
+  }
+
+  private boolean isMinuteDir(Path filePath, Path streamDir) {
+    String fileName = filePath.toString();
+    String dateString = fileName.substring(streamDir.toString().length() + 1);
+    if (dateString.matches("[0-9]{4}.[0-9]{2}.[0-9]{2}.[0-9]{2}.[0-9]{2}")) {
+      return true;
+    }
+    return false;
   }
 
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
