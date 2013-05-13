@@ -28,7 +28,7 @@ public abstract class AbstractStreamValidator {
   public Map<String, FileStatus> getMissingPaths() {
     return missingPaths;
   }
-  
+
   protected void fixHoles(List<Path> holesList, FileSystem fs)
       throws IOException {
     for (Path holePath : holesList) {
@@ -82,8 +82,7 @@ public abstract class AbstractStreamValidator {
         listOfDirs.add(filePath);
       } else {
         Path parentPath = filePath.getParent();
-        if (!listOfDirs.contains(parentPath) &&
-            isMinuteDir(parentPath, streamDir)) {
+        if (!listOfDirs.contains(parentPath)) {
           listOfDirs.add(parentPath);
         }
       }
@@ -91,9 +90,9 @@ public abstract class AbstractStreamValidator {
   }
 
   private boolean isMinuteDir(Path filePath, Path streamDir) {
-    String fileName = filePath.toString();
-    String dateString = fileName.substring(streamDir.toString().length() + 1);
-    if (dateString.matches("[0-9]{4}.[0-9]{2}.[0-9]{2}.[0-9]{2}.[0-9]{2}")) {
+    Path streamDirFromPath = filePath.getParent().getParent().getParent().
+        getParent().getParent();
+    if (streamDirFromPath.equals(streamDir)) {
       return true;
     }
     return false;
