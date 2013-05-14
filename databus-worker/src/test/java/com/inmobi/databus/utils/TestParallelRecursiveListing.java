@@ -17,13 +17,13 @@ import org.apache.hadoop.fs.Path;
 import org.testng.annotations.Test;
 
 public class TestParallelRecursiveListing {
-  List<FileStatus> paths = new ArrayList<FileStatus>();
+  List<Path> expectedPaths = new ArrayList<Path>();
   Path startPath = null;
   Path endPath = null;
   
   private void cleanup(FileSystem fs, Path dir) throws Exception {
     fs.delete(dir, true);
-    paths.clear();
+    expectedPaths.clear();
   }
   
   @Test
@@ -50,16 +50,12 @@ public class TestParallelRecursiveListing {
         dir, fs, includeEmptyDir);
     long endTime = System.currentTimeMillis();
     
-    System.out.println("Expected paths: " + paths.size() + 
+    System.out.println("Expected paths: " + expectedPaths.size() + 
         " Found paths: " + listedFileStatuses.size() + " Listing time (ms): " +
         Long.toString(endTime - startTime));
     
     // compare the sizes of the expected and listed paths
-    Assert.assertEquals(paths.size(), listedFileStatuses.size());
-    // compare each entry within the listed paths
-    Collections.sort(listedFileStatuses, new DatePathComparator());
-    List<Path> expectedPaths = new ArrayList<Path>();
-    prepareListOfPaths(paths, expectedPaths);
+    Assert.assertEquals(expectedPaths.size(), listedFileStatuses.size());
     List<Path> listedPaths = new ArrayList<Path>();
     prepareListOfPaths(listedFileStatuses, listedPaths);
     Assert.assertEquals(expectedPaths.size(), listedPaths.size());
@@ -97,10 +93,10 @@ public class TestParallelRecursiveListing {
         } catch (IOException e) {
           e.printStackTrace();
         }
-        paths.add(fs.getFileStatus(file));
+        expectedPaths.add(file);
       }
       if (count == 0 && includeEmptyDir) {
-        paths.add(fs.getFileStatus(path));
+        expectedPaths.add(path);
       }
       date = CalendarHelper.addAMinute(date);
     }
