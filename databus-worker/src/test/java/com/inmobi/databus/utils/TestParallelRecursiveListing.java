@@ -17,13 +17,13 @@ import org.apache.hadoop.fs.Path;
 import org.testng.annotations.Test;
 
 public class TestParallelRecursiveListing {
-  List<Path> paths = new ArrayList<Path>();
+  List<Path> expectedPaths = new ArrayList<Path>();
   Path startPath = null;
   Path endPath = null;
   
   private void cleanup(FileSystem fs, Path dir) throws Exception {
     fs.delete(dir, true);
-    paths.clear();
+    expectedPaths.clear();
   }
   
   @Test
@@ -46,26 +46,29 @@ public class TestParallelRecursiveListing {
     long startTime = System.currentTimeMillis();
     ParallelRecursiveListing parallelListing =
         new ParallelRecursiveListing(numThreads, startPath, endPath);
-    List<FileStatus> listedPaths = parallelListing.getListing(
+    List<FileStatus> listedFileStatuses = parallelListing.getListing(
         dir, fs, includeEmptyDir);
     long endTime = System.currentTimeMillis();
     
-    System.out.println("Expected paths: " + paths.size() + 
-        " Found paths: " + listedPaths.size() + " Listing time (ms): " +
+    System.out.println("Expected paths: " + expectedPaths.size() + 
+        " Found paths: " + listedFileStatuses.size() + " Listing time (ms): " +
         Long.toString(endTime - startTime));
     
     // compare the sizes of the expected and listed paths
-    Assert.assertEquals(paths.size(), listedPaths.size());
-    // compare each entry within the listed paths
-    Collections.sort(listedPaths, new DatePathComparator());
-    Path [] pathsArr = paths.toArray(new Path[0]);
-    FileStatus [] listedPathsArr = listedPaths.toArray(new FileStatus[0]);
-    for (int i = 0; i < paths.size(); i++) {
-      Assert.assertEquals(pathsArr[i], listedPathsArr[i].getPath());
-    }
-    
+    Assert.assertEquals(expectedPaths.size(), listedFileStatuses.size());
+    List<Path> listedPaths = new ArrayList<Path>();
+    prepareListOfPaths(listedFileStatuses, listedPaths);
+    Assert.assertEquals(expectedPaths.size(), listedPaths.size());
+    Assert.assertTrue(listedPaths.containsAll(expectedPaths));
     // finally cleanup the listingRootDir after listing data
     cleanup(fs, dir);
+  }
+
+  private void prepareListOfPaths(List<FileStatus> listOfFileStatuses,
+      List<Path> listOfPaths) {
+    for (FileStatus fileStatus : listOfFileStatuses) {
+      listOfPaths.add(fileStatus.getPath());
+    }
   }
   
   private void createData(Path dir, FileSystem fs, int numMinDirs, int numMaxFiles,
@@ -90,10 +93,10 @@ public class TestParallelRecursiveListing {
         } catch (IOException e) {
           e.printStackTrace();
         }
-        paths.add(file);
+        expectedPaths.add(file);
       }
       if (count == 0 && includeEmptyDir) {
-        paths.add(path);
+        expectedPaths.add(path);
       }
       date = CalendarHelper.addAMinute(date);
     }

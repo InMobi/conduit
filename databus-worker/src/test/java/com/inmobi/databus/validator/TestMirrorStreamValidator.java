@@ -85,10 +85,8 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
       createData(fs, streamLevelDir, date, streamName, srcCluster, 5, 2, false);
       nextDate = CalendarHelper.addAMinute(date);
       createData(fs, streamLevelDir, nextDate, streamName, srcCluster, 5, 2, false);
-      System.out.println("last date AAAAAAA "+ nextDate);
     }
     holesInMirror.addAll(createHoles(fs, streamLevelDir, nextDate));
-    System.out.println("hhhhhh mirror "+ holesInMirror);
   }
 
   @Test

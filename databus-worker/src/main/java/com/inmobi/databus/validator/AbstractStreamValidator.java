@@ -28,7 +28,7 @@ public abstract class AbstractStreamValidator {
   public Map<String, FileStatus> getMissingPaths() {
     return missingPaths;
   }
-  
+
   protected void fixHoles(List<Path> holesList, FileSystem fs)
       throws IOException {
     for (Path holePath : holesList) {
@@ -44,7 +44,7 @@ public abstract class AbstractStreamValidator {
     List<Path> holes = new ArrayList<Path>();
     List<Path> listOfDirs = new ArrayList<Path>();
     // prepare a list of dirs from list of all files
-    prepareListWithOnlyDirs(listOfFileStatuses, listOfDirs);
+    prepareListWithOnlyDirs(listOfFileStatuses, listOfDirs, streamDir);
     Collections.sort(listOfDirs);
     if (listOfDirs.isEmpty()) {
       return holes;
@@ -75,16 +75,27 @@ public abstract class AbstractStreamValidator {
   }
 
   private void prepareListWithOnlyDirs(List<FileStatus> listOfFileStatuses,
-      List<Path> listOfDirs) {
+      List<Path> listOfDirs, Path streamDir) {
     for (FileStatus fileStatus : listOfFileStatuses) {
-      if (fileStatus.isDir()) {
-        listOfDirs.add(fileStatus.getPath());
+      Path filePath = fileStatus.getPath();
+      if (fileStatus.isDir() && isMinuteDir(filePath, streamDir)) {
+        listOfDirs.add(filePath);
       } else {
-        if (!listOfDirs.contains(fileStatus.getPath().getParent())) {
-          listOfDirs.add(fileStatus.getPath().getParent());
+        Path parentPath = filePath.getParent();
+        if (!listOfDirs.contains(parentPath)) {
+          listOfDirs.add(parentPath);
         }
       }
     }
+  }
+
+  private boolean isMinuteDir(Path filePath, Path streamDir) {
+    Path streamDirFromPath = filePath.getParent().getParent().getParent().
+        getParent().getParent();
+    if (streamDirFromPath.equals(streamDir)) {
+      return true;
+    }
+    return false;
   }
 
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
