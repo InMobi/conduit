@@ -90,8 +90,6 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       List<FileStatus> localStreamFileStatuses =
           localParallelListing.getListing(localStreamPath, localFs, true);
 
-      findDuplicates(localStreamFileStatuses, localStreamFileListing);
-
       //find holes on source cluster
       List<Path> holesInLocalCluster = findHoles(localStreamFileStatuses,
           localStreamPath, localFs);
@@ -109,9 +107,6 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           copyMissingPaths(srcCluster);
           // clear missing paths list
           missingPaths.clear();
-        }
-        if (!holesInLocalCluster.isEmpty()) {
-          fixHoles(holesInLocalCluster, localFs);
         }
       }
       // clear the localStream file list map
