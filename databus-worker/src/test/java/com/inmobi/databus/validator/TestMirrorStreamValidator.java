@@ -98,7 +98,6 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     Date nextDate = cal.getTime();
     cal.add(Calendar.MINUTE, 4);
     Date stopDate = cal.getTime();
-    System.out.println("stopdate AAAAAAAAAA " + stopDate);
     DatabusConfig config = setup("test-mirror-validator-databus.xml");
     // clean up all root dir before generating test data
     cleanUp(config);
@@ -117,6 +116,9 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
           // verify : it tests what all are the missing paths
           testMirrorValidatorVerify(config,streamName, cluster.getName(),date,
               stopDate, false, true);
+          // fix : throw an exception as there are holes in source
+          testMirrorValidatorFixWithHolesInSource(config,streamName,
+              cluster.getName(), date, stopDate);
           // fix : It copies all the missing paths to mirror cluster
           testMirrorValidatorFix(config,streamName, cluster.getName(), date,
               stopDate);
@@ -158,8 +160,6 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     mirrorStreamValidator.execute();
     if (reverify) {
       Assert.assertEquals(mirrorStreamValidator.getMissingPaths().size(), 0);
-      Assert.assertEquals(mirrorStreamValidator.getHolesInMerge().size(), 0);
-      Assert.assertEquals(mirrorStreamValidator.getHolesInMirror().size(), 0);
     } else {
       if (listedAllFiles) {
         Assert.assertEquals(mirrorStreamValidator.getMissingPaths().size(),
@@ -173,13 +173,31 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     }
   }
 
+  private void testMirrorValidatorFixWithHolesInSource(DatabusConfig config,
+      String streamName, String mirrorClusterName, Date startTime, Date stopTime)
+          throws Exception {
+    MirrorStreamValidator mirrorStreamValidator = new MirrorStreamValidator(
+        config, streamName, mirrorClusterName, true, startTime, stopTime, 10);
+    Throwable th = null;
+    try {
+      mirrorStreamValidator.execute();
+    } catch (Exception e) {
+      th = e;
+    }
+    Assert.assertTrue(th instanceof IllegalStateException);
+  }
+  
   private void testMirrorValidatorFix(DatabusConfig config,
       String streamName, String mirrorClusterName, Date startTime, Date stopTime)
           throws Exception {
     MirrorStreamValidator mirrorStreamValidator = new MirrorStreamValidator(
         config, streamName, mirrorClusterName, true, startTime, stopTime, 10);
+    FileSystem fs = FileSystem.getLocal(new Configuration());
+    for (Path path : holesInMerge) {
+      fs.mkdirs(path);
+    }
     mirrorStreamValidator.execute();
     Assert.assertEquals(mirrorStreamValidator.getMissingPaths().size(),
-        missingPaths.size());
+        missingPaths.size() + holesInMerge.size());
   }
 }
