@@ -98,7 +98,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
         LOG.info("holes in [ " + srcCluster.getName() + " ] "
             + holesInLocalCluster);
       }
-
+      convertListToMap(localStreamFileStatuses, localStreamFileListing);
       //find missing paths on merge cluster
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
 
@@ -114,6 +114,15 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     }
     if (fix && !holesInMerge.isEmpty()) {
       fixHoles(holesInMerge, mergedFs);
+    }
+  }
+
+  protected void convertListToMap(List<FileStatus> listOfFileStatuses,
+      Map<String, FileStatus> streamListingMap) {
+    for (FileStatus file : listOfFileStatuses) {
+      if (!file.isDir()) {
+        streamListingMap.put(file.getPath().getName(), file);
+      }
     }
   }
 
