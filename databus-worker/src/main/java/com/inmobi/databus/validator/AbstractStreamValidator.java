@@ -44,7 +44,7 @@ public abstract class AbstractStreamValidator {
     List<Path> holes = new ArrayList<Path>();
     List<Path> listOfDirs = new ArrayList<Path>();
     // prepare a list of dirs from list of all files
-    prepareListWithOnlyDirs(listOfFileStatuses, listOfDirs, streamDir);
+    prepareListWithOnlyMinuteDirs(listOfFileStatuses, listOfDirs, streamDir);
     Collections.sort(listOfDirs);
     if (listOfDirs.isEmpty()) {
       return holes;
@@ -74,12 +74,14 @@ public abstract class AbstractStreamValidator {
     return holes;
   }
 
-  private void prepareListWithOnlyDirs(List<FileStatus> listOfFileStatuses,
+  private void prepareListWithOnlyMinuteDirs(List<FileStatus> listOfFileStatuses,
       List<Path> listOfDirs, Path streamDir) {
     for (FileStatus fileStatus : listOfFileStatuses) {
       Path filePath = fileStatus.getPath();
-      if (fileStatus.isDir() && isMinuteDir(filePath, streamDir)) {
-        listOfDirs.add(filePath);
+      if (fileStatus.isDir()) {
+        if (isMinuteDir(filePath, streamDir)) {
+          listOfDirs.add(filePath);
+        }
       } else {
         Path parentPath = filePath.getParent();
         if (!listOfDirs.contains(parentPath)) {

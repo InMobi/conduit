@@ -1,8 +1,8 @@
 package com.inmobi.databus.validator;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,9 +13,9 @@ import com.inmobi.databus.DatabusConfig;
 public class StreamsValidator {
   private static final Log LOG = LogFactory.getLog(StreamsValidator.class);
   private DatabusConfig databusConfig = null;
-  private List<String> streams = new ArrayList<String>();
-  private List<String> modes = new ArrayList<String>();
-  private List<String> clusters = new ArrayList<String>();
+  private Set<String> streams = new HashSet<String>();
+  private Set<String> modes = new HashSet<String>();
+  private Set<String> clusters = new HashSet<String>();
   private Date startTime;
   private Date stopTime;
   private int numThreads;
