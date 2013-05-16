@@ -152,7 +152,6 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     mergeStreamValidator.execute();
     if (reverify) {
       Assert.assertEquals(mergeStreamValidator.getMissingPaths().size(), 0);
-      Assert.assertEquals(mergeStreamValidator.getHolesInLocal().size(), 0);
       Assert.assertEquals(mergeStreamValidator.getHolesInMerge().size(), 0);
     } else {
       if (listedAllFiles) {
