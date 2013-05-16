@@ -61,37 +61,33 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     validateStartTime(mergedCluster);
     validateStartTime(mirrorCluster);
 
-    // perform recursive listing of paths in source cluster
+    // perform parallel recursive listing of paths in source cluster
     Path mergedPath = new Path(mergedCluster.getFinalDestDirRoot(), streamName);
     FileSystem mergedFs = FileSystem.get(mergedCluster.getHadoopConf());
     Path startPath = getstartPath(mergedPath);
     Path endPath = getEndPath(mergedPath);
-    /*
-     * list all files in merged stream using ParallelRecursiveListing utility
-     */
     ParallelRecursiveListing mergeParallelListing = 
         new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mergedStreamFiles = mergeParallelListing.getListing(
         mergedPath, mergedFs, true);
-    //this will just identify whether any holes present in merge stream
+    
+    //find holes in source cluster
     holesInMerge.addAll(findHoles(mergedStreamFiles, mergedPath, mergedFs));
     if (!holesInMerge.isEmpty()) {
       LOG.info("holes in [ " + mergedCluster.getName() + " ] " + holesInMerge);
     }
 
-    // perform recursive listing of paths in target cluster
+    // perform parallel recursive listing of paths in destination cluster
     Path mirrorPath = new Path(mirrorCluster.getFinalDestDirRoot(), streamName);
     FileSystem mirrorFs = FileSystem.get(mirrorCluster.getHadoopConf());
     startPath = getstartPath(mirrorPath);
     endPath = getEndPath(mirrorPath);
-    /*
-     * list all files in mirror stream using ParallelRecursiveListing utility
-     */
     ParallelRecursiveListing mirrorParallelListing =
         new ParallelRecursiveListing(numThreads, startPath, endPath);
     List<FileStatus> mirrorStreamFiles = mirrorParallelListing.getListing(
         mirrorPath, mirrorFs, true);
-    // find holes on mirror cluster
+    
+    // find holes in destination cluster
     holesInMirror.addAll(findHoles(mirrorStreamFiles, mirrorPath, mirrorFs));
     if (!holesInMirror.isEmpty()) {
       LOG.info("holes in [ " + mirrorCluster.getName() + " ] " + holesInMirror);
@@ -172,8 +168,9 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     Calendar cal = Calendar.getInstance();
     cal.add(Calendar.HOUR_OF_DAY, -retentionHours);
     if (cal.getTime().after(startTime)) {
-      throw new IllegalArgumentException("provided start time is" +
-          " invalid(i.e. beyond the retention period) ");
+      throw new IllegalArgumentException("Provided start time [" + startTime.toString()
+          + "] is beyond the retention period [" + cal.getTime().toString()
+          + "] for cluster [" + cluster.getName() + "]");
     }
   }
 
