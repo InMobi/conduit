@@ -55,6 +55,11 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   }
 
   public void execute() throws Exception {
+    // check whether the given start time is beyond retention period for all 
+    // source clusters
+    for (Cluster srcCluster : srcClusterList) {
+      validateStartTime(srcCluster);
+    }
     // perform recursive listing on merge cluster
     Map<String, FileStatus> mergeStreamFileListing = new TreeMap<String, FileStatus>();
     Path mergePath = new Path(mergeCluster.getFinalDestDirRoot(), streamName);
@@ -66,7 +71,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
     //find duplicates on merged cluster
     findDuplicates(mergeStreamFileStatuses, mergeStreamFileListing);
-
+    // find holes on merge cluster
     holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
     if (!holesInMerge.isEmpty()) {
       LOG.info("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
@@ -77,8 +82,6 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     for (Cluster srcCluster : srcClusterList) {
       Path localStreamPath = new Path(srcCluster.getLocalFinalDestDirRoot(),
           streamName);
-      // check whether the given start time is beyond retention period
-      validateStartTime(srcCluster);
       FileSystem localFs = FileSystem.get(srcCluster.getHadoopConf());
       Path startPath = new Path(localStreamPath,
           Cluster.getDateAsYYYYMMDDHHMNPath(startTime));
@@ -102,12 +105,10 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       //find missing paths on merge cluster
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
 
-      if (fix) {
-        if (!missingPaths.isEmpty()) {
-          copyMissingPaths(srcCluster);
-          // clear missing paths list
-          missingPaths.clear();
-        }
+      if (fix && !missingPaths.isEmpty()) {
+        copyMissingPaths(srcCluster);
+        // clear missing paths list
+        missingPaths.clear();
       }
       // clear the localStream file list map
       localStreamFileListing.clear();
