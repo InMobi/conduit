@@ -168,8 +168,9 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     Calendar cal = Calendar.getInstance();
     cal.add(Calendar.HOUR_OF_DAY, -retentionHours);
     if (cal.getTime().after(startTime)) {
-      throw new IllegalArgumentException("provided start time is" +
-          " invalid(i.e. beyond the retention period) ");
+      throw new IllegalArgumentException("Provided start time [" + startTime.toString()
+          + "] is beyond the retention period [" + cal.getTime().toString() 
+          + "] for cluster [" + srcCluster.getName() + "]");
     }
   }
 
