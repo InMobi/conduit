@@ -98,13 +98,16 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     }
 
     // find the missing paths
-    findMissingPaths(mergedStreamFiles, mirrorStreamFiles);
+    findMissingPaths(mergedStreamFiles, mirrorStreamFiles, true);
+
+    // find extra files in mirror stream
+    findMissingPaths(mirrorStreamFiles, mergedStreamFiles, false);
 
     // check if there are missing paths that need to be copied to mirror stream
     if (fix) {
       if (!holesInMerge.isEmpty()) {
         throw new IllegalStateException("fix holes in source cluster before" +
-        		" fixing mirror stream");
+            " fixing mirror stream");
       }
       if (!missingPaths.isEmpty()) {
         LOG.info("Number of missing paths to be copied: " + missingPaths.size());      
@@ -115,7 +118,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   }
 
   protected void findMissingPaths(List<FileStatus> mergedStreamFiles,
-      List<FileStatus> mirrorStreamFiles) {
+      List<FileStatus> mirrorStreamFiles, boolean addToMissingPtahs) {
     Map<String, FileStatus> srcListingMap = new TreeMap<String, FileStatus>();
     Map<String, FileStatus> destListingMap = new TreeMap<String, FileStatus>();
     prepareMapFromList(mergedStreamFiles, srcListingMap, mergedCluster);
@@ -125,8 +128,13 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
       fileName = srcEntry.getKey();
       if (!destListingMap.containsKey(fileName)) {
         FileStatus srcFileStatus = srcEntry.getValue();
-        LOG.info("Missing path " + srcFileStatus.getPath());
-        missingPaths.put(getFinalDestinationPath(srcFileStatus), srcFileStatus);
+        if (addToMissingPtahs) {
+          LOG.info("Missing path " + srcFileStatus.getPath());
+          missingPaths.put(getFinalDestinationPath(srcFileStatus), srcFileStatus);
+        } else {
+          LOG.info("Extra file exists on mirror stream " +
+              srcFileStatus.getPath());
+        }
       }
     }
   }
