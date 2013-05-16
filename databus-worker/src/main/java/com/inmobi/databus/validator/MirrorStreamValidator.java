@@ -97,38 +97,45 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
       LOG.info("holes in [ " + mirrorCluster.getName() + " ] " + holesInMirror);
     }
 
-    // find the missing paths
-    findMissingPaths(mergedStreamFiles, mirrorStreamFiles);
+    // find the missing and extra paths 
+    findMissingAndExtraPaths(mergedStreamFiles, mirrorStreamFiles);
 
     // check if there are missing paths that need to be copied to mirror stream
     if (fix) {
+      if (!holesInMerge.isEmpty()) {
+        throw new IllegalStateException("Holes found in source of mirror stream." +
+            " Fix holes in source cluster before fixing mirror stream");
+      }
+
       if (!missingPaths.isEmpty()) {
         LOG.info("Number of missing paths to be copied: " + missingPaths.size());      
         // copy the missing paths
         copyMissingPaths();
       }
-      if (!holesInMerge.isEmpty()) {
-        fixHoles(holesInMerge, mergedFs);
-      }
-      if (!holesInMirror.isEmpty()) {
-        fixHoles(holesInMirror, mirrorFs);
-      }
     }
   }
 
-  protected void findMissingPaths(List<FileStatus> mergedStreamFiles,
+  protected void findMissingAndExtraPaths(List<FileStatus> mergedStreamFiles,
       List<FileStatus> mirrorStreamFiles) {
-    Map<String, FileStatus> srcListingMap = new TreeMap<String, FileStatus>();
-    Map<String, FileStatus> destListingMap = new TreeMap<String, FileStatus>();
-    prepareMapFromList(mergedStreamFiles, srcListingMap, mergedCluster);
-    prepareMapFromList(mirrorStreamFiles, destListingMap, mirrorCluster);
+    Map<String, FileStatus> mergeStreamListing = new TreeMap<String, FileStatus>();
+    Map<String, FileStatus> mirrorStreamListing = new TreeMap<String, FileStatus>();
+    prepareMapFromList(mergedStreamFiles, mergeStreamListing, mergedCluster);
+    prepareMapFromList(mirrorStreamFiles, mirrorStreamListing, mirrorCluster);
     String fileName = null;
-    for (Map.Entry<String, FileStatus> srcEntry : srcListingMap.entrySet()) {
+    for (Map.Entry<String, FileStatus> srcEntry : mergeStreamListing.entrySet()) {
       fileName = srcEntry.getKey();
-      if (!destListingMap.containsKey(fileName)) {
+      if (!mirrorStreamListing.containsKey(fileName)) {
         FileStatus srcFileStatus = srcEntry.getValue();
         LOG.info("Missing path " + srcFileStatus.getPath());
         missingPaths.put(getFinalDestinationPath(srcFileStatus), srcFileStatus);
+      }
+    }
+
+    for (Map.Entry<String, FileStatus> destEntry : mirrorStreamListing.entrySet()) {
+      fileName = destEntry.getKey();
+      if (!mergeStreamListing.containsKey(fileName)) {
+        LOG.info("Extra file present in mirror stream " +
+            destEntry.getValue().getPath());
       }
     }
   }
