@@ -84,6 +84,11 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected abstract void execute() throws Exception;
 
+  public static String getCheckPointKey(String serviceName, String stream,
+      String source) {
+    return serviceName + "_" + stream + "_" + source;
+  }
+
   protected void preExecute() throws Exception {
   }
 

@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -38,9 +39,11 @@ public class CheckPointCreator {
   String getCheckPointKey(String stream, String srcCluster,
       boolean isMerge) {
     if (isMerge)
-      return "MergedStreamService" + srcCluster + stream;
+      return AbstractService.getCheckPointKey("MergedStreamService", stream,
+          srcCluster);
     else
-      return "MirrorStreamService" + srcCluster + stream;
+      return AbstractService.getCheckPointKey("MirrorStreamService", stream,
+          srcCluster);
   }
 
   public void createCheckPoint() throws Exception {

@@ -270,7 +270,8 @@ public abstract class DistcpBaseService extends AbstractService {
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
 
   protected String getCheckPointKey(String stream) {
-    return getClass().getSimpleName() + srcCluster.getName() + stream;
+    return getCheckPointKey(getClass().getSimpleName(), stream,
+        srcCluster.getName());
   }
 
   // protected abstract void filterMinFilePaths(Set<String> minFilesSet);
