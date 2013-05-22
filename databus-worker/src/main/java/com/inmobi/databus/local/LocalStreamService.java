@@ -17,7 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -291,9 +290,17 @@ ConfigConstants {
         TreeMap<String, FileStatus> collectorPaths = new TreeMap<String, FileStatus>();
         // check point for this collector
         String collectorName = collector.getPath().getName();
-        String checkPointKey = streamName + collectorName;
+        String checkPointKey = getCheckPointKey(
+            this.getClass().getSimpleName(), streamName, collectorName);
+
         String checkPointValue = null;
         byte[] value = checkpointProvider.read(checkPointKey);
+        if (value == null) {
+          // In case checkpointKey with newer name format is absent,read old
+          // checkpoint key
+          String oldCheckPointKey = streamName + collectorName;
+          value = checkpointProvider.read(oldCheckPointKey);
+        }
         if (value != null)
           checkPointValue = new String(value);
         LOG.debug("CheckPoint Key [" + checkPointKey + "] value [ "
