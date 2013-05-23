@@ -44,8 +44,8 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, null, CLUSTER2,
         STREAM1, date);
     creator.createCheckPoint();
-    String ck1 = "MergedStreamService" + CLUSTER1 + STREAM1;
-    String ck2 = "MergedStreamService" + CLUSTER2 + STREAM1;
+    String ck1 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER1;
+    String ck2 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER2;
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(),
  ck1 + ".ck")));
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(),
@@ -64,8 +64,8 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, null, CLUSTER2,
         STREAM2, date);
     creator.createCheckPoint();
-    String ck1 = "MirrorStreamService" + CLUSTER1 + STREAM2;
-    String ck2 = "MirrorStreamService" + CLUSTER2 + STREAM2;
+    String ck1 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER1;
+    String ck2 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER2;
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(), ck1 + ".ck")));
     assert (!fs2.exists(new Path(cluster2.getCheckpointDir(), ck2 + ".ck")));
     CheckpointProvider provider = new FSCheckpointProvider(
@@ -84,8 +84,8 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, CLUSTER1,
         CLUSTER2, STREAM1, date);
     creator.createCheckPoint();
-    String ck1 = "MergedStreamService" + CLUSTER1 + STREAM1;
-    String ck2 = "MergedStreamService" + CLUSTER2 + STREAM1;
+    String ck1 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER1;
+    String ck2 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER2;
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(), ck1 + ".ck")));
     assert (!fs2.exists(new Path(cluster2.getCheckpointDir(), ck2 + ".ck")));
     CheckpointProvider provider = new FSCheckpointProvider(
@@ -101,8 +101,8 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, CLUSTER1,
         CLUSTER2, STREAM2, date);
     creator.createCheckPoint();
-    String ck1 = "MirrorStreamService" + CLUSTER1 + STREAM2;
-    String ck2 = "MirrorStreamService" + CLUSTER2 + STREAM2;
+    String ck1 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER1;
+    String ck2 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER2;
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(), ck1 + ".ck")));
     assert (!fs2.exists(new Path(cluster2.getCheckpointDir(), ck2 + ".ck")));
     CheckpointProvider provider = new FSCheckpointProvider(
