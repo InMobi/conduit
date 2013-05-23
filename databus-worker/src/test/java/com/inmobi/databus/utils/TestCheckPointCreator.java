@@ -7,11 +7,14 @@ import org.apache.hadoop.fs.Path;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.FSCheckpointProvider;
+import com.inmobi.databus.distcp.MergedStreamService;
+import com.inmobi.databus.distcp.MirrorStreamService;
 
 public class TestCheckPointCreator {
   public static final String CLUSTER1 = "testcluster1";
@@ -44,8 +47,10 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, null, CLUSTER2,
         STREAM1, date);
     creator.createCheckPoint();
-    String ck1 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER1;
-    String ck2 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER2;
+    String ck1 = AbstractService.getCheckPointKey(
+        MergedStreamService.class.getSimpleName(), STREAM1, CLUSTER1);
+    String ck2 = AbstractService.getCheckPointKey(
+        MergedStreamService.class.getSimpleName(), STREAM1, CLUSTER2);
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(),
  ck1 + ".ck")));
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(),
@@ -64,8 +69,10 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, null, CLUSTER2,
         STREAM2, date);
     creator.createCheckPoint();
-    String ck1 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER1;
-    String ck2 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER2;
+    String ck1 = AbstractService.getCheckPointKey(
+        MirrorStreamService.class.getSimpleName(), STREAM2, CLUSTER1);
+    String ck2 = AbstractService.getCheckPointKey(
+        MirrorStreamService.class.getSimpleName(), STREAM2, CLUSTER2);
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(), ck1 + ".ck")));
     assert (!fs2.exists(new Path(cluster2.getCheckpointDir(), ck2 + ".ck")));
     CheckpointProvider provider = new FSCheckpointProvider(
@@ -84,8 +91,10 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, CLUSTER1,
         CLUSTER2, STREAM1, date);
     creator.createCheckPoint();
-    String ck1 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER1;
-    String ck2 = "MergedStreamService" + "_" + STREAM1 + "_" + CLUSTER2;
+    String ck1 = AbstractService.getCheckPointKey(
+        MergedStreamService.class.getSimpleName(), STREAM1, CLUSTER1);
+    String ck2 = AbstractService.getCheckPointKey(
+        MergedStreamService.class.getSimpleName(), STREAM1, CLUSTER2);
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(), ck1 + ".ck")));
     assert (!fs2.exists(new Path(cluster2.getCheckpointDir(), ck2 + ".ck")));
     CheckpointProvider provider = new FSCheckpointProvider(
@@ -101,8 +110,10 @@ public class TestCheckPointCreator {
     CheckPointCreator creator = new CheckPointCreator(config, CLUSTER1,
         CLUSTER2, STREAM2, date);
     creator.createCheckPoint();
-    String ck1 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER1;
-    String ck2 = "MirrorStreamService" + "_" + STREAM2 + "_" +CLUSTER2;
+    String ck1 = AbstractService.getCheckPointKey(
+        MirrorStreamService.class.getSimpleName(), STREAM2, CLUSTER1);
+    String ck2 = AbstractService.getCheckPointKey(
+        MirrorStreamService.class.getSimpleName(), STREAM2, CLUSTER2);
     assert (fs2.exists(new Path(cluster2.getCheckpointDir(), ck1 + ".ck")));
     assert (!fs2.exists(new Path(cluster2.getCheckpointDir(), ck2 + ".ck")));
     CheckpointProvider provider = new FSCheckpointProvider(
