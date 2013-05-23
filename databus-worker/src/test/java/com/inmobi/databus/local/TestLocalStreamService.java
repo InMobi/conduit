@@ -233,8 +233,9 @@ public class TestLocalStreamService extends LocalStreamService implements
           
           CheckpointProvider provider = this.getCheckpointProvider();
           
-          String checkpoint = new String(provider.read(sstream.getValue()
-              .getName() + srcCluster.getName()));
+          String checkpoint = new String(provider.read(
+              getCheckPointKey(getClass().getSimpleName(),
+                  sstream.getValue().getName(), srcCluster.getName())));
           
           LOG.debug("Checkpoint for " + sstream.getValue().getName()
               + srcCluster.getName() + " is " + checkpoint);
