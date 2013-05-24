@@ -59,7 +59,6 @@ public class Databus implements Service, DatabusConstants {
 
   private final Set<String> clustersToProcess;
   private final List<AbstractService> services = new ArrayList<AbstractService>();
-  private boolean databusStarted = false;
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess) {
     this.config = config;
@@ -187,16 +186,11 @@ public class Databus implements Service, DatabusConstants {
 
   @Override
   public void stop() throws Exception {
-    synchronized (services) {
-      if (!databusStarted) {
-        return;
-      }
-
-      for (AbstractService service : services) {
-        LOG.info("Stopping [" + service.getName() + "]");
-        service.stop();
-      }
+    for (AbstractService service : services) {
+      LOG.info("Stopping [" + service.getName() + "]");
+      service.stop();
     }
+    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -205,7 +199,6 @@ public class Databus implements Service, DatabusConstants {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
-    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -217,15 +210,12 @@ public class Databus implements Service, DatabusConstants {
   
   public void startDatabus() throws Exception {
     try {
-      synchronized (services) {
-        init();
-        for (AbstractService service : services) {
-          service.start();
-        }
-        databusStarted = true;
+      init();
+      for (AbstractService service : services) {
+        service.start();
       }
     } catch (Exception e) {
-      LOG.warn("Error in initializing databus", e);
+      LOG.warn("Error is starting service", e);
     }
     // Block this method to avoid losing leadership of current work
     join();
