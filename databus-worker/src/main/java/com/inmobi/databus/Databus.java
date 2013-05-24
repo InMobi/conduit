@@ -197,7 +197,6 @@ public class Databus implements Service, DatabusConstants {
         service.stop();
       }
     }
-    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -206,6 +205,7 @@ public class Databus implements Service, DatabusConstants {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
+    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -225,7 +225,7 @@ public class Databus implements Service, DatabusConstants {
         databusStarted = true;
       }
     } catch (Exception e) {
-      LOG.warn("Error is starting service", e);
+      LOG.warn("Error in initializing databus", e);
     }
     // Block this method to avoid losing leadership of current work
     join();
