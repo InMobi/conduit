@@ -30,9 +30,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.distcp.MirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
@@ -339,25 +336,27 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
+
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          try {
+            LOG.info("Starting to stop databus...");
+            databus.stop();
+          } catch (Exception e) {
+            LOG.warn("Error in shutting down databus", e);
+          }
+        }
+      });
+
       if (enableZookeeper) {
         LOG.info("Starting CuratorLeaderManager for eleader election ");
         CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(
             databus, databusClusterId.toString(), zkConnectString);
         curatorLeaderManager.start();
-      } else
+      } else {
         databus.start();
-      Signal.handle(new Signal("INT"), new SignalHandler() {
-        @Override
-        public void handle(Signal signal) {
-          try {
-            LOG.info("Starting to stop databus...");
-            databus.stop();
-          }
-          catch (Exception e) {
-            LOG.warn("Error in shutting down databus", e);
-          }
-        }
-      });
+      }
     }
     catch (Exception e) {
       LOG.warn("Error in starting Databus daemon", e);
