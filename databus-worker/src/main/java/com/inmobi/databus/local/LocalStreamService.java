@@ -524,10 +524,6 @@ public class LocalStreamService extends AbstractService implements
       public int compare(FileStatus file1, FileStatus file2) {
         long file1Time = file1.getModificationTime();
         long file2Time = file2.getModificationTime();
-        System.out.println("Modification time of file " + file1.getPath()
-            + "is " + file1Time);
-        System.out.println("Modification time of file " + file2.getPath()
-            + "is " + file2Time);
         if ((file1Time < file2Time))
           return -1;
         else
