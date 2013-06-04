@@ -30,9 +30,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.distcp.MirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
@@ -59,7 +56,7 @@ public class Databus implements Service, DatabusConstants {
 
   private final Set<String> clustersToProcess;
   private final List<AbstractService> services = new ArrayList<AbstractService>();
-
+  private boolean databusStarted = false;
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess) {
     this.config = config;
@@ -187,11 +184,16 @@ public class Databus implements Service, DatabusConstants {
 
   @Override
   public void stop() throws Exception {
-    for (AbstractService service : services) {
-      LOG.info("Stopping [" + service.getName() + "]");
-      service.stop();
+    synchronized (services) {
+      if (!databusStarted) {
+        return;
+      }
+
+      for (AbstractService service : services) {
+        LOG.info("Stopping [" + service.getName() + "]");
+        service.stop();
+      }
     }
-    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -200,6 +202,7 @@ public class Databus implements Service, DatabusConstants {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
+    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -211,12 +214,15 @@ public class Databus implements Service, DatabusConstants {
   
   public void startDatabus() throws Exception {
     try {
-      init();
-      for (AbstractService service : services) {
-        service.start();
+      synchronized (services) {
+        init();
+        for (AbstractService service : services) {
+          service.start();
+        }
+        databusStarted = true;
       }
     } catch (Exception e) {
-      LOG.warn("Error is starting service", e);
+      LOG.warn("Error in initializing databus. ", e);
     }
     // Block this method to avoid losing leadership of current work
     join();
@@ -330,25 +336,27 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
+
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          try {
+            LOG.info("Starting to stop databus...");
+            databus.stop();
+          } catch (Exception e) {
+            LOG.warn("Error in shutting down databus", e);
+          }
+        }
+      });
+
       if (enableZookeeper) {
         LOG.info("Starting CuratorLeaderManager for eleader election ");
         CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(
             databus, databusClusterId.toString(), zkConnectString);
         curatorLeaderManager.start();
-      } else
+      } else {
         databus.start();
-      Signal.handle(new Signal("INT"), new SignalHandler() {
-        @Override
-        public void handle(Signal signal) {
-          try {
-            LOG.info("Starting to stop databus...");
-            databus.stop();
-          }
-          catch (Exception e) {
-            LOG.warn("Error in shutting down databus", e);
-          }
-        }
-      });
+      }
     }
     catch (Exception e) {
       LOG.warn("Error in starting Databus daemon", e);
