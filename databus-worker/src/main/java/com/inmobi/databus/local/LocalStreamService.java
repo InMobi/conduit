@@ -511,8 +511,7 @@ public class LocalStreamService extends AbstractService implements
   }
 
   /*
-   * @returns null: if there are no files or the most significant timestamped
-   * file is 5 min back.
+   * @returns null: if there are no files
    */
   protected String getCurrentFile(FileSystem fs, FileStatus[] files) {
     // Proposed Algo :-> Sort files based on timestamp
