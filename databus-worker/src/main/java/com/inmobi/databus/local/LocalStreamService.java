@@ -337,6 +337,7 @@ public class LocalStreamService extends AbstractService implements
     return totalSize;
   }
 
+
   // This method is taken from DistCp SimpleCopyListing class.
   private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
     // if the file is not an instance of RawLocaleFileStatus, simply return it
@@ -359,12 +360,6 @@ public class LocalStreamService extends AbstractService implements
   }
 
 
-  public void createListing(FileSystem fs, FileStatus fileStatus,
-      Map<FileStatus, String> results, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths) throws IOException {
-    createListing(fs, fileStatus, results, trashSet, checkpointPaths, 300000);
-  }
-
   public static class CollectorPathFilter implements PathFilter {
     public boolean accept(Path path) {
       if (path.getName().endsWith("current")
@@ -376,8 +371,8 @@ public class LocalStreamService extends AbstractService implements
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths, long lastFileTimeout)
-      throws IOException {
+      Map<String, FileStatus> checkpointPaths)
+          throws IOException {
     List<FileStatus> streamsFileStatus = new ArrayList<FileStatus>();
     FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
     for (String stream : streamsToProcess) {
@@ -409,7 +404,7 @@ public class LocalStreamService extends AbstractService implements
           continue;
         }
 
-        String currentFile = getCurrentFile(fs, files, lastFileTimeout);
+        String currentFile = getCurrentFile(fs, files);
 
         for (FileStatus file : files) {
           processFile(file, currentFile, checkPointValue, fs, results,
@@ -516,27 +511,23 @@ public class LocalStreamService extends AbstractService implements
   }
 
   /*
-   * @returns null: if there are no files or the most significant timestamped
-   * file is 5 min back.
+   * @returns null: if there are no files
    */
-  protected String getCurrentFile(FileSystem fs, FileStatus[] files,
-      long lastFileTimeout) {
+  protected String getCurrentFile(FileSystem fs, FileStatus[] files) {
     // Proposed Algo :-> Sort files based on timestamp
-    // if ((currentTimeStamp - last file's timestamp) > 5min ||
     // if there are no files)
     // then null (implying process this file as non-current file)
     // else
     // return last file as the current file
-    class FileTimeStampComparator implements Comparator {
-      public int compare(Object o, Object o1) {
-        FileStatus file1 = (FileStatus) o;
-        FileStatus file2 = (FileStatus) o1;
+    class FileTimeStampComparator implements Comparator<FileStatus> {
+      public int compare(FileStatus file1, FileStatus file2) {
         long file1Time = file1.getModificationTime();
         long file2Time = file2.getModificationTime();
         if ((file1Time < file2Time))
           return -1;
         else
           return 1;
+
       }
     }
 
@@ -550,12 +541,6 @@ public class LocalStreamService extends AbstractService implements
 
     // get last file from set
     FileStatus lastFile = sortedFiles.last();
-
-    long currentTime = System.currentTimeMillis();
-    long lastFileTime = lastFile.getModificationTime();
-    if (currentTime - lastFileTime >= lastFileTimeout) {
-      return null;
-    } else
       return lastFile.getPath().getName();
   }
 

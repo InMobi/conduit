@@ -190,6 +190,7 @@
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
+        <version>0.9</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
