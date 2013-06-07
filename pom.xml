@@ -8,7 +8,7 @@
 
   <groupId>com.inmobi.databus</groupId>
   <artifactId>databus-parent</artifactId>
-  <version>1.5.2</version>
+  <version>1.5.3-SNAPSHOT</version>
   <name>Databus</name>
   <packaging>pom</packaging>
 
