@@ -234,7 +234,7 @@ public class MergedStreamService extends DistcpBaseService {
   private String toStringOfFileStatus(List<FileStatus> list) {
     StringBuffer str = new StringBuffer();
     for (FileStatus f : list) {
-      str.append(f.getPath().toString() + ",");
+      str.append(f.getPath().toString()).append(",");
     }
     return str.toString();
   }
