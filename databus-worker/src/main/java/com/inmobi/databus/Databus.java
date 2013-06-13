@@ -46,6 +46,13 @@ public class Databus implements Service, DatabusConstants {
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
+  private final Set<String> clustersToProcess;
+  private final List<AbstractService> services = new ArrayList<AbstractService>();
+
+  public enum DatabusState {
+    NONE, DATABUS_LEADER_ELECTION_COMPLETED, DATABUS_SERVICES_STARTED
+  }
+  public volatile DatabusState databusStatus = DatabusState.NONE;
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -56,10 +63,6 @@ public class Databus implements Service, DatabusConstants {
   public Set<String> getClustersToProcess() {
     return clustersToProcess;
   }
-
-  private final Set<String> clustersToProcess;
-  private final List<AbstractService> services = new ArrayList<AbstractService>();
-
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess) {
     this.config = config;
@@ -187,11 +190,21 @@ public class Databus implements Service, DatabusConstants {
 
   @Override
   public void stop() throws Exception {
-    for (AbstractService service : services) {
-      LOG.info("Stopping [" + service.getName() + "]");
-      service.stop();
+
+    if (databusStatus == DatabusState.NONE) {
+      LOG.info("Failed to stop databus worker since leader election is in" +
+          " progress");
+    } else if (databusStatus == DatabusState.DATABUS_LEADER_ELECTION_COMPLETED) {
+      LOG.info("Failed to stop databus worker since databus is not completely" +
+          " started");
+    } else {
+      synchronized (services) {
+        for (AbstractService service : services) {
+          LOG.info("Stopping [" + service.getName() + "]");
+          service.stop();
+        }
+      }
     }
-    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -200,10 +213,12 @@ public class Databus implements Service, DatabusConstants {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
+    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
   public void start() throws Exception{
+    databusStatus = DatabusState.DATABUS_LEADER_ELECTION_COMPLETED;
     startDatabus();
     //If all threads are finished release leadership
     System.exit(0);
@@ -211,12 +226,15 @@ public class Databus implements Service, DatabusConstants {
   
   public void startDatabus() throws Exception {
     try {
-      init();
-      for (AbstractService service : services) {
-        service.start();
+      synchronized (services) {
+        init();
+        for (AbstractService service : services) {
+          service.start();
+        }
       }
+      databusStatus = DatabusState.DATABUS_SERVICES_STARTED;
     } catch (Exception e) {
-      LOG.warn("Error is starting service", e);
+      LOG.warn("Error in initializing databus", e);
     }
     // Block this method to avoid losing leadership of current work
     join();
@@ -330,14 +348,8 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
-      if (enableZookeeper) {
-        LOG.info("Starting CuratorLeaderManager for eleader election ");
-        CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(
-            databus, databusClusterId.toString(), zkConnectString);
-        curatorLeaderManager.start();
-      } else
-        databus.start();
-      Signal.handle(new Signal("INT"), new SignalHandler() {
+
+      Signal.handle(new Signal("TERM"), new SignalHandler() {
         @Override
         public void handle(Signal signal) {
           try {
@@ -349,6 +361,15 @@ public class Databus implements Service, DatabusConstants {
           }
         }
       });
+
+      if (enableZookeeper) {
+        LOG.info("Starting CuratorLeaderManager for leader election ");
+        CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(
+            databus, databusClusterId.toString(), zkConnectString);
+        curatorLeaderManager.start();
+      } else {
+        databus.start();
+      }
     }
     catch (Exception e) {
       LOG.warn("Error in starting Databus daemon", e);
