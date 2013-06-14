@@ -83,6 +83,12 @@ public class CuratorLeaderManager implements LeaderSelectorListener {
     }
   }
 
-  
-
+  public void close() {
+    if (leaderSelector != null) {
+      leaderSelector.close();
+    }
+    if (client != null) {
+      client.close();
+    }
+  }
 }
