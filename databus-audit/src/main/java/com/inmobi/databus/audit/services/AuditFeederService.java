@@ -26,6 +26,9 @@ import com.inmobi.messaging.Message;
 import com.inmobi.messaging.consumer.EndOfStreamException;
 import com.inmobi.messaging.consumer.MessageConsumer;
 import com.inmobi.messaging.consumer.MessageConsumerFactory;
+import com.inmobi.messaging.consumer.databus.DatabusConsumer;
+import com.inmobi.messaging.consumer.databus.DatabusConsumerConfig;
+import com.inmobi.messaging.util.AuditDBConstants;
 import com.inmobi.messaging.util.AuditDBHelper;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -117,22 +120,23 @@ public class AuditFeederService extends AuditService {
 
   Map<TupleKey, Tuple> tuples = new HashMap<TupleKey, Tuple>();
 
-  private static final String ROOT_DIR_KEY = "databus.consumer.rootdirs";
-  private static final Log LOG = LogFactory.getLog(AuditFeederService.class);
-  private static final String CONSUMER_CLASSNAME = "com.inmobi.messaging.consumer.databus.DatabusConsumer";
 
+  private static final Log LOG = LogFactory.getLog(AuditFeederService.class);
+  private static final String CONSUMER_CLASSNAME = DatabusConsumer.class
+      .getCanonicalName();
   private final String clusterName;
   private volatile MessageConsumer consumer = null;
 
   private volatile boolean isStop = false;
-  private static final String MESSAGES_PER_BATCH_KEY = "messages.batch.num";
-  private int DEFAULT_MSG_PER_BATCH = 1000;
+
+  private int DEFAULT_MSG_PER_BATCH = 5000;
   private int msgsPerBatch;
   private TDeserializer deserializer = new TDeserializer();
   private final ClientConfig config;
   private final static long RETRY_INTERVAL = 60000;
   private final String rootDir;
   private static final String START_TIME_KEY = MessageConsumerFactory.ABSOLUTE_START_TIME;
+  private static final String START_FROM_STARTING_KEY = DatabusConsumerConfig.startOfStreamConfig;
   private static final int DEFAULT_TIMEOUT = 30;
 
   private final Counter messagesProcessed;
@@ -154,7 +158,7 @@ public class AuditFeederService extends AuditService {
     this.rootDir = rootDir;
     dbHelper = new AuditDBHelper(config);
     consumer = getConsumer(config);
-    msgsPerBatch = config.getInteger(MESSAGES_PER_BATCH_KEY,
+    msgsPerBatch = config.getInteger(AuditDBConstants.MESSAGES_PER_BATCH,
         DEFAULT_MSG_PER_BATCH);
     LOG.info("Messages per batch " + msgsPerBatch);
     messagesProcessed = AuditStats.metrics.counter(clusterName
@@ -307,7 +311,7 @@ public class AuditFeederService extends AuditService {
   }
 
   private MessageConsumer getConsumer(ClientConfig config) throws IOException {
-    config.set(ROOT_DIR_KEY, rootDir);
+    config.set(DatabusConsumerConfig.databusRootDirsConfig, rootDir);
     String consumerName = clusterName + "_consumer";
     return MessageConsumerFactory.create(config, CONSUMER_CLASSNAME,
         AuditUtil.AUDIT_STREAM_TOPIC_NAME, consumerName);
@@ -327,8 +331,12 @@ public class AuditFeederService extends AuditService {
 
   @Override
   public void execute() {
+    if (config.getString(START_TIME_KEY) != null) {
     LOG.info("Starting the run of audit feeder for cluster " + clusterName
         + " and start time " + config.getString(START_TIME_KEY));
+    } else {
+      config.set(START_FROM_STARTING_KEY, "true");
+    }
     Message msg;
     AuditMessage auditMsg;
     try {

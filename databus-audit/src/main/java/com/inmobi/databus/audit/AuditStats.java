@@ -22,6 +22,7 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.services.AuditFeederService;
 import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.util.AuditDBConstants;
 
 /*
  * This class is responsible for launching multiple AuditStatsFeeder instances one per cluster
@@ -31,9 +32,7 @@ public class AuditStats {
   private static final String DATABUS_CONF_FILE_KEY = "feeder.databus.conf";
   private static final Log LOG = LogFactory.getLog(AuditStats.class);
   public final static MetricRegistry metrics = new MetricRegistry();
-  private static final String GANGLIA_HOST = "feeder.ganglia.host";
-  private static final String GANGLIA_PORT = "feeder.ganglia.port";
-  private static final String CSV_REPORT_DIR = "feeder.csv.report.dir";
+
 
 
   private synchronized void start(List<AuditService> feeders)
@@ -66,8 +65,8 @@ public class AuditStats {
   }
 
   private void startMetricsReporter(ClientConfig config) {
-    String gangliaHost = config.getString(GANGLIA_HOST);
-    int gangliaPort = config.getInteger(GANGLIA_PORT, 8649);
+    String gangliaHost = config.getString(AuditDBConstants.GANGLIA_HOST);
+    int gangliaPort = config.getInteger(AuditDBConstants.GANGLIA_PORT, 8649);
     if (gangliaHost != null) {
       GMetric ganglia;
       try {
@@ -81,7 +80,7 @@ public class AuditStats {
         LOG.error("Cannot start ganglia reporter", e);
       }
     }
-    String csvDir = config.getString(CSV_REPORT_DIR, "/tmp");
+    String csvDir = config.getString(AuditDBConstants.CSV_REPORT_DIR, "/tmp");
     CsvReporter csvreporter = CsvReporter.forRegistry(metrics)
         .formatFor(Locale.US).convertRatesTo(TimeUnit.SECONDS)
         .convertDurationsTo(TimeUnit.MILLISECONDS).build(new File(csvDir));

@@ -26,8 +26,10 @@ public class AuditDBHelper {
   private static final Log LOG = LogFactory.getLog(AuditDBHelper.class);
   private final ClientConfig config;
 
+  final private String tableName;
   public AuditDBHelper(ClientConfig config) {
     this.config = config;
+    tableName = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
   }
 
   public static Connection getConnection(String driverName, String url,
@@ -126,12 +128,12 @@ public class AuditDBHelper {
     return rs;
   }
 
-  private static String getUpdateStmtForUpdation() {
+  private String getUpdateStmtForUpdation() {
     String setString = "";
     for (LatencyColumns columns : LatencyColumns.values()) {
       setString += ", " + columns.toString() + " = ?";
     }
-    String updateStatement = "update " + AuditDBConstants.TABLE_NAME + " set " +
+    String updateStatement = "update " + tableName + " set " +
         "" + AuditDBConstants.SENT + " = ?" + setString + " where " +
         Column.HOSTNAME + " = ? and " + Column.TIER + " = ? and " +
         Column.TOPIC +
@@ -141,14 +143,15 @@ public class AuditDBHelper {
     return updateStatement;
   }
 
-  private static String getInsertStmtForUpdation() {
+  private String getInsertStmtForUpdation() {
     String columnString = "", columnNames = "";
     for (LatencyColumns column : LatencyColumns.values()) {
       columnNames += column.toString() + ", ";
       columnString += "?, ";
     }
     String insertStatement =
-        "insert into " + AuditDBConstants.TABLE_NAME + " (" + columnNames +
+ "insert into " + tableName + " (" + columnNames
+        +
             AuditDBConstants.TIMESTAMP + "," + Column.HOSTNAME +
             ", " + Column.TIER + ", " + Column.TOPIC +
             ", " + Column.CLUSTER + ", " + AuditDBConstants.SENT + ") values " +
@@ -157,9 +160,10 @@ public class AuditDBHelper {
     return insertStatement;
   }
 
-  public static String getSelectStmtForUpdation() {
+  public String getSelectStmtForUpdation() {
     String selectstatement =
-        "select * from " + AuditDBConstants.TABLE_NAME + " where " +
+ "select * from " + tableName + " where "
+        +
             AuditDBConstants.TIMESTAMP + " = ? and " + Column.HOSTNAME + " = " +
             "? and " + Column.TOPIC + " = ? and " + Column.TIER + "" +
             " = ? and " + Column.CLUSTER + " = ?";
@@ -325,7 +329,7 @@ public class AuditDBHelper {
     return tuple;
   }
 
-  private static String getSelectStmtForRetrieve(Filter filter,
+  private String getSelectStmtForRetrieve(Filter filter,
                                                  GroupBy groupBy) {
     String sumString = "", whereString = "", groupByString = "";
     for (LatencyColumns latencyColumn : LatencyColumns.values()) {
@@ -351,7 +355,7 @@ public class AuditDBHelper {
     String statement =
         "select " + groupByString + ", Sum(" + AuditDBConstants.SENT + ") as " +
             AuditDBConstants.SENT + sumString + " from " +
-            AuditDBConstants.TABLE_NAME + " where " +
+ tableName + " where " +
             AuditDBConstants.TIMESTAMP + " >= ? and" +
             " " + AuditDBConstants.TIMESTAMP + " < ? " + whereString + " " +
             "group by " + groupByString;

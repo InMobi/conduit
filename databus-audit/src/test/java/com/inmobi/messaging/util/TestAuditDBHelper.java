@@ -1,21 +1,23 @@
 package com.inmobi.messaging.util;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.Set;
+
+import junit.framework.Assert;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.inmobi.databus.audit.AuditStats;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.consumer.audit.Filter;
 import com.inmobi.messaging.consumer.audit.GroupBy;
-import junit.framework.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.Set;
 
 public class TestAuditDBHelper extends  AuditDBUtil {
 
@@ -31,17 +33,16 @@ public class TestAuditDBHelper extends  AuditDBUtil {
 
   @Test(priority = 1)
   public void testUpdate() {
-    String selectStmt = AuditDBHelper.getSelectStmtForUpdation();
+    ClientConfig config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
+    AuditDBHelper helper = new AuditDBHelper(config);
+    String selectStmt = helper.getSelectStmtForUpdation();
     PreparedStatement selectStatement = null;
     ResultSet rs = null;
     try {
       selectStatement = connection.prepareStatement(selectStmt);
-      ClientConfig config = ClientConfig
-          .loadFromClasspath(AuditStats.CONF_FILE);
       rs = getResultSetOfQuery(selectStatement, tuple1);
       Assert.assertNotNull(rs);
       Assert.assertFalse(rs.next());
-      AuditDBHelper helper = new AuditDBHelper(config);
       Assert.assertTrue(helper.update(tupleSet1));
       rs = getResultSetOfQuery(selectStatement, tuple1);
       Assert.assertNotNull(rs);

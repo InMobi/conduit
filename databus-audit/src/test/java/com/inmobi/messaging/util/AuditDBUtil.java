@@ -1,15 +1,20 @@
 package com.inmobi.messaging.util;
 
-import com.inmobi.messaging.ClientConfig;
-import com.inmobi.databus.audit.AuditStats;
-import com.inmobi.databus.audit.LatencyColumns;
-import com.inmobi.messaging.consumer.audit.Tier;
-import com.inmobi.databus.audit.Tuple;
-import junit.framework.Assert;
-
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import junit.framework.Assert;
+
+import com.inmobi.databus.audit.AuditStats;
+import com.inmobi.databus.audit.LatencyColumns;
+import com.inmobi.databus.audit.Tuple;
+import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.consumer.audit.Tier;
 
 public class AuditDBUtil {
   protected Connection connection;
@@ -17,6 +22,7 @@ public class AuditDBUtil {
   protected Set<Tuple> tupleSet1, tupleSet2, tupleSet3;
   protected Date fromDate = new Date(1355314200000l);
   protected Date toDate = new Date(1355314400000l);
+  private String tableName = "audit";
 
   public void setupDB(boolean updateDB) {
     ClientConfig config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
@@ -26,8 +32,7 @@ public class AuditDBUtil {
         config.getString(AuditDBConstants.DB_USERNAME),
         config.getString(AuditDBConstants.DB_PASSWORD));
     Assert.assertTrue(connection != null);
-    String dropTable = "DROP TABLE IF EXISTS "+AuditDBConstants
-        .TABLE_NAME.toUpperCase()+";";
+    String dropTable = "DROP TABLE IF EXISTS " + tableName.toUpperCase() + ";";
     String createTable =
         "CREATE TABLE audit(\n  TIMEINTERVAL bigint,\n  HOSTNAME varchar(25)," +
             "\n  TIER varchar(15),\n  TOPIC varchar(25)," +
