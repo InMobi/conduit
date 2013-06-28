@@ -42,7 +42,6 @@
 
       <includes>
         <include>com.inmobi.databus:databus-worker</include>
-        <include>com.inmobi.databus:databus-audit</include>
       </includes>
 
       <binaries>
@@ -66,13 +65,6 @@
 
     <fileSet>
       <directory>../databus-worker/src/main/resources</directory>
-      <outputDirectory>/conf/</outputDirectory>
-      <includes>
-      <include>**</include>
-      </includes>
-    </fileSet>
-    <fileSet>
-      <directory>../databus-audit/conf</directory>
       <outputDirectory>/conf/</outputDirectory>
       <includes>
       <include>**</include>
