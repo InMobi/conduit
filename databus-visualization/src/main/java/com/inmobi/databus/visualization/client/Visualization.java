@@ -82,8 +82,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     System.out.println("Loading main panel...");
     loadHeader();
     loadFilterPanel();
-    RootPanel.get("gwtPanel").add(header);
-    RootPanel.get("gwtPanel").add(filterPanel);
+    RootPanel.get("headerContainer").add(header);
+    RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
     String startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
