@@ -27,7 +27,7 @@
   </formats>
 
   <baseDirectory>databus-audit-${project.version}</baseDirectory>
-  <includeBaseDirectory>true</includeBaseDirectory>
+  <includeBaseDirectory>false</includeBaseDirectory>
 
   <dependencySets>
     <dependencySet>
@@ -56,6 +56,13 @@
       <outputDirectory>/conf/</outputDirectory>
       <includes>
       <include>**</include>
+      </includes>
+    </fileSet>
+        <fileSet>
+      <directory>../databus-audit/bin</directory>
+      <outputDirectory>/bin/</outputDirectory>
+      <includes>
+        <include>**/audit-client</include>
       </includes>
     </fileSet>
   </fileSets>

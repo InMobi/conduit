@@ -1,6 +1,5 @@
 package com.inmobi.databus.audit;
 
-import com.inmobi.messaging.consumer.audit.GroupBy;
 import com.inmobi.messaging.util.AuditDBUtil;
 import com.inmobi.messaging.util.AuditUtil;
 import junit.framework.Assert;

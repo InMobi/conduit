@@ -11,7 +11,6 @@ import org.apache.thrift.TException;
 
 import com.inmobi.databus.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.consumer.audit.GroupBy;
 import com.inmobi.messaging.util.AuditUtil;
 
 public class AuditDbQuery {
