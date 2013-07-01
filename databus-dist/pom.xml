@@ -41,6 +41,7 @@
 					<descriptors>
 						<descriptor>src/main/assembly/dist.xml</descriptor>
 						<descriptor>src/main/assembly/audit-dist.xml</descriptor>
+						<descriptor>src/main/assembly/visualization-dist.xml</descriptor>
 					</descriptors>
 				</configuration>
 				<executions>
@@ -108,18 +109,31 @@
 										<prefix>/usr/local/databus-audit-${version}</prefix>
 									</mapper>
 								</data>
-								<!-- <data>
-									<src>target/databus-dist-${project.version}-audit/bin/</src>
-									<type>directory</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/usr/local/databus-audit-${version}/bin</prefix>
-										<filemode>755</filemode>
-									</mapper>
-								</data> -->
 							</dataSet>
 						</configuration>
 					</execution>
+					 <execution>
+            <id>visualization</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jdeb</goal>
+            </goals>
+            <configuration>
+              <installDir>/usr/local/databus-visualization-${version}</installDir>
+              <deb>${project.build.directory}/${artifactId}_visualization_${version}.deb</deb>
+              <controlDir>src/deb/control-visualization</controlDir>
+              <dataSet>
+                <data>
+                  <src>target/databus-dist-${project.version}-visualization/</src>
+                  <type>directory</type>
+                  <mapper>
+                    <type>perm</type>
+                    <prefix>/usr/local/databus-visualization-${version}</prefix>
+                  </mapper>
+                </data>
+              </dataSet>
+            </configuration>
+          </execution>
 				</executions>
 			</plugin>
 
