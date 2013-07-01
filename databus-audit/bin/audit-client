@@ -24,7 +24,7 @@
 # constants
 ################################
 
-CLIENT_AUDIT_QUERY_CLASS="com.inmobi.messaging.consumer.audit.AuditDbQuery"
+CLIENT_AUDIT_QUERY_CLASS="com.inmobi.databus.audit.AuditDbQuery"
 
 ################################
 # functions

@@ -16,10 +16,10 @@ import org.apache.commons.logging.LogFactory;
 
 import com.inmobi.databus.audit.Column;
 import com.inmobi.databus.audit.Filter;
+import com.inmobi.databus.audit.GroupBy;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.consumer.audit.GroupBy;
 
 public class AuditDBHelper {
 

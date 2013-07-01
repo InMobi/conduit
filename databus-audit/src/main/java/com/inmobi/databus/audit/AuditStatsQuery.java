@@ -1,4 +1,4 @@
-package com.inmobi.messaging.consumer.audit;
+package com.inmobi.databus.audit;
 
 
 import java.io.IOException;
@@ -19,16 +19,13 @@ import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.audit.Column;
-import com.inmobi.databus.audit.Filter;
-import com.inmobi.databus.audit.Tier;
+import com.inmobi.databus.audit.GroupBy.Group;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.consumer.AbstractMessageConsumer;
 import com.inmobi.messaging.consumer.EndOfStreamException;
 import com.inmobi.messaging.consumer.MessageConsumer;
 import com.inmobi.messaging.consumer.MessageConsumerFactory;
-import com.inmobi.messaging.consumer.audit.GroupBy.Group;
 import com.inmobi.messaging.util.AuditUtil;
 
 public class AuditStatsQuery {

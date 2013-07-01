@@ -1,11 +1,9 @@
-package com.inmobi.messaging.consumer.audit;
+package com.inmobi.databus.audit;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.inmobi.databus.audit.Column;
-import com.inmobi.databus.audit.Tier;
 
 public class GroupBy {
 
