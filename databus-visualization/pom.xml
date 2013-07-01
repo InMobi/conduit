@@ -68,14 +68,18 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+<<<<<<< HEAD
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-user</artifactId>
             <version>2.5.0-rc1</version>
         </dependency><!--
         <dependency>
+=======
+>>>>>>> 46a47896741478d10be2a8344e86852e1f685867
             <groupId>com.inmobi.databus</groupId>
-            <artifactId>databus-core</artifactId>
+            <artifactId>databus-audit</artifactId>
             <version>${databus.version}</version>
+<<<<<<< HEAD
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
@@ -91,6 +95,8 @@
         	<groupId>com.inmobi.databus</groupId>
         	<artifactId>databus-audit</artifactId>
         	<version>${project.version}</version>
+=======
+>>>>>>> 46a47896741478d10be2a8344e86852e1f685867
         </dependency>
     </dependencies>
 
@@ -110,17 +116,12 @@
                         <goals>
                             <goal>compile</goal>
                             <goal>test</goal>
-                            <!--<goal>i18n</goal>-->
-                            <!--<goal>generateAsync</goal>-->
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
                     <runTarget>Visualization.html</runTarget>
-                    <hostedWebapp>${webappDirectory}</hostedWebapp><!--
-                    <i18nMessagesBundle>
-                        com.inmobi.databus.visualization.client.Messages
-                    </i18nMessagesBundle>-->
+                    <hostedWebapp>${webappDirectory}</hostedWebapp>
                 </configuration>
             </plugin>
 
