@@ -16,9 +16,9 @@ import org.apache.commons.logging.LogFactory;
 
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.audit.AuditService;
+import com.inmobi.databus.audit.util.AuditDBConstants;
+import com.inmobi.databus.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.util.AuditDBConstants;
-import com.inmobi.messaging.util.AuditDBHelper;
 
 public class AuditRollUpService extends AuditService {
 

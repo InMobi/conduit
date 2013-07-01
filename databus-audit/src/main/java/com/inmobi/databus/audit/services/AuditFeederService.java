@@ -21,6 +21,8 @@ import com.inmobi.databus.audit.AuditService;
 import com.inmobi.databus.audit.AuditStats;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
+import com.inmobi.databus.audit.util.AuditDBConstants;
+import com.inmobi.databus.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.consumer.EndOfStreamException;
@@ -28,8 +30,6 @@ import com.inmobi.messaging.consumer.MessageConsumer;
 import com.inmobi.messaging.consumer.MessageConsumerFactory;
 import com.inmobi.messaging.consumer.databus.DatabusConsumer;
 import com.inmobi.messaging.consumer.databus.DatabusConsumerConfig;
-import com.inmobi.messaging.util.AuditDBConstants;
-import com.inmobi.messaging.util.AuditDBHelper;
 import com.inmobi.messaging.util.AuditUtil;
 
 /**

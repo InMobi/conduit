@@ -12,9 +12,11 @@ import junit.framework.Assert;
 
 import com.inmobi.databus.audit.AuditStats;
 import com.inmobi.databus.audit.LatencyColumns;
+import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.audit.Tuple;
+import com.inmobi.databus.audit.util.AuditDBConstants;
+import com.inmobi.databus.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.consumer.audit.Tier;
 
 public class AuditDBUtil {
   protected Connection connection;

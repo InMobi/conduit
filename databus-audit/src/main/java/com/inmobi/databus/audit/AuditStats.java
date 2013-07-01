@@ -21,8 +21,8 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.services.AuditFeederService;
+import com.inmobi.databus.audit.util.AuditDBConstants;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.util.AuditDBConstants;
 
 /*
  * This class is responsible for launching multiple AuditStatsFeeder instances one per cluster

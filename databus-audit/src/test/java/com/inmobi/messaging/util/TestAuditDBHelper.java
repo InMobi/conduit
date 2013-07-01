@@ -13,10 +13,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.inmobi.databus.audit.AuditStats;
+import com.inmobi.databus.audit.Filter;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
+import com.inmobi.databus.audit.util.AuditDBConstants;
+import com.inmobi.databus.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.consumer.audit.Filter;
 import com.inmobi.messaging.consumer.audit.GroupBy;
 
 public class TestAuditDBHelper extends  AuditDBUtil {

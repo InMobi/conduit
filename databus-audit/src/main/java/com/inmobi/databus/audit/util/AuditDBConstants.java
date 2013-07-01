@@ -1,4 +1,4 @@
-package com.inmobi.messaging.util;
+package com.inmobi.databus.audit.util;
 
 public interface AuditDBConstants {
 

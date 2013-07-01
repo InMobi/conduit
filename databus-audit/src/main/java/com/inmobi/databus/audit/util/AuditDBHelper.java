@@ -1,4 +1,4 @@
-package com.inmobi.messaging.util;
+package com.inmobi.databus.audit.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,11 +14,11 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.inmobi.databus.audit.Column;
+import com.inmobi.databus.audit.Filter;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.consumer.audit.Column;
-import com.inmobi.messaging.consumer.audit.Filter;
 import com.inmobi.messaging.consumer.audit.GroupBy;
 
 public class AuditDBHelper {
