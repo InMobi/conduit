@@ -68,54 +68,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.inmobi.messaging</groupId>
-            <artifactId>messaging-client-databus</artifactId>
-            <version>${messaging.client.project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>core</artifactId>
-                    <groupId>org.eclipse.jdt</groupId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.servlet</groupId>
-                    <artifactId>servlet-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.mortbay.jetty</groupId>
-                    <artifactId>servlet-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>2.5.0-rc1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.inmobi.messaging</groupId>
-            <artifactId>messaging-client-audit-consumer</artifactId>
-            <version>3.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.inmobi.messaging</groupId>
-            <artifactId>messaging-client-core</artifactId>
-            <version>3.0.1-SNAPSHOT</version>
-        </dependency><!--
-        <dependency>
             <groupId>com.inmobi.databus</groupId>
-            <artifactId>databus-core</artifactId>
+            <artifactId>databus-audit</artifactId>
             <version>${databus.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-test</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>-->
+        </dependency>
     </dependencies>
 
     <build>
@@ -134,17 +90,12 @@
                         <goals>
                             <goal>compile</goal>
                             <goal>test</goal>
-                            <!--<goal>i18n</goal>-->
-                            <!--<goal>generateAsync</goal>-->
                         </goals>
                     </execution>
                 </executions>
                 <configuration>
                     <runTarget>Visualization.html</runTarget>
-                    <hostedWebapp>${webappDirectory}</hostedWebapp><!--
-                    <i18nMessagesBundle>
-                        com.inmobi.databus.visualization.client.Messages
-                    </i18nMessagesBundle>-->
+                    <hostedWebapp>${webappDirectory}</hostedWebapp>
                 </configuration>
             </plugin>
 
@@ -181,7 +132,7 @@
                                             value="src/main/resources/requestResponse.proto"/>
                                 </exec>
                             </tasks>
-                            <sourceRoot>visualization-core/src/main/java
+                            <sourceRoot>databus-visualization/src/main/java
                             </sourceRoot>
                         </configuration>
                         <goals>
