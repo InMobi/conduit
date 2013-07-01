@@ -1,5 +1,5 @@
 Package: visualization
-Version: 1.0
+Version: [[project.version]]
 Section:  misc
 Priority: high
 Architecture: all

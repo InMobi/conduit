@@ -20,7 +20,7 @@
 <assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
-  <id>pkg</id>
+  <id>audit</id>
 
   <formats>
     <format>dir</format>
@@ -51,13 +51,19 @@
   </moduleSets>
 
   <fileSets>
-    <fileSet>
-      <directory>conf/</directory>
+  <fileSet>
+      <directory>../databus-audit/conf</directory>
       <outputDirectory>/conf/</outputDirectory>
       <includes>
-      <include>audit-feeder.properties</include>
+      <include>**</include>
       </includes>
     </fileSet>
-
+        <fileSet>
+      <directory>../databus-audit/bin</directory>
+      <outputDirectory>/bin/</outputDirectory>
+      <includes>
+        <include>**/audit-client</include>
+      </includes>
+    </fileSet>
   </fileSets>
 </assembly>
