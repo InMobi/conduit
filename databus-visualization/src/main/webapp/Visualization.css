@@ -1,0 +1,123 @@
+#page {
+  margin:0px 50px 0px;
+  border-style:solid;
+  border-width:2px;
+  border-color:#ccc;
+}
+
+#gwtPanel {
+  margin:0 auto;
+}
+
+#header {
+  width:100%
+}
+
+#heading {
+  text-align: center;
+}
+
+#filterPanel {
+  width:100%;
+}
+
+#viewPanel {
+  margin:0 auto;
+}
+
+#goButton {
+  width:50px;
+  float:right;
+}
+
+.gwt-ListBox {
+  width:150px;
+}
+
+#graphPanel {
+  border-style:solid;
+  border-width:2px;
+  border-color:#ccc;
+  height:900px;
+  width:900px;
+}
+
+#infoPanel {
+  border-style:solid;
+  border-width:2px;
+  border-color:#ccc;
+  height:900px;
+  width:300px;
+}
+
+div.tooltip {
+  position:absolute;
+  text-align:center;
+  padding:2px;
+  font:12px sans-serif;
+  background:#ccc;
+  border:0px;
+  border-radius:8px;
+  pointer-events:none;
+}
+
+.gwt-DatePicker {
+  color: #ccc;
+  border: 1px solid #ccc;
+  height: 200px;
+  width: 200px;
+}
+
+#tabs {
+    width: 100%;
+    margin: auto;
+    overflow: hidden;
+    background: #F9F9F9;
+    display: none;
+}
+
+#tabs ul {
+    list-style: none;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+}
+
+#tabs li a {
+    color: #444444;
+    display: block;
+    float: left;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    border:none;
+    border-left:1px solid #d9d9d9;
+    border-bottom:1px solid #d9d9d9;
+}
+
+#tabs li a:hover {
+    color: #7d7d7d;
+    background:#FFFFFF;
+}
+
+#tabs li:first-child a {
+    border-left:none;
+}
+
+#tabs li a.active {
+    background:#FFFFFF;
+    border:none;
+    border-left:1px solid #d9d9d9;
+    border-bottom:1px solid #FFFFFF;
+}
+
+#tabs li:first-child a.active {
+    border:none;
+    border-bottom:1px solid #FFFFFF;
+}
+
+#tabs li:last-child a.active {
+    border:none;
+    border-left:1px solid #d9d9d9;
+    border-bottom:1px solid #FFFFFF
+}

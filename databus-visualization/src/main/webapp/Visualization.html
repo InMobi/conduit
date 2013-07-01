@@ -1,0 +1,49 @@
+<!doctype html>
+
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link type="text/css" rel="stylesheet" href="Visualization.css">
+    <title>Databus Visualization</title>
+    <script type="text/javascript"
+            src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.1.6/d3.min.js"></script>
+    <script type="text/javascript"
+            src="http://cdnjs.cloudflare.com/ajax/libs/history.js/1.8/native.history.min.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="Visualization/Visualization.nocache.js"></script>
+</head>
+
+<body>
+
+<!-- OPTIONAL: include this if you want history support -->
+<iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1'
+        style="position:absolute;width:0;height:0;border:0"></iframe>
+
+<!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+<noscript>
+    <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        Your web browser must have JavaScript enabled
+        in order for this application to display correctly.
+    </div>
+</noscript>
+<div id="page">
+    <div id="gwtPanel"></div>
+    <div id="viewPanel" style="height:700px;overflow:auto;">
+        <div id="tabs">
+            <ul>
+                <li><a id="count" href="javascript:void(0)" onClick="tabSelected(1, 'null', 'null')" class="active">Count</a></li>
+                <li><a id="latency" href="javascript:void(0)" onClick="tabSelected(2, 'null', 'null')">Latency</a></li>
+            </ul>
+        </div>
+        <table>
+            <tr>
+                <td id="graphPanel"></td>
+                <td id="infoPanel"></td>
+            </tr>
+        </table>
+    </div>
+</div>
+<script type="text/javascript"
+        src="Visualization/d3graph.nocache.js"></script>
+</body>
+</html>
