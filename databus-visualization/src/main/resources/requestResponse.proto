@@ -1,0 +1,44 @@
+option gwt_package = "com.inmobi.databus.visualization.shared";
+
+message Request {
+	optional GraphDataRequest graphDataRequest = 1;
+}
+
+message GraphDataRequest {
+	optional string stream = 1;
+	optional string colo = 2;
+	optional string startTime = 3;
+	optional string endTime = 4;
+}
+
+message Response {
+	optional StreamListResponse streamListResponse = 1;
+	optional ColoListResponse coloListResponse = 2;
+	optional GraphDataResponse graphDataResponse = 3;
+	optional RefreshIntervalResponse refreshIntervalResponse = 4;
+}
+
+message StreamListResponse {
+	repeated string stream = 1;
+}
+
+message ColoListResponse {
+	repeated string colo = 1;
+}
+
+message GraphDataResponse {
+	optional string jsonString = 1;
+	optional int32 agentSla = 2;
+	optional int32 vipSla = 3;
+	optional int32 collectorSla = 4;
+	optional int32 hdfsSla = 5;
+	optional int32 localSla = 6;
+	optional int32 mergeSla = 7;
+	optional int32 mirrorSla = 8;
+	optional float percentileForSla = 9;
+	optional float percentageForLoss = 10;
+}
+
+message RefreshIntervalResponse {
+	optional int32 refreshTime = 1;
+}
