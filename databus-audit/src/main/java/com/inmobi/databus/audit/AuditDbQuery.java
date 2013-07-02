@@ -3,7 +3,16 @@ package com.inmobi.databus.audit;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -218,11 +227,13 @@ public class AuditDbQuery {
       results.append(tuple.getGroup()+"\t");
       results.append(received.get(tuple.getGroup())+"\t");
       Map<Float, Integer> percentileMap = percentile.get(tuple);
+      if (percentileMap != null) {
       for (Map.Entry<Float, Integer> percentileEntry : percentileMap.entrySet()) {
         results.append("<"+percentileEntry.getKey()+",\t");
         results.append(percentileEntry.getValue()+">\t");
       }
       results.append("\n");
+      }
     }
     System.out.println(results);
   }
