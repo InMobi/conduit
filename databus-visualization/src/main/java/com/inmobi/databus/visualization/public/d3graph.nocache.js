@@ -268,8 +268,8 @@ function latencyhighlightChildNodes(n) {
       })
       .transition()
       .duration(100)
-      .style("fill", "#ADD8E6")
-      .style("stroke", "#ADD8E6");
+      .style("fill", "#ADBCE6")
+      .style("stroke", "#ADBCE6");
 
     latencyhighlightChildNodes(c);
   });
@@ -307,10 +307,9 @@ function highlightBasedOnTier(n, isCountView) {
   }
 }
 
-function nodeclick(n) {
-  document.getElementById("infoPanel")
-    .innerHTML = "";
-  var c, r, t;
+function addListToInfoPanel(n, isCountView) {
+	var div = document.createElement('div');
+	var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');
   r = t.insertRow(currentRow);
@@ -331,23 +330,38 @@ function nodeclick(n) {
   c = r.insertCell(1);
   c.innerHTML =
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" + n.cluster +
-    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px\">" +
+    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     n.cluster + "</button>";
-  currentRow++;
-  r = t.insertRow(currentRow);
-  c = r.insertCell(0);
-  c.innerHTML = "Aggregate Recieved";
-  c = r.insertCell(1);
-  c.innerHTML = n.aggregatemessagesreceived;
-  currentRow++;
-  if (n.tier == "agent" || n.tier == "collector") {
-    r = t.insertRow(currentRow);
-    c = r.insertCell(0);
-    c.innerHTML = "Aggregate Sent";
-    c = r.insertCell(1);
-    c.innerHTML = n.aggregatemessagesent;
+  if(isCountView) {
     currentRow++;
     r = t.insertRow(currentRow);
+    c = r.insertCell(0);
+    c.innerHTML = "Aggregate Recieved";
+    c = r.insertCell(1);
+    c.innerHTML = n.aggregatemessagesreceived;
+    currentRow++;
+    if (n.tier == "agent" || n.tier == "collector") {
+      r = t.insertRow(currentRow);
+      c = r.insertCell(0);
+      c.innerHTML = "Aggregate Sent";
+      c = r.insertCell(1);
+      c.innerHTML = n.aggregatemessagesent;
+    }
+  }
+	div.appendChild(t);
+  document.getElementById("infoPanel").appendChild(div);
+}
+
+function nodeclick(n) {
+  document.getElementById("infoPanel")
+    .innerHTML = "";
+  addListToInfoPanel(n, true);
+  var c, r, t;
+  var currentRow = 0;
+  t = document.createElement('table');
+  if (n.tier == "agent" || n.tier == "collector") {
+    r = t.insertRow(currentRow);
+    r.style.border = "1px solid #ccc";
     c = r.insertCell(0);
     c.innerHTML = "<b>Topic</b>";
     c = r.insertCell(1);
@@ -364,11 +378,12 @@ function nodeclick(n) {
         }
       });
       r = t.insertRow(currentRow);
+      r.style.border = "2px solid black";
       c = r.insertCell(0);
       c.innerHTML =
         "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" +
         receivedStats.topic + "', '" + n.cluster +
-        "', true)\" style=\"cursor: pointer; cursor: hand;;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px\">" +
+        "', true)\" style=\"cursor: pointer; cursor: hand;;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
         receivedStats.topic + "</button>";
       if (sent != received) {
         c.firstChild.style.color = "#ff0000";
@@ -384,6 +399,7 @@ function nodeclick(n) {
   } else {
     var cell = 0;
     r = t.insertRow(currentRow);
+      r.style.border = "2px solid black";
     if (n.tier.toLowerCase() == "hdfs") {
       c = r.insertCell(cell);
       c.innerHTML = "<b>Collector</b>";
@@ -397,6 +413,7 @@ function nodeclick(n) {
     currentRow++;
     n.allreceivedtopicstats.forEach(function (topicstats) {
       r = t.insertRow(currentRow);
+      r.style.border = "2px solid black";
       var cell = 0;
       if (n.tier.toLowerCase() == "hdfs") {
         c = r.insertCell(cell);
@@ -407,7 +424,7 @@ function nodeclick(n) {
       c.innerHTML =
         "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" +
         topicstats.topic + "', '" + n.cluster +
-        "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px\">" +
+        "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
         topicstats.topic + "</button>";
       cell++;
       c = r.insertCell(cell);
@@ -415,35 +432,17 @@ function nodeclick(n) {
       currentRow++;
     });
   }
+  t.className = "valuesTable";
   document.getElementById("infoPanel")
     .appendChild(t);
 }
 
 function latencynodeclick(n) {
-  console.log(n);
-  document.getElementById("infoPanel")
-    .innerHTML = "";
+  document.getElementById("infoPanel").innerHTML = "";
+  addListToInfoPanel(n, false);
   var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Name";
-  c = r.insertCell(1);
-  c.innerHTML = n.name;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Tier";
-  c = r.insertCell(1);
-  c.innerHTML = n.tier;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Cluster";
-  c = r.insertCell(1);
-  c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" + n.cluster +
-    "', false)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px\">" +
-    n.cluster + "</button>";
   var percentileSet = [];
   n.overallLatency.forEach(function (l) {
     percentileSet.push(l.percentile);
@@ -466,7 +465,7 @@ function latencynodeclick(n) {
     c = r.insertCell(currentColumn++);
     c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" +
       topic + "', '" + n.cluster +
-      "', false)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px\">" +
+      "', false)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
       topic + "</button>";
     percentileSet.forEach(function (p) {
       var currentPercentile = p;
@@ -474,7 +473,7 @@ function latencynodeclick(n) {
         if (pl.percentile == currentPercentile) {
           c = r.insertCell(currentColumn++);
           if (pl.latency == 0)
-            c.innerHTML = "< 1";
+            c.innerHTML = "<1";
           else
             c.innerHTML = pl.latency;
         }
@@ -491,12 +490,13 @@ function latencynodeclick(n) {
       if (pl.percentile == currentPercentile) {
         c = r.insertCell(currentCol++);
         if (pl.latency == 0)
-          c.innerHTML = "< 1";
+          c.innerHTML = "<1";
         else
           c.innerHTML = pl.latency;
       }
     });
   });
+  t.className = "valuesTable";
   document.getElementById("infoPanel")
     .appendChild(t);
 }
@@ -559,7 +559,7 @@ function linkclick(l) {
   c.innerHTML =
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" + l.source
     .cluster +
-    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px\">" +
+    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.source.cluster + "</button>";
   currentRow++;
   r = t.insertRow(currentRow);
@@ -581,7 +581,7 @@ function linkclick(l) {
   c.innerHTML =
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" + l.target
     .cluster +
-    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px\">" +
+    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.target.cluster + "</button>";
   currentRow++;
   var streams = getStreamsCausingDataLoss(l);
@@ -596,7 +596,7 @@ function linkclick(l) {
       c.innerHTML =
         "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + s +
         "', '" + l.source.cluster +
-        "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#fff;border:#fff;padding:0px;margin:0px;color:#ff0000\">" +
+        "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px;color:#ff0000\">" +
         s + "</button>";
       currentRow++;
     });
@@ -756,7 +756,7 @@ function drawConcentricCircles(graphsvg, yDiff, divisions) {
   for (var i = rad.length; i > -1; i--) {
     graphsvg.append("circle")
       .attr("r", rad[i])
-      .style("fill", "white")
+      .style("fill","#E3F0F6")
       .style(
         "stroke-dasharray", ("3, 3"))
       .style("stroke", "#ccc");
@@ -855,23 +855,20 @@ function addColorsToNodes() {
 
 function addLegendBox(graphsvg) {
   var tierList = ["Publisher", "Agent", "VIP", "Collector", "HDFS"];
-  var inc = 15;
+  var inc = 100;
   for (var i = 0; i < tierList.length; i++) {
     graphsvg.append("circle")
       .attr("class", "legendColor")
       .attr("r", 5)
-      .attr(
-        "cx", -r * 2.5 + 10)
-      .attr("cy", -r * 2.5 + 10 + (i) * 15)
-      .style("fill",
-        hexcodeList[i])
+      .attr("cx", -r * 2.5 + 10 + (i) * inc)
+      .attr("cy", -r * 2.5 + 10)
+      .style("fill", hexcodeList[i])
       .style("stroke", hexcodeList[i]);
     graphsvg.append("text")
       .attr("class", "legend")
       .text(tierList[i])
-      .attr("x", -
-        r * 2.5 + 20)
-      .attr("y", -r * 2.5 + (i + 1) * 15);
+      .attr("x", -r * 2.5 + 20 + (i) * inc)
+      .attr("y", -r * 2.5 + 15);
   }
 }
 
@@ -1017,8 +1014,7 @@ function loadGraph(streamName, clusterName, isCountView) {
       "gray")
     .attr("width", r * 5)
     .attr("height", r * 5)
-    .style("background",
-      "#fff")
+    .style("background","#D8EAF3")
     .attr("id", "graphsvg")
     .append("svg:g")
     .attr("transform",
@@ -1245,6 +1241,7 @@ function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, d
 
 function clearSvgAndAddLoadSymbol() {
   document.getElementById("infoPanel").innerHTML = "";
+  document.getElementById("infoPanel").style.backgroundColor = "#D8EAF3";
   d3.select("#graphsvg").remove();
   var graphsvg = d3.select("#graphPanel")
     .append("svg:svg")
@@ -1252,11 +1249,10 @@ function clearSvgAndAddLoadSymbol() {
       "gray")
     .attr("width", r * 5)
     .attr("height", r * 5)
-    .style("background",
-      "#fff")
+    .style("background","#D8EAF3")
     .attr("id", "graphsvg")
     .append("svg:g")
-  var imgpath = "bar-ajax-loader.gif";
+  var imgpath = "Visualization/bar-ajax-loader.gif";
   var imgs = graphsvg.append("svg:image")
     .attr("xlink:href", imgpath)
     .attr("x",

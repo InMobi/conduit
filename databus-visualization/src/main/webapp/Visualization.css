@@ -1,12 +1,29 @@
-#page {
+/*#page {
   margin:0px 50px 0px;
   border-style:solid;
   border-width:2px;
   border-color:#ccc;
-}
+}*/
 
 #gwtPanel {
   margin:0 auto;
+}
+
+#headerContainer {
+  padding: 0px 100px 0px;
+  background-color: #2d3d4b;
+  color: #fff;
+}
+
+#filterContainer {
+    background-color: #4596b8;
+    color: #fff;
+    padding: 0px 100px 0px;
+}
+
+#viewPanelContainer {
+       padding: 0px 100px 0px;
+       background-color: #c9e2ee;
 }
 
 #header {
@@ -40,6 +57,7 @@
   border-color:#ccc;
   height:900px;
   width:900px;
+  background-color: #D8EAF3;
 }
 
 #infoPanel {
@@ -48,6 +66,7 @@
   border-color:#ccc;
   height:900px;
   width:300px;
+  background-color: #D8EAF3;
 }
 
 div.tooltip {
@@ -72,7 +91,7 @@ div.tooltip {
     width: 100%;
     margin: auto;
     overflow: hidden;
-    background: #F9F9F9;
+    background: #D8EAF3;
     display: none;
 }
 
@@ -91,13 +110,14 @@ div.tooltip {
     text-align: center;
     text-decoration: none;
     border:none;
-    border-left:1px solid #d9d9d9;
-    border-bottom:1px solid #d9d9d9;
+    border-left:1px solid #ccc;
+    border-bottom:1px solid #ccc;
 }
 
 #tabs li a:hover {
-    color: #7d7d7d;
-    background:#FFFFFF;
+    background:#EBF4F8;
+    cursor: pointer;
+    cursor: hand;
 }
 
 #tabs li:first-child a {
@@ -105,9 +125,9 @@ div.tooltip {
 }
 
 #tabs li a.active {
-    background:#FFFFFF;
+    background:#EBF4F8;
     border:none;
-    border-left:1px solid #d9d9d9;
+    border-left:1px solid #ccc;
     border-bottom:1px solid #FFFFFF;
 }
 
@@ -118,6 +138,17 @@ div.tooltip {
 
 #tabs li:last-child a.active {
     border:none;
-    border-left:1px solid #d9d9d9;
+    border-left:1px solid #ccc;
     border-bottom:1px solid #FFFFFF
+}
+
+.valuesTable
+{
+	border-collapse:collapse;
+	border:2px solid #ADADAD;
+}
+
+.valuesTable td, th
+{
+	border:2px solid #ADADAD;
 }
