@@ -161,7 +161,7 @@
         <configuration>
           <ignoreDirFormatExtensions>true</ignoreDirFormatExtensions>
           <descriptors>
-            <descriptor>dist/assembly/visualization-dist.xml</descriptor>
+            <descriptor>src/deb/assembly/visualization-dist.xml</descriptor>
           </descriptors>
         </configuration>
         <executions>
@@ -190,7 +190,6 @@
             <configuration>
               <installDir>/usr/local/databus-visualization-${version}</installDir>
               <deb>${project.build.directory}/${artifactId}-${version}.deb</deb>
-              <controlDir>dist/control</controlDir>
               <dataSet>
                 <data>
                   <src>target/${artifactId}-${project.version}-visualization/</src>
