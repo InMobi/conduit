@@ -279,7 +279,13 @@ public class Visualization implements EntryPoint, ClickHandler {
         streamsList.getItemText(streamsList.getSelectedIndex());
     String selectedCluster = clusterList.getItemText(clusterList.getSelectedIndex());
     String url = Window.Location.getHref();
-    url = url + "&qstart=" + stTime + "&qend=" + edTime +
+    /*
+      For running in GWT developement mode,
+      url = url + "&qstart=" + stTime + "&qend=" + edTime +
+        "&qcluster=" + selectedCluster +
+        "&qstream=" + selectedStream;
+     */
+    url = url + "?qstart=" + stTime + "&qend=" + edTime +
         "&qcluster=" + selectedCluster +
         "&qstream=" + selectedStream;
     isReloaded = true;

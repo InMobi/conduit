@@ -307,7 +307,7 @@ function highlightBasedOnTier(n, isCountView) {
   }
 }
 
-function addListToInfoPanel(n) {
+function addListToInfoPanel(n, isCountView) {
 	var div = document.createElement('div');
 	var c, r, t;
   var currentRow = 0;
@@ -332,19 +332,21 @@ function addListToInfoPanel(n) {
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" + n.cluster +
     "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     n.cluster + "</button>";
-  currentRow++;
-  r = t.insertRow(currentRow);
-  c = r.insertCell(0);
-  c.innerHTML = "Aggregate Recieved";
-  c = r.insertCell(1);
-  c.innerHTML = n.aggregatemessagesreceived;
-  currentRow++;
-  if (n.tier == "agent" || n.tier == "collector") {
+  if(isCountView) {
+    currentRow++;
     r = t.insertRow(currentRow);
     c = r.insertCell(0);
-    c.innerHTML = "Aggregate Sent";
+    c.innerHTML = "Aggregate Recieved";
     c = r.insertCell(1);
-    c.innerHTML = n.aggregatemessagesent;
+    c.innerHTML = n.aggregatemessagesreceived;
+    currentRow++;
+    if (n.tier == "agent" || n.tier == "collector") {
+      r = t.insertRow(currentRow);
+      c = r.insertCell(0);
+      c.innerHTML = "Aggregate Sent";
+      c = r.insertCell(1);
+      c.innerHTML = n.aggregatemessagesent;
+    }
   }
 	div.appendChild(t);
   document.getElementById("infoPanel").appendChild(div);
@@ -353,7 +355,7 @@ function addListToInfoPanel(n) {
 function nodeclick(n) {
   document.getElementById("infoPanel")
     .innerHTML = "";
-  addListToInfoPanel(n);
+  addListToInfoPanel(n, true);
   var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');
@@ -437,7 +439,7 @@ function nodeclick(n) {
 
 function latencynodeclick(n) {
   document.getElementById("infoPanel").innerHTML = "";
-  addListToInfoPanel(n);
+  addListToInfoPanel(n, false);
   var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');

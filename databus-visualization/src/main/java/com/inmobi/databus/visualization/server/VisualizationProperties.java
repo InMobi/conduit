@@ -29,7 +29,7 @@ public class VisualizationProperties {
     try {
       Properties p = new Properties();
       p.load(new FileInputStream(
-          new File("/usr/local/visualization/conf/visualization.properties")));
+          new File("/usr/local/databus-visualization/conf/visualization.properties")));
       propMap.put(PropNames.DATABUS_XML_PATH.name(),
           p.get("databus.xml.path").toString());
       propMap.put(PropNames.PERCENTILE_STRING.name(),
