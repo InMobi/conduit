@@ -192,7 +192,7 @@
               <deb>${project.build.directory}/${artifactId}-${version}.deb</deb>
               <dataSet>
                 <data>
-                  <src>target/${artifactId}-${project.version}-pkg/</src>
+                  <src>target/${artifactId}-${project.version}-visualization-pkg/</src>
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
