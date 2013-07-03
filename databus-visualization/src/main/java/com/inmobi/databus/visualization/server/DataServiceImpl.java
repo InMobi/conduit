@@ -16,12 +16,8 @@ public class DataServiceImpl extends RemoteServiceServlet
     return serviceManager.getData(filterValues);
   }
 
-  public String getStreamList() {
-    return serviceManager.getStreamList();
-  }
-
-  public String getClusterList() {
-    return serviceManager.getClusterList();
+  public String getStreamAndClusterList() {
+    return serviceManager.getStreamAndClusterList();
   }
 
 }
