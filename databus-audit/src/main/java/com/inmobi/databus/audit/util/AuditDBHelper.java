@@ -346,19 +346,16 @@ public class AuditDBHelper {
     }
     }
     for (Column column : groupBy.getGroupByColumns()) {
-      if (!groupByString.isEmpty()) {
         groupByString += ", " + column.toString();
-      } else {
-        groupByString += column.toString();
-      }
     }
+
     String statement =
-        "select " + groupByString + ", Sum(" + AuditDBConstants.SENT + ") as " +
-            AuditDBConstants.SENT + sumString + " from " +
- tableName + " where " +
-            AuditDBConstants.TIMESTAMP + " >= ? and" +
-            " " + AuditDBConstants.TIMESTAMP + " < ? " + whereString + " " +
-            "group by " + groupByString;
+        "select Sum(" + AuditDBConstants.SENT + ") as " + AuditDBConstants
+            .SENT + sumString + groupByString + " from " + tableName + " " +
+            "where " + AuditDBConstants.TIMESTAMP + " >= ? and "
+            + AuditDBConstants.TIMESTAMP + " < ? " + whereString;
+    if(!groupByString.isEmpty())
+      statement += " group by " + groupByString.substring(1);
     LOG.debug("Select statement " + statement);
     return statement;
   }
