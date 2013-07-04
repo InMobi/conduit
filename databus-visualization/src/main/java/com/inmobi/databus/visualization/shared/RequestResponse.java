@@ -546,43 +546,25 @@ public final class RequestResponse {
       return defaultInstance;
     }
     
-    // optional .StreamListResponse streamListResponse = 1;
-    public static final int STREAMLISTRESPONSE_FIELD_NUMBER = 1;
-    private boolean hasStreamListResponse;
-    @com.google.protobuf.gwt.shared.FieldNumber(1)
-    private com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse streamListResponse_;
-    public boolean hasStreamListResponse() { return hasStreamListResponse; }
-    public com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse getStreamListResponse() { return streamListResponse_; }
-    
-    // optional .ColoListResponse coloListResponse = 2;
-    public static final int COLOLISTRESPONSE_FIELD_NUMBER = 2;
-    private boolean hasColoListResponse;
-    @com.google.protobuf.gwt.shared.FieldNumber(2)
-    private com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse coloListResponse_;
-    public boolean hasColoListResponse() { return hasColoListResponse; }
-    public com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse getColoListResponse() { return coloListResponse_; }
-    
-    // optional .GraphDataResponse graphDataResponse = 3;
-    public static final int GRAPHDATARESPONSE_FIELD_NUMBER = 3;
+    // optional .GraphDataResponse graphDataResponse = 1;
+    public static final int GRAPHDATARESPONSE_FIELD_NUMBER = 1;
     private boolean hasGraphDataResponse;
-    @com.google.protobuf.gwt.shared.FieldNumber(3)
+    @com.google.protobuf.gwt.shared.FieldNumber(1)
     private com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse graphDataResponse_;
     public boolean hasGraphDataResponse() { return hasGraphDataResponse; }
     public com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse getGraphDataResponse() { return graphDataResponse_; }
     
-    // optional .RefreshIntervalResponse refreshIntervalResponse = 4;
-    public static final int REFRESHINTERVALRESPONSE_FIELD_NUMBER = 4;
-    private boolean hasRefreshIntervalResponse;
-    @com.google.protobuf.gwt.shared.FieldNumber(4)
-    private com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse refreshIntervalResponse_;
-    public boolean hasRefreshIntervalResponse() { return hasRefreshIntervalResponse; }
-    public com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse getRefreshIntervalResponse() { return refreshIntervalResponse_; }
+    // optional .LoadMainPanelResponse loadMainPanelResponse = 2;
+    public static final int LOADMAINPANELRESPONSE_FIELD_NUMBER = 2;
+    private boolean hasLoadMainPanelResponse;
+    @com.google.protobuf.gwt.shared.FieldNumber(2)
+    private com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse loadMainPanelResponse_;
+    public boolean hasLoadMainPanelResponse() { return hasLoadMainPanelResponse; }
+    public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse getLoadMainPanelResponse() { return loadMainPanelResponse_; }
     
     private void initFields() {
-      streamListResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.getDefaultInstance();
-      coloListResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.getDefaultInstance();
       graphDataResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
-      refreshIntervalResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.getDefaultInstance();
+      loadMainPanelResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -592,20 +574,12 @@ public final class RequestResponse {
     public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
       throws java.io.IOException {
       
-      if (hasStreamListResponse()) {
-        output.writeMessage(1, "streamListResponse", getStreamListResponse());
-      }
-      
-      if (hasColoListResponse()) {
-        output.writeMessage(2, "coloListResponse", getColoListResponse());
-      }
-      
       if (hasGraphDataResponse()) {
-        output.writeMessage(3, "graphDataResponse", getGraphDataResponse());
+        output.writeMessage(1, "graphDataResponse", getGraphDataResponse());
       }
       
-      if (hasRefreshIntervalResponse()) {
-        output.writeMessage(4, "refreshIntervalResponse", getRefreshIntervalResponse());
+      if (hasLoadMainPanelResponse()) {
+        output.writeMessage(2, "loadMainPanelResponse", getLoadMainPanelResponse());
       }
     }
     
@@ -692,20 +666,12 @@ public final class RequestResponse {
       public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.Response other) {
         if (other == com.inmobi.databus.visualization.shared.RequestResponse.Response.getDefaultInstance()) return this;
         
-        if (other.hasStreamListResponse()) {
-          mergeStreamListResponse(other.getStreamListResponse());
-        }
-        
-        if (other.hasColoListResponse()) {
-          mergeColoListResponse(other.getColoListResponse());
-        }
-        
         if (other.hasGraphDataResponse()) {
           mergeGraphDataResponse(other.getGraphDataResponse());
         }
         
-        if (other.hasRefreshIntervalResponse()) {
-          mergeRefreshIntervalResponse(other.getRefreshIntervalResponse());
+        if (other.hasLoadMainPanelResponse()) {
+          mergeLoadMainPanelResponse(other.getLoadMainPanelResponse());
         }
       
         return this;
@@ -714,27 +680,7 @@ public final class RequestResponse {
       public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
         throws java.io.IOException {
         
-        com.google.protobuf.gwt.shared.JsonStream streamListResponseJson = input.readStream(1);
-        if (streamListResponseJson != null) {
-          com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.Builder streamListResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.newBuilder();
-          if (hasStreamListResponse()) {
-            streamListResponseBuilder.mergeFrom(getStreamListResponse());
-          }
-          streamListResponseBuilder.readFrom(streamListResponseJson);
-          setStreamListResponse(streamListResponseBuilder.buildParsed());
-        }
-        
-        com.google.protobuf.gwt.shared.JsonStream coloListResponseJson = input.readStream(2);
-        if (coloListResponseJson != null) {
-          com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.Builder coloListResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.newBuilder();
-          if (hasColoListResponse()) {
-            coloListResponseBuilder.mergeFrom(getColoListResponse());
-          }
-          coloListResponseBuilder.readFrom(coloListResponseJson);
-          setColoListResponse(coloListResponseBuilder.buildParsed());
-        }
-        
-        com.google.protobuf.gwt.shared.JsonStream graphDataResponseJson = input.readStream(3);
+        com.google.protobuf.gwt.shared.JsonStream graphDataResponseJson = input.readStream(1);
         if (graphDataResponseJson != null) {
           com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse.Builder graphDataResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse.newBuilder();
           if (hasGraphDataResponse()) {
@@ -744,94 +690,20 @@ public final class RequestResponse {
           setGraphDataResponse(graphDataResponseBuilder.buildParsed());
         }
         
-        com.google.protobuf.gwt.shared.JsonStream refreshIntervalResponseJson = input.readStream(4);
-        if (refreshIntervalResponseJson != null) {
-          com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.Builder refreshIntervalResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.newBuilder();
-          if (hasRefreshIntervalResponse()) {
-            refreshIntervalResponseBuilder.mergeFrom(getRefreshIntervalResponse());
+        com.google.protobuf.gwt.shared.JsonStream loadMainPanelResponseJson = input.readStream(2);
+        if (loadMainPanelResponseJson != null) {
+          com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.Builder loadMainPanelResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.newBuilder();
+          if (hasLoadMainPanelResponse()) {
+            loadMainPanelResponseBuilder.mergeFrom(getLoadMainPanelResponse());
           }
-          refreshIntervalResponseBuilder.readFrom(refreshIntervalResponseJson);
-          setRefreshIntervalResponse(refreshIntervalResponseBuilder.buildParsed());
+          loadMainPanelResponseBuilder.readFrom(loadMainPanelResponseJson);
+          setLoadMainPanelResponse(loadMainPanelResponseBuilder.buildParsed());
         }
         
         return this;
       }
       
-      // optional .StreamListResponse streamListResponse = 1;
-      public boolean hasStreamListResponse() {
-        return result.hasStreamListResponse();
-      }
-      public com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse getStreamListResponse() {
-        return result.getStreamListResponse();
-      }
-      public Builder setStreamListResponse(com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse value) {
-        if (value == null) {
-          throw new java.lang.NullPointerException();
-        }
-        result.hasStreamListResponse = true;
-        result.streamListResponse_ = value;
-        return this;
-      }
-      public Builder setStreamListResponse(com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.Builder builderForValue) {
-        result.hasStreamListResponse = true;
-        result.streamListResponse_ = builderForValue.build();
-        return this;
-      }
-      public Builder mergeStreamListResponse(com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse value) {
-        if (result.hasStreamListResponse() &&
-            result.streamListResponse_ != com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.getDefaultInstance()) {
-          result.streamListResponse_ =
-            com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.newBuilder(result.streamListResponse_).mergeFrom(value).buildPartial();
-        } else {
-          result.streamListResponse_ = value;
-        }
-        result.hasStreamListResponse = true;
-        return this;
-      }
-      public Builder clearStreamListResponse() {
-        result.hasStreamListResponse = false;
-        result.streamListResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.getDefaultInstance();
-        return this;
-      }
-      
-      // optional .ColoListResponse coloListResponse = 2;
-      public boolean hasColoListResponse() {
-        return result.hasColoListResponse();
-      }
-      public com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse getColoListResponse() {
-        return result.getColoListResponse();
-      }
-      public Builder setColoListResponse(com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse value) {
-        if (value == null) {
-          throw new java.lang.NullPointerException();
-        }
-        result.hasColoListResponse = true;
-        result.coloListResponse_ = value;
-        return this;
-      }
-      public Builder setColoListResponse(com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.Builder builderForValue) {
-        result.hasColoListResponse = true;
-        result.coloListResponse_ = builderForValue.build();
-        return this;
-      }
-      public Builder mergeColoListResponse(com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse value) {
-        if (result.hasColoListResponse() &&
-            result.coloListResponse_ != com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.getDefaultInstance()) {
-          result.coloListResponse_ =
-            com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.newBuilder(result.coloListResponse_).mergeFrom(value).buildPartial();
-        } else {
-          result.coloListResponse_ = value;
-        }
-        result.hasColoListResponse = true;
-        return this;
-      }
-      public Builder clearColoListResponse() {
-        result.hasColoListResponse = false;
-        result.coloListResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.getDefaultInstance();
-        return this;
-      }
-      
-      // optional .GraphDataResponse graphDataResponse = 3;
+      // optional .GraphDataResponse graphDataResponse = 1;
       public boolean hasGraphDataResponse() {
         return result.hasGraphDataResponse();
       }
@@ -868,40 +740,40 @@ public final class RequestResponse {
         return this;
       }
       
-      // optional .RefreshIntervalResponse refreshIntervalResponse = 4;
-      public boolean hasRefreshIntervalResponse() {
-        return result.hasRefreshIntervalResponse();
+      // optional .LoadMainPanelResponse loadMainPanelResponse = 2;
+      public boolean hasLoadMainPanelResponse() {
+        return result.hasLoadMainPanelResponse();
       }
-      public com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse getRefreshIntervalResponse() {
-        return result.getRefreshIntervalResponse();
+      public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse getLoadMainPanelResponse() {
+        return result.getLoadMainPanelResponse();
       }
-      public Builder setRefreshIntervalResponse(com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse value) {
+      public Builder setLoadMainPanelResponse(com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse value) {
         if (value == null) {
           throw new java.lang.NullPointerException();
         }
-        result.hasRefreshIntervalResponse = true;
-        result.refreshIntervalResponse_ = value;
+        result.hasLoadMainPanelResponse = true;
+        result.loadMainPanelResponse_ = value;
         return this;
       }
-      public Builder setRefreshIntervalResponse(com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.Builder builderForValue) {
-        result.hasRefreshIntervalResponse = true;
-        result.refreshIntervalResponse_ = builderForValue.build();
+      public Builder setLoadMainPanelResponse(com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.Builder builderForValue) {
+        result.hasLoadMainPanelResponse = true;
+        result.loadMainPanelResponse_ = builderForValue.build();
         return this;
       }
-      public Builder mergeRefreshIntervalResponse(com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse value) {
-        if (result.hasRefreshIntervalResponse() &&
-            result.refreshIntervalResponse_ != com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.getDefaultInstance()) {
-          result.refreshIntervalResponse_ =
-            com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.newBuilder(result.refreshIntervalResponse_).mergeFrom(value).buildPartial();
+      public Builder mergeLoadMainPanelResponse(com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse value) {
+        if (result.hasLoadMainPanelResponse() &&
+            result.loadMainPanelResponse_ != com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance()) {
+          result.loadMainPanelResponse_ =
+            com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.newBuilder(result.loadMainPanelResponse_).mergeFrom(value).buildPartial();
         } else {
-          result.refreshIntervalResponse_ = value;
+          result.loadMainPanelResponse_ = value;
         }
-        result.hasRefreshIntervalResponse = true;
+        result.hasLoadMainPanelResponse = true;
         return this;
       }
-      public Builder clearRefreshIntervalResponse() {
-        result.hasRefreshIntervalResponse = false;
-        result.refreshIntervalResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.getDefaultInstance();
+      public Builder clearLoadMainPanelResponse() {
+        result.hasLoadMainPanelResponse = false;
+        result.loadMainPanelResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance();
         return this;
       }
       
@@ -915,454 +787,6 @@ public final class RequestResponse {
     }
     
     // @@protoc_insertion_point(class_scope:Response)
-  }
-  
-  public static final class StreamListResponse extends
-      com.google.protobuf.gwt.shared.GeneratedMessage {
-    // Use StreamListResponse.newBuilder() to construct.
-    private StreamListResponse() {
-      initFields();
-    }
-    
-    private StreamListResponse(boolean noInit) {}
-    
-    private static final StreamListResponse defaultInstance;
-    public static StreamListResponse getDefaultInstance() {
-      return defaultInstance;
-    }
-    
-    public StreamListResponse getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-    
-    // repeated string stream = 1;
-    public static final int STREAM_FIELD_NUMBER = 1;
-    private java.util.List<java.lang.String> stream_ =
-      java.util.Collections.emptyList();
-    public java.util.List<java.lang.String> getStreamList() {
-      return stream_;
-    }
-    public int getStreamCount() { return stream_.size(); }
-    public java.lang.String getStream(int index) {
-      return stream_.get(index);
-    }
-    
-    private void initFields() {
-    }
-    
-    public final boolean isInitialized() {
-      return true;
-    }
-    
-    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
-      throws java.io.IOException {
-      
-      if (getStreamList().size() > 0) {
-        output.writeStringRepeated(1, "stream list", getStreamList());
-      }
-    }
-    
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-    
-    public static final class Builder extends
-        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
-          com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse, Builder> {
-      
-      private com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse result;
-      
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.newBuilder()
-      private Builder() {}
-      
-      private static Builder create() {
-        Builder builder = new Builder();
-        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse();
-        return builder;
-      }
-      
-      protected com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse internalGetResult() {
-        return result;
-      }
-      
-      public Builder clear() {
-        if (result == null) {
-          throw new java.lang.IllegalStateException(
-            "Cannot call clear() after build().");
-        }
-        result = new com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse();
-        return this;
-      }
-      
-      public Builder clone() {
-        return create().mergeFrom(result);
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse getDefaultInstanceForType() {
-        return com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.getDefaultInstance();
-      }
-      
-      public boolean isInitialized() {
-        return result.isInitialized();
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse build() {
-        if (result != null && !isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return buildPartial();
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse buildParsed()
-          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
-        if (!isInitialized()) {
-          throw newUninitializedMessageException(
-            result).asInvalidProtocolBufferException();
-        }
-        return buildPartial();
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse buildPartial() {
-        if (result == null) {
-          throw new java.lang.IllegalStateException(
-            "build() has already been called on this Builder.");
-        }
-        
-        if (result.stream_ != java.util.Collections.EMPTY_LIST) {
-          result.stream_ =
-            java.util.Collections.unmodifiableList(result.stream_);
-        }
-        com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse returnMe = result;
-        result = null;
-        return returnMe;
-      }
-      
-      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
-        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse) {
-          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse)other);
-        }
-        return this;
-      }
-      
-      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse other) {
-        if (other == com.inmobi.databus.visualization.shared.RequestResponse.StreamListResponse.getDefaultInstance()) return this;
-        
-        if (!other.stream_.isEmpty()) {
-          if (result.stream_.isEmpty()) {
-            result.stream_ = new java.util.ArrayList<java.lang.String>();
-          }
-          result.stream_.addAll(other.stream_);
-        }
-      
-        return this;
-      }
-      
-      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
-        throws java.io.IOException {
-        
-        java.util.List<java.lang.String> streamList = input.readStringRepeated(1);
-        if (streamList != null) {
-          addAllStream(streamList);
-        }
-        
-        return this;
-      }
-      
-      // repeated string stream = 1;
-      public java.util.List<java.lang.String> getStreamList() {
-        return java.util.Collections.unmodifiableList(result.stream_);
-      }
-      public int getStreamCount() {
-        return result.getStreamCount();
-      }
-      public java.lang.String getStream(int index) {
-        return result.getStream(index);
-      }
-      public Builder setStreamIgnoreIfNull(int index, java.lang.String value) {
-        if (value != null) {
-          setStream(index, value);
-        }
-        return this;
-      }
-      public Builder setStream(int index, java.lang.String value) {
-        if (value == null) {
-    throw new java.lang.NullPointerException();
-  }
-  result.stream_.set(index, value);
-        return this;
-      }
-      public Builder addStreamIgnoreIfNull(java.lang.String value) {
-        if (value != null) {
-          addStream(value);  }
-        return this;
-      }
-      public Builder addStream(java.lang.String value) {
-        if (value == null) {
-    throw new java.lang.NullPointerException();
-  }
-  if (result.stream_.isEmpty()) {
-          result.stream_ = new java.util.ArrayList<java.lang.String>();
-        }
-        result.stream_.add(value);
-        return this;
-      }
-      public Builder addAllStreamIgnoreIfNull(
-          java.lang.Iterable<? extends java.lang.String> values) {
-        if (values != null) {
-          addAllStream(values);
-        }
-        return this;
-      }
-      public Builder addAllStream(
-          java.lang.Iterable<? extends java.lang.String> values) {
-        if (result.stream_.isEmpty()) {
-          result.stream_ = new java.util.ArrayList<java.lang.String>();
-        }
-        super.addAll(values, result.stream_);
-        return this;
-      }
-      public Builder clearStream() {
-        result.stream_ = java.util.Collections.emptyList();
-        return this;
-      }
-      
-      // @@protoc_insertion_point(builder_scope:StreamListResponse)
-    }
-    
-    static {
-      defaultInstance = new StreamListResponse(true);
-      com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
-      defaultInstance.initFields();
-    }
-    
-    // @@protoc_insertion_point(class_scope:StreamListResponse)
-  }
-  
-  public static final class ColoListResponse extends
-      com.google.protobuf.gwt.shared.GeneratedMessage {
-    // Use ColoListResponse.newBuilder() to construct.
-    private ColoListResponse() {
-      initFields();
-    }
-    
-    private ColoListResponse(boolean noInit) {}
-    
-    private static final ColoListResponse defaultInstance;
-    public static ColoListResponse getDefaultInstance() {
-      return defaultInstance;
-    }
-    
-    public ColoListResponse getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-    
-    // repeated string colo = 1;
-    public static final int COLO_FIELD_NUMBER = 1;
-    private java.util.List<java.lang.String> colo_ =
-      java.util.Collections.emptyList();
-    public java.util.List<java.lang.String> getColoList() {
-      return colo_;
-    }
-    public int getColoCount() { return colo_.size(); }
-    public java.lang.String getColo(int index) {
-      return colo_.get(index);
-    }
-    
-    private void initFields() {
-    }
-    
-    public final boolean isInitialized() {
-      return true;
-    }
-    
-    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
-      throws java.io.IOException {
-      
-      if (getColoList().size() > 0) {
-        output.writeStringRepeated(1, "colo list", getColoList());
-      }
-    }
-    
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-    
-    public static final class Builder extends
-        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
-          com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse, Builder> {
-      
-      private com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse result;
-      
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.newBuilder()
-      private Builder() {}
-      
-      private static Builder create() {
-        Builder builder = new Builder();
-        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse();
-        return builder;
-      }
-      
-      protected com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse internalGetResult() {
-        return result;
-      }
-      
-      public Builder clear() {
-        if (result == null) {
-          throw new java.lang.IllegalStateException(
-            "Cannot call clear() after build().");
-        }
-        result = new com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse();
-        return this;
-      }
-      
-      public Builder clone() {
-        return create().mergeFrom(result);
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse getDefaultInstanceForType() {
-        return com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.getDefaultInstance();
-      }
-      
-      public boolean isInitialized() {
-        return result.isInitialized();
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse build() {
-        if (result != null && !isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return buildPartial();
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse buildParsed()
-          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
-        if (!isInitialized()) {
-          throw newUninitializedMessageException(
-            result).asInvalidProtocolBufferException();
-        }
-        return buildPartial();
-      }
-      
-      public com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse buildPartial() {
-        if (result == null) {
-          throw new java.lang.IllegalStateException(
-            "build() has already been called on this Builder.");
-        }
-        
-        if (result.colo_ != java.util.Collections.EMPTY_LIST) {
-          result.colo_ =
-            java.util.Collections.unmodifiableList(result.colo_);
-        }
-        com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse returnMe = result;
-        result = null;
-        return returnMe;
-      }
-      
-      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
-        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse) {
-          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse)other);
-        }
-        return this;
-      }
-      
-      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse other) {
-        if (other == com.inmobi.databus.visualization.shared.RequestResponse.ColoListResponse.getDefaultInstance()) return this;
-        
-        if (!other.colo_.isEmpty()) {
-          if (result.colo_.isEmpty()) {
-            result.colo_ = new java.util.ArrayList<java.lang.String>();
-          }
-          result.colo_.addAll(other.colo_);
-        }
-      
-        return this;
-      }
-      
-      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
-        throws java.io.IOException {
-        
-        java.util.List<java.lang.String> coloList = input.readStringRepeated(1);
-        if (coloList != null) {
-          addAllColo(coloList);
-        }
-        
-        return this;
-      }
-      
-      // repeated string colo = 1;
-      public java.util.List<java.lang.String> getColoList() {
-        return java.util.Collections.unmodifiableList(result.colo_);
-      }
-      public int getColoCount() {
-        return result.getColoCount();
-      }
-      public java.lang.String getColo(int index) {
-        return result.getColo(index);
-      }
-      public Builder setColoIgnoreIfNull(int index, java.lang.String value) {
-        if (value != null) {
-          setColo(index, value);
-        }
-        return this;
-      }
-      public Builder setColo(int index, java.lang.String value) {
-        if (value == null) {
-    throw new java.lang.NullPointerException();
-  }
-  result.colo_.set(index, value);
-        return this;
-      }
-      public Builder addColoIgnoreIfNull(java.lang.String value) {
-        if (value != null) {
-          addColo(value);  }
-        return this;
-      }
-      public Builder addColo(java.lang.String value) {
-        if (value == null) {
-    throw new java.lang.NullPointerException();
-  }
-  if (result.colo_.isEmpty()) {
-          result.colo_ = new java.util.ArrayList<java.lang.String>();
-        }
-        result.colo_.add(value);
-        return this;
-      }
-      public Builder addAllColoIgnoreIfNull(
-          java.lang.Iterable<? extends java.lang.String> values) {
-        if (values != null) {
-          addAllColo(values);
-        }
-        return this;
-      }
-      public Builder addAllColo(
-          java.lang.Iterable<? extends java.lang.String> values) {
-        if (result.colo_.isEmpty()) {
-          result.colo_ = new java.util.ArrayList<java.lang.String>();
-        }
-        super.addAll(values, result.colo_);
-        return this;
-      }
-      public Builder clearColo() {
-        result.colo_ = java.util.Collections.emptyList();
-        return this;
-      }
-      
-      // @@protoc_insertion_point(builder_scope:ColoListResponse)
-    }
-    
-    static {
-      defaultInstance = new ColoListResponse(true);
-      com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
-      defaultInstance.initFields();
-    }
-    
-    // @@protoc_insertion_point(class_scope:ColoListResponse)
   }
   
   public static final class GraphDataResponse extends
@@ -1951,31 +1375,47 @@ public final class RequestResponse {
     // @@protoc_insertion_point(class_scope:GraphDataResponse)
   }
   
-  public static final class RefreshIntervalResponse extends
+  public static final class LoadMainPanelResponse extends
       com.google.protobuf.gwt.shared.GeneratedMessage {
-    // Use RefreshIntervalResponse.newBuilder() to construct.
-    private RefreshIntervalResponse() {
+    // Use LoadMainPanelResponse.newBuilder() to construct.
+    private LoadMainPanelResponse() {
       initFields();
     }
     
-    private RefreshIntervalResponse(boolean noInit) {}
+    private LoadMainPanelResponse(boolean noInit) {}
     
-    private static final RefreshIntervalResponse defaultInstance;
-    public static RefreshIntervalResponse getDefaultInstance() {
+    private static final LoadMainPanelResponse defaultInstance;
+    public static LoadMainPanelResponse getDefaultInstance() {
       return defaultInstance;
     }
     
-    public RefreshIntervalResponse getDefaultInstanceForType() {
+    public LoadMainPanelResponse getDefaultInstanceForType() {
       return defaultInstance;
     }
     
-    // optional int32 refreshTime = 1;
-    public static final int REFRESHTIME_FIELD_NUMBER = 1;
-    private boolean hasRefreshTime;
-    @com.google.protobuf.gwt.shared.FieldNumber(1)
-    private int refreshTime_ = 0;
-    public boolean hasRefreshTime() { return hasRefreshTime; }
-    public int getRefreshTime() { return refreshTime_; }
+    // repeated string stream = 1;
+    public static final int STREAM_FIELD_NUMBER = 1;
+    private java.util.List<java.lang.String> stream_ =
+      java.util.Collections.emptyList();
+    public java.util.List<java.lang.String> getStreamList() {
+      return stream_;
+    }
+    public int getStreamCount() { return stream_.size(); }
+    public java.lang.String getStream(int index) {
+      return stream_.get(index);
+    }
+    
+    // repeated string cluster = 2;
+    public static final int CLUSTER_FIELD_NUMBER = 2;
+    private java.util.List<java.lang.String> cluster_ =
+      java.util.Collections.emptyList();
+    public java.util.List<java.lang.String> getClusterList() {
+      return cluster_;
+    }
+    public int getClusterCount() { return cluster_.size(); }
+    public java.lang.String getCluster(int index) {
+      return cluster_.get(index);
+    }
     
     private void initFields() {
     }
@@ -1987,34 +1427,38 @@ public final class RequestResponse {
     public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
       throws java.io.IOException {
       
-      if (hasRefreshTime()) {
-        output.writeInteger(1, "refreshTime", getRefreshTime());
+      if (getStreamList().size() > 0) {
+        output.writeStringRepeated(1, "stream list", getStreamList());
+      }
+      
+      if (getClusterList().size() > 0) {
+        output.writeStringRepeated(2, "cluster list", getClusterList());
       }
     }
     
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse prototype) {
+    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
     
     public static final class Builder extends
         com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
-          com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse, Builder> {
+          com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse, Builder> {
       
-      private com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse result;
+      private com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.newBuilder()
+      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.newBuilder()
       private Builder() {}
       
       private static Builder create() {
         Builder builder = new Builder();
-        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse();
+        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse();
         return builder;
       }
       
-      protected com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse internalGetResult() {
+      protected com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse internalGetResult() {
         return result;
       }
       
@@ -2023,7 +1467,7 @@ public final class RequestResponse {
           throw new java.lang.IllegalStateException(
             "Cannot call clear() after build().");
         }
-        result = new com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse();
+        result = new com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse();
         return this;
       }
       
@@ -2031,22 +1475,22 @@ public final class RequestResponse {
         return create().mergeFrom(result);
       }
       
-      public com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse getDefaultInstanceForType() {
-        return com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.getDefaultInstance();
+      public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse getDefaultInstanceForType() {
+        return com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance();
       }
       
       public boolean isInitialized() {
         return result.isInitialized();
       }
       
-      public com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse build() {
+      public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse build() {
         if (result != null && !isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return buildPartial();
       }
       
-      public com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse buildParsed()
+      public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse buildParsed()
           throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
         if (!isInitialized()) {
           throw newUninitializedMessageException(
@@ -2055,28 +1499,48 @@ public final class RequestResponse {
         return buildPartial();
       }
       
-      public com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse buildPartial() {
+      public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse buildPartial() {
         if (result == null) {
           throw new java.lang.IllegalStateException(
             "build() has already been called on this Builder.");
         }
-        com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse returnMe = result;
+        
+        if (result.stream_ != java.util.Collections.EMPTY_LIST) {
+          result.stream_ =
+            java.util.Collections.unmodifiableList(result.stream_);
+        }
+        
+        if (result.cluster_ != java.util.Collections.EMPTY_LIST) {
+          result.cluster_ =
+            java.util.Collections.unmodifiableList(result.cluster_);
+        }
+        com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse returnMe = result;
         result = null;
         return returnMe;
       }
       
       public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
-        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse) {
-          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse)other);
+        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse) {
+          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse)other);
         }
         return this;
       }
       
-      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse other) {
-        if (other == com.inmobi.databus.visualization.shared.RequestResponse.RefreshIntervalResponse.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse other) {
+        if (other == com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance()) return this;
         
-        if (other.hasRefreshTime()) {
-          setRefreshTime(other.getRefreshTime());
+        if (!other.stream_.isEmpty()) {
+          if (result.stream_.isEmpty()) {
+            result.stream_ = new java.util.ArrayList<java.lang.String>();
+          }
+          result.stream_.addAll(other.stream_);
+        }
+        
+        if (!other.cluster_.isEmpty()) {
+          if (result.cluster_.isEmpty()) {
+            result.cluster_ = new java.util.ArrayList<java.lang.String>();
+          }
+          result.cluster_.addAll(other.cluster_);
         }
       
         return this;
@@ -2085,48 +1549,145 @@ public final class RequestResponse {
       public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
         throws java.io.IOException {
         
-        java.lang.Integer refreshTime = input.readInteger(1);
-        if (refreshTime != null) {
-          setRefreshTime(refreshTime);
+        java.util.List<java.lang.String> streamList = input.readStringRepeated(1);
+        if (streamList != null) {
+          addAllStream(streamList);
+        }
+        
+        java.util.List<java.lang.String> clusterList = input.readStringRepeated(2);
+        if (clusterList != null) {
+          addAllCluster(clusterList);
         }
         
         return this;
       }
       
-      // optional int32 refreshTime = 1;
-      public boolean hasRefreshTime() {
-        return result.hasRefreshTime();
+      // repeated string stream = 1;
+      public java.util.List<java.lang.String> getStreamList() {
+        return java.util.Collections.unmodifiableList(result.stream_);
       }
-      public int getRefreshTime() {
-        return result.getRefreshTime();
+      public int getStreamCount() {
+        return result.getStreamCount();
       }
-      public Builder setRefreshTimeIgnoreIfNull(java.lang.Integer value) {
+      public java.lang.String getStream(int index) {
+        return result.getStream(index);
+      }
+      public Builder setStreamIgnoreIfNull(int index, java.lang.String value) {
         if (value != null) {
-          setRefreshTime(value);
+          setStream(index, value);
         }
         return this;
       }
-      public Builder setRefreshTime(int value) {
-        result.hasRefreshTime = true;
-        result.refreshTime_ = value;
+      public Builder setStream(int index, java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.stream_.set(index, value);
         return this;
       }
-      public Builder clearRefreshTime() {
-        result.hasRefreshTime = false;
-        result.refreshTime_ = 0;
+      public Builder addStreamIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          addStream(value);  }
+        return this;
+      }
+      public Builder addStream(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  if (result.stream_.isEmpty()) {
+          result.stream_ = new java.util.ArrayList<java.lang.String>();
+        }
+        result.stream_.add(value);
+        return this;
+      }
+      public Builder addAllStreamIgnoreIfNull(
+          java.lang.Iterable<? extends java.lang.String> values) {
+        if (values != null) {
+          addAllStream(values);
+        }
+        return this;
+      }
+      public Builder addAllStream(
+          java.lang.Iterable<? extends java.lang.String> values) {
+        if (result.stream_.isEmpty()) {
+          result.stream_ = new java.util.ArrayList<java.lang.String>();
+        }
+        super.addAll(values, result.stream_);
+        return this;
+      }
+      public Builder clearStream() {
+        result.stream_ = java.util.Collections.emptyList();
         return this;
       }
       
-      // @@protoc_insertion_point(builder_scope:RefreshIntervalResponse)
+      // repeated string cluster = 2;
+      public java.util.List<java.lang.String> getClusterList() {
+        return java.util.Collections.unmodifiableList(result.cluster_);
+      }
+      public int getClusterCount() {
+        return result.getClusterCount();
+      }
+      public java.lang.String getCluster(int index) {
+        return result.getCluster(index);
+      }
+      public Builder setClusterIgnoreIfNull(int index, java.lang.String value) {
+        if (value != null) {
+          setCluster(index, value);
+        }
+        return this;
+      }
+      public Builder setCluster(int index, java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.cluster_.set(index, value);
+        return this;
+      }
+      public Builder addClusterIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          addCluster(value);  }
+        return this;
+      }
+      public Builder addCluster(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  if (result.cluster_.isEmpty()) {
+          result.cluster_ = new java.util.ArrayList<java.lang.String>();
+        }
+        result.cluster_.add(value);
+        return this;
+      }
+      public Builder addAllClusterIgnoreIfNull(
+          java.lang.Iterable<? extends java.lang.String> values) {
+        if (values != null) {
+          addAllCluster(values);
+        }
+        return this;
+      }
+      public Builder addAllCluster(
+          java.lang.Iterable<? extends java.lang.String> values) {
+        if (result.cluster_.isEmpty()) {
+          result.cluster_ = new java.util.ArrayList<java.lang.String>();
+        }
+        super.addAll(values, result.cluster_);
+        return this;
+      }
+      public Builder clearCluster() {
+        result.cluster_ = java.util.Collections.emptyList();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:LoadMainPanelResponse)
     }
     
     static {
-      defaultInstance = new RefreshIntervalResponse(true);
+      defaultInstance = new LoadMainPanelResponse(true);
       com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
       defaultInstance.initFields();
     }
     
-    // @@protoc_insertion_point(class_scope:RefreshIntervalResponse)
+    // @@protoc_insertion_point(class_scope:LoadMainPanelResponse)
   }
   
   public static void internalForceInit() {}

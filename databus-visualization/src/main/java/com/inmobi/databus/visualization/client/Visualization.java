@@ -41,13 +41,13 @@ public class Visualization implements EntryPoint, ClickHandler {
     if (isReloaded) {
       loadMainPanel();
     } else {
-      buildStreamsList();
+      buildStreamsAndClustersList();
     }
   }
 
-  private void buildStreamsList() {
-    System.out.println("Building stream list...");
-    serviceInstance.getStreamList(new AsyncCallback<String>() {
+  private void buildStreamsAndClustersList() {
+    System.out.println("Building stream and cluster list...");
+    serviceInstance.getStreamAndClusterList(new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         caught.printStackTrace();
@@ -56,23 +56,11 @@ public class Visualization implements EntryPoint, ClickHandler {
       public void onSuccess(String result) {
         System.out.println("Completed building stream list.");
         streams.addAll(
-            ClientDataHelper.getInstance().getStreamsListResponse(result));
-        buildClusterList();
-      }
-    });
-  }
-
-  private void buildClusterList() {
-    System.out.println("Building cluster list...");
-    serviceInstance.getClusterList(new AsyncCallback<String>() {
-
-      public void onFailure(Throwable caught) {
-        caught.printStackTrace();
-      }
-
-      public void onSuccess(String result) {
-        clusters
-            .addAll(ClientDataHelper.getInstance().getClusterListResponse(result));
+            ClientDataHelper.getInstance()
+                .getStreamsListFromLoadMainPanelResponse(result));
+        clusters.addAll(
+            ClientDataHelper.getInstance().getClusterListFromLoadMainPanelResponse
+                (result));
         loadMainPanel();
       }
     });

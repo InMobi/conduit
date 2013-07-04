@@ -27,21 +27,8 @@ public class DataServiceWrapper {
     });
   }
 
-  public void getStreamList(final AsyncCallback<String> callback) {
-    service.getStreamList(new AsyncCallback<String>() {
-
-      public void onFailure(Throwable caught) {
-        callback.onFailure(caught);
-      }
-
-      public void onSuccess(String result) {
-        callback.onSuccess(result);
-      }
-    });
-  }
-
-  public void getClusterList(final AsyncCallback<String> callback) {
-    service.getClusterList(new AsyncCallback<String>() {
+  public void getStreamAndClusterList(final AsyncCallback<String> callback) {
+    service.getStreamAndClusterList(new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);

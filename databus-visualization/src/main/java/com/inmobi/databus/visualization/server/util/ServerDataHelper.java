@@ -5,14 +5,11 @@ import com.inmobi.databus.visualization.server.MessageStats;
 import com.inmobi.databus.visualization.server.Node;
 import com.inmobi.databus.visualization.server.VisualizationProperties;
 import com.inmobi.databus.visualization.shared.RequestResponse;
-import com.inmobi.messaging.consumer.audit.Tier;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -77,23 +74,6 @@ public class ServerDataHelper {
       e.printStackTrace();
     }
     return endTime;
-  }
-
-  public String setStreamListResponse(List<String> streams) {
-    RequestResponse.StreamListResponse streamListResponse =
-        RequestResponse.StreamListResponse.newBuilder().addAllStream(streams)
-            .build();
-    return ServerJsonStreamFactory.getInstance().serializeMessage(
-        RequestResponse.Response.newBuilder()
-            .setStreamListResponse(streamListResponse).build());
-  }
-
-  public String setColoListResponse(List<String> colos) {
-    RequestResponse.ColoListResponse coloListResponse =
-        RequestResponse.ColoListResponse.newBuilder().addAllColo(colos).build();
-    return ServerJsonStreamFactory.getInstance().serializeMessage(
-        RequestResponse.Response.newBuilder()
-            .setColoListResponse(coloListResponse).build());
   }
 
   public String setGraphDataResponse(List<Node> nodeList) {
@@ -196,5 +176,15 @@ public class ServerDataHelper {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder().setGraphDataResponse(response)
             .build());
+  }
+
+  public String setLoadMainPanelResponse(List<String> streamList,
+                                         List<String> clusterList) {
+    RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
+        RequestResponse.LoadMainPanelResponse.newBuilder().addAllStream
+            (streamList).addAllCluster(clusterList).build();
+    return ServerJsonStreamFactory.getInstance().serializeMessage(
+        RequestResponse.Response.newBuilder()
+            .setLoadMainPanelResponse(loadMainPanelResponse).build());
   }
 }

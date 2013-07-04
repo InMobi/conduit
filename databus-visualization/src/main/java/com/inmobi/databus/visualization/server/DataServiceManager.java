@@ -3,6 +3,7 @@ package com.inmobi.databus.visualization.server;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.AuditDbQuery;
+import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.consumer.audit.*;
@@ -35,21 +36,16 @@ public class DataServiceManager {
     return instance;
   }
 
-  public String getStreamList() {
+  public String getStreamAndClusterList() {
     List<String> streamList = new ArrayList<String>();
     streamList.addAll(dataBusConfig.getSourceStreams().keySet());
     streamList.add(0, "All");
+    List<String> clusterList = new ArrayList<String>();
+    clusterList.addAll(dataBusConfig.getClusters().keySet());
+    clusterList.add(0, "All");
     String serverJson =
-        ServerDataHelper.getInstance().setStreamListResponse(streamList);
-    return serverJson;
-  }
-
-  public String getClusterList() {
-    List<String> coloList = new ArrayList<String>();
-    coloList.addAll(dataBusConfig.getClusters().keySet());
-    coloList.add(0, "All");
-    String serverJson =
-        ServerDataHelper.getInstance().setColoListResponse(coloList);
+        ServerDataHelper.getInstance().setLoadMainPanelResponse(streamList,
+            clusterList);
     return serverJson;
   }
 

@@ -5,6 +5,7 @@ import com.inmobi.databus.visualization.client.ClientConstants;
 import com.inmobi.databus.visualization.shared.RequestResponse;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,30 +28,6 @@ public class ClientDataHelper {
             .setEndTime(endTime).setStream(stream).setColo(colo).build())
         .build();
     return ClientJsonStreamFactory.getInstance().serializeMessage(request);
-  }
-
-  public List<String> getStreamsListResponse(String serverJson) {
-    RequestResponse.Response response = null;
-    try {
-      response = RequestResponse.Response.newBuilder().readFrom(
-          ClientJsonStreamFactory.getInstance()
-              .createNewStreamFromJson(serverJson)).build();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return response.getStreamListResponse().getStreamList();
-  }
-
-  public List<String> getClusterListResponse(String serverJson) {
-    RequestResponse.Response response = null;
-    try {
-      response = RequestResponse.Response.newBuilder().readFrom(
-          ClientJsonStreamFactory.getInstance()
-              .createNewStreamFromJson(serverJson)).build();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return response.getColoListResponse().getColoList();
   }
 
   public String getJsonStrongFromGraphDataResponse(String serverJson) {
@@ -115,5 +92,31 @@ public class ClientDataHelper {
       e.printStackTrace();
     }
     return response.getGraphDataResponse().getPercentageForLoss();
+  }
+
+  public List<String> getStreamsListFromLoadMainPanelResponse(
+      String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance()
+              .createNewStreamFromJson(serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getLoadMainPanelResponse().getStreamList();
+  }
+
+  public List<String> getClusterListFromLoadMainPanelResponse(
+      String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance()
+              .createNewStreamFromJson(serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getLoadMainPanelResponse().getClusterList();
   }
 }

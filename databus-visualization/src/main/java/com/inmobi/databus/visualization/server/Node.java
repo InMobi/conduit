@@ -117,14 +117,6 @@ public class Node {
     return sourceList;
   }
 
-  public void setAggregateMessagesSent(Long aggregateMessagesSent) {
-    this.aggregateMessagesSent = aggregateMessagesSent;
-  }
-
-  public void setAggregateMessagesReceived(Long aggregateMessagesReceived) {
-    this.aggregateMessagesReceived = aggregateMessagesReceived;
-  }
-
   public void setSourceList(Set<String> sourceList) {
     this.sourceList = new ArrayList<String>();
     this.sourceList.addAll(sourceList);
