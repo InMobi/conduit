@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 
+import com.inmobi.databus.audit.Tier;
 import org.testng.annotations.Test;
 
 import com.inmobi.audit.thrift.AuditMessage;
@@ -160,6 +161,4 @@ public class AuditFeederServiceTest {
     assert (msgs[0].getSent().get(received2) == 4);
     assert (msgs[1].getSent().get(received2) == 2);
   }
-
-
 }
