@@ -509,11 +509,32 @@ function getStreamsCausingDataLoss(l) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic && s.hostname == l.target.name) {
           isstreampresent = true;
-          if (t.messages > s.messages)
+          if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
       });
       if (!isstreampresent && !(streamslist.contains(t.topic)))
+        streamslist.push(t.topic);
+      isstreampresent = false;
+    });
+  } else if(l.source.tier.toLowerCase() == "collector") {
+    var linkList = d3.selectAll("path.link")
+                     .filter(function (d) {
+                       return d.source.cluster == l.source.cluster && d.source
+                       .tier.toLowerCase() == "collector";
+                     })
+                     .data();
+    l.target.allreceivedtopicstats.forEach(function (t) {
+      var parentCount = 0;
+      linkList.forEach(function (cl) {
+        cl.source.allreceivedtopicstats.forEach(function (s) {
+          if (t.topic == s.topic) {
+            parentCount += s.messages;
+            isstreampresent = true;
+          }
+        });
+      });
+      if (isLoss(parentCount, t.messages) || (!isstreampresent && !(streamslist.contains(t.topic))))
         streamslist.push(t.topic);
       isstreampresent = false;
     });
@@ -522,7 +543,7 @@ function getStreamsCausingDataLoss(l) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic) {
           isstreampresent = true;
-          if (t.messages > s.messages)
+          if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
       });
