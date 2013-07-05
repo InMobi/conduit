@@ -1,6 +1,12 @@
-package com.inmobi.databus.audit;
+package com.inmobi.databus.audit.query;
 
-import com.inmobi.messaging.util.AuditDBUtil;
+import com.inmobi.databus.audit.Column;
+import com.inmobi.databus.audit.GroupBy;
+import com.inmobi.databus.audit.LatencyColumns;
+import com.inmobi.databus.audit.Tier;
+import com.inmobi.databus.audit.Tuple;
+import com.inmobi.databus.audit.query.AuditDbQuery;
+import com.inmobi.databus.audit.util.AuditDBUtil;
 import com.inmobi.messaging.util.AuditUtil;
 import junit.framework.Assert;
 import org.testng.annotations.*;

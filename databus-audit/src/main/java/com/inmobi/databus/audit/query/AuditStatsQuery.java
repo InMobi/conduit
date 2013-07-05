@@ -1,4 +1,4 @@
-package com.inmobi.databus.audit;
+package com.inmobi.databus.audit.query;
 
 
 import java.io.IOException;
@@ -19,6 +19,10 @@ import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 
 import com.inmobi.audit.thrift.AuditMessage;
+import com.inmobi.databus.audit.Column;
+import com.inmobi.databus.audit.Filter;
+import com.inmobi.databus.audit.GroupBy;
+import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.audit.GroupBy.Group;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.Message;

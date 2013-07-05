@@ -1,4 +1,4 @@
-package com.inmobi.databus.audit;
+package com.inmobi.databus.audit.query;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -18,6 +18,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 
+import com.inmobi.databus.audit.AuditStats;
+import com.inmobi.databus.audit.Column;
+import com.inmobi.databus.audit.Filter;
+import com.inmobi.databus.audit.GroupBy;
+import com.inmobi.databus.audit.LatencyColumns;
+import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.util.AuditUtil;
@@ -25,13 +31,13 @@ import com.inmobi.messaging.util.AuditUtil;
 public class AuditDbQuery {
 
   private static final int minArgs = 2;
-  private static final  String DEFAULT_TIMEZONE = "GMT";
+  private static final String DEFAULT_TIMEZONE = "GMT";
   private static final Log LOG = LogFactory.getLog(AuditDbQuery.class);
 
   private String timeZone, filterString, groupByString, toTimeString,
       fromTimeString, percentileString;
 
-  Map<Tuple, Map<Float, Integer>> percentile = new HashMap<Tuple, Map<Float,Integer>>();
+  Map<Tuple, Map<Float, Integer>> percentile = new HashMap<Tuple, Map<Float, Integer>>();
   Date fromTime;
   Date toTime;
   GroupBy groupBy;
@@ -42,15 +48,14 @@ public class AuditDbQuery {
   Map<GroupBy.Group, Long> sent;
 
   public AuditDbQuery(String toTimeString, String fromTimeString,
-                      String filterString, String groupByString,
-                      String timeZone) {
+      String filterString, String groupByString, String timeZone) {
     this(toTimeString, fromTimeString, filterString, groupByString, timeZone,
         null);
   }
 
   public AuditDbQuery(String toTimeString, String fromTimeString,
-                      String filterString, String groupByString,
-                      String timeZone, String percentileString) {
+      String filterString, String groupByString, String timeZone,
+      String percentileString) {
     received = new TreeMap<GroupBy.Group, Long>();
     sent = new TreeMap<GroupBy.Group, Long>();
     tupleSet = new HashSet<Tuple>();
@@ -77,7 +82,7 @@ public class AuditDbQuery {
   }
 
   private void setReceivedAndSentStats() {
-    for(Tuple tuple : tupleSet) {
+    for (Tuple tuple : tupleSet) {
       if (!tuple.isGroupBySet())
         tuple.setGroupBy(groupBy);
       GroupBy.Group group = tuple.getGroup();
@@ -88,7 +93,7 @@ public class AuditDbQuery {
 
   private void populatePercentileMap() {
     for (Tuple tuple : tupleSet) {
-      LOG.debug("Creating percentile map for tuple :"+tuple.toString());
+      LOG.debug("Creating percentile map for tuple :" + tuple.toString());
       Long totalCount = tuple.getReceived() - tuple.getLostCount();
       Long currentCount = 0l;
       Iterator<Float> it = percentileSet.iterator();
@@ -97,18 +102,19 @@ public class AuditDbQuery {
         if (latencyColumn == LatencyColumns.C600)
           continue;
         Long value = tuple.getLatencyCountMap().get(latencyColumn);
-        while ( currentCount + value >= ((currentPercentile * totalCount) / 100)) {
+        while (currentCount + value >= ((currentPercentile * totalCount) / 100)) {
           Map<Float, Integer> percentileMap = percentile.get(tuple);
           if (percentileMap == null)
             percentileMap = new HashMap<Float, Integer>();
           percentileMap.put(currentPercentile, latencyColumn.getValue());
           percentile.put(tuple, percentileMap);
-          if(it.hasNext())
+          if (it.hasNext())
             currentPercentile = it.next();
           else
             break;
         }
-        if (!it.hasNext() && percentile.get(tuple).get(currentPercentile) != null)
+        if (!it.hasNext()
+            && percentile.get(tuple).get(currentPercentile) != null)
           break;
         currentCount += value;
       }
@@ -125,8 +131,8 @@ public class AuditDbQuery {
     return formatter.parse(date);
   }
 
-  public void execute()
-      throws ParseException, IOException, InterruptedException, TException {
+  public void execute() throws ParseException, IOException,
+      InterruptedException, TException {
     parseAndSetArguments();
     aggregateStats();
   }
@@ -161,7 +167,7 @@ public class AuditDbQuery {
         printUsage();
         return;
       }
-      for (int i = 0; i < args.length; ) {
+      for (int i = 0; i < args.length;) {
         if (args[i].equalsIgnoreCase("-group")) {
           groupByKeys = args[i + 1];
           LOG.info("Group is " + groupByKeys);
@@ -191,9 +197,8 @@ public class AuditDbQuery {
         printUsage();
         System.exit(-1);
       }
-      AuditDbQuery auditQuery =
-          new AuditDbQuery(toTime, fromTime, filterKeys,
-              groupByKeys, timeZone, percentileString);
+      AuditDbQuery auditQuery = new AuditDbQuery(toTime, fromTime, filterKeys,
+          groupByKeys, timeZone, percentileString);
       try {
         auditQuery.execute();
       } catch (InterruptedException e) {
@@ -214,26 +219,28 @@ public class AuditDbQuery {
   @Override
   public String toString() {
     SimpleDateFormat formatter = new SimpleDateFormat("dd-MM HH:mm");
-    return "AuditStatsQuery [fromTime=" + formatter.format(fromTime) +
-        ", toTime=" + formatter.format(toTime) + ", groupBy=" + groupBy +
-        ", filter=" + filter + ", timeZone=" + timeZone + ", " +
-        "percentiles=" + percentileString + "]";
+    return "AuditStatsQuery [fromTime=" + formatter.format(fromTime)
+        + ", toTime=" + formatter.format(toTime) + ", groupBy=" + groupBy
+        + ", filter=" + filter + ", timeZone=" + timeZone + ", "
+        + "percentiles=" + percentileString + "]";
   }
 
   public void displayResults() {
     StringBuffer results = new StringBuffer();
-    results.append("Group \t\t\tReceived\t\t\t<Percentile, Latency>");
+    results.append("Group \t\t\tReceived\t\t\t<Percentile, Latency>\n");
     for (Tuple tuple : tupleSet) {
-      results.append(tuple.getGroup()+"\t");
-      results.append(received.get(tuple.getGroup())+"\t");
+      results.append(tuple.getGroup() + "\t");
+      results.append(received.get(tuple.getGroup()) + "\t");
       Map<Float, Integer> percentileMap = percentile.get(tuple);
       if (percentileMap != null) {
-      for (Map.Entry<Float, Integer> percentileEntry : percentileMap.entrySet()) {
-        results.append("<"+percentileEntry.getKey()+",\t");
-        results.append(percentileEntry.getValue()+">\t");
+        for (Map.Entry<Float, Integer> percentileEntry : percentileMap
+            .entrySet()) {
+          results.append("<" + percentileEntry.getKey() + ",\t");
+          results.append(percentileEntry.getValue() + ">\t");
+        }
       }
       results.append("\n");
-      }
+
     }
     System.out.println(results);
   }
@@ -251,8 +258,8 @@ public class AuditDbQuery {
     usage.append("]");
     usage.append("[-timezone]");
     usage.append("[-percentile <comma seperated percentile>]");
-    usage.append("fromTime(" + AuditUtil.DATE_FORMAT + ")" + "toTime(" +
-        AuditUtil.DATE_FORMAT + ")");
+    usage.append("fromTime(" + AuditUtil.DATE_FORMAT + ")" + "toTime("
+        + AuditUtil.DATE_FORMAT + ")");
     System.out.println(usage);
   }
 
@@ -278,4 +285,3 @@ public class AuditDbQuery {
     return percentileSet;
   }
 }
-

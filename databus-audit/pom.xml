@@ -69,11 +69,23 @@
 			<version>3.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
+      <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+      <version>3.0.1-SNAPSHOT</version>
+    </dependency>
+		<dependency>
 			<groupId>postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>9.1-901.jdbc4</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+		 <groupId>commons-codec</groupId>
+     <artifactId>commons-codec</artifactId>
+     <version>1.4</version>
+   </dependency>
 	</dependencies>
 	
 	<build>

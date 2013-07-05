@@ -2,8 +2,8 @@ package com.inmobi.databus.visualization.server;
 
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
-import com.inmobi.databus.audit.AuditDbQuery;
 import com.inmobi.databus.audit.Tuple;
+import com.inmobi.databus.audit.query.AuditDbQuery;
 import com.inmobi.databus.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.consumer.audit.*;
 import org.apache.log4j.Logger;

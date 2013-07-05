@@ -24,7 +24,8 @@
 # constants
 ################################
 
-CLIENT_AUDIT_QUERY_CLASS="com.inmobi.databus.audit.AuditDbQuery"
+CLIENT_AUDIT_QUERY_CLASS="com.inmobi.databus.audit.query.AuditDbQuery"
+CLIENT_FEEDER_CLASS="com.inmobi.databus.audit.AuditStats"
 
 ################################
 # functions
@@ -58,6 +59,7 @@ display_help() {
   cat <<EOF
 Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>] 
           [-filter <TIER=xxx,HOSTNAME=xxx,TOPIC=xxx,CLUSTER=xxx>] <dd-mm-yyyy-HH:mm> <dd-mm-yyyy-HH:mm> --conf <confdir>
+       $0 feeder --conf <confdir>   
 EOF
 }
 
@@ -98,6 +100,9 @@ case "$mode" in
   audit)
     opt_audit=1
     ;;
+   feeder)
+    opt_feeder=1
+    ;; 
   *)
     error "Unknown or unspecified command '$mode'"
     echo
@@ -163,6 +168,9 @@ fi
 # finally, invoke the appropriate command
 if [ -n "$opt_audit" ] ; then
   run_client $CLIENT_AUDIT_QUERY_CLASS $args
+fi  
+if [ -n "$opt_feeder" ] ; then
+  run_client $CLIENT_FEEDER_CLASS $args
 else
   error "This message should never appear" 1
 fi

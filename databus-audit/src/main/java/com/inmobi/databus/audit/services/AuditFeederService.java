@@ -30,6 +30,7 @@ import com.inmobi.messaging.consumer.MessageConsumer;
 import com.inmobi.messaging.consumer.MessageConsumerFactory;
 import com.inmobi.messaging.consumer.databus.DatabusConsumer;
 import com.inmobi.messaging.consumer.databus.DatabusConsumerConfig;
+import com.inmobi.messaging.consumer.databus.MessagingConsumerConfig;
 import com.inmobi.messaging.util.AuditUtil;
 
 /**
@@ -313,6 +314,8 @@ public class AuditFeederService extends AuditService {
   private MessageConsumer getConsumer(ClientConfig config) throws IOException {
     config.set(DatabusConsumerConfig.databusRootDirsConfig, rootDir);
     String consumerName = clusterName + "_consumer";
+    if (config.getString(MessageConsumerFactory.ABSOLUTE_START_TIME) == null)
+      config.set(MessagingConsumerConfig.startOfStreamConfig, "true");
     return MessageConsumerFactory.create(config, CONSUMER_CLASSNAME,
         AuditUtil.AUDIT_STREAM_TOPIC_NAME, consumerName);
   }
