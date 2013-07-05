@@ -12,18 +12,8 @@ message GraphDataRequest {
 }
 
 message Response {
-	optional StreamListResponse streamListResponse = 1;
-	optional ColoListResponse coloListResponse = 2;
-	optional GraphDataResponse graphDataResponse = 3;
-	optional RefreshIntervalResponse refreshIntervalResponse = 4;
-}
-
-message StreamListResponse {
-	repeated string stream = 1;
-}
-
-message ColoListResponse {
-	repeated string colo = 1;
+	optional GraphDataResponse graphDataResponse = 1;
+	optional LoadMainPanelResponse loadMainPanelResponse = 2;
 }
 
 message GraphDataResponse {
@@ -39,6 +29,7 @@ message GraphDataResponse {
 	optional float percentageForLoss = 10;
 }
 
-message RefreshIntervalResponse {
-	optional int32 refreshTime = 1;
+message LoadMainPanelResponse {
+	repeated string stream = 1;
+	repeated string cluster = 2;
 }

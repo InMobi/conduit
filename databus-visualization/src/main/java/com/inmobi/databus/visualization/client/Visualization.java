@@ -41,13 +41,13 @@ public class Visualization implements EntryPoint, ClickHandler {
     if (isReloaded) {
       loadMainPanel();
     } else {
-      buildStreamsList();
+      buildStreamsAndClustersList();
     }
   }
 
-  private void buildStreamsList() {
-    System.out.println("Building stream list...");
-    serviceInstance.getStreamList(new AsyncCallback<String>() {
+  private void buildStreamsAndClustersList() {
+    System.out.println("Building stream and cluster list...");
+    serviceInstance.getStreamAndClusterList(new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         caught.printStackTrace();
@@ -56,23 +56,11 @@ public class Visualization implements EntryPoint, ClickHandler {
       public void onSuccess(String result) {
         System.out.println("Completed building stream list.");
         streams.addAll(
-            ClientDataHelper.getInstance().getStreamsListResponse(result));
-        buildClusterList();
-      }
-    });
-  }
-
-  private void buildClusterList() {
-    System.out.println("Building cluster list...");
-    serviceInstance.getClusterList(new AsyncCallback<String>() {
-
-      public void onFailure(Throwable caught) {
-        caught.printStackTrace();
-      }
-
-      public void onSuccess(String result) {
-        clusters
-            .addAll(ClientDataHelper.getInstance().getClusterListResponse(result));
+            ClientDataHelper.getInstance()
+                .getStreamsListFromLoadMainPanelResponse(result));
+        clusters.addAll(
+            ClientDataHelper.getInstance().getClusterListFromLoadMainPanelResponse
+                (result));
         loadMainPanel();
       }
     });
@@ -82,8 +70,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     System.out.println("Loading main panel...");
     loadHeader();
     loadFilterPanel();
-    RootPanel.get("gwtPanel").add(header);
-    RootPanel.get("gwtPanel").add(filterPanel);
+    RootPanel.get("headerContainer").add(header);
+    RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
     String startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
@@ -279,7 +267,13 @@ public class Visualization implements EntryPoint, ClickHandler {
         streamsList.getItemText(streamsList.getSelectedIndex());
     String selectedCluster = clusterList.getItemText(clusterList.getSelectedIndex());
     String url = Window.Location.getHref();
-    url = url + "&qstart=" + stTime + "&qend=" + edTime +
+    /*
+      For running in GWT developement mode,
+      url = url + "&qstart=" + stTime + "&qend=" + edTime +
+        "&qcluster=" + selectedCluster +
+        "&qstream=" + selectedStream;
+     */
+    url = url + "?qstart=" + stTime + "&qend=" + edTime +
         "&qcluster=" + selectedCluster +
         "&qstream=" + selectedStream;
     isReloaded = true;

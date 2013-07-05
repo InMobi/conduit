@@ -8,9 +8,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("graph")
 public interface DataService extends RemoteService {
-  public String getStreamList();
-
-  public String getClusterList();
+  public String getStreamAndClusterList();
 
   public String getData(String filterValues);
 }
