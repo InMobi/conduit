@@ -54,7 +54,7 @@ public class DataServiceManager {
   }
 
   public String getData(String filterValues) {
-    List<Node> nodeList = new ArrayList<Node>();
+    Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
     String responseJson;
     String selectedStream =
         ServerDataHelper.getInstance().getStreamFromGraphDataReq(filterValues);
@@ -80,6 +80,7 @@ public class DataServiceManager {
     Map<Tuple, Map<Float, Integer>> tuplesPercentileMap = dbQuery.getPercentile();
     LOG.debug("Percentile Set:"+percentileSet);
     LOG.debug("Tuples Percentile Map:"+tuplesPercentileMap);
+
     for (Tuple tuple : tupleSet) {
       LOG.info("Creating node from tuple :"+tuple);
       String name, hostname = null;
@@ -92,47 +93,38 @@ public class DataServiceManager {
           new MessageStats(tuple.getTopic(), tuple.getReceived(), hostname);
       MessageStats sentMessageStat =
           new MessageStats(tuple.getTopic(), tuple.getSent(), hostname);
-      Node newNode = new Node(name, tuple.getCluster(), tuple.getTier());
-      Node finalNode = null;
+      NodeKey newNodeKey = new NodeKey(name, tuple.getCluster(), tuple.getTier());
       List<MessageStats> receivedMessageStatsList = new ArrayList<MessageStats>(),
           sentMessageStatsList = new ArrayList<MessageStats>();
       receivedMessageStatsList.add(receivedMessageStat);
       sentMessageStatsList.add(sentMessageStat);
-      if (nodeList.contains(newNode)) {
-        for (Node currentNode : nodeList) {
-          if (newNode.equals(currentNode)) {
-            if (currentNode.getReceivedMessagesList().size() > 0) {
-              receivedMessageStatsList
-                  .addAll(currentNode.getReceivedMessagesList());
-            }
-            if (currentNode.getSentMessagesList().size() > 0) {
-              sentMessageStatsList.addAll(currentNode.getSentMessagesList());
-            }
-            finalNode = currentNode;
-            break;
-          }
-        }
+      Node node = nodeMap.get(newNodeKey);
+      if(node == null) {
+        node = new Node(name, tuple.getCluster(), tuple.getTier());
       }
-      if (nodeList.isEmpty() || finalNode == null) {
-        nodeList.add(newNode);
-        finalNode = newNode;
+      if (node.getReceivedMessagesList().size() > 0) {
+        receivedMessageStatsList.addAll(node.getReceivedMessagesList());
       }
-      finalNode.setReceivedMessagesList(receivedMessageStatsList);
-      finalNode.setSentMessagesList(sentMessageStatsList);
-      finalNode.setPercentileSet(percentileSet);
-      finalNode.addToTopicPercentileMap(tuple.getTopic(),
-          tuplesPercentileMap.get(tuple));
-      finalNode.addToTopicCountMap(tuple.getTopic(), tuple.getLatencyCountMap());
-      LOG.info("Node created: " + finalNode);
+      if (node.getSentMessagesList().size() > 0) {
+        sentMessageStatsList.addAll(node.getSentMessagesList());
+      }
+      node.setReceivedMessagesList(receivedMessageStatsList);
+      node.setSentMessagesList(sentMessageStatsList);
+      node.setPercentileSet(percentileSet);
+      node.addToTopicPercentileMap(tuple.getTopic(), tuplesPercentileMap.get(tuple));
+      node.addToTopicCountMap(tuple.getTopic(), tuple.getLatencyCountMap());
+      nodeMap.put(newNodeKey, node);
+      LOG.debug("Node created: " + node);
     }
-    buildPercentileMapOfAllNodes(nodeList);
-    addVIPNodesToNodesList(nodeList, percentileSet);
-    checkAndSetSourceListForMergeMirror(nodeList);
+
+    buildPercentileMapOfAllNodes(nodeMap);
+    addVIPNodesToNodesList(nodeMap, percentileSet);
+    checkAndSetSourceListForMergeMirror(nodeMap);
     LOG.debug("Printing node list");
-    for (Node node : nodeList) {
+    for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
-    responseJson = ServerDataHelper.getInstance().setGraphDataResponse(nodeList);
+    responseJson = ServerDataHelper.getInstance().setGraphDataResponse(nodeMap);
     LOG.debug("Json response returned to client : " + responseJson);
     return responseJson;
   }
@@ -155,15 +147,15 @@ public class DataServiceManager {
     return filterString;
   }
 
-  private void buildPercentileMapOfAllNodes(List<Node> nodeList) {
-    for (Node node: nodeList)
+  private void buildPercentileMapOfAllNodes(Map<NodeKey, Node> nodeMap) {
+    for (Node node: nodeMap.values())
       node.buildPercentileMap(false);
   }
 
-  private void addVIPNodesToNodesList(List<Node> nodeList,
+  private void addVIPNodesToNodesList(Map<NodeKey, Node> nodeMap,
                                       Set<Float> percentileSet) {
     Map<String, Node> vipNodeMap = new HashMap<String, Node>();
-    for (Node node : nodeList) {
+    for (Node node : nodeMap.values()) {
       if (node.getTier().equalsIgnoreCase(Tier.COLLECTOR.toString())) {
         Node vipNode = vipNodeMap.get(node.getClusterName());
         if (vipNode == null) {
@@ -182,7 +174,7 @@ public class DataServiceManager {
     }
     for (Map.Entry<String, Node> entry : vipNodeMap.entrySet()) {
       entry.getValue().buildPercentileMap(true);
-      nodeList.add(entry.getValue());
+      nodeMap.put(entry.getValue().getNodeKey(), entry.getValue());
     }
   }
 
@@ -225,10 +217,10 @@ public class DataServiceManager {
    * If any node in the nodeList is a merge/mirror tier node, set the source
    * node's names' list for it.
    *
-   * @param nodeList
+   * @param nodeMap map of all nodeKey::nodes returned by the query
    */
-  private void checkAndSetSourceListForMergeMirror(List<Node> nodeList) {
-    for (Node node : nodeList) {
+  private void checkAndSetSourceListForMergeMirror(Map<NodeKey, Node> nodeMap) {
+    for (Node node : nodeMap.values()) {
       if (node.getTier().equalsIgnoreCase("merge") ||
           node.getTier().equalsIgnoreCase("mirror")) {
         node.setSourceList(
