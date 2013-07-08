@@ -58,7 +58,7 @@ error() {
 display_help() {
   cat <<EOF
 Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>] 
-          [-filter <TIER=xxx,HOSTNAME=xxx,TOPIC=xxx,CLUSTER=xxx>] <dd-mm-yyyy-HH:mm> <dd-mm-yyyy-HH:mm> --conf <confdir>
+          [-filter <TIER=xxx,HOSTNAME=xxx,TOPIC=xxx,CLUSTER=xxx>] [-percentile <comma separated list of percentiles>] <dd-mm-yyyy-HH:mm> <dd-mm-yyyy-HH:mm> --conf <confdir>
        $0 feeder --conf <confdir>   
 EOF
 }
