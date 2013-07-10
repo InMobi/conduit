@@ -126,9 +126,10 @@ public class AuditFeederService extends AuditService {
   private static final String CONSUMER_CLASSNAME = DatabusConsumer.class
       .getCanonicalName();
   private final String clusterName;
-  private volatile MessageConsumer consumer = null;
+  protected volatile MessageConsumer consumer = null;
 
-  private volatile boolean isStop = false;
+  protected boolean stopIfMsgNull = false;
+  protected volatile boolean isStop = false;
 
   private int DEFAULT_MSG_PER_BATCH = 5000;
   private int msgsPerBatch;
@@ -311,7 +312,7 @@ public class AuditFeederService extends AuditService {
     }
   }
 
-  private MessageConsumer getConsumer(ClientConfig config) throws IOException {
+  MessageConsumer getConsumer(ClientConfig config) throws IOException {
     config.set(DatabusConsumerConfig.databusRootDirsConfig, rootDir);
     String consumerName = clusterName + "_consumer";
     if (config.getString(MessageConsumerFactory.ABSOLUTE_START_TIME) == null)
@@ -328,9 +329,6 @@ public class AuditFeederService extends AuditService {
   public String getServiceName() {
     return "AuditStatsFeeder_" + clusterName;
   }
-
-
-
 
   @Override
   public void execute() {
@@ -365,8 +363,11 @@ public class AuditFeederService extends AuditService {
           while (!isStop && numOfMsgs < msgsPerBatch) {
             try {
               msg = consumer.next(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
-              if (msg == null)// timeout occurred
+              if (msg == null) {// timeout occurred
+                if(stopIfMsgNull)
+                  isStop = true;
                 continue;
+              }
               auditMsg = new AuditMessage();
               deserializer.deserialize(auditMsg, msg.getData().array());
               LOG.debug("Packet read is " + auditMsg);
@@ -401,6 +402,8 @@ public class AuditFeederService extends AuditService {
               LOG.error("Updation to DB failed,resetting the consumer");
               try {
                 consumer.reset();
+                if(stopIfMsgNull)
+                  isStop = true;
               } catch (Exception e) {
                 LOG.error("Exception while reseting the consumer,would re-intialize consumer in next run");
                 consumer = null;
@@ -429,5 +432,7 @@ public class AuditFeederService extends AuditService {
     return clusterName;
   }
 
-
+  public String getRootDir() {
+    return rootDir;
+  }
 }
