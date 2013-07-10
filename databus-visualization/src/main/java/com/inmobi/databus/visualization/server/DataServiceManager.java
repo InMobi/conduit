@@ -16,7 +16,7 @@ import com.inmobi.databus.audit.query.AuditDbQuery;
 import com.inmobi.databus.visualization.server.util.ServerDataHelper;
 
 public class DataServiceManager {
-  public static final String GROUPBY_STRING = "TIER,HOSTNAME,TOPIC,CLUSTER";
+  public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String TIMEZONE = "GMT";
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
   private static DataServiceManager instance = null;
