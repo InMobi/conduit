@@ -129,7 +129,7 @@ public class TestAuditFeeder extends AuditFeederUtil {
   }
 
   @Test
-  public void testConsumerMarkFail()
+  public void testConsumerDBUpdateFails()
       throws IOException, InterruptedException, SQLException {
     setupPublisher();
     generateData(topic, totalData / 2);

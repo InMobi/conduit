@@ -20,7 +20,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class AuditFeederUtil {
-  protected final static String TABLE_NAME_CONF = "feeder.table.master";
+  protected final static String TABLE_NAME_CONF = "audit.table.master";
   protected AuditMessage msg1, msg2;
   protected String tier1 = "agent", tier2 = "publisher", host = "localhost",
        topic = "testTopic", cluster = "testCluster", topic1 = "testTopic1";
