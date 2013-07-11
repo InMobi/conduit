@@ -147,4 +147,21 @@ public class TestAuditDBHelper extends  AuditDBUtil {
     tupleSet = helper.retrieve(toDate, fromDate, filter, groupBy);
     Assert.assertEquals(2, tupleSet.size());
   }
+
+  @Test(priority = 3)
+  public void testTuplesOrder() {
+    GroupBy groupBy = new GroupBy("CLUSTER,TIER,HOSTNAME,TOPIC");
+    System.out.println("groupby columns set:"+groupBy.getGroupByColumns());
+    Filter filter = new Filter("hostname="+tuple1.getHostname());
+    AuditDBHelper helper = new AuditDBHelper(
+        ClientConfig.loadFromClasspath(AuditStats.CONF_FILE));
+    Set<Tuple> tupleSet = helper.retrieve(toDate, fromDate, filter, groupBy);
+    Assert.assertEquals(2, tupleSet.size());
+    Iterator<Tuple> tupleSetIter = tupleSet.iterator();
+    Assert.assertTrue(tupleSetIter.hasNext());
+    Tuple returnedTuple = tupleSetIter.next();
+    Assert.assertEquals(tuple1.getTopic(), returnedTuple.getTopic());
+    returnedTuple = tupleSetIter.next();
+    Assert.assertEquals(tuple3.getTopic(), returnedTuple.getTopic());
+  }
 }
