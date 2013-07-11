@@ -261,4 +261,66 @@ public class TestAuditDBQuery extends AuditDBUtil {
       e.printStackTrace();
     }
   }
+
+  @Test
+  public void testOnePercentileValue() {
+    String groupByString = "CLUSTER,HOSTNAME,TIER";
+    String filterString = "";
+    String percentileString =  "99.9";
+    AuditDbQuery query;
+    try {
+      query = new AuditDbQuery(formatter.format(toDate),
+          formatter.format(fromDate), filterString, groupByString, null,
+          percentileString);
+      query.execute();
+      Assert.assertEquals(2, query.getPercentile().size());
+      for (Map.Entry<Tuple, Map<Float, Integer>> entry : query.getPercentile
+          ().entrySet()) {
+        Assert.assertEquals(1, entry.getValue().size());
+        if (entry.getKey().getHostname().equals(tuple1.getHostname())) {
+          Assert.assertEquals((Integer) LatencyColumns.C3.getValue(),
+              entry.getValue().get(99.9f));
+        } else if (entry.getKey().getHostname().equals(tuple4.getHostname())) {
+          Assert.assertEquals((Integer) LatencyColumns.C1.getValue(),
+              entry.getValue().get(99.9f));
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void testEmptyGroup() {
+    String groupByString = "";
+    String filterString = "";
+    String percentileString =  "70,80,90,95,99,99.9";
+    AuditDbQuery query;
+    try {
+      query = new AuditDbQuery(formatter.format(toDate),
+          formatter.format(fromDate), filterString, groupByString, null,
+          percentileString);
+      query.execute();
+      Assert.assertEquals(1, query.getPercentile().size());
+      for (Map.Entry<Tuple, Map<Float, Integer>> entry : query.getPercentile
+          ().entrySet()) {
+        Assert.assertEquals(6, entry.getValue().size());
+        Assert.assertEquals((Integer) LatencyColumns.C1.getValue(),
+            entry.getValue().get(70.00f));
+        Assert.assertEquals((Integer) LatencyColumns.C2.getValue(),
+            entry.getValue().get(80.00f));
+        Assert.assertEquals((Integer) LatencyColumns.C2.getValue(),
+            entry.getValue().get(90.00f));
+        Assert.assertEquals((Integer) LatencyColumns.C3.getValue(),
+            entry.getValue().get(95.00f));
+        Assert.assertEquals((Integer) LatencyColumns.C3.getValue(),
+            entry.getValue().get(99.00f));
+        Assert.assertEquals((Integer) LatencyColumns.C3.getValue(),
+            entry.getValue().get(99.9f));
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
 }

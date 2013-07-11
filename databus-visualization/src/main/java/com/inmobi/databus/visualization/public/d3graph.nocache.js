@@ -509,11 +509,32 @@ function getStreamsCausingDataLoss(l) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic && s.hostname == l.target.name) {
           isstreampresent = true;
-          if (t.messages > s.messages)
+          if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
       });
       if (!isstreampresent && !(streamslist.contains(t.topic)))
+        streamslist.push(t.topic);
+      isstreampresent = false;
+    });
+  } else if(l.source.tier.toLowerCase() == "collector") {
+    var linkList = d3.selectAll("path.link")
+                     .filter(function (d) {
+                       return d.source.cluster == l.source.cluster && d.source
+                       .tier.toLowerCase() == "collector";
+                     })
+                     .data();
+    l.target.allreceivedtopicstats.forEach(function (t) {
+      var parentCount = 0;
+      linkList.forEach(function (cl) {
+        cl.source.allreceivedtopicstats.forEach(function (s) {
+          if (t.topic == s.topic) {
+            parentCount += s.messages;
+            isstreampresent = true;
+          }
+        });
+      });
+      if (isLoss(parentCount, t.messages) || (!isstreampresent && !(streamslist.contains(t.topic))))
         streamslist.push(t.topic);
       isstreampresent = false;
     });
@@ -522,7 +543,7 @@ function getStreamsCausingDataLoss(l) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic) {
           isstreampresent = true;
-          if (t.messages > s.messages)
+          if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
       });
@@ -683,7 +704,7 @@ function getNumOfNodes(nodes, tier) {
   return num;
 }
 
-function setNodesAngles(angle, diff, nodes, isRootHdfs) {
+function setNodesAngles(angle, diff, nodes) {
   var numCollectors = getNumOfNodes(nodes, "collector");
   var numAgents = getNumOfNodes(nodes, "agent");
   var numPublishers = getNumOfNodes(nodes, "publisher");
@@ -894,6 +915,7 @@ function clearHistory() {
 
 function clearPreviousGraph() {
   document.getElementById("infoPanel").innerHTML = "";
+  document.getElementById("infoPanel").style.backgroundColor = "#D8EAF3";
   d3.select("#graphsvg").remove();
 }
 
@@ -1024,7 +1046,6 @@ function loadGraph(streamName, clusterName, isCountView) {
   var angle = 360 / (2 * divisions);
   var diff = 360 / divisions;
   var yDiff = r;
-  var isRootHdfs = false;
   if (divisions == 1) {
     angle = 90;
     diff = 90;
@@ -1033,13 +1054,7 @@ function loadGraph(streamName, clusterName, isCountView) {
     collectorIndex = 0;
     var clusterNodeList = treeList[index];
     var clusterName = clusterNodeList[0].cluster;
-    //var i;
     var startindex = getStartIndex(clusterNodeList);
-    if (startindex == undefined) {
-      addClusterName(clusterName, tree, angle, yDiff, graphsvg, isCountView);
-      angle += diff;
-      continue;
-    }
     var tree = d3.layout.tree()
       .size([360, r])
       .separation(function (a, b) {
@@ -1049,6 +1064,11 @@ function loadGraph(streamName, clusterName, isCountView) {
           return (a.children == b.children ? 3 : 3) / a.depth;
         }
       });
+    if (startindex == undefined) {
+      addClusterName(clusterName, tree, angle, yDiff, graphsvg, isCountView);
+      angle += diff;
+      continue;
+    }
       
     var root = cloneNode(clusterNodeList[startindex]);
     root.children = travelTree(root, clusterNodeList);
@@ -1061,11 +1081,9 @@ function loadGraph(streamName, clusterName, isCountView) {
       .projection(function (d) {
         return [d.y, d.x / 180 * Math.PI];
       });
-
     var nodes = tree.nodes(root);
     var links = tree.links(nodes);
-    
-    yDiff = setNodesAngles(angle, diff, nodes, isRootHdfs);
+    yDiff = setNodesAngles(angle, diff, nodes);
 
     if (!calledOnce) {
       drawConcentricCircles(graphsvg, yDiff, divisions);
@@ -1228,21 +1246,21 @@ function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, d
   document.getElementById("tabs").style.display = "block";
   queryString = baseQueryString;
   jsonresponse = JSON.parse(result);
+
   while (fullTreeList.length > 0) {
     fullTreeList.pop();
   }
   clearHistory();
   buildNodeList();
-  if (drillDownCluster != 'null' && drillDownStream != 'null')
+  if (drillDownCluster != null && drillDownStream != null) {
     tabSelected(1, drillDownStream, drillDownCluster);
-  else
+  } else {
     tabSelected(1, stream, cluster);
+  }
 }
 
 function clearSvgAndAddLoadSymbol() {
-  document.getElementById("infoPanel").innerHTML = "";
-  document.getElementById("infoPanel").style.backgroundColor = "#D8EAF3";
-  d3.select("#graphsvg").remove();
+  clearPreviousGraph();
   var graphsvg = d3.select("#graphPanel")
     .append("svg:svg")
     .style("stroke",
@@ -1329,7 +1347,6 @@ function getStartIndex(nodeList) {
     for (i = 0; i < nodeList.length; i++) {
       if (nodeList[i].tier.toLowerCase() == "hdfs") {
         startindex = i;
-        isRootHdfs = true;
         break;
       }
     }
