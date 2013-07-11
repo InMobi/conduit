@@ -128,6 +128,12 @@ public class AuditFeederService extends AuditService {
   private final String clusterName;
   protected volatile MessageConsumer consumer = null;
 
+  /*
+  stopIfMsgNull is added for Unit Tests. If stopIfMsgNull is set to true
+  and the msg returned on call of next on consumer is null,
+  then iStop is set to true and the feeder stops. Also,
+  stops when update fails and consumer is reset.
+   */
   protected boolean stopIfMsgNull = false;
   protected volatile boolean isStop = false;
 

@@ -3,12 +3,8 @@ package com.inmobi.databus.audit.services;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.audit.*;
 import com.inmobi.databus.audit.services.AuditFeederService.TupleKey;
-import com.inmobi.databus.audit.util.AuditFeederUtil;
+import com.inmobi.databus.audit.util.AuditFeederTestUtil;
 import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.consumer.MessageConsumer;
-import com.inmobi.messaging.consumer.MockInMemoryConsumer;
-import com.inmobi.messaging.publisher.MockInMemoryPublisher;
-import com.inmobi.messaging.util.AuditUtil;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -19,7 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 
-public class TestAuditFeeder extends AuditFeederUtil {
+public class TestAuditFeeder extends AuditFeederTestUtil {
 
   @BeforeClass
   public void setup() {
