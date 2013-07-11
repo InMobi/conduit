@@ -54,7 +54,7 @@ public class Visualization implements EntryPoint, ClickHandler {
       }
 
       public void onSuccess(String result) {
-        System.out.println("Completed building stream list.");
+        System.out.println("Completed building stream and cluster list");
         streams.addAll(
             ClientDataHelper.getInstance()
                 .getStreamsListFromLoadMainPanelResponse(result));
@@ -80,13 +80,11 @@ public class Visualization implements EntryPoint, ClickHandler {
     String stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
     String drillDownCluster = Window.Location.getParameter(ClientConstants.GRAPH_CLUSTER);
     String drillDownStream = Window.Location.getParameter(ClientConstants.GRAPH_STREAM);
-    String nodesJson = null;
     if (startTime != null && endTime != null && cluster != null &&
         stream != null) {
       System.out.println("Retrieving parameters from URL");
       setSelectedParameterValues(startTime, endTime, cluster, stream);
-      sendRequest(startTime, endTime, cluster, stream, nodesJson,
-          drillDownCluster, drillDownStream);
+      sendRequest(startTime, endTime, cluster, stream, drillDownCluster, drillDownStream);
     }
   }
 
@@ -267,6 +265,7 @@ public class Visualization implements EntryPoint, ClickHandler {
         streamsList.getItemText(streamsList.getSelectedIndex());
     String selectedCluster = clusterList.getItemText(clusterList.getSelectedIndex());
     String url = Window.Location.getHref();
+    url = clearPreviousParameter(url);
     /*
       For running in GWT developement mode,
       url = url + "&qstart=" + stTime + "&qend=" + edTime +
@@ -281,9 +280,23 @@ public class Visualization implements EntryPoint, ClickHandler {
     Window.Location.replace(url);
   }
 
+  private String clearPreviousParameter(String url) {
+    String newUrl;
+    /*
+    If running in GWT development mode;
+    int index = url.indexOf("&");
+     */
+    int index = url.indexOf("?");
+    if(index != -1)
+      newUrl = url.substring(0, index);
+    else
+      newUrl = url;
+    return newUrl;
+  }
+
   public void sendRequest(String stTime, String edTime,
                           final String selectedCluster,
-                          final String selectedStream, String nodesJson,
+                          final String selectedStream,
                           final String drillDownCluster,
                           final String drillDownStream) {
     System.out.println("Sending request to load graph");
@@ -301,7 +314,6 @@ public class Visualization implements EntryPoint, ClickHandler {
             .getJsonStrongFromGraphDataResponse(result);
         Map<String, Integer> slaMap = ClientDataHelper.getInstance()
             .getSlaMapFromGraphDataResponse(result);
-        System.out.println("Json passed to js:" + nodesJson);
         drawGraph(nodesJson, selectedCluster, selectedStream,
             getQueryString(), drillDownCluster, drillDownStream,
             slaMap.get(ClientConstants.AGENT), slaMap.get(ClientConstants

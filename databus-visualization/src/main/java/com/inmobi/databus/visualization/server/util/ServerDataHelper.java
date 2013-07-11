@@ -3,6 +3,7 @@ package com.inmobi.databus.visualization.server.util;
 import com.google.protobuf.gwt.server.ServerJsonStreamFactory;
 import com.inmobi.databus.visualization.server.MessageStats;
 import com.inmobi.databus.visualization.server.Node;
+import com.inmobi.databus.visualization.server.NodeKey;
 import com.inmobi.databus.visualization.server.VisualizationProperties;
 import com.inmobi.databus.visualization.shared.RequestResponse;
 import org.apache.log4j.Logger;
@@ -76,12 +77,12 @@ public class ServerDataHelper {
     return endTime;
   }
 
-  public String setGraphDataResponse(List<Node> nodeList) {
+  public String setGraphDataResponse(Map<NodeKey, Node> nodeMap) {
     JSONObject newObject = new JSONObject();
     JSONArray nodeArray = new JSONArray();
     try {
       LOG.debug("Parsing the nodeList into a JSON");
-      for (Node node : nodeList) {
+      for (Node node : nodeMap.values()) {
         LOG.debug("Parsing node : " + node.toString());
         JSONObject nodeObject = new JSONObject();
         nodeObject.put("name", node.getName());

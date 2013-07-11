@@ -5,9 +5,7 @@ import com.inmobi.databus.audit.LatencyColumns;
 import java.util.*;
 
 public class Node {
-  private String name;
-  private String clusterName;
-  private String tier;
+  private final NodeKey nodeKey;
   private Long aggregateMessagesReceived = 0L;
   private Long aggregateMessagesSent = 0L;
   private List<MessageStats> receivedMessagesList;
@@ -23,9 +21,7 @@ public class Node {
   private Map<Float, Integer> percentileMap = new HashMap<Float, Integer>();
 
   public Node(String name, String clusterName, String tier) {
-    this.name = name;
-    this.clusterName = clusterName;
-    this.tier = tier;
+    this.nodeKey = new NodeKey(name, clusterName, tier);
     receivedMessagesList = new ArrayList<MessageStats>();
     sentMessagesList = new ArrayList<MessageStats>();
   }
@@ -62,11 +58,11 @@ public class Node {
   }
 
   public String getName() {
-    return name;
+    return nodeKey.getHostname();
   }
 
   public String getClusterName() {
-    return clusterName;
+    return nodeKey.getCluster();
   }
 
   public Long getAggregateMessagesReceived() {
@@ -74,43 +70,11 @@ public class Node {
   }
 
   public String getTier() {
-    return tier;
+    return nodeKey.getTier();
   }
 
   public Long getAggregateMessagesSent() {
     return aggregateMessagesSent;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    Node node = (Node) o;
-
-    if (!clusterName.equals(node.clusterName)) {
-      return false;
-    }
-    if (!name.equals(node.name)) {
-      return false;
-    }
-    if (!tier.equals(node.tier)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + clusterName.hashCode();
-    result = 31 * result + tier.hashCode();
-    return result;
   }
 
   public List<String> getSourceList() {
@@ -264,12 +228,37 @@ public class Node {
     return percentileMap;
   }
 
+  public NodeKey getNodeKey() {
+    return nodeKey;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Node node = (Node) o;
+
+    if (!nodeKey.equals(node.nodeKey)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return nodeKey.hashCode();
+  }
+
   @Override
   public String toString() {
     return "Node{" +
-        "name='" + name + '\'' +
-        ", clusterName='" + clusterName + '\'' +
-        ", tier='" + tier + '\'' +
+        "nodeKey=" + nodeKey +
         ", aggregateMessagesReceived=" + aggregateMessagesReceived +
         ", aggregateMessagesSent=" + aggregateMessagesSent +
         ", receivedMessagesList=" + receivedMessagesList +
