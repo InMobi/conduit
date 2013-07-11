@@ -383,8 +383,10 @@ public class AuditFeederService extends AuditService {
               break;
             }
           }
-          if (isStop)
-            LOG.info("Stopped received,going to udpate in memory contents");
+          if (isStop) {
+            LOG.info("Stopped received,not updating in memory contents");
+            continue;
+          }
           Set<Tuple> tupleSet = new HashSet<Tuple>();
           tupleSet.addAll(tuples.values());
           final Timer.Context dbUpdate = timeTakenDbUpdate.time();
