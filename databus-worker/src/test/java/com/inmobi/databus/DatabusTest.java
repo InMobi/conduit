@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -47,7 +48,7 @@ public class DatabusTest extends TestMiniClusterUtil {
   
     @Override
     protected LocalStreamService getLocalStreamService(DatabusConfig config,
-        Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
+        Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
         throws IOException {
       return new TestLocalStreamService(config, cluster, currentCluster,
           new FSCheckpointProvider(cluster.getCheckpointDir()),
@@ -56,20 +57,18 @@ public class DatabusTest extends TestMiniClusterUtil {
     
     @Override
     protected MergedStreamService getMergedStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster, Set<String> streamsToProcess) throws
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
         Exception {
       return new TestMergedStreamService(config,
- srcCluster, dstCluster,
-          currentCluster, streamsToProcess);
+          srcCluster, dstCluster, currentCluster);
     }
     
     @Override
     protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster, Set<String> streamsToProcess) throws
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
         Exception {
       return new TestMirrorStreamService(config,
- srcCluster, dstCluster,
-          currentCluster, streamsToProcess);
+          srcCluster, dstCluster, currentCluster);
     }
     
   }

@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.local.TestCreateListing;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -20,10 +22,6 @@ import org.apache.log4j.Logger;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.FSCheckpointProvider;
-import com.inmobi.databus.local.TestCreateListing;
 
 public class TestMirrorStreamPrepForCommit {
 
@@ -64,9 +62,7 @@ public class TestMirrorStreamPrepForCommit {
 
     //create service
     service = new MirrorStreamService(null, cluster,
- cluster, null,
-        new FSCheckpointProvider(cluster.getCheckpointDir()),
-        new HashSet<String>());
+        cluster, null);
 
     //createFinalExpectedPath
     finalExpectedPaths.add(new Path

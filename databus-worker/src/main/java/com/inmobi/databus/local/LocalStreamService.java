@@ -14,9 +14,11 @@
 package com.inmobi.databus.local;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -31,6 +33,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -49,7 +52,6 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
-import com.inmobi.databus.utils.FileUtil;
 
 
 /*
@@ -59,7 +61,7 @@ import com.inmobi.databus.utils.FileUtil;
  */
 
 public class LocalStreamService extends AbstractService implements
-ConfigConstants {
+    ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
 
@@ -69,6 +71,9 @@ ConfigConstants {
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
+  private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
+  private final List<String> streamsToProcess;
+  private final String streamsToProcessName;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -82,25 +87,33 @@ ConfigConstants {
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess) throws IOException {
+      List<String> streamsToProcess) throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config,
         DEFAULT_RUN_INTERVAL,
-        provider, streamsToProcess);
+        provider);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
     else
       this.currentCluster = currentCluster;
+    this.streamsToProcess = streamsToProcess;
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+    streamsToProcessName = getServiceName(streamsToProcess);
   }
 
 
-
+  private static final String getServiceName(List<String> streamsToProcess) {
+    String servicename = "";
+    for (String stream : streamsToProcess) {
+      servicename += stream + "@";
+    }
+    return servicename;
+  }
   private void cleanUpTmp(FileSystem fs) throws Exception {
     if (fs.exists(tmpPath)) {
       LOG.info("Deleting tmpPath recursively [" + tmpPath + "]");
@@ -124,8 +137,14 @@ ConfigConstants {
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
 
-      publishMissingPaths(fs,
-          srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
+      for (String stream : streamsToProcess) {
+        Set<Path> missingPaths = publishMissingPaths(fs,
+            srcCluster.getLocalFinalDestDirRoot(), commitTime, stream);
+        if (null != missingPaths && missingPaths.size() > 0) {
+          missingDirsCommittedPaths.put(stream, missingPaths);
+        }
+      }
+      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
@@ -182,10 +201,73 @@ ConfigConstants {
         LOG.debug("Moving [" + file.getPath() + "] to [" + destPath + "]");
         mvPaths.put(file.getPath(), destPath);
       }
-      publishMissingPaths(fs,
+      Set<Path> missingdirectories = missingDirsCommittedPaths
+          .get(categoryName);
+      Set<Path> publishMissingDirs = publishMissingPaths(fs,
           srcCluster.getLocalFinalDestDirRoot(), commitTime, categoryName);
+      if (missingdirectories != null) {
+        missingdirectories.addAll(publishMissingDirs);
+      } else {
+        missingDirsCommittedPaths.put(categoryName, publishMissingDirs);
+      }
+      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
     }
-    return mvPaths;
+
+    // find input files for consumer
+    Map<Path, Path> consumerCommitPaths = new HashMap<Path, Path>();
+    for (Cluster clusterEntry : getConfig().getClusters().values()) {
+      Set<String> destStreams = clusterEntry.getDestinationStreams().keySet();
+      boolean consumeCluster = false;
+      for (String destStream : destStreams) {
+        if (clusterEntry.getPrimaryDestinationStreams().contains(destStream)
+            && srcCluster.getSourceStreams().contains(destStream)) {
+          consumeCluster = true;
+        }
+      }
+
+      if (consumeCluster) {
+        Path tmpConsumerPath = new Path(tmpPath, clusterEntry.getName());
+        boolean isFileOpened = false;
+        FSDataOutputStream out = null;
+        try {
+          for (Path destPath : mvPaths.values()) {
+            String category = getCategoryFromDestPath(destPath);
+            if (clusterEntry.getPrimaryDestinationStreams().contains(category)) {
+              if (!isFileOpened) {
+                out = fs.create(tmpConsumerPath);
+                isFileOpened = true;
+              }
+              out.writeBytes(destPath.toString());
+              LOG.debug("Adding [" + destPath + "]  for consumer ["
+                  + clusterEntry.getName() + "] to commit Paths in ["
+                  + tmpConsumerPath + "]");
+
+              out.writeBytes("\n");
+            }
+          }
+        } finally {
+          if (isFileOpened) {
+            out.close();
+            // Multiple localstream threads can merge different streams to the
+            // same destination cluster. To avoid conflict of filename in
+            // /databus/system/consumers/{clusterName}/
+            // suffix it with streams contained in the file
+            Path finalConsumerPath = new Path(
+                srcCluster.getConsumePath(clusterEntry), Long.toString(System
+                    .currentTimeMillis()) + "_" + streamsToProcessName);
+            LOG.debug("Moving [" + tmpConsumerPath + "] to [ "
+                + finalConsumerPath + "]");
+            consumerCommitPaths.put(tmpConsumerPath, finalConsumerPath);
+          }
+        }
+      }
+    }
+
+    Map<Path, Path> commitPaths = new LinkedHashMap<Path, Path>();
+    commitPaths.putAll(mvPaths);
+    commitPaths.putAll(consumerCommitPaths);
+
+    return commitPaths;
   }
 
   Map<Path, Path> populateTrashCommitPaths(Set<FileStatus> trashSet) {
@@ -220,48 +302,63 @@ ConfigConstants {
 
   }
 
-  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
-      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
+  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
-        trashSet, checkpointPaths);
-
-    // if file listing is empty, simply return
-    if (fileListing.isEmpty()) {
-      return 0;
-    }
-
+    trashSet, checkpointPaths);
+    
     // the total size of data present in all files
     long totalSize = 0;
     SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-        inputPath, Text.class, FileStatus.class);
+      inputPath, Text.class, FileStatus.class);
     try {
-      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
+      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
+          .iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
-        FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
-        out.append(new Text(entry.getValue()), status);
-
+        if (out == null) {
+          out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
+              inputPath, Text.class, entry.getKey().getClass());
+        }
+        out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
+        
         // Create a sync point after each entry. This will ensure that SequenceFile
         // Reader can work at file entry level granularity, given that SequenceFile
         // Reader reads from the starting of sync point.
         out.sync();
-
+        
         totalSize += entry.getKey().getLen();
       }
     } finally {
       out.close();
     }
-
+    
     return totalSize;
   }
 
-  public void createListing(FileSystem fs, FileStatus fileStatus,
-      Map<FileStatus, String> results, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths) throws IOException {
-    createListing(fs, fileStatus, results, trashSet, checkpointPaths, 300000);
+
+  // This method is taken from DistCp SimpleCopyListing class.
+  private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
+    // if the file is not an instance of RawLocaleFileStatus, simply return it
+    if (fileStatus.getClass() == FileStatus.class) {
+      return fileStatus;
+    }
+    
+    // Else if it is a local file, we need to convert it to an instance of 
+    // FileStatus class. The reason is that SequenceFile.Writer/Reader does 
+    // an exact match for FileStatus class.
+    FileStatus status = new FileStatus();
+    
+    buffer.reset();
+    DataOutputStream out = new DataOutputStream(buffer);
+    fileStatus.write(out);
+    
+    in.reset(buffer.toByteArray(), 0, buffer.size());
+    status.readFields(in);
+    return status;
   }
+
 
   public static class CollectorPathFilter implements PathFilter {
     public boolean accept(Path path) {
@@ -274,7 +371,7 @@ ConfigConstants {
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths, long lastFileTimeout)
+      Map<String, FileStatus> checkpointPaths)
           throws IOException {
     List<FileStatus> streamsFileStatus = new ArrayList<FileStatus>();
     FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
@@ -290,17 +387,9 @@ ConfigConstants {
         TreeMap<String, FileStatus> collectorPaths = new TreeMap<String, FileStatus>();
         // check point for this collector
         String collectorName = collector.getPath().getName();
-        String checkPointKey = getCheckPointKey(
-            this.getClass().getSimpleName(), streamName, collectorName);
-
+        String checkPointKey = streamName + collectorName;
         String checkPointValue = null;
         byte[] value = checkpointProvider.read(checkPointKey);
-        if (value == null) {
-          // In case checkpointKey with newer name format is absent,read old
-          // checkpoint key
-          String oldCheckPointKey = streamName + collectorName;
-          value = checkpointProvider.read(oldCheckPointKey);
-        }
         if (value != null)
           checkPointValue = new String(value);
         LOG.debug("CheckPoint Key [" + checkPointKey + "] value [ "
@@ -315,7 +404,7 @@ ConfigConstants {
           continue;
         }
 
-        String currentFile = getCurrentFile(fs, files, lastFileTimeout);
+        String currentFile = getCurrentFile(fs, files);
 
         for (FileStatus file : files) {
           processFile(file, currentFile, checkPointValue, fs, results,
@@ -371,7 +460,7 @@ ConfigConstants {
     } catch (IOException e) {
       LOG.error(
           "Unable to find if file is empty or not [" + fileStatus.getPath()
-          + "]", e);
+              + "]", e);
     } finally {
       if (in != null) {
         try {
@@ -422,27 +511,23 @@ ConfigConstants {
   }
 
   /*
-   * @returns null: if there are no files or the most significant timestamped
-   * file is 5 min back.
+   * @returns null: if there are no files
    */
-  protected String getCurrentFile(FileSystem fs, FileStatus[] files,
-      long lastFileTimeout) {
+  protected String getCurrentFile(FileSystem fs, FileStatus[] files) {
     // Proposed Algo :-> Sort files based on timestamp
-    // if ((currentTimeStamp - last file's timestamp) > 5min ||
     // if there are no files)
     // then null (implying process this file as non-current file)
     // else
     // return last file as the current file
-    class FileTimeStampComparator implements Comparator {
-      public int compare(Object o, Object o1) {
-        FileStatus file1 = (FileStatus) o;
-        FileStatus file2 = (FileStatus) o1;
+    class FileTimeStampComparator implements Comparator<FileStatus> {
+      public int compare(FileStatus file1, FileStatus file2) {
         long file1Time = file1.getModificationTime();
         long file2Time = file2.getModificationTime();
         if ((file1Time < file2Time))
           return -1;
         else
           return 1;
+
       }
     }
 
@@ -456,12 +541,6 @@ ConfigConstants {
 
     // get last file from set
     FileStatus lastFile = sortedFiles.last();
-
-    long currentTime = System.currentTimeMillis();
-    long lastFileTime = lastFile.getModificationTime();
-    if (currentTime - lastFileTime >= lastFileTimeout) {
-      return null;
-    } else
       return lastFile.getPath().getName();
   }
 
@@ -482,14 +561,14 @@ ConfigConstants {
   protected void setBytesPerMapper(long bytesPerMapper) {
     BYTES_PER_MAPPER = bytesPerMapper;
   }
-
+  
   /*
     The visiblity of method is set to protected to enable unit testing
    */
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
-
+   
     Job job = new Job(conf);
     job.setJobName(jobName);
     //DistributedCache.addFileToClassPath(inputFormatJarDestPath, job.getConfiguration());
@@ -509,7 +588,7 @@ ConfigConstants {
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
     job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
-
+    
     // set configurations needed for UniformSizeInputFormat
     int numMaps = getNumMapsForJob(totalSize);
     job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
@@ -522,7 +601,7 @@ ConfigConstants {
 
     return job;
   }
-
+  
   private int getNumMapsForJob(long totalSize) {
     String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
     if (mbPerMapper != null) {

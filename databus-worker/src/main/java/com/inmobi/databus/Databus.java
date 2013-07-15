@@ -18,11 +18,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -48,10 +46,6 @@ public class Databus implements Service, DatabusConstants {
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
-  private static int numStreamsMergeService = 5;
-  private static int numStreamsMirrorService = 1;
-  private static boolean isPurgerEnabled = true;
-
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -101,7 +95,7 @@ public class Databus implements Service, DatabusConstants {
         copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
 
         Iterator<String> iterator = cluster.getSourceStreams().iterator();
-        Set<String> streamsToProcess = new HashSet<String>();
+        List<String> streamsToProcess = new ArrayList<String>();
         while (iterator.hasNext()) {
           for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
             streamsToProcess.add(iterator.next());
@@ -109,91 +103,45 @@ public class Databus implements Service, DatabusConstants {
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
                 streamsToProcess));
-            streamsToProcess = new HashSet<String>();
+            streamsToProcess = new ArrayList<String>();
           }
         }
       }
 
 			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
 			Set<String> mirroredRemoteClusters = new HashSet<String>();
-      Map<String, Set<String>> mergedSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
-      Map<String, Set<String>> mirrorSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
       for (DestinationStream cStream : cluster.getDestinationStreams().values()) {
         //Start MergedStreamConsumerService instances for this cluster for each cluster
         //from where it has to fetch a partial stream and is hosting a primary stream
         //Start MirroredStreamConsumerService instances for this cluster for each cluster
         //from where it has to mirror mergedStreams
 
-        if (cStream.isPrimary()) {
         for (String cName : config.getSourceStreams().get(cStream.getName())
         .getSourceClusters()) {
+          if (cStream.isPrimary())
 						mergedStreamRemoteClusters.add(cName);
-            if (mergedSrcClusterToStreamsMap.get(cName) == null) {
-              Set<String> tmp = new HashSet<String>();
-              tmp.add(cStream.getName());
-              mergedSrcClusterToStreamsMap.put(cName, tmp);
-            } else {
-              mergedSrcClusterToStreamsMap.get(cName).add(cStream.getName());
-            }
-          }
         }
         if (!cStream.isPrimary())  {
           Cluster primaryCluster = config.getPrimaryClusterForDestinationStream(cStream.getName());
-          if (primaryCluster != null) {
+          if (primaryCluster != null)
 						mirroredRemoteClusters.add(primaryCluster.getName());
-            String clusterName = primaryCluster.getName();
-            if (mirrorSrcClusterToStreamsMap.get(clusterName) == null) {
-              Set<String> tmp = new HashSet<String>();
-              tmp.add(cStream.getName());
-              mirrorSrcClusterToStreamsMap.put(clusterName, tmp);
-            } else {
-              mirrorSrcClusterToStreamsMap.get(clusterName).add(
-                  cStream.getName());
-            }
-          }
         }
       }
 
 
 			for (String remote : mergedStreamRemoteClusters) {
-
-        Iterator<String> iterator = mergedSrcClusterToStreamsMap.get(remote)
-            .iterator();
-        Set<String> streamsToProcess = new HashSet<String>();
-        while (iterator.hasNext()) {
-          for (int i = 0; i < numStreamsMergeService && iterator.hasNext(); i++) {
-            streamsToProcess.add(iterator.next());
-          }
-          if (streamsToProcess.size() > 0) {
-            services.add(getMergedStreamService(config, config.getClusters()
-                .get(remote), cluster, currentCluster, streamsToProcess));
-            streamsToProcess = new HashSet<String>();
-          }
-        }
-
+        services.add(getMergedStreamService(config,
+            config.getClusters().get(remote), cluster, currentCluster));
       }
 			for (String remote : mirroredRemoteClusters) {
-
-        Iterator<String> iterator = mirrorSrcClusterToStreamsMap.get(remote)
-            .iterator();
-        Set<String> streamsToProcess = new HashSet<String>();
-        while (iterator.hasNext()) {
-          for (int i = 0; i < numStreamsMirrorService && iterator.hasNext(); i++) {
-            streamsToProcess.add(iterator.next());
-          }
-          if (streamsToProcess.size() > 0) {
-            services.add(getMirrorStreamService(config, config.getClusters()
-                .get(remote), cluster, currentCluster, streamsToProcess));
-            streamsToProcess = new HashSet<String>();
-          }
-        }
-
+        services.add(getMirrorStreamService(config,
+            config.getClusters().get(remote), cluster, currentCluster));
       }
     }
 
     //Start a DataPurgerService for this Cluster/Clusters to process
     Iterator<String> it = clustersToProcess.iterator();
-    while (isPurgerEnabled && it.hasNext()) {
+    while(it.hasNext()) {
       String  clusterName = it.next();
       Cluster cluster =  config.getClusters().get(clusterName);
       LOG.info("Starting Purger for Cluster [" + clusterName + "]");
@@ -219,30 +167,22 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
+      Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
       throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
         new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String> streamsToProcess) throws
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
       Exception {
-    return new MergedStreamService(config, srcCluster, dstCluster,
-        currentCluster,
-        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess);
+    return new MergedStreamService(config, srcCluster, dstCluster, currentCluster);
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String> streamsToProcess) throws
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
       Exception {
-    return new MirrorStreamService(config, srcCluster, dstCluster,
-        currentCluster,
-        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess);
+    return new MirrorStreamService(config, srcCluster, dstCluster, currentCluster);
   }
 
   @Override
@@ -304,26 +244,11 @@ public class Databus implements Service, DatabusConstants {
       String cfgFile = args[0].trim();
       Properties prop = new Properties();
       prop.load(new FileReader(cfgFile));
-      String purgerEnabled = prop.getProperty(PERGER_ENABLED);
-      if (purgerEnabled != null)
-        isPurgerEnabled = Boolean.parseBoolean(purgerEnabled);
+
       String streamperLocal = prop.getProperty(STREAMS_PER_LOCALSERVICE);
       if (streamperLocal != null) {
         numStreamsLocalService = Integer.parseInt(streamperLocal);
       }
-      String streamperMerge = prop.getProperty(STREAMS_PER_MERGE);
-      if (streamperMerge != null) {
-        numStreamsMergeService = Integer.parseInt(streamperMerge);
-      }
-      String streamperMirror = prop.getProperty(STREAMS_PER_MIRROR);
-      if (streamperMirror != null) {
-        numStreamsMirrorService = Integer.parseInt(streamperMirror);
-      }
-      String numOfDirPerDistcpService = prop.getProperty(NUM_DIR_PER_DISTCP);
-      if (numOfDirPerDistcpService != null) {
-        System.setProperty(NUM_DIR_PER_DISTCP, numOfDirPerDistcpService);
-      }
-
       String log4jFile = getProperty(prop, LOG4J_FILE);
       if (log4jFile == null) {
         LOG.error("log4j.properties incorrectly defined");
