@@ -121,7 +121,6 @@ public class AuditFeederService extends AuditService {
 
   Map<TupleKey, Tuple> tuples = new HashMap<TupleKey, Tuple>();
 
-
   private static final Log LOG = LogFactory.getLog(AuditFeederService.class);
   private static final String CONSUMER_CLASSNAME = DatabusConsumer.class
       .getCanonicalName();
@@ -129,10 +128,10 @@ public class AuditFeederService extends AuditService {
   protected volatile MessageConsumer consumer = null;
 
   /*
-  stopIfMsgNull is added for Unit Tests. If stopIfMsgNull is set to true
-  and the msg returned on call of next on consumer is null,
-  then iStop is set to true and the feeder stops. Also,
-  stops when update fails and consumer is reset.
+   * stopIfMsgNull is added for Unit Tests. If stopIfMsgNull is set to true and
+   * the msg returned on call of next on consumer is null, then iStop is set to
+   * true and the feeder stops. Also, stops when update fails and consumer is
+   * reset.
    */
   protected boolean stopIfMsgNull = false;
   protected volatile boolean isStop = false;
@@ -339,8 +338,8 @@ public class AuditFeederService extends AuditService {
   @Override
   public void execute() {
     if (config.getString(START_TIME_KEY) != null) {
-    LOG.info("Starting the run of audit feeder for cluster " + clusterName
-        + " and start time " + config.getString(START_TIME_KEY));
+      LOG.info("Starting the run of audit feeder for cluster " + clusterName
+          + " and start time " + config.getString(START_TIME_KEY));
     } else {
       config.set(START_FROM_STARTING_KEY, "true");
     }
@@ -348,84 +347,89 @@ public class AuditFeederService extends AuditService {
     AuditMessage auditMsg;
     try {
       while (!isStop) {
-        final Timer.Context runContext = timeTakenPerRun.time();
         try {
-          int numOfMsgs = 0;
-          while (!isStop && consumer == null) {
-            // if a checkpoint is already present than from time would be
-            // ignored.
-            try {
-              consumer = getConsumer(config);
-            } catch (IOException e) {
-              LOG.error("Could not intialize the consumer,would re-try after "
-                  + RETRY_INTERVAL + "millis");
-              try {
-                Thread.sleep(RETRY_INTERVAL);
-              } catch (InterruptedException e1) {
-                LOG.error("Exception while sleeping", e1);
-              }
-            }
-          }
-          while (!isStop && numOfMsgs < msgsPerBatch) {
-            try {
-              msg = consumer.next(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
-              if (msg == null) {// timeout occurred
-                if(stopIfMsgNull)
-                  isStop = true;
-                continue;
-              }
-              auditMsg = new AuditMessage();
-              deserializer.deserialize(auditMsg, msg.getData().array());
-              LOG.debug("Packet read is " + auditMsg);
-              addTuples(auditMsg);
-              numOfMsgs++;
-              messagesProcessed.inc();
-            } catch (InterruptedException e) {
-              LOG.error("Error while reading audit message ", e);
-            } catch (TException e) {
-              LOG.error("Exception in deserializing audit message");
-            } catch (EndOfStreamException e) {
-              LOG.info("End of stream reached,breaking the loop");
-              isStop = true;
-              break;
-            }
-          }
-          if (isStop) {
-            LOG.info("Stopped received,not updating in memory contents");
-            continue;
-          }
-          Set<Tuple> tupleSet = new HashSet<Tuple>();
-          tupleSet.addAll(tuples.values());
-          final Timer.Context dbUpdate = timeTakenDbUpdate.time();
+          final Timer.Context runContext = timeTakenPerRun.time();
           try {
-            if (dbHelper.update(tupleSet)) {
+            int numOfMsgs = 0;
+            while (!isStop && consumer == null) {
+              // if a checkpoint is already present than from time would be
+              // ignored.
               try {
-                consumer.mark();
-              } catch (Exception e) {
-                LOG.error(
-                    "Failure in marking the consumer,Audit Messages  could be re processed",
-                    e);
-              }
-            } else {
-              LOG.error("Updation to DB failed,resetting the consumer");
-              try {
-                consumer.reset();
-                if(stopIfMsgNull)
-                  isStop = true;
-              } catch (Exception e) {
-                LOG.error("Exception while reseting the consumer,would re-intialize consumer in next run");
-                consumer = null;
+                consumer = getConsumer(config);
+              } catch (IOException e) {
+                LOG.error("Could not intialize the consumer,would re-try after "
+                    + RETRY_INTERVAL + "millis");
+                try {
+                  Thread.sleep(RETRY_INTERVAL);
+                } catch (InterruptedException e1) {
+                  LOG.error("Exception while sleeping", e1);
+                }
               }
             }
+            while (!isStop && numOfMsgs < msgsPerBatch) {
+              try {
+                msg = consumer.next(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+                if (msg == null) {// timeout occurred
+                  if (stopIfMsgNull)
+                    isStop = true;
+                  continue;
+                }
+                auditMsg = new AuditMessage();
+                deserializer.deserialize(auditMsg, msg.getData().array());
+                LOG.debug("Packet read is " + auditMsg);
+                addTuples(auditMsg);
+                numOfMsgs++;
+                messagesProcessed.inc();
+              } catch (InterruptedException e) {
+                LOG.error("Error while reading audit message ", e);
+              } catch (TException e) {
+                LOG.error("Exception in deserializing audit message");
+              } catch (EndOfStreamException e) {
+                LOG.info("End of stream reached,breaking the loop");
+                isStop = true;
+                break;
+              }
+            }
+            if (isStop) {
+              LOG.info("Stopped received,not updating in memory contents");
+              continue;
+            }
+            Set<Tuple> tupleSet = new HashSet<Tuple>();
+            tupleSet.addAll(tuples.values());
+            final Timer.Context dbUpdate = timeTakenDbUpdate.time();
+            try {
+              if (dbHelper.update(tupleSet)) {
+                try {
+                  consumer.mark();
+                } catch (Exception e) {
+                  LOG.error(
+                      "Failure in marking the consumer,Audit Messages  could be re processed",
+                      e);
+                }
+              } else {
+                LOG.error("Updation to DB failed,resetting the consumer");
+                try {
+                  consumer.reset();
+                  if (stopIfMsgNull)
+                    isStop = true;
+                } catch (Exception e) {
+                  LOG.error("Exception while reseting the consumer,would re-intialize consumer in next run");
+                  consumer = null;
+                }
+              }
+            } finally {
+              dbUpdate.stop();
+            }
+            // clearing of the tuples as they have been processed
+            tuples.clear();
+            if (isStop)
+              LOG.info("Stop complete");
           } finally {
-            dbUpdate.stop();
+            runContext.stop();
           }
-          // clearing of the tuples as they have been processed
-          tuples.clear();
-          if (isStop)
-            LOG.info("Stop complete");
-        } finally {
-          runContext.stop();
+        } catch (Throwable t) {
+          // catching all exceptions here so that thread doesn't get killed
+          LOG.error("Error while executing " + getServiceName(), t);
         }
       }
     } finally {

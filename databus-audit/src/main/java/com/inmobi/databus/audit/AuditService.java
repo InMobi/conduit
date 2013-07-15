@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 public abstract class AuditService implements Runnable {
   private Thread thread;
   private static final Log LOG = LogFactory.getLog(AuditService.class);
+
   @Override
   public void run() {
     execute();

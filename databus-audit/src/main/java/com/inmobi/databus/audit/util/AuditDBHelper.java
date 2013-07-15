@@ -27,13 +27,14 @@ public class AuditDBHelper {
   private final ClientConfig config;
 
   final private String tableName;
+
   public AuditDBHelper(ClientConfig config) {
     this.config = config;
     tableName = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
   }
 
   public static Connection getConnection(String driverName, String url,
-                                          String username, String password) {
+      String username, String password) {
     try {
       Class.forName(driverName).newInstance();
     } catch (Exception e) {
@@ -52,11 +53,11 @@ public class AuditDBHelper {
   public boolean update(Set<Tuple> tupleSet) {
 
     LOG.info("Connecting to DB ...");
-    Connection connection =
-        getConnection(config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
-            config.getString(AuditDBConstants.DB_URL),
-            config.getString(AuditDBConstants.DB_USERNAME),
-            config.getString(AuditDBConstants.DB_PASSWORD));
+    Connection connection = getConnection(
+        config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
+        config.getString(AuditDBConstants.DB_URL),
+        config.getString(AuditDBConstants.DB_USERNAME),
+        config.getString(AuditDBConstants.DB_PASSWORD));
     if (connection == null) {
       LOG.error("Connection not initialized returning ...");
       return false;
@@ -68,8 +69,7 @@ public class AuditDBHelper {
     String selectstatement = getSelectStmtForUpdation();
     String insertStatement = getInsertStmtForUpdation();
     String updateStatement = getUpdateStmtForUpdation();
-    PreparedStatement selectPreparedStatement = null, insertPreparedStatement =
-        null, updatePreparedStatement = null;
+    PreparedStatement selectPreparedStatement = null, insertPreparedStatement = null, updatePreparedStatement = null;
     try {
       selectPreparedStatement = connection.prepareStatement(selectstatement);
       insertPreparedStatement = connection.prepareStatement(insertStatement);
@@ -133,12 +133,11 @@ public class AuditDBHelper {
     for (LatencyColumns columns : LatencyColumns.values()) {
       setString += ", " + columns.toString() + " = ?";
     }
-    String updateStatement = "update " + tableName + " set " +
-        "" + AuditDBConstants.SENT + " = ?" + setString + " where " +
-        Column.HOSTNAME + " = ? and " + Column.TIER + " = ? and " +
-        Column.TOPIC +
-        " = ? and " + Column.CLUSTER + " = ? and " +
-        AuditDBConstants.TIMESTAMP + " = ? ";
+    String updateStatement = "update " + tableName + " set " + ""
+        + AuditDBConstants.SENT + " = ?" + setString + " where "
+        + Column.HOSTNAME + " = ? and " + Column.TIER + " = ? and "
+        + Column.TOPIC + " = ? and " + Column.CLUSTER + " = ? and "
+        + AuditDBConstants.TIMESTAMP + " = ? ";
     LOG.debug("Update statement: " + updateStatement);
     return updateStatement;
   }
@@ -149,24 +148,20 @@ public class AuditDBHelper {
       columnNames += column.toString() + ", ";
       columnString += "?, ";
     }
-    String insertStatement =
- "insert into " + tableName + " (" + columnNames
-        +
-            AuditDBConstants.TIMESTAMP + "," + Column.HOSTNAME +
-            ", " + Column.TIER + ", " + Column.TOPIC +
-            ", " + Column.CLUSTER + ", " + AuditDBConstants.SENT + ") values " +
-            "(" + columnString + "?, ?, ?, ?, ?, ?)";
+    String insertStatement = "insert into " + tableName + " (" + columnNames
+        + AuditDBConstants.TIMESTAMP + "," + Column.HOSTNAME + ", "
+        + Column.TIER + ", " + Column.TOPIC + ", " + Column.CLUSTER + ", "
+        + AuditDBConstants.SENT + ") values " + "(" + columnString
+        + "?, ?, ?, ?, ?, ?)";
     LOG.debug("Insert statement: " + insertStatement);
     return insertStatement;
   }
 
   public String getSelectStmtForUpdation() {
-    String selectstatement =
- "select * from " + tableName + " where "
-        +
-            AuditDBConstants.TIMESTAMP + " = ? and " + Column.HOSTNAME + " = " +
-            "? and " + Column.TOPIC + " = ? and " + Column.TIER + "" +
-            " = ? and " + Column.CLUSTER + " = ?";
+    String selectstatement = "select * from " + tableName + " where "
+        + AuditDBConstants.TIMESTAMP + " = ? and " + Column.HOSTNAME + " = "
+        + "? and " + Column.TOPIC + " = ? and " + Column.TIER + ""
+        + " = ? and " + Column.CLUSTER + " = ?";
     LOG.debug("Select statement: " + selectstatement);
     return selectstatement;
   }
@@ -189,8 +184,8 @@ public class AuditDBHelper {
       insertPreparedStatement.setString(index++, tuple.getTopic());
       insertPreparedStatement.setString(index++, tuple.getCluster());
       insertPreparedStatement.setLong(index++, tuple.getSent());
-      LOG.debug(
-          "Insert prepared statement : " + insertPreparedStatement.toString());
+      LOG.debug("Insert prepared statement : "
+          + insertPreparedStatement.toString());
       insertPreparedStatement.addBatch();
     } catch (SQLException e) {
       LOG.error("Exception thrown while adding to insert statement batch", e);
@@ -203,8 +198,7 @@ public class AuditDBHelper {
       PreparedStatement updatePreparedStatement, Tuple tuple, ResultSet rs) {
     try {
       LOG.debug("Updating tuple in DB:" + tuple);
-      Map<LatencyColumns, Long> latencyCountMap =
-          new HashMap<LatencyColumns, Long>();
+      Map<LatencyColumns, Long> latencyCountMap = new HashMap<LatencyColumns, Long>();
       latencyCountMap.putAll(tuple.getLatencyCountMap());
       for (LatencyColumns latencyColumn : LatencyColumns.values()) {
         Long currentVal = latencyCountMap.get(latencyColumn);
@@ -220,40 +214,36 @@ public class AuditDBHelper {
       int index = 1;
       updatePreparedStatement.setLong(index++, sent);
       for (LatencyColumns latencyColumn : LatencyColumns.values()) {
-        updatePreparedStatement
-            .setLong(index++, latencyCountMap.get(latencyColumn));
+        updatePreparedStatement.setLong(index++,
+            latencyCountMap.get(latencyColumn));
       }
       updatePreparedStatement.setString(index++, tuple.getHostname());
       updatePreparedStatement.setString(index++, tuple.getTier());
       updatePreparedStatement.setString(index++, tuple.getTopic());
       updatePreparedStatement.setString(index++, tuple.getCluster());
       updatePreparedStatement.setLong(index++, tuple.getTimestamp().getTime());
-      LOG.debug(
-          "Update prepared statement : " + updatePreparedStatement.toString());
+      LOG.debug("Update prepared statement : "
+          + updatePreparedStatement.toString());
       updatePreparedStatement.addBatch();
     } catch (SQLException e) {
-      LOG.error("Exception thrown while adding to batch of update statement",
-          e);
+      LOG.error("Exception thrown while adding to batch of update statement", e);
       return false;
     }
     return true;
   }
 
-
-
   public Set<Tuple> retrieve(Date toDate, Date fromDate, Filter filter,
       GroupBy groupBy) {
-    LOG.debug("Retrieving from db  from-time :" + fromDate + " to-date :" +
- ":"
+    LOG.debug("Retrieving from db  from-time :" + fromDate + " to-date :" + ":"
         + toDate + " filter :" + filter.toString());
     Set<Tuple> tupleSet = new HashSet<Tuple>();
 
     LOG.info("Connecting to DB ...");
-    Connection connection =
-        getConnection(config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
-            config.getString(AuditDBConstants.DB_URL),
-            config.getString(AuditDBConstants.DB_USERNAME),
-            config.getString(AuditDBConstants.DB_PASSWORD));
+    Connection connection = getConnection(
+        config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
+        config.getString(AuditDBConstants.DB_URL),
+        config.getString(AuditDBConstants.DB_USERNAME),
+        config.getString(AuditDBConstants.DB_PASSWORD));
     if (connection == null) {
       LOG.error("Connection not initialized returning ...");
       return null;
@@ -269,12 +259,12 @@ public class AuditDBHelper {
       preparedstatement.setLong(index++, fromDate.getTime());
       preparedstatement.setLong(index++, toDate.getTime());
       if (filter.getFilters() != null) {
-      for (Column column : Column.values()) {
-        String value = filter.getFilters().get(column);
-        if (value != null && !value.isEmpty()) {
-          preparedstatement.setString(index++, value);
+        for (Column column : Column.values()) {
+          String value = filter.getFilters().get(column);
+          if (value != null && !value.isEmpty()) {
+            preparedstatement.setString(index++, value);
+          }
         }
-      }
       }
       LOG.debug("Prepared statement is " + preparedstatement.toString());
       rs = preparedstatement.executeQuery();
@@ -311,8 +301,7 @@ public class AuditDBHelper {
         if (groupBy.getGroupByColumns().contains(column))
           columnValuesInTuple.put(column, rs.getString(column.toString()));
       }
-      Map<LatencyColumns, Long> latencyCountMap =
-          new HashMap<LatencyColumns, Long>();
+      Map<LatencyColumns, Long> latencyCountMap = new HashMap<LatencyColumns, Long>();
       for (LatencyColumns latencyColumn : LatencyColumns.values()) {
         latencyCountMap
             .put(latencyColumn, rs.getLong(latencyColumn.toString()));
@@ -329,32 +318,30 @@ public class AuditDBHelper {
     return tuple;
   }
 
-  private String getSelectStmtForRetrieve(Filter filter,
-                                                 GroupBy groupBy) {
+  private String getSelectStmtForRetrieve(Filter filter, GroupBy groupBy) {
     String sumString = "", whereString = "", groupByString = "";
     for (LatencyColumns latencyColumn : LatencyColumns.values()) {
-      sumString += ", Sum(" + latencyColumn.toString() + ") as " +
-          latencyColumn.toString();
+      sumString += ", Sum(" + latencyColumn.toString() + ") as "
+          + latencyColumn.toString();
     }
     if (filter.getFilters() != null) {
-    for (Column column : Column.values()) {
-      String value = filter.getFilters().get(column);
-      if (value != null && !value.isEmpty()) {
-        whereString += " and " + column.toString() +" = ?";
+      for (Column column : Column.values()) {
+        String value = filter.getFilters().get(column);
+        if (value != null && !value.isEmpty()) {
+          whereString += " and " + column.toString() + " = ?";
 
+        }
       }
     }
-    }
     for (Column column : groupBy.getGroupByColumns()) {
-        groupByString += ", " + column.toString();
+      groupByString += ", " + column.toString();
     }
 
-    String statement =
-        "select Sum(" + AuditDBConstants.SENT + ") as " + AuditDBConstants
-            .SENT + sumString + groupByString + " from " + tableName + " " +
-            "where " + AuditDBConstants.TIMESTAMP + " >= ? and "
-            + AuditDBConstants.TIMESTAMP + " < ? " + whereString;
-    if(!groupByString.isEmpty())
+    String statement = "select Sum(" + AuditDBConstants.SENT + ") as "
+        + AuditDBConstants.SENT + sumString + groupByString + " from "
+        + tableName + " " + "where " + AuditDBConstants.TIMESTAMP
+        + " >= ? and " + AuditDBConstants.TIMESTAMP + " < ? " + whereString;
+    if (!groupByString.isEmpty())
       statement += " group by " + groupByString.substring(1);
     LOG.debug("Select statement " + statement);
     return statement;

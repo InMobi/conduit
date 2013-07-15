@@ -36,6 +36,7 @@ public class AuditRollUpService extends AuditService {
   private static String MONTHLY_TABLE_KEY = "feeder.rollup.table.monthly";
   private static String DAILY_TABLE_KEY = "feeder.rollup.table.daily";
   private static final Log LOG = LogFactory.getLog(AuditRollUpService.class);
+
   public AuditRollUpService(ClientConfig config) {
     this.config = config;
     rollUpHourOfDay = config.getInteger(ROLLUP_HOUR_KEY, 0);
@@ -63,13 +64,13 @@ public class AuditRollUpService extends AuditService {
     return cal.getTimeInMillis();
   }
 
-  private long getTimeToSleep(){
-    Calendar cal =Calendar.getInstance();
+  private long getTimeToSleep() {
+    Calendar cal = Calendar.getInstance();
     long currentTime = cal.getTimeInMillis();
     // setting calendar to rollup hour
     if (cal.get(Calendar.HOUR_OF_DAY) >= rollUpHourOfDay) {
       // rollup will happen the next day
-    cal.add(Calendar.DAY_OF_MONTH, 1);
+      cal.add(Calendar.DAY_OF_MONTH, 1);
     }
     cal.set(Calendar.HOUR_OF_DAY, rollUpHourOfDay);
     cal.set(Calendar.MINUTE, 0);
@@ -88,6 +89,7 @@ public class AuditRollUpService extends AuditService {
     SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
     return formatter.format(date);
   }
+
   private String getDailyTableName(Date date) {
     return srcTableName + formatDate(date);
   }
@@ -172,11 +174,11 @@ public class AuditRollUpService extends AuditService {
    * @return
    */
   private Map<String, Long> getTableConstraint(Long fromTime, Long toTime) {
-    Date fromDate=getFirstMilliOfMonth(fromTime);
-    Date toDate=getFirstMilliOfMonth(toTime);
+    Date fromDate = getFirstMilliOfMonth(fromTime);
+    Date toDate = getFirstMilliOfMonth(toTime);
     Calendar cal = Calendar.getInstance();
-    Map<String,Long> tableConstraints= new HashMap<String, Long>();
-    while(!fromDate.after(toDate)){
+    Map<String, Long> tableConstraints = new HashMap<String, Long>();
+    while (!fromDate.after(toDate)) {
       Date lastDate = getLastMilliOfMonth(fromDate.getTime());
       if (toDate.after(lastDate)) {
         // insertion was across monthly tables and this constraint is for
@@ -203,8 +205,7 @@ public class AuditRollUpService extends AuditService {
    */
   private void dropDailyTable(Date fromDate, Date toDate, Connection connection)
       throws SQLException {
-    String statement = "alter table ?  no inherit "
-        + srcTableName;
+    String statement = "alter table ?  no inherit " + srcTableName;
     PreparedStatement preparedstatement = connection
         .prepareStatement(statement);
     Calendar cal = Calendar.getInstance();
@@ -228,6 +229,7 @@ public class AuditRollUpService extends AuditService {
     dropDailyTable(new Date(fromTime), new Date(toTime), connection);
     connection.commit();
   }
+
   @Override
   public void execute() {
     // wait till the roll up hour
