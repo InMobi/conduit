@@ -3,7 +3,6 @@ DATABUS_MIRROR_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.MirrorStreamDat
 DATABUS_ORDERLY_CREATION_FILES_CLASS="com.inmobi.databus.utils.OrderlyCreationOfDirs"
 DATABUS_MERGE_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.MergeStreamDataConsistency"
 DATABUS_LOCAL_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.LocalStreamDataConsistency"
-DATABUS_VALIDATION_CLASS="com.inmobi.databus.validator.DatabusValidator"
 #functions
 info() {
   local msg=$1
@@ -34,9 +33,6 @@ USAGE: $0 mirrorstreamdataconsistency <mergedstreamroot-dir> <mirrorstreamroot-d
        $0 orderlycreated <root-dirs (comma separated list)> [<basedir (comma separated list)>] [<streamname (comma separated list)>]
        $0 mergestreamdataconsistency <local stream root-dirs (comma separated list)> <merge stream root-dir> [<streamNames (comma separated list)>]
        $0 localstreamdataconsistency <root-dirs (comma separated list)>
-       $0 admin -verify [-stream (comma separated stream names)] [-mode (comma separated stream modes: {local,merge,mirror})] [-cluster (comma separated cluster names)] <-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)> <-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)> [-numThreads (number of threads for parallel listing)] <-conf (databus.xml file path)>
-       $0 admin -fix <-stream (stream name)> <-mode (stream mode: {local,merge,mirror})> <-cluster (cluster name)> <-start (YYYY/MM/DD/HH/mm)> <-stop (YYYY/MM/DD/HH/mm)> [-numThreads (number of threads for parallel listing)] <-conf (databus.xml file path)> [NOTE: THIS NEEDS SHUTDOWN OF TARGET DATABUS WORKERS]
-       $0 admin -checkpoint <-stream (stream name)> <-destCluster (destination cluster)> [-srcCluster (source cluster) ] <-date (YYYY/MM/DD/HH/mm)> <-conf (databus.xml file path)> 
 EOF
 }
 
@@ -86,9 +82,6 @@ case "$mode" in
   localstreamdataconsistency)
     opt_local=1;
     ;;
-  -admin)
-    opt_admin=1;
-    ;;
   *)
     error "Unknown or unspecified command '$mode'"
     echo
@@ -103,9 +96,6 @@ while [ -n "$*" ] ; do
 
   case "$arg" in
     -D*)
-      JAVA_OPTS="${JAVA_OPTS} $arg"
-      ;;
-    -X*)
       JAVA_OPTS="${JAVA_OPTS} $arg"
       ;;
     *)
@@ -147,8 +137,6 @@ elif [ -n "$opt_local_merge" ] ; then
   run_databus $DATABUS_MERGE_STREAM_VALIDATION_CLASS $args
 elif [ -n "$opt_local" ] ; then
   run_databus $DATABUS_LOCAL_STREAM_VALIDATION_CLASS $args
-elif [ -n "$opt_admin" ] ; then
-  run_databus $DATABUS_VALIDATION_CLASS $args
 #  echo $args
 else
   error "This message should never appear" 1
