@@ -16,6 +16,7 @@ import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.visualization.client.util.ClientDataHelper;
 import com.inmobi.databus.visualization.client.util.DateUtils;
 
+import javax.ws.rs.HEAD;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -105,11 +106,13 @@ public class Visualization implements EntryPoint, ClickHandler {
     String stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
     String drillDownCluster = Window.Location.getParameter(ClientConstants.GRAPH_CLUSTER);
     String drillDownStream = Window.Location.getParameter(ClientConstants.GRAPH_STREAM);
+    String selectedTab = Window.Location.getParameter(ClientConstants.SELECTED_TAB);
     if (startTime != null && endTime != null && cluster != null &&
         stream != null) {
       System.out.println("Retrieving parameters from URL");
       setSelectedParameterValues(startTime, endTime, cluster, stream);
-      sendRequest(startTime, endTime, cluster, stream, drillDownCluster, drillDownStream);
+      sendRequest(startTime, endTime, cluster, stream, drillDownCluster,
+          drillDownStream, selectedTab);
     }
   }
 
@@ -364,7 +367,8 @@ public class Visualization implements EntryPoint, ClickHandler {
                           final String selectedCluster,
                           final String selectedStream,
                           final String drillDownCluster,
-                          final String drillDownStream) {
+                          final String drillDownStream,
+                          final String selectedTab) {
     System.out.println("Sending request to load graph");
     clearAndShowLoadingSymbol();
     String clientJson = ClientDataHelper.getInstance()
@@ -395,8 +399,11 @@ public class Visualization implements EntryPoint, ClickHandler {
             hLatency = -1;
           setTierLatencyValues(pLatency, aLatency, cLatency,hLatency);
         }
+        Integer selectedTabId = 1;
+        if(selectedTab != null)
+          selectedTabId =  Integer.parseInt(selectedTab);
         drawGraph(nodesJson, selectedCluster, selectedStream,
-            getQueryString(), drillDownCluster, drillDownStream,
+            getQueryString(), drillDownCluster, drillDownStream, selectedTabId,
             Integer.parseInt(clientConfig.get(ClientConstants.PUBLISHER)),
             Integer.parseInt(clientConfig.get(ClientConstants.AGENT)),
             Integer.parseInt(clientConfig.get(ClientConstants.VIP)),
@@ -488,7 +495,8 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   private native void drawGraph(String result, String cluster, String stream,
                                 String queryString, String drillDownCluster,
-                                String drillDownStream, Integer publisherSla,
+                                String drillDownStream,
+                                Integer selectedTabID, Integer publisherSla,
                                 Integer agentSla,
                                 Integer vipSla, Integer collectorSla,
                                 Integer hdfsSla, Float percentileForSla,
@@ -496,7 +504,8 @@ public class Visualization implements EntryPoint, ClickHandler {
                                 Float percentageForWarn,
                                 Integer lossWarnThresholdDiff)/*-{
     $wnd.drawGraph(result, cluster, stream, queryString, drillDownCluster,
-    drillDownStream, publisherSla, agentSla, vipSla, collectorSla, hdfsSla,
-    percentileForSla, percentageForLoss, percentageForWarn, lossWarnThresholdDiff);
+    drillDownStream, selectedTabID, publisherSla, agentSla, vipSla,
+    collectorSla, hdfsSla, percentileForSla, percentageForLoss,
+    percentageForWarn, lossWarnThresholdDiff);
   }-*/;
 }
