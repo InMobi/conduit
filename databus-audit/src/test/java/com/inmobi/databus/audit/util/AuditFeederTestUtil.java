@@ -94,7 +94,7 @@ public class AuditFeederTestUtil {
     Assert.assertTrue(connection != null);
     String dropTable = "DROP TABLE IF EXISTS " + tableName.toUpperCase() + ";";
     String createTable =
-        "CREATE TABLE audit(\n  TIMEINTERVAL bigint,\n  HOSTNAME varchar(25)," +
+        "CREATE TABLE audit(\n  TIMEINTERVAL bigint,\n  HOSTNAME varchar(50)," +
             "\n  TIER varchar(15),\n  TOPIC varchar(25)," +
             "\n  CLUSTER varchar(50),\n  SENT bigint,\n  C0 bigint," +
             "\n  C1 bigint,\n  C2 bigint,\n  C3 bigint,\n  C4 bigint," +
