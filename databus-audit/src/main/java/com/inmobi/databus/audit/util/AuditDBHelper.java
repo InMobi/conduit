@@ -329,20 +329,21 @@ public class AuditDBHelper {
         String value = filter.getFilters().get(column);
         if (value != null && !value.isEmpty()) {
           whereString += " and " + column.toString() + " = ?";
-
         }
       }
     }
     for (Column column : groupBy.getGroupByColumns()) {
       groupByString += ", " + column.toString();
     }
-
-    String statement = "select Sum(" + AuditDBConstants.SENT + ") as "
-        + AuditDBConstants.SENT + sumString + groupByString + " from "
-        + tableName + " " + "where " + AuditDBConstants.TIMESTAMP
-        + " >= ? and " + AuditDBConstants.TIMESTAMP + " < ? " + whereString;
-    if (!groupByString.isEmpty())
+    String statement =
+        "select Sum(" + AuditDBConstants.SENT + ") as " + AuditDBConstants
+            .SENT + sumString + groupByString + " from " + tableName + " " +
+            "where " + AuditDBConstants.TIMESTAMP + " >= ? and "
+            + AuditDBConstants.TIMESTAMP + " < ? " + whereString;
+    if(!groupByString.isEmpty()) {
       statement += " group by " + groupByString.substring(1);
+      statement += " order by " + groupByString.substring(1);
+    }
     LOG.debug("Select statement " + statement);
     return statement;
   }
