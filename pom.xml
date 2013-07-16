@@ -8,7 +8,7 @@
 
   <groupId>com.inmobi.databus</groupId>
   <artifactId>databus-parent</artifactId>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>1.5.3-SNAPSHOT</version>
   <name>Databus</name>
   <packaging>pom</packaging>
 
@@ -86,110 +86,16 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-core</artifactId>
         <version>0.20.2-cdh3u5</version>
-        <exclusions>
-          <exclusion>
-            <groupId>net.sf.kosmosfs</groupId>
-            <artifactId>kfs</artifactId>
-          </exclusion>           
-          <exclusion>
-            <groupId>oro</groupId>
-            <artifactId>oro</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-el</groupId>
-            <artifactId>commons-el</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-          </exclusion>
-           <exclusion>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-json</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jdt</groupId>
-            <artifactId>core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>asm</groupId>
-            <artifactId>asm</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-cli</groupId>
-            <artifactId>commons-cli</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jetty</groupId>
-            <artifactId>jetty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet.jsp</groupId>
-            <artifactId>jsp-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-test</artifactId>
         <version>0.20.2-cdh3u5</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.ftpserver</groupId>
-            <artifactId>ftpserver-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.ftpserver</groupId>
-            <artifactId>ftpserver-deprecated</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.ftpserver</groupId>
-            <artifactId>ftplet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.mina</groupId>
-            <artifactId>mina-core</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>3.3.3</version>
-        <exclusions>
-          <exclusion>
-            <groupId>jline</groupId>
-            <artifactId>jline</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.netflix.curator</groupId>
@@ -210,58 +116,16 @@
         <groupId>commons-httpclient</groupId>
         <artifactId>commons-httpclient</artifactId>
         <version>3.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
         <version>1.2.16</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.sun.jdmk</groupId>
-            <artifactId>jmxtools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jmx</groupId>
-            <artifactId>jmxri</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.jms</groupId>
-            <artifactId>jmx</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.jms</groupId>
-            <artifactId>jms</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
         <version>1.1.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>avalon-framework</groupId>
-            <artifactId>avalon-framework</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>logkit</groupId>
-            <artifactId>logkit</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>commons-cli</groupId>
@@ -272,20 +136,6 @@
         <groupId>org.apache.hadoop.inmobi.tools</groupId>
         <artifactId>hadoop-distcp</artifactId>
         <version>0.5</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjweaver</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.aspectj</groupId>
-            <artifactId>aspectjrt</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
@@ -301,18 +151,16 @@
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
         <version>6.1.1</version>
-        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>net.java.dev.jets3t</groupId>
         <artifactId>jets3t</artifactId>
         <version>0.6.1</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-          </exclusion>
-        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.3</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -341,7 +189,7 @@
       </plugin>
       <plugin>
         <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId> 
+        <artifactId>apache-rat-plugin</artifactId>
         <version>0.9</version>
       </plugin>
       <plugin>
@@ -349,7 +197,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.12</version>
         <configuration>
-          <argLine>-Djava.security.krb5.realm= -Djava.security.krb5.kdc=</argLine>
           <excludedGroups>${excluded.testng.groups}</excludedGroups> 
           <forkedProcessTimeoutInSeconds>7200</forkedProcessTimeoutInSeconds>
         </configuration>
@@ -357,7 +204,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.0-beta-9</version>
+        <version>2.2</version>
       </plugin>
     </plugins>
   </build>
@@ -375,8 +222,6 @@
     <module>databus-core</module>
     <module>databus-worker</module>
     <module>databus-dist</module>
-    <module>databus-audit</module>
-    <module>databus-visualization</module>
   </modules>
 
 </project>

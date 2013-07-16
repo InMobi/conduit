@@ -49,7 +49,7 @@ public class TestDatabusInitialization {
   public void testCluser1() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 6, 1, 6,
+    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 6, 1, 4,
         0);
   }
   
@@ -63,7 +63,7 @@ public class TestDatabusInitialization {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster2");
     testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 6, 1, 4,
-        3);
+        1);
   }
   
   /*
@@ -76,7 +76,7 @@ public class TestDatabusInitialization {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster3");
     testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 4, 1, 4,
-        3);
+        1);
   }
   
   /*
@@ -149,7 +149,8 @@ public class TestDatabusInitialization {
     clustersToProcess.add("testcluster4");
     clustersToProcess.add("testcluster5");
     testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 20, 5,
-        22, 6);
+        20,
+        2);
   }
   
   @Test
@@ -159,7 +160,8 @@ public class TestDatabusInitialization {
     clustersToProcess.add("testcluster2");
     clustersToProcess.add("testcluster4");
     testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 12, 3,
-        14, 3);
+        12,
+        1);
   }
   
   /*

@@ -7,6 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,10 +23,8 @@ import org.testng.Assert;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
-import com.inmobi.databus.utils.DatePathComparator;
 
 public class TestMergedStreamService extends MergedStreamService
     implements AbstractServiceTest {
@@ -40,50 +39,35 @@ public class TestMergedStreamService extends MergedStreamService
   private Date todaysdate = null;
   
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster, Set<String> streamsToProcess) throws Exception {
+      Cluster destinationCluster, Cluster currentCluster) throws Exception {
 
-    super(config, srcCluster, destinationCluster, currentCluster,
-        new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess);
+    super(config, srcCluster, destinationCluster, currentCluster);
     this.srcCluster = srcCluster;
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());
   }
   
-  /*
-   * Returns the last file path
-   */
-  public static FileStatus getAllFiles(Path listPath, FileSystem fs,
+  public static void getAllFiles(Path listPath, FileSystem fs, 
       List<String> fileList) 
           throws IOException {
-    FileStatus lastFile = null;
-    DatePathComparator comparator = new DatePathComparator();
     FileStatus[] fileStatuses = fs.listStatus(listPath);
-
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + listPath);
-      if (fs.exists(listPath))
-      lastFile = fs.getFileStatus(listPath);
     } else {
-
       for (FileStatus file : fileStatuses) { 
         if (file.isDir()) {
-          lastFile = getAllFiles(file.getPath(), fs, fileList);
-        } else {
-          if (lastFile == null)
-            lastFile = fileStatuses[0];
-          if (comparator.compare(file, lastFile) > 0)
-            lastFile = file;
+          getAllFiles(file.getPath(), fs, fileList);
+        } else { 
           fileList.add(file.getPath().getName());
         }
       } 
     }
-    return lastFile;
   }
   
   @Override
   protected void preExecute() throws Exception {
     try {
+      // PublishMissingPathsTest.testPublishMissingPaths(this, false);
       if (files != null)
         files.clear();
       files = null;
@@ -143,9 +127,7 @@ public class TestMergedStreamService extends MergedStreamService
             LOG.debug("Verifying Merged Paths in Stream for directory "
                 + commitpath);
             List<String> commitPaths = new ArrayList<String>();
-            FileStatus lastFile = getAllFiles(new Path(commitpath), fs,
-                commitPaths);
-
+            getAllFiles(new Path(commitpath), fs, commitPaths);
             try {
               LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
                   + commitPaths.size());
@@ -157,10 +139,8 @@ public class TestMergedStreamService extends MergedStreamService
               }
             } catch (NumberFormatException e) {
             }
-
           }
         }
-
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -185,6 +165,12 @@ public class TestMergedStreamService extends MergedStreamService
     postExecute();
   }
 
+  @Override
+  public void publishMissingPaths(long commitTime) throws Exception {
+    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot(), 
+        commitTime);
+  }
+  
   @Override
   public Cluster getCluster() {
     return destinationCluster;

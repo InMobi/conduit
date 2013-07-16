@@ -86,19 +86,19 @@ public class TestLocalStreamService extends LocalStreamService implements
   }
   
   public void doRecursiveListing(Path dir, Set<Path> listing,
-  		FileSystem fs) throws IOException {
-  	FileStatus[] fileStatuses = fs.listStatus(dir);
-  	if (fileStatuses == null || fileStatuses.length == 0) {
-  		LOG.debug("No files in directory:" + dir);
-  	} else {
-  		for (FileStatus file : fileStatuses) {
-  			if (file.isDir()) {
-  				doRecursiveListing(file.getPath(), listing, fs);	
-  			} else {
-  				listing.add(file.getPath().getParent());
-  			}
-  		}
-  	}
+      FileSystem fs) throws IOException {
+    FileStatus[] fileStatuses = fs.listStatus(dir);
+    if (fileStatuses == null || fileStatuses.length == 0) {
+      LOG.debug("No files in directory:" + dir);
+    } else {
+      for (FileStatus file : fileStatuses) {
+        if (file.isDir()) {
+          doRecursiveListing(file.getPath(), listing, fs);  
+        } else {
+          listing.add(file.getPath().getParent());
+        }
+      }
+    }
   }
 
   @Override
@@ -181,16 +181,16 @@ public class TestLocalStreamService extends LocalStreamService implements
 
         Path trashpath = srcCluster.getTrashPathWithDateHour();
         String streamPrefix = srcCluster.getLocalFinalDestDirRoot()
-        		+ sstream.getValue().getName();
+            + sstream.getValue().getName();
         Set<Path> listOfPaths = new HashSet<Path>();
         doRecursiveListing(new Path(streamPrefix), listOfPaths, fs);
         Path latestPath = null;
         for (Path path : listOfPaths) {
-        	if (latestPath== null || (CalendarHelper.getDateFromStreamDir(new 
-        			Path(streamPrefix), path).compareTo(CalendarHelper.getDateFromStreamDir
-        					(new Path(streamPrefix), latestPath)) > 0)) {
-        		latestPath = path;
-        	}
+          if (latestPath== null || (CalendarHelper.getDateFromStreamDir(new 
+              Path(streamPrefix), path).compareTo(CalendarHelper.getDateFromStreamDir
+                  (new Path(streamPrefix), latestPath)) > 0)) {
+            latestPath = path;
+          }
         }
 
         // Make sure all the paths from dummy to mindir are created
@@ -201,7 +201,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   
         try {
           String streams_local_dir = latestPath + File.separator + srcCluster.getName(); 
-        	LOG.debug("Checking in Path for mapred Output: " + streams_local_dir);
+          LOG.debug("Checking in Path for mapred Output: " + streams_local_dir);
           
           // First check for the previous current file
           if (!prevfilesList.isEmpty()) {
@@ -233,9 +233,8 @@ public class TestLocalStreamService extends LocalStreamService implements
           
           CheckpointProvider provider = this.getCheckpointProvider();
           
-          String checkpoint = new String(provider.read(
-              getCheckPointKey(getClass().getSimpleName(),
-                  sstream.getValue().getName(), srcCluster.getName())));
+          String checkpoint = new String(provider.read(sstream.getValue()
+              .getName() + srcCluster.getName()));
           
           LOG.debug("Checkpoint for " + sstream.getValue().getName()
               + srcCluster.getName() + " is " + checkpoint);
@@ -281,18 +280,8 @@ public class TestLocalStreamService extends LocalStreamService implements
         } catch (NumberFormatException e) {
           
         }
-        // Since merge will only pick the data if next minute directory is
-        // present hence creating an empty next minute directory
-        LOG.debug("Last path created in local stream is [" + latestPath + "]");
-        Date lastPathDate = CalendarHelper.getDateFromStreamDir(new Path(
-            streamPrefix), latestPath);
-        Path nextPath = CalendarHelper.getNextMinutePathFromDate(lastPathDate,
-            new Path(streamPrefix));
-        LOG.debug("Creating empty path in local stream " + nextPath);
-        fs.mkdirs(nextPath);
       }
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
-
     } catch (Exception e) {
       e.printStackTrace();
       throw new Error("Error in LocalStreamService Test PostExecute");
@@ -306,7 +295,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   public TestLocalStreamService(DatabusConfig config,
                                 Cluster srcCluster, Cluster currentCluster,
  CheckpointProvider provider,
-      Set<String> streamsToProcess) throws IOException {
+      List<String> streamsToProcess) throws IOException {
     super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.srcCluster = srcCluster;
     this.provider = provider;
@@ -315,6 +304,15 @@ public class TestLocalStreamService extends LocalStreamService implements
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+    }
+  }
+  
+  public void publishMissingPaths(FileSystem fs,
+      Map<String, Set<Path>> missingDirCommittedPaths, long commitTime) 
+          throws Exception {
+    if (missingDirCommittedPaths != null) {
+      missingDirCommittedPaths.putAll(super.publishMissingPaths(fs,
+          srcCluster.getLocalFinalDestDirRoot(), commitTime));
     }
   }
   
@@ -341,6 +339,11 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public FileSystem getFileSystem() {
     return fs;
+  }
+
+  @Override
+  public void publishMissingPaths(long commitTime) throws Exception {
+    super.publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot(), commitTime);
   }
 }
 

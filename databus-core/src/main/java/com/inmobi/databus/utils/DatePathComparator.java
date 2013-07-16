@@ -53,6 +53,7 @@ public class DatePathComparator implements Comparator<FileStatus> {
 
       streamDate = CalendarHelper.getDateFromStreamDir(streamDirPrefix,
           streamDir);
+      LOG.debug("streamDate [" + streamDate + "]");
     }
 
     if (fileStatus1 != null) {
@@ -66,6 +67,7 @@ public class DatePathComparator implements Comparator<FileStatus> {
 
       streamDate1 = CalendarHelper.getDateFromStreamDir(streamDirPrefix1,
           streamDir1);
+      LOG.debug("streamDate1 [" + streamDate1.toString() + "]");
     }
 
     if (streamDate != null && streamDate1 != null)

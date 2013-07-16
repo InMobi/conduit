@@ -1,6 +1,5 @@
 package com.inmobi.databus.audit.query;
 
-
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -22,8 +21,8 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.audit.Column;
 import com.inmobi.databus.audit.Filter;
 import com.inmobi.databus.audit.GroupBy;
-import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.audit.GroupBy.Group;
+import com.inmobi.databus.audit.Tier;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.consumer.AbstractMessageConsumer;
@@ -52,8 +51,7 @@ public class AuditStatsQuery {
   Date toTime;
   int cutoffTime;
   long timeout = 60000;
-  private static final String MESSAGE_CLIENT_CONF_FILE =
-      "audit-consumer-conf.properties";
+  private static final String MESSAGE_CLIENT_CONF_FILE = "audit-consumer-conf.properties";
   public static final String ROOT_DIR_KEY = "databus.consumer.rootdirs";
   public static final String CONSUMER_CLASS_KEY = "consumer.classname";
   boolean isTimeOut = false;
@@ -69,16 +67,14 @@ public class AuditStatsQuery {
   private long messageCount = 0;
   private Tier cutoffTier = null;
   private String timezone;
-  public static final String CONSUMER_CLASSNAME =
-      "com.inmobi.messaging.consumer.databus.DatabusConsumer";
+  public static final String CONSUMER_CLASSNAME = "com.inmobi.messaging.consumer.databus.DatabusConsumer";
   public static final String CONSUMER_NAME = "audit-consumer";
   private static final int DEFAULT_CUTOFF_HRS = 1;
-  private static final String CONFIG_STOP_TIME =
-      "messaging.consumer.absolute.stoptime";
+  private static final String CONFIG_STOP_TIME = "messaging.consumer.absolute.stoptime";
 
   public AuditStatsQuery(String rootDir, String toTimeString,
-                         String fromTimeString, String filterString, String groupByString,
-                         String cuttoffTime, String timeOut, String timezone) {
+      String fromTimeString, String filterString, String groupByString,
+      String cuttoffTime, String timeOut, String timezone) {
     received = new TreeMap<Group, Long>();
     sent = new TreeMap<Group, Long>();
     this.rootDir = rootDir;
@@ -92,16 +88,14 @@ public class AuditStatsQuery {
   }
 
   public AuditStatsQuery(String rootDir, String toTimeString,
-                         String fromTimeString, String filterString, String groupByString,
-                         String cuttoffTime, String timeOut, String timezone, Tier cutoffTier,
-                         long maxMessages) {
+      String fromTimeString, String filterString, String groupByString,
+      String cuttoffTime, String timeOut, String timezone, Tier cutoffTier,
+      long maxMessages) {
     this(rootDir, toTimeString, fromTimeString, filterString, groupByString,
         cuttoffTime, timeOut, timezone);
     this.cutoffTier = cutoffTier;
     this.maxMessages = maxMessages;
   }
-
-
 
   void aggregateStats(MessageConsumer consumer) throws InterruptedException,
       TException, ParseException, IOException, EndOfStreamException {
@@ -249,9 +243,9 @@ public class AuditStatsQuery {
         printUsage();
         System.exit(-1);
       }
-      AuditStatsQuery auditStatsQuery =
-          new AuditStatsQuery(rootDir, toTime, fromTime, filterKeys,
-              groupByKeys, cutoffString, timeoutString, timezone);
+      AuditStatsQuery auditStatsQuery = new AuditStatsQuery(rootDir, toTime,
+          fromTime, filterKeys, groupByKeys, cutoffString, timeoutString,
+          timezone);
       try {
         auditStatsQuery.execute();
       } catch (InterruptedException e) {
@@ -317,8 +311,8 @@ public class AuditStatsQuery {
     calendar.add(Calendar.HOUR_OF_DAY, cutoffTime);
     stopTime = calendar.getTime();
 
-    ClientConfig config =
-        ClientConfig.loadFromClasspath(MESSAGE_CLIENT_CONF_FILE);
+    ClientConfig config = ClientConfig
+        .loadFromClasspath(MESSAGE_CLIENT_CONF_FILE);
     String stopDateString = AbstractMessageConsumer.getStringFromDate(stopTime);
     config.set(CONFIG_STOP_TIME, stopDateString);
     if (rootDir != null) {

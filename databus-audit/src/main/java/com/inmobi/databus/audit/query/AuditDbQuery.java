@@ -113,8 +113,8 @@ public class AuditDbQuery {
           else
             break;
         }
-        if (!it.hasNext() && percentile.get(tuple) != null && percentile.get
-            (tuple).get(currentPercentile) != null)
+        if (!it.hasNext() && percentile.get(tuple) != null
+            && percentile.get(tuple).get(currentPercentile) != null)
           break;
         currentCount += value;
       }
@@ -229,13 +229,14 @@ public class AuditDbQuery {
     StringBuffer results = new StringBuffer();
     results.append("Group \t\t\tReceived\t\t\t<Percentile, Latency>\n");
     for (Tuple tuple : tupleSet) {
-      results.append(tuple.getGroup()+"\t\t");
-      results.append(received.get(tuple.getGroup())+"\t\t");
+      results.append(tuple.getGroup() + "\t\t");
+      results.append(received.get(tuple.getGroup()) + "\t\t");
       Map<Float, Integer> percentileMap = percentile.get(tuple);
       if (percentileMap != null) {
-        for (Map.Entry<Float, Integer> percentileEntry : percentileMap.entrySet()) {
-          results.append("<"+percentileEntry.getKey()+", ");
-          results.append(percentileEntry.getValue()+">\t");
+        for (Map.Entry<Float, Integer> percentileEntry : percentileMap
+            .entrySet()) {
+          results.append("<" + percentileEntry.getKey() + ", ");
+          results.append(percentileEntry.getValue() + ">\t");
         }
       }
       results.append("\n");

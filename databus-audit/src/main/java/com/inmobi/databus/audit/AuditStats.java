@@ -33,10 +33,7 @@ public class AuditStats {
   private static final Log LOG = LogFactory.getLog(AuditStats.class);
   public final static MetricRegistry metrics = new MetricRegistry();
 
-
-
-  private synchronized void start(List<AuditService> feeders)
-      throws Exception {
+  private synchronized void start(List<AuditService> feeders) throws Exception {
     ClientConfig config = ClientConfig.loadFromClasspath(CONF_FILE);
     String databusConf = config.getString(DATABUS_CONF_FILE_KEY);
     DatabusConfigParser parser = new DatabusConfigParser(databusConf);
@@ -44,8 +41,7 @@ public class AuditStats {
     for (Entry<String, Cluster> cluster : dataBusConfig.getClusters()
         .entrySet()) {
       String rootDir = cluster.getValue().getRootDir();
-      AuditService feeder = new AuditFeederService(cluster.getKey(),
-          rootDir,
+      AuditService feeder = new AuditFeederService(cluster.getKey(), rootDir,
           config);
       feeders.add(feeder);
     }
@@ -103,7 +99,7 @@ public class AuditStats {
 
   }
 
-  public static void main(String args[]) throws Exception{
+  public static void main(String args[]) throws Exception {
     final AuditStats stats = new AuditStats();
     final List<AuditService> feeders = new ArrayList<AuditService>();
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -118,9 +114,9 @@ public class AuditStats {
     // in next version
 
     try {
-    stats.start(feeders);
-    // wait for all feeders to finish
-    stats.join(feeders);
+      stats.start(feeders);
+      // wait for all feeders to finish
+      stats.join(feeders);
     } finally {
       stats.stop(feeders);
     }

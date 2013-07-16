@@ -1,6 +1,5 @@
 package com.inmobi.databus.audit.util;
 
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
@@ -67,7 +66,7 @@ public class StreamingBenchmarkWithAudit {
 
               consumerOptionIndex = 7;
             } else {
-              consumerOptionIndex = 6; 
+              consumerOptionIndex = 6;
             }
           } else {
             consumerOptionIndex = 5;
@@ -103,7 +102,7 @@ public class StreamingBenchmarkWithAudit {
       ClientConfig config = ClientConfig
           .loadFromClasspath(MessageConsumerFactory.MESSAGE_CLIENT_CONF_FILE);
       // set consumer start time as auditStartTime
-      auditStartTime = formatter.format(benchmark.consumerStartTime);
+      auditStartTime = formatter.format(benchmark.getConsumerStartTime());
       auditTopic = config.getString(MessageConsumerFactory.TOPIC_NAME_KEY);
       // set consumer end time as auditEndTime
       // adding 2 minutes to the end time so that
@@ -115,16 +114,15 @@ public class StreamingBenchmarkWithAudit {
       // more minute
 
       Calendar calendar = Calendar.getInstance();
-      calendar.setTime(benchmark.consumerEndTime);
+      calendar.setTime(benchmark.getConsumerEndTime());
       calendar.add(Calendar.MINUTE, 2);
       auditEndTime = formatter.format(calendar.getTime());
     }
     int exitcode = 0;
     if (runConsumer) {
       // start audit thread to perform audit query
-      AuditThread auditThread =
-          createAuditThread(auditTopic, auditStartTime, auditEndTime,
-              auditTimeout, maxSent * numProducers);
+      AuditThread auditThread = createAuditThread(auditTopic, auditStartTime,
+          auditEndTime, auditTimeout, maxSent * numProducers);
       auditThread.start();
 
       // wait for audit thread to join
@@ -145,8 +143,6 @@ public class StreamingBenchmarkWithAudit {
       String toTime, int timeout, long maxMessages) {
     return new AuditThread(topic, fromTime, toTime, timeout, maxMessages);
   }
-
-
 
   static class AuditThread extends Thread {
     final String topic;
@@ -209,4 +205,4 @@ public class StreamingBenchmarkWithAudit {
     }
   }
 
- }
+}

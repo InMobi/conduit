@@ -13,20 +13,24 @@
  */
 package com.inmobi.databus.distcp;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,34 +39,26 @@ import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.databus.AbstractService;
-import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
-import com.inmobi.databus.utils.FileUtil;
 
 public abstract class DistcpBaseService extends AbstractService {
 
-  protected final Cluster srcCluster;
-  protected final Cluster destCluster;
-  protected final Cluster currentCluster;
+  private final Cluster srcCluster;
+  private final Cluster destCluster;
+  private final Cluster currentCluster;
   private final FileSystem srcFs;
   private final FileSystem destFs;
   protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
-  protected final CheckpointProvider provider;
-  protected Map<String, Path> checkPointPaths = new HashMap<String, Path>();
-  private static final int DEFAULT_NUM_DIR_PER_DISTCP = 30;
 
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService.class);
-  private final int numOfDirPerDistcp;
 
   public DistcpBaseService(DatabusConfig config, String name,
-      Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess)
+      Cluster srcCluster, Cluster destCluster, Cluster currentCluster)
       throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess);
+        config);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
@@ -73,13 +69,6 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
-    this.provider = provider;
-    String tmp;
-    if ((tmp = System.getProperty(DatabusConstants.NUM_DIR_PER_DISTCP)) != null) {
-      numOfDirPerDistcp = Integer.parseInt(tmp);
-    } else
-      numOfDirPerDistcp = DEFAULT_NUM_DIR_PER_DISTCP;
-
   }
 
   protected Cluster getSrcCluster() {
@@ -98,21 +87,34 @@ public abstract class DistcpBaseService extends AbstractService {
     return destFs;
   }
 
+  /**
+   * Set Common or default DistCp options here.
+   * 
+   * @param inputPathListing
+   * @param target
+   * @return options instance
+   */
 
+  protected DistCpOptions getDistCpOptions(Path inputPathListing, Path target) {
+    DistCpOptions options = new DistCpOptions(inputPathListing, target);
+    options.setBlocking(true);
+    options.setSkipPathValidation(true);
+    options.setUseSimpleFileListing(true);
+    // If more command line options need to be passed to DistCP then,
+    // Create options instance using OptionParser.parse and set default options
+    // on the returned instance.
+    // with the arguments as sent in by the Derived Service
+    return options;
+  }
 
-  protected Boolean executeDistCp(String serviceName, 
-      Map<String, FileStatus> fileListingMap, Path targetPath)
+  protected Boolean executeDistCp(DistCpOptions options, String serviceName)
       throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
-    conf.set("mapred.job.name", serviceName);
-    
-    // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
-    // since DatabusDistCp writes listing file using fileListingMap instead of
-    // relying on sourceFileListing path. Passing a dummy value.
-    DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
-    DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
+    conf.set("mapred.job.name", serviceName + "_" + getSrcCluster().getName() +
+        "_" + getDestCluster().getName());
+    DistCp distCp = new DistCp(conf, options);
     try {
       distCp.execute();
     } catch (Exception e) {
@@ -130,11 +132,6 @@ public abstract class DistcpBaseService extends AbstractService {
    * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
-  
-  /*
-   * @return the target path where distcp will copy paths from source cluster 
-   */
-  protected abstract Path getDistCpTargetPath();
 
   /*
    * @param filename should be of the format
@@ -173,140 +170,268 @@ public abstract class DistcpBaseService extends AbstractService {
     return (runIntervalInSec - currentSec) * 1000;
   }
 
+  protected void doFinalCommit(Map<Path, FileSystem> consumePaths)
+      throws Exception {
+    // commit distcp consume Path from remote cluster
+    Set<Map.Entry<Path, FileSystem>> consumeEntries = consumePaths.entrySet();
+    for (Map.Entry<Path, FileSystem> consumePathEntry : consumeEntries) {
+      FileSystem fileSystem = consumePathEntry.getValue();
+      Path consumePath = consumePathEntry.getKey();
+      fileSystem.delete(consumePath);
+      LOG.debug("Deleting/Commiting [" + consumePath + "]");
+    }
 
-  protected abstract Path getStartingDirectory(String stream) throws IOException;
+  }
 
   /*
-   * Return a map of destination path,source path file status Since the map uses
-   * destination path as the key,no conflicting duplicates paths would be passed
-   * on to distcp
+   * @param Map<Path, FileSystem> consumePaths - list of files which contain
+   * fully qualified path of minute level files which have to be pulled
+   * 
+   * @param Path tmp - Temporary Location path on Cluster to where files have to
+   * be pulled
    * 
    * @return
    */
-  protected Map<String, FileStatus> getDistCPInputFile()
+  protected Path getDistCPInputFile(Map<Path, FileSystem> consumePaths, Path tmp)
       throws Exception {
-    Map<String,FileStatus> result = new HashMap<String, FileStatus>();
-    int pathsAlreadyAdded = 0;
-    for (String stream : streamsToProcess) {
-      LOG.info("Processing stream " + stream);
-      byte[] value = provider.read(getCheckPointKey(stream));
-      Path inputPath = new Path(getInputPath(), stream);
-      Path lastCheckPointPath = null;
-      Path nextPath = null;
-      if (value != null) {
-        String checkPointValue = new String(value);
-        // creating a path object from empty string throws exception;hence
-        // checking for it
-        if (!checkPointValue.trim().equals("")) {
-        lastCheckPointPath = new Path(checkPointValue);
-        }
-        if (lastCheckPointPath == null
-            || !getSrcFs().exists(lastCheckPointPath)) {
-          LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
-              + "] for stream " + stream + ";Ignoring it");
-        } else {
-          Date lastDate = CalendarHelper.getDateFromStreamDir(inputPath,
-              lastCheckPointPath);
-          nextPath = CalendarHelper.getNextMinutePathFromDate(lastDate,
-              inputPath);
-        }
+    Path input = getInputPath();
+    if (!srcFs.exists(input))
+      return null;
+    // find all consumePaths which need to be pulled
+    FileStatus[] fileList = srcFs.listStatus(input);
+    if (fileList != null) {
+      Set<String> minFilesSet = new HashSet<String>();
+      Set<Path> yetToBeMovedPaths = new HashSet<Path>();
+      /*
+       * inputPath could have multiple files due to backlog read all and create
+       * a Input file for DISTCP with valid paths on destinationCluster as an
+       * optimization so that distcp doesn't pull this file remotely
+       */
+      for (int i = 0; i < fileList.length; i++) {
+        Path consumeFilePath = fileList[i].getPath().makeQualified(srcFs);
+        /*
+         * put eachFile name in consumePaths An example of data in consumePaths
+         * is /databus/system/consumers/<cluster>/file1..and so on
+         */
+        consumePaths.put(consumeFilePath, srcFs);
+
+        LOG.debug("Reading minutePaths from ConsumePath [" + consumeFilePath
+            + "]");
+        // read all valid minute files path in each consumePath
+        readConsumePath(srcFs, consumeFilePath, minFilesSet, yetToBeMovedPaths);
       }
-      if (nextPath == null) {
-        LOG.info("Finding the starting directoryfor stream [" + stream + "]");
-        nextPath = getStartingDirectory(stream);
-        if (nextPath == null) {
-          LOG.debug("No start directory found,returning the empty result");
-          continue;
-        }
+      // removing those path which have same file name
+      filterMinFilePaths(minFilesSet);
+      if (yetToBeMovedPaths.size() > 0) {
+        // writing yet to be moved file on the source cluster
+        writeYetToBeMovedFile(srcCluster.getTmpPath(), yetToBeMovedPaths);
       }
-      LOG.info("Starting directory for stream [" + stream + "]" + " is ["
-          + nextPath + "]");
-      Date nextDate = CalendarHelper.getDateFromStreamDir(inputPath, nextPath);
-      // if next to next path exist than only add the next path so that the path
-      // being added to disctp input is not the current path
-      Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
-          inputPath);
-      Path lastPathAdded = null;
-      FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
-      FileStatus[] nextToNextPathFileStatus;
-      while (pathsAlreadyAdded <= numOfDirPerDistcp
-          && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
-          nextToNextPath)) != null) {
-        if(nextPathFileStatus.length==0){
-          LOG.info(nextPath + " is an empty directory");
-          FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
-          String destnPath= getFinalDestinationPath(srcFileStatus);
-          if(destnPath!=null){
-            LOG.info("Adding to input of Distcp.Move ["+nextPath+"] to "+destnPath);
-            result.put(destnPath,srcFileStatus);
-          }
-        }
-        else{
-          for(FileStatus fStatus:nextPathFileStatus){
-            String destnPath = getFinalDestinationPath(fStatus);
-            if(destnPath!=null){
-              LOG.info("Adding to input of Distcp.Move ["+fStatus.getPath()+"] to "+destnPath);
-              result.put(destnPath,fStatus);
+      Path tmpPath = createInputFileForDISCTP(destFs, srcCluster.getName(),
+          tmp, minFilesSet);
+      return getFinalPathForDistCP(tmpPath, consumePaths);
+    }
+
+    return null;
+  }
+
+  protected abstract void filterMinFilePaths(Set<String> minFilesSet);
+
+  /*
+   * read each consumePath and add only valid paths to minFilesSet
+   */
+  void readConsumePath(FileSystem fs, Path consumePath,
+      Set<String> minFilesSet, Set<Path> yetToBeMovedPaths) throws IOException {
+    BufferedReader reader = null;
+    try {
+      FSDataInputStream fsDataInputStream = fs.open(consumePath);
+      reader = new BufferedReader(new InputStreamReader(fsDataInputStream));
+      String minFileName = null;
+      do {
+        minFileName = reader.readLine();
+        if (minFileName != null) {
+          /*
+           * To avoid data-loss in all services we publish the paths to
+           * consumers directory first before publishing on HDFS for
+           * finalConsumption. In a distributed transaction failure it's
+           * possible that some of these paths do not exist. Do isExistence
+           * check before adding them as DISTCP input otherwise DISTCP jobs can
+           * fail continously thereby blocking Merge/Mirror stream to run
+           * further
+           */
+          Path p = new Path(minFileName);
+          if (fs.exists(p)) {
+            LOG.info("Adding sourceFile [" + minFileName + "] to distcp "
+                + "FinalList");
+            minFilesSet.add(minFileName.trim());
+          } else {
+            // if a path doesn't exist than it there can be 2 cases:
+            // 1) previous service failed after writing consumer paths
+            // 2) previous service is still working and its in between writing
+            // consumer paths and publishing data
+            if (isMoveFailed(fs, p)) {
+              LOG.info("Skipping [" + minFileName + "] to pull as it's an "
+                  + "INVALID PATH");
+            } else {
+              yetToBeMovedPaths.add(p);
             }
           }
-        } 
-        pathsAlreadyAdded++;
-        lastPathAdded = nextPath;
-        nextPath = nextToNextPath;
-        nextDate = CalendarHelper.addAMinute(nextDate);
-        nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
-            inputPath);
-        nextPathFileStatus=nextToNextPathFileStatus;
-        nextToNextPathFileStatus=null;
-      }
-      if (lastPathAdded != null) {
-        checkPointPaths.put(stream, lastPathAdded);
-      }
-
+        }
+      } while (minFileName != null);
+    } finally {
+      if (reader != null)
+        reader.close();
     }
-    return result;
   }
 
-  protected abstract String getFinalDestinationPath(FileStatus srcPath);
-
-  protected String getCheckPointKey(String stream) {
-    return getCheckPointKey(getClass().getSimpleName(), stream,
-        srcCluster.getName());
+  /*
+   * Method to check whether movement of file from temp location to Path p has
+   * failed or is under process
+   */
+  private boolean isMoveFailed(FileSystem fs, Path p) throws IOException {
+    Path nextPath = getNextMinuteDirectory(p);
+    if (nextPath == null) {
+      LOG.error("Path[" + p + "] is invalid");
+      return true;// so that invalid path can be skipped
+    }
+    if (fs.exists(nextPath))
+      return true;
+    return false;
   }
 
-  // protected abstract void filterMinFilePaths(Set<String> minFilesSet);
-
-  protected void finalizeCheckPoints() {
-    for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
-      provider.checkpoint(getCheckPointKey(entry.getKey()), entry.getValue()
-          .toString().getBytes());
+  /*
+   * Helper function to find next minute directory given a path eg: Path p =
+   * "hdfsUrl/databus/streams/<streamName>/2013/01/10/12/33"
+   */
+  private Path getNextMinuteDirectory(Path p) {
+    String rootString = srcCluster.getRootDir();
+    Path root = new Path(rootString);// this will clean the root path string of
+                                     // all extra slashes(/)
+    // eg: root = "hdfsUrl/databus/"
+    LOG.debug("Path given to getNextMinuteDirectory function [" + p + "]");
+    String path = p.toString();
+    // if it is a valid path than this condition should be true
+    if (path.length() >= root.toString().length() + 1) {
+      // tmpPath will have value of form
+      // "streams/<streamName>/2013/01/10/12/33"
+      String tmpPath = path.substring(root.toString().length() + 1);
+      String tmp[] = tmpPath.split(File.separator);
+      if (tmp.length >= 2) {
+        // tmp[0] value should either be streams or steam_local and tmp[1] value
+        // will be name of topic
+        Path pathTillStream = new Path(root, tmp[0]);
+        Path pathTillTopic = new Path(pathTillStream, tmp[1]);
+        // pathTillTopic value will be of form
+        // hdfsUrl/databus/streams/<streamName>/
+        Date pathDate = CalendarHelper.getDateFromStreamDir(pathTillTopic, p);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(pathDate);
+        calendar.add(Calendar.MINUTE, 1);
+        Date nextdate = calendar.getTime();
+        String suffix = Cluster.getDateAsYYYYMMDDHHMNPath(nextdate);
+        Path nextPath = new Path(pathTillTopic, suffix);
+        return nextPath;
+      }
     }
-    checkPointPaths.clear();
+
+    return null;
+  }
+
+  void writeYetToBeMovedFile(Path tmp, Set<Path> yetToBeMovedPaths)
+      throws Exception {
+    String tmpPath = "yet_to_be_moved_src" + srcCluster.getName()
+        + "_to_destn_" + destCluster.getName() + "_"
+        + System.currentTimeMillis();
+    Path temporary = new Path(tmp, tmpPath);
+    Map<Path, Path> ytmCommitPaths = new HashMap<Path, Path>();
+    FSDataOutputStream out = null;
+    try {
+      out = srcFs.create(temporary);
+      for (Path p : yetToBeMovedPaths) {
+        LOG.debug("Writing yet To Be Moved Path [" + p + "]");
+        out.writeBytes(p.toString());
+        out.writeBytes("\n");
+      }
+    } catch (IOException e) {
+      throw new IOException("Cannot create yet_to_be_moved file in[" + 
+          temporary + "]", e);
+    } finally {
+      if (out != null) {
+        try {
+          out.close();
+        } catch (IOException e) {
+          throw new IOException("Cannot close the file [" + temporary + "]", e);
+        }
+      }
+    }
+
+    Path finalYetToBeMoved = new Path(getInputPath(),
+        ("yet_to_be_moved_" + System.currentTimeMillis()));
+    ytmCommitPaths.put(temporary, finalYetToBeMoved);
+    LOG.info("Renaming " + temporary + " to " + finalYetToBeMoved);
+    srcFs.mkdirs(finalYetToBeMoved.getParent());
+    if (srcFs.rename(temporary, finalYetToBeMoved) == false) {
+      LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
+          + "dataloss.");
+      throw new Exception("Abort transaction Commit. Rename failed from ["
+          + temporary + "] to [" + finalYetToBeMoved + "]");
+    }
+  }
+
+  /*
+   * Helper function which returns the final path to be used as input forDistcp
+   * Does cleanup of consumePaths at sourceCluster if they are INVALID
+   */
+  private Path getFinalPathForDistCP(Path tmpPath,
+      Map<Path, FileSystem> consumePaths) throws IOException {
+    if (tmpPath != null) {
+      LOG.warn("Source File For distCP [" + tmpPath + "]");
+      consumePaths.put(tmpPath.makeQualified(destFs), destFs);
+      return tmpPath.makeQualified(destFs);
+    } else {
+      /*
+       * no valid paths to return.
+       */
+      return null;
+    }
+  }
+
+  /*
+   * Helper method for getDistCPInputFile if none of the paths are VALID then it
+   * does not create an empty file on <clusterName> but returns a null
+   * 
+   * @param FileSystem - where to create file i.e. srcFs or destFs
+   * 
+   * @param String - sourceCluster from where we are pulling files from
+   * 
+   * @param Path - tmpLocation on sourceCluster
+   * 
+   * @param Set<String> - set of sourceFiles need to be pulled
+   */
+  private Path createInputFileForDISCTP(FileSystem fs, String clusterName,
+      Path tmp, Set<String> minFilesSet) throws IOException {
+    if (minFilesSet.size() > 0) {
+      Path tmpPath = null;
+      FSDataOutputStream out = null;
+      try {
+        tmpPath = new Path(tmp, clusterName
+            + new Long(System.currentTimeMillis()).toString());
+        out = fs.create(tmpPath);
+        for (String minFile : minFilesSet) {
+          out.write(minFile.getBytes());
+          out.write('\n');
+        }
+      } finally {
+        if (out != null) {
+          out.close();
+        }
+      }
+      return tmpPath;
+    } else
+      return null;
   }
 
   public Cluster getCurrentCluster() {
     // for tests
     return currentCluster;
-  }
-
-  public static void createListing(FileSystem fs, FileStatus fileStatus,
-      List<FileStatus> results) throws IOException {
-    if (fileStatus.isDir()) {
-      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
-      // stats can be null in case where purger deleted the path while this
-      // method was called
-      if (stats != null) {
-        if (stats.length == 0) {
-        results.add(fileStatus);
-        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      }
-      for (FileStatus stat : stats) {
-        createListing(fs, stat, results);
-      }
-      }
-    } else {
-      LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      results.add(fileStatus);
-    }
   }
 }
