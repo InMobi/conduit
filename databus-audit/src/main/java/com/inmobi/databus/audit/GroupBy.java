@@ -1,6 +1,7 @@
 package com.inmobi.databus.audit;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -111,7 +112,7 @@ public class GroupBy {
   private Set<Column> isSet;
 
   public GroupBy(String input) {
-    isSet = new HashSet<Column>();
+    isSet = new LinkedHashSet<Column>();
     if (input == null)
       return;
     String[] columns = input.split(",");
