@@ -35,6 +35,8 @@ public class AuditDBHelper {
 
   public static Connection getConnection(String driverName, String url,
       String username, String password) {
+    LOG.debug("Getting connection for db:"+url+" with username:"+username+" " +
+        "and password:"+ password+" using driver:"+driverName);
     try {
       Class.forName(driverName).newInstance();
     } catch (Exception e) {

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
 
 import com.inmobi.databus.DatabusConfig;
@@ -16,6 +17,8 @@ import com.inmobi.databus.audit.query.AuditDbQuery;
 import com.inmobi.databus.visualization.server.util.ServerDataHelper;
 
 public class DataServiceManager {
+  private static final String FEEDER_PROPERTIES_PATH =
+      "/usr/local/databus-visualization/conf/audit-feeder.properties";
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String TIMEZONE = "GMT";
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
@@ -65,9 +68,10 @@ public class DataServiceManager {
     String endTime =
         ServerDataHelper.getInstance().getEndTimeFromGraphDataReq(filterValues);
     String filterString = setFilterString(selectedStream, selectedCluster);
+    ClientConfig config = ClientConfig.load(FEEDER_PROPERTIES_PATH);
     AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
         GROUPBY_STRING, TIMEZONE, VisualizationProperties.get(
-        VisualizationProperties.PropNames.PERCENTILE_STRING));
+        VisualizationProperties.PropNames.PERCENTILE_STRING), config);
     try {
       dbQuery.execute();
     } catch (Exception e) {
