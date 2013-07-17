@@ -400,6 +400,8 @@ public class AuditFeederService extends AuditService {
             try {
               if (dbHelper.update(tupleSet)) {
                 try {
+                  LOG.info("Updation to DB suceeded for service "
+                      + getServiceName());
                   consumer.mark();
                 } catch (Exception e) {
                   LOG.error(

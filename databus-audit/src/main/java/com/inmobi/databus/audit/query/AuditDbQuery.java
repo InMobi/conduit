@@ -46,16 +46,23 @@ public class AuditDbQuery {
   Set<Tuple> tupleSet;
   Map<GroupBy.Group, Long> received;
   Map<GroupBy.Group, Long> sent;
+  private final ClientConfig config;
 
   public AuditDbQuery(String toTimeString, String fromTimeString,
       String filterString, String groupByString, String timeZone) {
     this(toTimeString, fromTimeString, filterString, groupByString, timeZone,
         null);
   }
-
   public AuditDbQuery(String toTimeString, String fromTimeString,
       String filterString, String groupByString, String timeZone,
       String percentileString) {
+    this(toTimeString, fromTimeString, filterString, groupByString, timeZone,
+        percentileString, null);
+  }
+
+  public AuditDbQuery(String toTimeString, String fromTimeString,
+      String filterString, String groupByString, String timeZone,
+      String percentileString, ClientConfig config) {
     received = new TreeMap<GroupBy.Group, Long>();
     sent = new TreeMap<GroupBy.Group, Long>();
     tupleSet = new HashSet<Tuple>();
@@ -65,12 +72,17 @@ public class AuditDbQuery {
     this.groupByString = groupByString;
     this.timeZone = timeZone;
     this.percentileString = percentileString;
+    if (config != null)
+      this.config = config;
+    else {
+      this.config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
+    }
+
   }
 
   void aggregateStats() {
     LOG.debug("To time:" + toTime);
     LOG.debug("From time:" + fromTime);
-    ClientConfig config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
     AuditDBHelper dbHelper = new AuditDBHelper(config);
     tupleSet.addAll(dbHelper.retrieve(toTime, fromTime, filter, groupBy));
     LOG.debug("Tuple set retrieved from DB: " + tupleSet);
