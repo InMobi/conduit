@@ -1,10 +1,6 @@
 package com.inmobi.databus.visualization.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
@@ -46,9 +42,11 @@ public class DataServiceManager {
   public String getStreamAndClusterList() {
     List<String> streamList = new ArrayList<String>();
     streamList.addAll(dataBusConfig.getSourceStreams().keySet());
+    Collections.sort(streamList);
     streamList.add(0, "All");
     List<String> clusterList = new ArrayList<String>();
     clusterList.addAll(dataBusConfig.getClusters().keySet());
+    Collections.sort(clusterList);
     clusterList.add(0, "All");
     String serverJson =
         ServerDataHelper.getInstance().setLoadMainPanelResponse(streamList,
