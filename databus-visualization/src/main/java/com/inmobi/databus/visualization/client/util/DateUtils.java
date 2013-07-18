@@ -1,6 +1,7 @@
 package com.inmobi.databus.visualization.client.util;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.user.datepicker.client.CalendarUtil;
 
 import java.util.Date;
 
@@ -93,5 +94,20 @@ public class DateUtils {
     Date date = formatter.parse(dateString);
     DateTimeFormat minuteFormatter = DateTimeFormat.getFormat(MINUTE_FORMAT);
     return minuteFormatter.format(date);
+  }
+
+  public static String getPreviousDayTime() {
+    Date currentDate = new Date();
+    CalendarUtil.addDaysToDate(currentDate, -1);
+    DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
+    return formatter.format(currentDate);
+  }
+
+  public static String incrementAndGetTimeAsString(String currentTime,
+                                           int numMinutes) {
+    DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
+    long curTime = formatter.parse(currentTime).getTime() + numMinutes *
+        ONE_MINUTE_IN_MILLIS;
+    return formatter.format(new Date(curTime));
   }
 }

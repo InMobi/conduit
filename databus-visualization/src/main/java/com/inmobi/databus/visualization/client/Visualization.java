@@ -34,15 +34,31 @@ public class Visualization implements EntryPoint, ClickHandler {
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
   private String stTime, edTime;
-  private boolean isReloaded = false;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
   public void onModuleLoad() {
-    if (isReloaded) {
-      loadMainPanel();
+    if (checkParametersNull()) {
+      System.out.println("Loading default settings");
+      String stream = "All";
+      String cluster = "All";
+      String startTime = DateUtils.getPreviousDayTime();
+      String endTime = DateUtils.incrementAndGetTimeAsString(startTime, 60);
+      replaceUrl(startTime, endTime, stream, cluster);
     } else {
       buildStreamsAndClustersList();
     }
+  }
+
+  private boolean checkParametersNull() {
+    String startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
+    String endTime = Window.Location.getParameter(ClientConstants.QUERY_TO_TIME);
+    String cluster = Window.Location.getParameter(ClientConstants.QUERY_CLUSTER);
+    String stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
+    if (startTime != null && endTime != null && cluster != null &&
+        stream != null) {
+      return false;
+    }
+    return true;
   }
 
   private void buildStreamsAndClustersList() {
@@ -256,26 +272,24 @@ public class Visualization implements EntryPoint, ClickHandler {
     edTime = DateUtils.constructDateString(endtime.getText(),
         edTimeHour.getItemText(edTimeHour.getSelectedIndex()),
         edTimeMinute.getItemText(edTimeMinute.getSelectedIndex()));
-    System.out.println("stTime: " + stTime);
-    System.out.println("edTime: " + edTime);
     if (!validateParameters()) {
       return;
     }
-    String selectedStream =
-        streamsList.getItemText(streamsList.getSelectedIndex());
-    String selectedCluster = clusterList.getItemText(clusterList.getSelectedIndex());
+    replaceUrl(stTime, edTime, streamsList.getItemText(streamsList
+        .getSelectedIndex()), clusterList.getItemText(clusterList.getSelectedIndex()));
+  }
+
+  private void replaceUrl(String startTime, String endTime, String stream,
+                          String cluster) {
     String url = Window.Location.getHref();
     url = clearPreviousParameter(url);
     /*
       For running in GWT developement mode,
-      url = url + "&qstart=" + stTime + "&qend=" + edTime +
-        "&qcluster=" + selectedCluster +
-        "&qstream=" + selectedStream;
+      url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
+      cluster + "&qstream=" + stream;
      */
-    url = url + "?qstart=" + stTime + "&qend=" + edTime +
-        "&qcluster=" + selectedCluster +
-        "&qstream=" + selectedStream;
-    isReloaded = true;
+    url = url + "?qstart=" + startTime + "&qend=" + endTime +
+        "&qcluster=" + cluster + "&qstream=" + stream;
     System.out.println("Replacing URL after adding selected parameters");
     Window.Location.replace(url);
   }
