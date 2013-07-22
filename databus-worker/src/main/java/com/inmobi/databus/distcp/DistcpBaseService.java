@@ -230,8 +230,9 @@ public abstract class DistcpBaseService extends AbstractService {
       FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
       FileStatus[] nextToNextPathFileStatus;
       while (pathsAlreadyAdded <= numOfDirPerDistcp
+          && nextPathFileStatus != null
           && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
-          nextToNextPath)) != null) {
+              nextToNextPath)) != null) {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
           FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
