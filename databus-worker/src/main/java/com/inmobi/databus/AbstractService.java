@@ -49,11 +49,11 @@ public abstract class AbstractService implements Service, Runnable {
   protected Thread thread;
   protected volatile boolean stopped = false;
   protected CheckpointProvider checkpointProvider = null;
-  private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
-  private Map<String, Long> prevRuntimeForCategory = new HashMap<String, Long>();
-  protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
-      "yyyy/MM/dd, hh:mm");
-  private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
+	private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
+	private Map<String, Long> prevRuntimeForCategory = new HashMap<String, Long>();
+	protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
+	    "yyyy/MM/dd, hh:mm");
+	private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
 
   public AbstractService(String name, DatabusConfig config) {
     this(name, config, DEFAULT_RUN_INTERVAL);
@@ -148,110 +148,110 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
-  protected String getLogDateString(long commitTime) {
-    return LogDateFormat.format(commitTime);
-  }
+	protected String getLogDateString(long commitTime) {
+		return LogDateFormat.format(commitTime);
+	}
 
-  private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
-    FileStatus[] fileStatus = fs.listStatus(Dir);
+	private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
+		FileStatus[] fileStatus = fs.listStatus(Dir);
 
-    if (fileStatus != null && fileStatus.length > 0) {
-      FileStatus latestfile = fileStatus[0];
-      for (FileStatus currentfile : fileStatus) {
-        if (currentfile.getPath().getName()
-            .compareTo(latestfile.getPath().getName()) > 0)
-          latestfile = currentfile;
-      }
-      return latestfile.getPath();
-    }
-    return null;
-  }
+		if (fileStatus != null && fileStatus.length > 0) {
+			FileStatus latestfile = fileStatus[0];
+			for (FileStatus currentfile : fileStatus) {
+				if (currentfile.getPath().getName()
+				    .compareTo(latestfile.getPath().getName()) > 0)
+					latestfile = currentfile;
+			}
+			return latestfile.getPath();
+		}
+		return null;
+	}
 
-  private long getPreviousRuntime(FileSystem fs, String destDir, String category)
-      throws Exception {
-    String localDestDir = destDir + File.separator + category;
-    LOG.warn("Querying Directory [" + localDestDir + "]");
-    Path latestyeardir = getLatestDir(fs, new Path(localDestDir));
-    int latestyear = 0, latestmonth = 0, latestday = 0, latesthour = 0, latestminute = 0;
+	private long getPreviousRuntime(FileSystem fs, String destDir, String category)
+	    throws Exception {
+		String localDestDir = destDir + File.separator + category;
+		LOG.warn("Querying Directory [" + localDestDir + "]");
+		Path latestyeardir = getLatestDir(fs, new Path(localDestDir));
+		int latestyear = 0, latestmonth = 0, latestday = 0, latesthour = 0, latestminute = 0;
 
-    if (latestyeardir != null) {
-      latestyear = Integer.parseInt(latestyeardir.getName());
-      Path latestmonthdir = getLatestDir(fs, latestyeardir);
-      if (latestmonthdir != null) {
-        latestmonth = Integer.parseInt(latestmonthdir.getName());
-        Path latestdaydir = getLatestDir(fs, latestmonthdir);
-        if (latestdaydir != null) {
-          latestday = Integer.parseInt(latestdaydir.getName());
-          Path latesthourdir = getLatestDir(fs, latestdaydir);
-          if (latesthourdir != null) {
-            latesthour = Integer.parseInt(latesthourdir.getName());
-            Path latestminutedir = getLatestDir(fs, latesthourdir);
-            if (latestminutedir != null) {
-              latestminute = Integer.parseInt(latestminutedir.getName());
-            }
-          }
-        }
-      }
-    } else
-      return -1;
-    LOG.debug("Date Found " + latestyear + File.separator + latestmonth
-        + File.separator + latestday + File.separator + latesthour
-        + File.separator + latestminute);
-    return CalendarHelper.getDateHourMinute(latestyear, latestmonth, latestday,
-        latesthour, latestminute).getTimeInMillis();
-  }
+		if (latestyeardir != null) {
+			latestyear = Integer.parseInt(latestyeardir.getName());
+			Path latestmonthdir = getLatestDir(fs, latestyeardir);
+			if (latestmonthdir != null) {
+				latestmonth = Integer.parseInt(latestmonthdir.getName());
+				Path latestdaydir = getLatestDir(fs, latestmonthdir);
+				if (latestdaydir != null) {
+					latestday = Integer.parseInt(latestdaydir.getName());
+					Path latesthourdir = getLatestDir(fs, latestdaydir);
+					if (latesthourdir != null) {
+						latesthour = Integer.parseInt(latesthourdir.getName());
+						Path latestminutedir = getLatestDir(fs, latesthourdir);
+						if (latestminutedir != null) {
+							latestminute = Integer.parseInt(latestminutedir.getName());
+						}
+					}
+				}
+			}
+		} else
+			return -1;
+		LOG.debug("Date Found " + latestyear + File.separator + latestmonth
+		    + File.separator + latestday + File.separator + latesthour
+		    + File.separator + latestminute);
+		return CalendarHelper.getDateHourMinute(latestyear, latestmonth, latestday,
+		    latesthour, latestminute).getTimeInMillis();
+	}
 
-  private boolean isMissingPaths(long commitTime, long prevRuntime) {
-    return ((commitTime - prevRuntime) >= MILLISECONDS_IN_MINUTE);
-  }
+	private boolean isMissingPaths(long commitTime, long prevRuntime) {
+		return ((commitTime - prevRuntime) >= MILLISECONDS_IN_MINUTE);
+	}
 
   protected Set<Path> publishMissingPaths(FileSystem fs, String destDir,
-      long commitTime, String categoryName) throws Exception {
+	    long commitTime, String categoryName) throws Exception {
     Set<Path> missingDirectories = new TreeSet<Path>();
-    Long prevRuntime = new Long(-1);
-    if (!prevRuntimeForCategory.containsKey(categoryName)) {
-      LOG.debug("Calculating Previous Runtime from Directory Listing");
-      prevRuntime = getPreviousRuntime(fs, destDir, categoryName);
-    } else {
-      LOG.debug("Reading Previous Runtime from Cache");
-      prevRuntime = prevRuntimeForCategory.get(categoryName);
-    }
+		Long prevRuntime = new Long(-1);
+		if (!prevRuntimeForCategory.containsKey(categoryName)) {
+			LOG.debug("Calculating Previous Runtime from Directory Listing");
+			prevRuntime = getPreviousRuntime(fs, destDir, categoryName);
+		} else {
+			LOG.debug("Reading Previous Runtime from Cache");
+			prevRuntime = prevRuntimeForCategory.get(categoryName);
+		}
 
-    if (prevRuntime != -1) {
-      if (isMissingPaths(commitTime, prevRuntime)) {
-        LOG.debug("Previous Runtime: [" + getLogDateString(prevRuntime) + "]");
-        while (isMissingPaths(commitTime, prevRuntime)) {
-          String missingPath = Cluster.getDestDir(destDir, categoryName,
-              prevRuntime);
+		if (prevRuntime != -1) {
+			if (isMissingPaths(commitTime, prevRuntime)) {
+				LOG.debug("Previous Runtime: [" + getLogDateString(prevRuntime) + "]");
+				while (isMissingPaths(commitTime, prevRuntime)) {
+					String missingPath = Cluster.getDestDir(destDir, categoryName,
+					    prevRuntime);
           Path missingDir = new Path(missingPath);
           if (!fs.exists(missingDir)) {
             missingDirectories.add(new Path(missingPath));
           }
-          prevRuntime += MILLISECONDS_IN_MINUTE;
-        }
-      }
-    }
+					prevRuntime += MILLISECONDS_IN_MINUTE;
+				}
+			}
+		}
     return missingDirectories;
-  }
+	}
 
   protected Map<String, Set<Path>> publishMissingPaths(FileSystem fs,
       String destDir, long commitTime)
-      throws Exception {
+	    throws Exception {
     Map<String, Set<Path>> missingDirectories = new HashMap<String, Set<Path>>();
     Set<Path> missingdirsinstream = null;
-    FileStatus[] fileStatus = fs.listStatus(new Path(destDir));
-    LOG.info("Create All the Missing Paths in " + destDir);
-    if (fileStatus != null) {
-      for (FileStatus file : fileStatus) {
+		FileStatus[] fileStatus = fs.listStatus(new Path(destDir));
+		LOG.info("Create All the Missing Paths in " + destDir);
+		if (fileStatus != null) {
+			for (FileStatus file : fileStatus) {
         missingdirsinstream = publishMissingPaths(fs, destDir,
             commitTime, file.getPath().getName());
         if (missingdirsinstream.size() > 0)
           missingDirectories.put(file.getPath().getName(), missingdirsinstream);
-      }
-    }
-    LOG.info("Done Creating All the Missing Paths in " + destDir);
+			}
+		}
+		LOG.info("Done Creating All the Missing Paths in " + destDir);
     return missingDirectories;
-  }
+	}
   
   /*
    * publish all the missing paths and clears missingDirCommittedPaths map

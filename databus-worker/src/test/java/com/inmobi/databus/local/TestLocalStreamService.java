@@ -86,19 +86,19 @@ public class TestLocalStreamService extends LocalStreamService implements
   }
   
   public void doRecursiveListing(Path dir, Set<Path> listing,
-      FileSystem fs) throws IOException {
-    FileStatus[] fileStatuses = fs.listStatus(dir);
-    if (fileStatuses == null || fileStatuses.length == 0) {
-      LOG.debug("No files in directory:" + dir);
-    } else {
-      for (FileStatus file : fileStatuses) {
-        if (file.isDir()) {
-          doRecursiveListing(file.getPath(), listing, fs);  
-        } else {
-          listing.add(file.getPath().getParent());
-        }
-      }
-    }
+  		FileSystem fs) throws IOException {
+  	FileStatus[] fileStatuses = fs.listStatus(dir);
+  	if (fileStatuses == null || fileStatuses.length == 0) {
+  		LOG.debug("No files in directory:" + dir);
+  	} else {
+  		for (FileStatus file : fileStatuses) {
+  			if (file.isDir()) {
+  				doRecursiveListing(file.getPath(), listing, fs);	
+  			} else {
+  				listing.add(file.getPath().getParent());
+  			}
+  		}
+  	}
   }
 
   @Override
@@ -181,16 +181,16 @@ public class TestLocalStreamService extends LocalStreamService implements
 
         Path trashpath = srcCluster.getTrashPathWithDateHour();
         String streamPrefix = srcCluster.getLocalFinalDestDirRoot()
-            + sstream.getValue().getName();
+        		+ sstream.getValue().getName();
         Set<Path> listOfPaths = new HashSet<Path>();
         doRecursiveListing(new Path(streamPrefix), listOfPaths, fs);
         Path latestPath = null;
         for (Path path : listOfPaths) {
-          if (latestPath== null || (CalendarHelper.getDateFromStreamDir(new 
-              Path(streamPrefix), path).compareTo(CalendarHelper.getDateFromStreamDir
-                  (new Path(streamPrefix), latestPath)) > 0)) {
-            latestPath = path;
-          }
+        	if (latestPath== null || (CalendarHelper.getDateFromStreamDir(new 
+        			Path(streamPrefix), path).compareTo(CalendarHelper.getDateFromStreamDir
+        					(new Path(streamPrefix), latestPath)) > 0)) {
+        		latestPath = path;
+        	}
         }
 
         // Make sure all the paths from dummy to mindir are created
@@ -201,7 +201,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   
         try {
           String streams_local_dir = latestPath + File.separator + srcCluster.getName(); 
-          LOG.debug("Checking in Path for mapred Output: " + streams_local_dir);
+        	LOG.debug("Checking in Path for mapred Output: " + streams_local_dir);
           
           // First check for the previous current file
           if (!prevfilesList.isEmpty()) {
