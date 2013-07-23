@@ -222,6 +222,8 @@
     <module>databus-core</module>
     <module>databus-worker</module>
     <module>databus-dist</module>
+    <module>databus-audit</module>
+    <module>databus-visualization</module>
   </modules>
 
 </project>
