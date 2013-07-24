@@ -23,6 +23,7 @@ import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.services.AuditFeederService;
 import com.inmobi.databus.audit.util.AuditDBConstants;
 import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.consumer.databus.MessagingConsumerConfig;
 
 /*
  * This class is responsible for launching multiple AuditStatsFeeder instances one per cluster
@@ -35,6 +36,8 @@ public class AuditStats {
   private final ClientConfig config;
   public AuditStats(List<AuditService> feeders) throws Exception {
     config = ClientConfig.loadFromClasspath(CONF_FILE);
+    config.set(MessagingConsumerConfig.hadoopConfigFileKey,
+        "audit-core-site.xml");
     String databusConf = config.getString(DATABUS_CONF_FILE_KEY);
     DatabusConfigParser parser = new DatabusConfigParser(databusConf);
     DatabusConfig dataBusConfig = parser.getConfig();
