@@ -65,11 +65,11 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   protected final static String getServiceName(Set<String> streamsToProcess) {
-    String servicename = "";
+    StringBuffer serviceName = new StringBuffer("");
     for (String stream : streamsToProcess) {
-      servicename += stream + "@";
+      serviceName.append(stream).append("@");
     }
-    return servicename;
+    return serviceName.toString();
   }
 
   public DatabusConfig getConfig() {
