@@ -133,6 +133,7 @@ public class AuditFeederService extends AuditService {
    */
   protected boolean stopIfMsgNull = false;
   protected volatile boolean isStop = false;
+  private boolean processLastBatch = false;
 
   private int DEFAULT_MSG_PER_BATCH = 5000;
   private int msgsPerBatch;
@@ -387,10 +388,11 @@ public class AuditFeederService extends AuditService {
               } catch (EndOfStreamException e) {
                 LOG.info("End of stream reached,breaking the loop");
                 isStop = true;
+                processLastBatch = true;
                 break;
               }
             }
-            if (isStop) {
+            if (isStop & !processLastBatch) {
               LOG.info("Stopped received,not updating in memory contents");
               continue;
             }
