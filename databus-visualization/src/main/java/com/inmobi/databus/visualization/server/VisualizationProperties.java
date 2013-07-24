@@ -19,7 +19,10 @@ public class VisualizationProperties {
     MERGE_SLA,
     MIRROR_SLA,
     PERCENTILE_FOR_SLA,
-    PERCENTAGE_FOR_LOSS
+    PERCENTAGE_FOR_LOSS,
+    PERCENTAGE_FOR_WARN,
+    MAX_START_TIME,
+    MAX_TIME_RANGE_INTERVAL_IN_HOURS
   }
 
   private static Hashtable<String, String> propMap =
@@ -51,6 +54,12 @@ public class VisualizationProperties {
           p.get("percentile.for.sla").toString());
       propMap.put(PropNames.PERCENTAGE_FOR_LOSS.name(),
           p.get("percentage.for.loss").toString());
+      propMap.put(PropNames.PERCENTAGE_FOR_WARN.name(),
+          p.get("percentage.for.warn").toString());
+      propMap.put(PropNames.MAX_START_TIME.name(),
+          p.get("max.start.time").toString());
+      propMap.put(PropNames.MAX_TIME_RANGE_INTERVAL_IN_HOURS.name(),
+          p.get("max.time.range.interval.in.hours").toString());
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(
