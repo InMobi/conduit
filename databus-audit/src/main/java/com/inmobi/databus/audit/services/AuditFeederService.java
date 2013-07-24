@@ -17,7 +17,7 @@ import org.apache.thrift.TException;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.audit.AuditService;
+import com.inmobi.databus.audit.AuditDBService;
 import com.inmobi.databus.audit.AuditStats;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
@@ -38,7 +38,7 @@ import com.inmobi.messaging.util.AuditUtil;
  * memory for some time and than performing batch update of the DB
  * 
  */
-public class AuditFeederService extends AuditService {
+public class AuditFeederService extends AuditDBService {
 
   class TupleKey {
     public TupleKey(Date timestamp, String tier, String topic, String hostname,
