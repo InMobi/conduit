@@ -9,6 +9,8 @@
             src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.1.6/d3.min.js"></script>
     <script type="text/javascript"
             src="http://cdnjs.cloudflare.com/ajax/libs/history.js/1.8/native.history.min.js"></script>
+    <script type="text/javascript"
+            src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script type="text/javascript" language="javascript"
             src="Visualization/Visualization.nocache.js"></script>
 </head>
@@ -29,19 +31,23 @@
         <div id="filterContainer"></div>
     </div>
     <div id="viewPanelContainer">
-        <div id="viewPanel" style="height:700px;overflow:auto;">
+        <div id="viewPanel">
             <div id="tabs">
                 <ul>
                     <li><a id="count" href="javascript:void(0)" onClick="tabSelected(1, 'null', 'null')" class="active">Count</a></li>
                     <li><a id="latency" href="javascript:void(0)" onClick="tabSelected(2, 'null', 'null')">Latency</a></li>
                 </ul>
             </div>
+            <div id="graphInfoContainer">
+                <div id="graphPanel"></div>
+                <div id="infoPanel"></div>
+            </div><!--
             <table>
                 <tr>
                     <td id="graphPanel"></td>
                     <td id="infoPanel"></td>
                 </tr>
-            </table>
+            </table>-->
         </div>
     </div>
 </div>

@@ -6,7 +6,7 @@ var fullTreeList = []; // Full list of Node objects grouped by respective cluste
 var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A", "#f96",
   "#ff0", "#ff0080"];
 var agentSla, vipSla, collectorSla, hdfsSla, localSla, mergeSla, mirrorSla,
-    percentileForSla, percentageForLoss;
+    percentileForSla, percentageForLoss, percentageForWarn;
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -86,9 +86,16 @@ function buildNodeList() {
   });
 }
 
-function isLoss(parentCount, childCount) {
-	var marginAllowed = percentageForLoss * childCount / 100;
-	if ( parentCount < (childCount - marginAllowed))
+function isLoss(count1, count2) {
+	console.log("percentageForLoss="+percentageForLoss);
+	count1 = parseInt(count1);
+	count2 = parseInt(count2);
+	console.log("count1="+count1);
+	console.log("count2="+count2);
+	var marginAllowed = parseFloat(parseInt(percentageForLoss * count2) / 100);
+	console.log("margin allowed for loss:"+marginAllowed);
+	console.log("count1 should be less than "+(count2 - marginAllowed)+" for loss status");
+	if ( count1 < (count2 - marginAllowed))
 		return true;
 	else
 		return false;
@@ -114,12 +121,13 @@ function highlightChildNodes(n) {
           if (t.hostname == c.name) {
             c.allsenttopicstats.forEach(function (ct) {
               if (ct.topic == t.topic) {
-                aggregateparent += t.messages;
-                aggregatechild += ct.messages;
+                aggregateparent += parseInt(t.messages);
+                aggregatechild += parseInt(ct.messages);
               }
             });
           }
         });
+        console.log("aggregateparent:"+aggregateparent+" aggregatechild:"+aggregatechild);
         if (n.allreceivedtopicstats.length == 0)
           link.style("fill", "#dedede")
             .style("stroke", "#dedede");
@@ -134,9 +142,11 @@ function highlightChildNodes(n) {
   } else {
     var totalaggregatechild = 0;
     var totalaggregateparent = 0;
+    console.log("initialized totalaggregatechild:"+totalaggregatechild);
     n.children.forEach(function (c) {
-      totalaggregatechild += parseFloat(c.aggregatemessagesreceived);
+      totalaggregatechild += parseInt(c.aggregatemessagesreceived);
     });
+    console.log("first addition:"+totalaggregatechild);
     if (n.tier.toLowerCase() == "vip") {
     	if (n.children.length == 0) {
 	      var arr = d3.selectAll("g.node")
@@ -145,11 +155,12 @@ function highlightChildNodes(n) {
 	            0);
 	        })
 	        .data();
-	      n = arr[0];    		
+	      n = arr[0];
     	}
       n.children.forEach(function (c) {
-        totalaggregatechild += parseFloat(c.aggregatemessagessent);
+        totalaggregatechild += parseInt(c.aggregatemessagessent);
       });
+      console.log("in case of vip node totalaggregatechild:"+totalaggregatechild);
     }
     if (n.tier.toLowerCase() == "collector") {
       var nodesInCluster = d3.selectAll("g.node")
@@ -159,11 +170,13 @@ function highlightChildNodes(n) {
         .data();
       nodesInCluster.forEach(function (c) {
         if (c.tier.toLowerCase() == "collector")
-          totalaggregateparent += parseFloat(c.aggregatemessagesreceived);
+          totalaggregateparent += parseInt(c.aggregatemessagesreceived);
       });
     } else {
       totalaggregateparent = n.aggregatemessagesreceived;
     }
+    console.log("printing node n");
+    console.log(n);
     n.children.forEach(function (c) {
       var currentLink = d3.selectAll("path.link")
         .filter(function (d) {
@@ -172,6 +185,8 @@ function highlightChildNodes(n) {
         })
         .transition()
         .duration(100);
+      console.log("totalaggregateparent:"+totalaggregateparent);
+      console.log("totalaggregatechild:"+totalaggregatechild);
       if (n.allreceivedtopicstats.length == 0)
         currentLink.style("fill", "#dedede").style("stroke", "#dedede");
       else if ((c.tier == "agent" || c.tier == "collector") && c.allsenttopicstats.length == 0)
@@ -197,9 +212,9 @@ function nodeover(n, isCountView, clear) {
       .style("fill", "#dedede")
       .style("stroke", "#dedede");
   }
-  
+
   if (n.tier == "merge" || n.tier == "mirror")
-	  highlightBasedOnTier(n, isCountView); 
+	  highlightBasedOnTier(n, isCountView);
 	else if(isCountView)
 	  highlightChildNodes(n);
 	else
@@ -509,6 +524,8 @@ function getStreamsCausingDataLoss(l) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic && s.hostname == l.target.name) {
           isstreampresent = true;
+      console.log("s.messages:"+s.messages);
+      console.log("t.messages:"+t.messages);
           if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
@@ -534,6 +551,8 @@ function getStreamsCausingDataLoss(l) {
           }
         });
       });
+      console.log("parentCount:"+parentCount);
+      console.log("t.messages:"+t.messages);
       if (isLoss(parentCount, t.messages) || (!isstreampresent && !(streamslist.contains(t.topic))))
         streamslist.push(t.topic);
       isstreampresent = false;
@@ -543,6 +562,8 @@ function getStreamsCausingDataLoss(l) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic) {
           isstreampresent = true;
+      console.log("s.messages:"+s.messages);
+      console.log("t.messages:"+t.messages);
           if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
@@ -874,6 +895,162 @@ function addColorsToNodes() {
     });
 }
 
+function isWarn(count1, count2) {
+	console.log("percentageForWarn="+percentageForWarn);
+	console.log("count2="+count2);
+	console.log("percentageForWarn * count2="+percentageForWarn * count2);
+	console.log(parseInt(percentageForWarn * count2) / 100);
+	console.log(parseFloat(parseInt(percentageForWarn * count2) / 100));
+	var marginAllowed = parseFloat(parseInt(percentageForWarn * count2) / 100);
+	console.log("margin allowed for warn:"+marginAllowed);
+	console.log("count1 "+count1+" should be less than "+(count2 - marginAllowed)+" for warn status");
+	if ( count1 < (count2 - marginAllowed))
+		return true;
+	else
+		return false;
+}
+
+function getHealth(count1, count2) {
+	console.log("count1:"+count1);
+	console.log("count2:"+count2);
+	var health;
+	if (isWarn(count1, count2))
+		health = 1;
+	else if (isLoss(count1, count2))
+		health = 2;
+	else
+		health = 0;
+	console.log("health:"+health);
+	return health;
+}
+
+function appendHealthStatusIndicator(tier, health) {
+
+	var svg = d3.select("#healthCell"+tier)
+							.append("svg:svg")
+							.attr("width", 12)
+							.attr("height", 12)
+							.style("display", "block")
+							.append("svg:g");
+  var div = d3.select("body")
+      				.append("div")
+      				.attr("class", "healthtooltip")
+	      			.style("opacity", 0);
+	var circle = svg.append("svg:circle")
+		 							.attr("r", 5)
+		 							.attr("cx", 6)
+		 							.attr("cy", 6)
+									.style("display", "block")
+									.on("mouseout", function(){
+										div.transition()
+				          		 .duration(500)
+				          		 .style("opacity", 0);
+									});
+	if (health == 0) {
+		circle.style("fill", "#0f0")
+					.style("stroke", "#0f0")
+					.on("mouseover", function(){
+						div.transition()
+          		 .duration(200)
+          		 .style("opacity", .9)
+          		 .style("background", "#0f0")
+        		div.html("Healthy")
+          		 .style("left", (d3.event.pageX) + "px")
+          		 .style("top", (d3.event.pageY - 14) + "px");
+					});
+	} else if(health == 1){
+		circle.style("fill", "#ff0")
+					.style("stroke", "#ff0")
+					.on("mouseover", function(){
+						div.transition()
+          		 .duration(200)
+          		 .style("opacity", .9)
+          		 .style("background", "#ff0")
+        		div.html("Warn")
+          		 .style("left", (d3.event.pageX) + "px")
+          		 .style("top", (d3.event.pageY - 28) + "px");
+					});
+	} else if(health == 2){
+		circle.style("fill", "#f00")
+					.style("stroke", "#f00")
+					.on("mouseover", function(){
+						div.transition()
+          		 .duration(200)
+          		 .style("opacity", .9)
+          		 .style("background", "#f00")
+        		div.html("Unhealthy")
+          		 .style("left", (d3.event.pageX) + "px")
+          		 .style("top", (d3.event.pageY - 28) + "px");
+					});
+	}
+}
+
+function addTierDetailsToSummary(div, currentRow, tier, received, sent, childCount) {
+  console.log(div);
+	var health;
+	if(tier == 'Publisher')
+		health = 0;
+	else
+		health = getHealth(received, childCount);
+	var t = div.firstChild;
+	var r, c, currentCol = 0;
+	r = t.insertRow(currentRow++);
+	c = r.insertCell(currentCol++);
+	c.innerHTML = tier;
+	c = r.insertCell(currentCol++);
+	c.id = "healthCell"+tier;
+	c.style.width = "15px";
+	c.style.height = "15px";
+	c = r.insertCell(currentCol++);
+	c.innerHTML = received+"(R)";
+	if (sent != 0) {
+		c = r.insertCell(currentCol++);
+		c.innerHTML = sent+"(S)";
+	}
+	appendHealthStatusIndicator(tier, health);
+	return currentRow;
+}
+
+function addSummaryBox(isCountView, treeList) {
+  var tierList = ["Publisher", "Agent", "VIP", "Collector", "HDFS"];
+  if (isCountView) {
+	  var publisherCount = 0, agentReceivedCount = 0, agentSentCount = 0, collectorReceivedCount = 0, collectorSentCount = 0, hdfsCount = 0;
+		treeList.forEach(function (cl) {
+			cl.forEach(function (n){
+				switch(n.tier.toLowerCase()) {
+					case 'publisher':
+						publisherCount += parseInt(n.aggregatemessagesreceived);
+						break;
+					case 'agent':
+						agentReceivedCount +=  parseInt(n.aggregatemessagesreceived);
+						agentSentCount += parseInt(n.aggregatemessagesent);
+						break;
+					case 'collector':
+						collectorReceivedCount +=  parseInt(n.aggregatemessagesreceived);
+						collectorSentCount += parseInt(n.aggregatemessagesent);
+						break;
+					case 'hdfs':
+						hdfsCount += parseInt(n.aggregatemessagesreceived);
+						break;
+				}
+			});
+		});
+
+  	document.getElementById("summaryPanel").innerHTML = "";
+  	var div = document.createElement('div');
+  	var t = document.createElement('table');
+  	var currentRow = 0;
+  	t.insertRow(currentRow++).insertCell(0).innerHTML = "Summary:";
+		div.appendChild(t);
+	  document.getElementById("summaryPanel").appendChild(div);
+
+  	currentRow = addTierDetailsToSummary(div, currentRow, "Publisher", publisherCount, 0, 0);
+  	currentRow = addTierDetailsToSummary(div, currentRow, "Agent", agentReceivedCount, agentSentCount, publisherCount);
+  	currentRow = addTierDetailsToSummary(div, currentRow, "Collector", collectorReceivedCount, collectorSentCount, agentSentCount);
+  	currentRow = addTierDetailsToSummary(div, currentRow, "HDFS", hdfsCount, 0, collectorSentCount);
+  }
+}
+
 function addLegendBox(graphsvg) {
   var tierList = ["Publisher", "Agent", "VIP", "Collector", "HDFS"];
   var inc = 100;
@@ -904,7 +1081,7 @@ function loadDefaultView(isCountView) {
   nodeOverList.forEach(function (n) {
     nodeover(n, isCountView, clear);
     if(clear)
-    	clear = false;        
+    	clear = false;
   });
   addColorsToNodes();
 }
@@ -914,6 +1091,8 @@ function clearHistory() {
 }
 
 function clearPreviousGraph() {
+  document.getElementById("summaryPanel").innerHTML = "";
+  document.getElementById("summaryPanel").style.backgroundColor = "#D8EAF3";
   document.getElementById("infoPanel").innerHTML = "";
   document.getElementById("infoPanel").style.backgroundColor = "#D8EAF3";
   d3.select("#graphsvg").remove();
@@ -937,7 +1116,7 @@ function saveHistory(streamName, clusterName, isCountView) {
     console.log("History not enabled");
   }
   History.Adapter.bind(window, 'statechange', function () {
-      loadGraph(History.getState().data.gstream, History.getState().data.gcluster, isCountView);      
+      loadGraph(History.getState().data.gstream, History.getState().data.gcluster, isCountView);
   });
 }
 
@@ -961,7 +1140,7 @@ function popAllTopicStatsNotBelongingToStream(streamName, treeList) {
           newReceivedStats.push(new TopicStats(s.topic, s.messages, s.hostname));
         }
       });
-      n.allsenttopicstats.forEach(function (s) {      
+      n.allsenttopicstats.forEach(function (s) {
         if (s.topic == streamName) {
           n.aggregatemessagesent += s.messages;
           newSentStats.push(new TopicStats(s.topic, s.messages, s.hostname));
@@ -1069,7 +1248,7 @@ function loadGraph(streamName, clusterName, isCountView) {
       angle += diff;
       continue;
     }
-      
+
     var root = cloneNode(clusterNodeList[startindex]);
     root.children = travelTree(root, clusterNodeList);
 
@@ -1134,20 +1313,20 @@ function loadGraph(streamName, clusterName, isCountView) {
         div.html(n.name)
           .style("left", (d3.event.pageX) + "px")
           .style("top", (d3.event.pageY - 28) + "px");
-        
-        nodeover(n, isCountView, true);          
+
+        nodeover(n, isCountView, true);
       })
       .on("mouseout", function (n) {
         div.transition()
           .duration(500)
           .style("opacity", 0);
-        loadDefaultView(isCountView);        
+        loadDefaultView(isCountView);
       });
     if (isCountView) {
       drawlink.style("cursor", "hand")
       	.style("cursor", "pointer")
-      	.on("click", linkclick);  
-      drawnode.on("click", nodeclick);  	
+      	.on("click", linkclick);
+      drawnode.on("click", nodeclick);
     } else
       drawnode.on("click", latencynodeclick);
 
@@ -1204,19 +1383,19 @@ function loadGraph(streamName, clusterName, isCountView) {
               .duration(200)
               .style("opacity", .9);
             /*
-          
+
                   div.html(n.name + "<br/>" + n.aggregatemessagesreceived)*/
             div.html(n.name)
               .style("left", (
                 d3.event.pageX) + "px")
-              .style("top", (d3.event.pageY - 28) + "px");              
-            nodeover(n, isCountView, true);                
+              .style("top", (d3.event.pageY - 28) + "px");
+            nodeover(n, isCountView, true);
           })
           .on("mouseout", function (n) {
             div.transition()
               .duration(500)
-              .style("opacity", 0);              
-            loadDefaultView(isCountView);              
+              .style("opacity", 0);
+            loadDefaultView(isCountView);
           });
         if (isCountView)
           mergeMirrorNode.on("click", nodeclick);
@@ -1225,14 +1404,15 @@ function loadGraph(streamName, clusterName, isCountView) {
       });
     }
     addClusterName(clusterName, tree, angle, yDiff, graphsvg, isCountView);
-    
+
     angle += diff;
   }
-  loadDefaultView(isCountView);    
+  loadDefaultView(isCountView);
   addLegendBox(graphsvg);
+  addSummaryBox(isCountView, treeList);
 }
 
-function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, drillDownStream, agent, vip, collector, hdfs, local, merge, mirror, percentileFrSla, percentageForLoss) {
+function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, drillDownStream, agent, vip, collector, hdfs, local, merge, mirror, percentileFrSla, percentageFrLoss, percentageFrWarn) {
 
   agentSla = agent;
   vipSla = vip;
@@ -1242,7 +1422,8 @@ function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, d
   mergeSla = merge
   mirrorSla = mirror;
   percentileForSla = percentileFrSla;
-  percentageForLoss = percentageForLoss;
+  percentageForLoss = percentageFrLoss;
+  percentageForWarn = percentageFrWarn;
   document.getElementById("tabs").style.display = "block";
   queryString = baseQueryString;
   jsonresponse = JSON.parse(result);

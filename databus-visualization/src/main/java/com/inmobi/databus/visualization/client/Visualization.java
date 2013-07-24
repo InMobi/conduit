@@ -288,8 +288,10 @@ public class Visualization implements EntryPoint, ClickHandler {
       url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
       cluster + "&qstream=" + stream;
      */
-    url = url + "?qstart=" + startTime + "&qend=" + endTime +
-        "&qcluster=" + cluster + "&qstream=" + stream;
+    /*url = url + "?qstart=" + startTime + "&qend=" + endTime +
+        "&qcluster=" + cluster + "&qstream=" + stream;*/
+    url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
+        cluster + "&qstream=" + stream;
     System.out.println("Replacing URL after adding selected parameters");
     Window.Location.replace(url);
   }
@@ -300,7 +302,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     If running in GWT development mode;
     int index = url.indexOf("&");
      */
-    int index = url.indexOf("?");
+    /*int index = url.indexOf("?");*/
+    int index = url.indexOf("&");
     if(index != -1)
       newUrl = url.substring(0, index);
     else
@@ -336,7 +339,7 @@ public class Visualization implements EntryPoint, ClickHandler {
             .LOCAL), slaMap.get(ClientConstants.MERGE),
             slaMap.get(ClientConstants.MIRROR), ClientDataHelper.getInstance
             ().getPercentileForSlaFromGraphDataResponse(result), ClientDataHelper.getInstance
-            ().getPercentageForLossFromGraphDataResponse(result));
+            ().getPercentageForLossFromGraphDataResponse(result), 0.001f);
       }
     });
   }
@@ -408,9 +411,11 @@ public class Visualization implements EntryPoint, ClickHandler {
                                 Integer hdfsSla, Integer localSla,
                                 Integer mergeSla, Integer mirrorSla,
                                 Float percentileForSla,
-                                Float percentageForSla)/*-{
+                                Float percentageForSla,
+                                Float percentageForWarn)/*-{
     $wnd.drawGraph(result, cluster, stream, queryString, drillDownCluster,
     drillDownStream, agentSla, vipSla, collectorSla, hdfsSla, localSla,
-    mergeSla, mirrorSla, percentileForSla, percentageForSla);
+    mergeSla, mirrorSla, percentileForSla, percentageForSla,
+    percentageForWarn);
   }-*/;
 }

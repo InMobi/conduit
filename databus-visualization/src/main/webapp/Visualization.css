@@ -10,7 +10,7 @@
 }
 
 #headerContainer {
-  padding: 0px 100px 0px;
+  padding: 0px 0px 0px;
   background-color: #2d3d4b;
   color: #fff;
 }
@@ -18,12 +18,12 @@
 #filterContainer {
     background-color: #4596b8;
     color: #fff;
-    padding: 0px 100px 0px;
+    padding: 0px 0px 0px;
 }
 
 #viewPanelContainer {
-       padding: 0px 100px 0px;
-       background-color: #c9e2ee;
+       padding: 0px 0px 0px;
+       background-color: #d8eaf3;
 }
 
 #header {
@@ -40,10 +40,12 @@
 
 #viewPanel {
   margin:0 auto;
+  height:940px;
+  background-color:#D8EAF3;
 }
 
 #goButton {
-  width:50px;
+  width:75px;
   float:right;
 }
 
@@ -51,12 +53,23 @@
   width:150px;
 }
 
+#graphInfoContainer > div
+{
+  display: inline-block;
+}
+
+#graphInfoContainer {
+  text-align: center;
+  width:100%;
+  background-color: #D8EAF3;
+}
+
 #graphPanel {
   border-style:solid;
   border-width:2px;
   border-color:#ccc;
   height:900px;
-  width:900px;
+  width:71%;
   background-color: #D8EAF3;
 }
 
@@ -65,8 +78,9 @@
   border-width:2px;
   border-color:#ccc;
   height:900px;
-  width:300px;
+  width:28%;
   background-color: #D8EAF3;
+  text-align:left;
 }
 
 div.tooltip {
