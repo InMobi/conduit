@@ -23,6 +23,7 @@ import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.services.AuditFeederService;
 import com.inmobi.databus.audit.util.AuditDBConstants;
 import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.consumer.databus.MessagingConsumerConfig;
 
 /*
  * This class is responsible for launching multiple AuditStatsFeeder instances one per cluster
@@ -32,9 +33,11 @@ public class AuditStats {
   private static final String DATABUS_CONF_FILE_KEY = "feeder.databus.conf";
   private static final Log LOG = LogFactory.getLog(AuditStats.class);
   public final static MetricRegistry metrics = new MetricRegistry();
-
-  private synchronized void start(List<AuditService> feeders) throws Exception {
-    ClientConfig config = ClientConfig.loadFromClasspath(CONF_FILE);
+  private final ClientConfig config;
+  public AuditStats(List<AuditService> feeders) throws Exception {
+    config = ClientConfig.loadFromClasspath(CONF_FILE);
+    config.set(MessagingConsumerConfig.hadoopConfigFileKey,
+        "audit-core-site.xml");
     String databusConf = config.getString(DATABUS_CONF_FILE_KEY);
     DatabusConfigParser parser = new DatabusConfigParser(databusConf);
     DatabusConfig dataBusConfig = parser.getConfig();
@@ -45,6 +48,9 @@ public class AuditStats {
           config);
       feeders.add(feeder);
     }
+  }
+
+  private synchronized void start(List<AuditService> feeders) throws Exception {
     // start all feeders
     for (AuditService feeder : feeders) {
       LOG.info("starting feeder for cluster " + feeder.getServiceName());
@@ -100,8 +106,9 @@ public class AuditStats {
   }
 
   public static void main(String args[]) throws Exception {
-    final AuditStats stats = new AuditStats();
+
     final List<AuditService> feeders = new ArrayList<AuditService>();
+    final AuditStats stats = new AuditStats(feeders);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {

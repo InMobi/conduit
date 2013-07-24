@@ -37,8 +37,6 @@ import com.inmobi.messaging.util.AuditUtil;
  * This class is responsible for reading audit packets,aggregating stats in
  * memory for some time and than performing batch update of the DB
  * 
- * @author rohit.kochar
- * 
  */
 public class AuditFeederService extends AuditService {
 
@@ -343,7 +341,7 @@ public class AuditFeederService extends AuditService {
     } else {
       config.set(START_FROM_STARTING_KEY, "true");
     }
-    Message msg;
+    Message msg = null;
     AuditMessage auditMsg;
     try {
       while (!isStop) {
@@ -383,7 +381,9 @@ public class AuditFeederService extends AuditService {
               } catch (InterruptedException e) {
                 LOG.error("Error while reading audit message ", e);
               } catch (TException e) {
-                LOG.error("Exception in deserializing audit message");
+                LOG.error(
+                    "Exception in deserializing audit message for message  "
+                        + msg, e);
               } catch (EndOfStreamException e) {
                 LOG.info("End of stream reached,breaking the loop");
                 isStop = true;

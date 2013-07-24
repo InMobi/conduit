@@ -145,7 +145,7 @@ public class TestDistCPBaseService  {
     FSDataInputStream in = localFs.open(p);
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
     while ((currentLine = reader.readLine()) != null) {
-      result.add(currentLine);
+    	result.add(currentLine);
     }
     reader.close();
     // assert that the minuteFileName inside the valid file with data
