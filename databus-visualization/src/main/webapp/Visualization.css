@@ -1,0 +1,154 @@
+/*#page {
+  margin:0px 50px 0px;
+  border-style:solid;
+  border-width:2px;
+  border-color:#ccc;
+}*/
+
+#gwtPanel {
+  margin:0 auto;
+}
+
+#headerContainer {
+  padding: 0px 100px 0px;
+  background-color: #2d3d4b;
+  color: #fff;
+}
+
+#filterContainer {
+    background-color: #4596b8;
+    color: #fff;
+    padding: 0px 100px 0px;
+}
+
+#viewPanelContainer {
+       padding: 0px 100px 0px;
+       background-color: #c9e2ee;
+}
+
+#header {
+  width:100%
+}
+
+#heading {
+  text-align: center;
+}
+
+#filterPanel {
+  width:100%;
+}
+
+#viewPanel {
+  margin:0 auto;
+}
+
+#goButton {
+  width:50px;
+  float:right;
+}
+
+.gwt-ListBox {
+  width:150px;
+}
+
+#graphPanel {
+  border-style:solid;
+  border-width:2px;
+  border-color:#ccc;
+  height:900px;
+  width:900px;
+  background-color: #D8EAF3;
+}
+
+#infoPanel {
+  border-style:solid;
+  border-width:2px;
+  border-color:#ccc;
+  height:900px;
+  width:300px;
+  background-color: #D8EAF3;
+}
+
+div.tooltip {
+  position:absolute;
+  text-align:center;
+  padding:2px;
+  font:12px sans-serif;
+  background:#ccc;
+  border:0px;
+  border-radius:8px;
+  pointer-events:none;
+}
+
+.gwt-DatePicker {
+  color: #ccc;
+  border: 1px solid #ccc;
+  height: 200px;
+  width: 200px;
+}
+
+#tabs {
+    width: 100%;
+    margin: auto;
+    overflow: hidden;
+    background: #D8EAF3;
+    display: none;
+}
+
+#tabs ul {
+    list-style: none;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+}
+
+#tabs li a {
+    color: #444444;
+    display: block;
+    float: left;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    border:none;
+    border-left:1px solid #ccc;
+    border-bottom:1px solid #ccc;
+}
+
+#tabs li a:hover {
+    background:#EBF4F8;
+    cursor: pointer;
+    cursor: hand;
+}
+
+#tabs li:first-child a {
+    border-left:none;
+}
+
+#tabs li a.active {
+    background:#EBF4F8;
+    border:none;
+    border-left:1px solid #ccc;
+    border-bottom:1px solid #FFFFFF;
+}
+
+#tabs li:first-child a.active {
+    border:none;
+    border-bottom:1px solid #FFFFFF;
+}
+
+#tabs li:last-child a.active {
+    border:none;
+    border-left:1px solid #ccc;
+    border-bottom:1px solid #FFFFFF
+}
+
+.valuesTable
+{
+	border-collapse:collapse;
+	border:2px solid #ADADAD;
+}
+
+.valuesTable td, th
+{
+	border:2px solid #ADADAD;
+}
