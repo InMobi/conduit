@@ -17,7 +17,7 @@ import org.apache.thrift.TException;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.audit.AuditService;
+import com.inmobi.databus.audit.AuditDBService;
 import com.inmobi.databus.audit.AuditStats;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
@@ -38,7 +38,7 @@ import com.inmobi.messaging.util.AuditUtil;
  * memory for some time and than performing batch update of the DB
  * 
  */
-public class AuditFeederService extends AuditService {
+public class AuditFeederService extends AuditDBService {
 
   class TupleKey {
     public TupleKey(Date timestamp, String tier, String topic, String hostname,
@@ -133,6 +133,7 @@ public class AuditFeederService extends AuditService {
    */
   protected boolean stopIfMsgNull = false;
   protected volatile boolean isStop = false;
+  private boolean processLastBatch = false;
 
   private int DEFAULT_MSG_PER_BATCH = 5000;
   private int msgsPerBatch;
@@ -387,10 +388,11 @@ public class AuditFeederService extends AuditService {
               } catch (EndOfStreamException e) {
                 LOG.info("End of stream reached,breaking the loop");
                 isStop = true;
+                processLastBatch = true;
                 break;
               }
             }
-            if (isStop) {
+            if (isStop && !processLastBatch) {
               LOG.info("Stopped received,not updating in memory contents");
               continue;
             }

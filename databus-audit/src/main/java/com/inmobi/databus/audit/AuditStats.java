@@ -23,6 +23,7 @@ import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.services.AuditFeederService;
 import com.inmobi.databus.audit.util.AuditDBConstants;
 import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.consumer.databus.MessagingConsumerConfig;
 
 /*
  * This class is responsible for launching multiple AuditStatsFeeder instances one per cluster
@@ -33,23 +34,25 @@ public class AuditStats {
   private static final Log LOG = LogFactory.getLog(AuditStats.class);
   public final static MetricRegistry metrics = new MetricRegistry();
   private final ClientConfig config;
-  public AuditStats(List<AuditService> feeders) throws Exception {
+  public AuditStats(List<AuditDBService> feeders) throws Exception {
     config = ClientConfig.loadFromClasspath(CONF_FILE);
+    config.set(MessagingConsumerConfig.hadoopConfigFileKey,
+        "audit-core-site.xml");
     String databusConf = config.getString(DATABUS_CONF_FILE_KEY);
     DatabusConfigParser parser = new DatabusConfigParser(databusConf);
     DatabusConfig dataBusConfig = parser.getConfig();
     for (Entry<String, Cluster> cluster : dataBusConfig.getClusters()
         .entrySet()) {
       String rootDir = cluster.getValue().getRootDir();
-      AuditService feeder = new AuditFeederService(cluster.getKey(), rootDir,
+      AuditDBService feeder = new AuditFeederService(cluster.getKey(), rootDir,
           config);
       feeders.add(feeder);
     }
   }
 
-  private synchronized void start(List<AuditService> feeders) throws Exception {
+  private synchronized void start(List<AuditDBService> feeders) throws Exception {
     // start all feeders
-    for (AuditService feeder : feeders) {
+    for (AuditDBService feeder : feeders) {
       LOG.info("starting feeder for cluster " + feeder.getServiceName());
       feeder.start();
     }
@@ -57,8 +60,8 @@ public class AuditStats {
     startMetricsReporter(config);
   }
 
-  private void join(List<AuditService> feeders) {
-    for (AuditService feeder : feeders) {
+  private void join(List<AuditDBService> feeders) {
+    for (AuditDBService feeder : feeders) {
       feeder.join();
     }
   }
@@ -87,11 +90,11 @@ public class AuditStats {
 
   }
 
-  public synchronized void stop(List<AuditService> feeders) {
+  public synchronized void stop(List<AuditDBService> feeders) {
 
     try {
       LOG.info("Stopping Feeder...");
-      for (AuditService feeder : feeders) {
+      for (AuditDBService feeder : feeders) {
         LOG.info("Stopping feeder  " + feeder.getServiceName());
         feeder.stop();
       }
@@ -104,7 +107,7 @@ public class AuditStats {
 
   public static void main(String args[]) throws Exception {
 
-    final List<AuditService> feeders = new ArrayList<AuditService>();
+    final List<AuditDBService> feeders = new ArrayList<AuditDBService>();
     final AuditStats stats = new AuditStats(feeders);
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override

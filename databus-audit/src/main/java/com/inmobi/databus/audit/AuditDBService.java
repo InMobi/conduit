@@ -3,9 +3,9 @@ package com.inmobi.databus.audit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public abstract class AuditService implements Runnable {
+public abstract class AuditDBService implements Runnable {
   private Thread thread;
-  private static final Log LOG = LogFactory.getLog(AuditService.class);
+  private static final Log LOG = LogFactory.getLog(AuditDBService.class);
 
   @Override
   public void run() {
