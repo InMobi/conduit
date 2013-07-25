@@ -392,7 +392,7 @@ public class AuditFeederService extends AuditDBService {
                 break;
               }
             }
-            if (isStop & !processLastBatch) {
+            if (isStop && !processLastBatch) {
               LOG.info("Stopped received,not updating in memory contents");
               continue;
             }
