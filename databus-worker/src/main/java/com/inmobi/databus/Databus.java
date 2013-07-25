@@ -188,11 +188,10 @@ public class Databus implements Service, DatabusConstants {
 
   @Override
   public void stop() throws Exception {
-
-    if (!databusStarted) {
-      stopRequested = true;
-    } else {
-      synchronized (services) {
+    synchronized (services) {
+      if (!databusStarted) {
+        stopRequested = true;
+      } else {
         for (AbstractService service : services) {
           LOG.info("Stopping [" + service.getName() + "]");
           service.stop();
@@ -230,8 +229,8 @@ public class Databus implements Service, DatabusConstants {
         for (AbstractService service : services) {
           service.start();
         }
+        databusStarted = true;
       }
-      databusStarted = true;
     } catch (Exception e) {
       LOG.warn("Error in initializing databus", e);
     }
