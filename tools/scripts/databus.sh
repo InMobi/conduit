@@ -91,7 +91,10 @@ case $startStop in
 
     echo starting DATABUS
 
-   nohup java -Dcom.sun.management.jmxremote.port=9089 -Dcom.sun.management.jmxremote.ssl=true -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
+   nohup java -Dcom.sun.management.jmxremote.port=9089
+              -Dcom.sun.management.jmxremote.authenticate=false
+              -Dcom.sun.management.jmxremote.ssl=false
+              -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
    if [ $? -eq 0 ]
     then
       if /bin/echo -n $! > "$_DATABUS_DAEMON_PIDFILE"
