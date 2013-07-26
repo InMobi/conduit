@@ -15,9 +15,6 @@ public class VisualizationProperties {
     VIP_SLA,
     COLLECTOR_SLA,
     HDFS_SLA,
-    LOCAL_SLA,
-    MERGE_SLA,
-    MIRROR_SLA,
     PERCENTILE_FOR_SLA,
     PERCENTAGE_FOR_LOSS,
     PERCENTAGE_FOR_WARN,
@@ -44,12 +41,6 @@ public class VisualizationProperties {
           p.get("collector.sla").toString());
       propMap.put(PropNames.HDFS_SLA.name(),
           p.get("hdfs.sla").toString());
-      propMap.put(PropNames.LOCAL_SLA.name(),
-          p.get("local.sla").toString());
-      propMap.put(PropNames.MERGE_SLA.name(),
-          p.get("merge.sla").toString());
-      propMap.put(PropNames.MIRROR_SLA.name(),
-          p.get("mirror.sla").toString());
       propMap.put(PropNames.PERCENTILE_FOR_SLA.name(),
           p.get("percentile.for.sla").toString());
       propMap.put(PropNames.PERCENTAGE_FOR_LOSS.name(),

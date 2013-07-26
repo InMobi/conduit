@@ -1,9 +1,6 @@
-/*#page {
-  margin:0px 50px 0px;
-  border-style:solid;
-  border-width:2px;
-  border-color:#ccc;
-}*/
+#page {
+  background-color: #D8EAF3;
+}
 
 #gwtPanel {
   margin:0 auto;
@@ -73,12 +70,29 @@
   background-color: #D8EAF3;
 }
 
-#infoPanel {
+#summaryAndInfoPanel {
+  float:right;
   border-style:solid;
   border-width:2px;
   border-color:#ccc;
   height:900px;
   width:28%;
+  background-color: #D8EAF3;
+}
+
+#summaryPanel {
+  border-bottom:2px solid #ccc;
+  width:100%;
+  background-color: #D8EAF3;
+  text-align:left;
+  padding-bottom:10px;
+  padding-left:5px;
+}
+
+#infoPanel {
+  padding-top:10px;
+  padding-left:5px;
+  width:100%;
   background-color: #D8EAF3;
   text-align:left;
 }
@@ -165,4 +179,19 @@ div.tooltip {
 .valuesTable td, th
 {
 	border:2px solid #ADADAD;
+}
+
+div.healthtooltip {
+  position:absolute;
+  text-align:center;
+  padding:2px;
+  font:12px sans-serif;
+  background:#ccc;
+  border:0px;
+  border-radius:8px;
+}
+
+#currentTimeLabel {
+  float:right;
+  text-align:right;
 }

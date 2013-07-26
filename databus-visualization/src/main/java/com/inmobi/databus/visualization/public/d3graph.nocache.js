@@ -5,8 +5,7 @@ var r = 180;
 var fullTreeList = []; // Full list of Node objects grouped by respective cluster name
 var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A", "#f96",
   "#ff0", "#ff0080"];
-var agentSla, vipSla, collectorSla, hdfsSla, localSla, mergeSla, mirrorSla,
-    percentileForSla, percentageForLoss, percentageForWarn;
+var agentSla, vipSla, collectorSla, hdfsSla, percentileForSla, percentageForLoss, percentageForWarn;
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -87,14 +86,7 @@ function buildNodeList() {
 }
 
 function isLoss(count1, count2) {
-	console.log("percentageForLoss="+percentageForLoss);
-	count1 = parseInt(count1);
-	count2 = parseInt(count2);
-	console.log("count1="+count1);
-	console.log("count2="+count2);
 	var marginAllowed = parseFloat(parseInt(percentageForLoss * count2) / 100);
-	console.log("margin allowed for loss:"+marginAllowed);
-	console.log("count1 should be less than "+(count2 - marginAllowed)+" for loss status");
 	if ( count1 < (count2 - marginAllowed))
 		return true;
 	else
@@ -127,7 +119,6 @@ function highlightChildNodes(n) {
             });
           }
         });
-        console.log("aggregateparent:"+aggregateparent+" aggregatechild:"+aggregatechild);
         if (n.allreceivedtopicstats.length == 0)
           link.style("fill", "#dedede")
             .style("stroke", "#dedede");
@@ -142,11 +133,9 @@ function highlightChildNodes(n) {
   } else {
     var totalaggregatechild = 0;
     var totalaggregateparent = 0;
-    console.log("initialized totalaggregatechild:"+totalaggregatechild);
     n.children.forEach(function (c) {
       totalaggregatechild += parseInt(c.aggregatemessagesreceived);
     });
-    console.log("first addition:"+totalaggregatechild);
     if (n.tier.toLowerCase() == "vip") {
     	if (n.children.length == 0) {
 	      var arr = d3.selectAll("g.node")
@@ -160,7 +149,6 @@ function highlightChildNodes(n) {
       n.children.forEach(function (c) {
         totalaggregatechild += parseInt(c.aggregatemessagessent);
       });
-      console.log("in case of vip node totalaggregatechild:"+totalaggregatechild);
     }
     if (n.tier.toLowerCase() == "collector") {
       var nodesInCluster = d3.selectAll("g.node")
@@ -175,8 +163,6 @@ function highlightChildNodes(n) {
     } else {
       totalaggregateparent = n.aggregatemessagesreceived;
     }
-    console.log("printing node n");
-    console.log(n);
     n.children.forEach(function (c) {
       var currentLink = d3.selectAll("path.link")
         .filter(function (d) {
@@ -185,8 +171,6 @@ function highlightChildNodes(n) {
         })
         .transition()
         .duration(100);
-      console.log("totalaggregateparent:"+totalaggregateparent);
-      console.log("totalaggregatechild:"+totalaggregatechild);
       if (n.allreceivedtopicstats.length == 0)
         currentLink.style("fill", "#dedede").style("stroke", "#dedede");
       else if ((c.tier == "agent" || c.tier == "collector") && c.allsenttopicstats.length == 0)
@@ -327,19 +311,21 @@ function addListToInfoPanel(n, isCountView) {
 	var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Showing Node Information:";
+  c.style.fontWeight = "bold";
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Name";
   c = r.insertCell(1);
   c.innerHTML = n.name;
-  currentRow++;
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Tier";
   c = r.insertCell(1);
   c.innerHTML = n.tier;
-  currentRow++;
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Cluster";
   c = r.insertCell(1);
@@ -348,20 +334,27 @@ function addListToInfoPanel(n, isCountView) {
     "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     n.cluster + "</button>";
   if(isCountView) {
-    currentRow++;
-    r = t.insertRow(currentRow);
+    r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Aggregate Recieved";
     c = r.insertCell(1);
     c.innerHTML = n.aggregatemessagesreceived;
-    currentRow++;
     if (n.tier == "agent" || n.tier == "collector") {
-      r = t.insertRow(currentRow);
+      r = t.insertRow(currentRow++);
       c = r.insertCell(0);
       c.innerHTML = "Aggregate Sent";
       c = r.insertCell(1);
       c.innerHTML = n.aggregatemessagesent;
     }
+    r = t.insertRow(currentRow++);
+    c = r.insertCell(0);
+    c.innerHTML = "Message Count Table:";
+    c.style.fontWeight = "bold";
+  } else {
+    r = t.insertRow(currentRow++);
+    c = r.insertCell(0);
+    c.innerHTML = "Latency Table:";
+    c.style.fontWeight = "bold";
   }
 	div.appendChild(t);
   document.getElementById("infoPanel").appendChild(div);
@@ -523,9 +516,7 @@ function getStreamsCausingDataLoss(l) {
     l.target.allsenttopicstats.forEach(function (t) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic && s.hostname == l.target.name) {
-          isstreampresent = true;
-      console.log("s.messages:"+s.messages);
-      console.log("t.messages:"+t.messages);
+          isstreampresent = true
           if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
@@ -551,8 +542,6 @@ function getStreamsCausingDataLoss(l) {
           }
         });
       });
-      console.log("parentCount:"+parentCount);
-      console.log("t.messages:"+t.messages);
       if (isLoss(parentCount, t.messages) || (!isstreampresent && !(streamslist.contains(t.topic))))
         streamslist.push(t.topic);
       isstreampresent = false;
@@ -562,8 +551,6 @@ function getStreamsCausingDataLoss(l) {
       l.source.allreceivedtopicstats.forEach(function (s) {
         if (t.topic == s.topic) {
           isstreampresent = true;
-      console.log("s.messages:"+s.messages);
-      console.log("t.messages:"+t.messages);
           if (isLoss(s.messages,t.messages))
             streamslist.push(t.topic);
         }
@@ -582,19 +569,21 @@ function linkclick(l) {
   var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Showing Link Information:";
+  c.style.fontWeight = "bold";
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Source Name:";
   c = r.insertCell(1);
   c.innerHTML = l.source.name;
-  currentRow++;
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Source Tier:";
   c = r.insertCell(1);
   c.innerHTML = l.source.tier;
-  currentRow++;
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Source Cluster:";
   c = r.insertCell(1);
@@ -603,20 +592,17 @@ function linkclick(l) {
     .cluster +
     "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.source.cluster + "</button>";
-  currentRow++;
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Target Name:";
   c = r.insertCell(1);
   c.innerHTML = l.target.name;
-  currentRow++;
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Target Tier:";
   c = r.insertCell(1);
   c.innerHTML = l.target.tier;
-  currentRow++;
-  r = t.insertRow(currentRow);
+  r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Target Cluster:";
   c = r.insertCell(1);
@@ -625,22 +611,19 @@ function linkclick(l) {
     .cluster +
     "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.target.cluster + "</button>";
-  currentRow++;
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
-    r = t.insertRow(currentRow);
+    r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "<b>Streams causing dataloss: </b>";
-    currentRow++;
     streams.forEach(function (s) {
-      r = t.insertRow(currentRow);
+      r = t.insertRow(currentRow++);
       c = r.insertCell(0);
       c.innerHTML =
         "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + s +
         "', '" + l.source.cluster +
         "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px;color:#ff0000\">" +
         s + "</button>";
-      currentRow++;
     });
   }
   document.getElementById("infoPanel")
@@ -896,14 +879,7 @@ function addColorsToNodes() {
 }
 
 function isWarn(count1, count2) {
-	console.log("percentageForWarn="+percentageForWarn);
-	console.log("count2="+count2);
-	console.log("percentageForWarn * count2="+percentageForWarn * count2);
-	console.log(parseInt(percentageForWarn * count2) / 100);
-	console.log(parseFloat(parseInt(percentageForWarn * count2) / 100));
 	var marginAllowed = parseFloat(parseInt(percentageForWarn * count2) / 100);
-	console.log("margin allowed for warn:"+marginAllowed);
-	console.log("count1 "+count1+" should be less than "+(count2 - marginAllowed)+" for warn status");
 	if ( count1 < (count2 - marginAllowed))
 		return true;
 	else
@@ -911,8 +887,6 @@ function isWarn(count1, count2) {
 }
 
 function getHealth(count1, count2) {
-	console.log("count1:"+count1);
-	console.log("count2:"+count2);
 	var health;
 	if (isWarn(count1, count2))
 		health = 1;
@@ -920,12 +894,10 @@ function getHealth(count1, count2) {
 		health = 2;
 	else
 		health = 0;
-	console.log("health:"+health);
 	return health;
 }
 
 function appendHealthStatusIndicator(tier, health) {
-
 	var svg = d3.select("#healthCell"+tier)
 							.append("svg:svg")
 							.attr("width", 12)
@@ -941,6 +913,8 @@ function appendHealthStatusIndicator(tier, health) {
 		 							.attr("cx", 6)
 		 							.attr("cy", 6)
 									.style("display", "block")
+                  .style("cursor", "hand")
+                  .style("cursor", "pointer")
 									.on("mouseout", function(){
 										div.transition()
 				          		 .duration(500)
@@ -952,7 +926,7 @@ function appendHealthStatusIndicator(tier, health) {
 					.on("mouseover", function(){
 						div.transition()
           		 .duration(200)
-          		 .style("opacity", .9)
+          		 .style("opacity", .8)
           		 .style("background", "#0f0")
         		div.html("Healthy")
           		 .style("left", (d3.event.pageX) + "px")
@@ -986,7 +960,6 @@ function appendHealthStatusIndicator(tier, health) {
 }
 
 function addTierDetailsToSummary(div, currentRow, tier, received, sent, childCount) {
-  console.log(div);
 	var health;
 	if(tier == 'Publisher')
 		health = 0;
@@ -1040,7 +1013,7 @@ function addSummaryBox(isCountView, treeList) {
   	var div = document.createElement('div');
   	var t = document.createElement('table');
   	var currentRow = 0;
-  	t.insertRow(currentRow++).insertCell(0).innerHTML = "Summary:";
+  	t.insertRow(currentRow++).insertCell(0).innerHTML = "<b>Summary:</b>";
 		div.appendChild(t);
 	  document.getElementById("summaryPanel").appendChild(div);
 
@@ -1412,15 +1385,12 @@ function loadGraph(streamName, clusterName, isCountView) {
   addSummaryBox(isCountView, treeList);
 }
 
-function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, drillDownStream, agent, vip, collector, hdfs, local, merge, mirror, percentileFrSla, percentageFrLoss, percentageFrWarn) {
+function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, drillDownStream, agent, vip, collector, hdfs, percentileFrSla, percentageFrLoss, percentageFrWarn) {
 
   agentSla = agent;
   vipSla = vip;
   collectorSla = collector;
   hdfsSla = hdfs;
-  localSla = local
-  mergeSla = merge
-  mirrorSla = mirror;
   percentileForSla = percentileFrSla;
   percentageForLoss = percentageFrLoss;
   percentageForWarn = percentageFrWarn;

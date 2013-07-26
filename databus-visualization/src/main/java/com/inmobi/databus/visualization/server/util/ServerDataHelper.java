@@ -153,37 +153,37 @@ public class ServerDataHelper {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    RequestResponse.GraphDataResponse response =
-        RequestResponse.GraphDataResponse.newBuilder()
-            .setJsonString(newObject.toString()).setAgentSla(Integer.parseInt(
-            VisualizationProperties
-                .get(VisualizationProperties.PropNames.AGENT_SLA))).setVipSla(
-            Integer.parseInt(VisualizationProperties
-                .get(VisualizationProperties.PropNames.VIP_SLA)))
-            .setCollectorSla(Integer.parseInt(VisualizationProperties
-                .get(VisualizationProperties.PropNames.COLLECTOR_SLA)))
-            .setHdfsSla(Integer.parseInt(VisualizationProperties
-                .get(VisualizationProperties.PropNames.HDFS_SLA))).setLocalSla(
-            Integer.parseInt(VisualizationProperties
-                .get(VisualizationProperties.PropNames.LOCAL_SLA))).setMergeSla(
-            Integer.parseInt(VisualizationProperties
-                .get(VisualizationProperties.PropNames.MERGE_SLA)))
-            .setMirrorSla(Integer.parseInt(VisualizationProperties
-                .get(VisualizationProperties.PropNames.MIRROR_SLA)))
-            .setPercentileForSla(Float.parseFloat(VisualizationProperties
-                .get(VisualizationProperties.PropNames.PERCENTILE_FOR_SLA)))
-            .setPercentageForLoss(Float.parseFloat(VisualizationProperties
-                .get(VisualizationProperties.PropNames.PERCENTAGE_FOR_LOSS))).build();
     return ServerJsonStreamFactory.getInstance().serializeMessage(
-        RequestResponse.Response.newBuilder().setGraphDataResponse(response)
-            .build());
+        RequestResponse.Response.newBuilder().setGraphDataResponse(
+            RequestResponse.GraphDataResponse.newBuilder()
+                .setJsonString(newObject.toString())).build());
   }
 
   public String setLoadMainPanelResponse(List<String> streamList,
                                          List<String> clusterList) {
+    RequestResponse.ClientConfiguration clientConfiguration =
+        RequestResponse.ClientConfiguration.newBuilder().setAgentSla(VisualizationProperties
+                .get(VisualizationProperties.PropNames.AGENT_SLA)).setVipSla(VisualizationProperties
+                .get(VisualizationProperties.PropNames.VIP_SLA))
+            .setCollectorSla(VisualizationProperties
+                .get(VisualizationProperties.PropNames.COLLECTOR_SLA))
+            .setHdfsSla(VisualizationProperties
+                .get(VisualizationProperties.PropNames.HDFS_SLA))
+            .setPercentileForSla(VisualizationProperties
+                .get(VisualizationProperties.PropNames.PERCENTILE_FOR_SLA))
+            .setPercentageForLoss(VisualizationProperties
+                .get(VisualizationProperties.PropNames.PERCENTAGE_FOR_LOSS))
+            .setPercentageForWarn(VisualizationProperties.get
+                (VisualizationProperties.PropNames.PERCENTAGE_FOR_WARN))
+            .setMaxStartTime(VisualizationProperties.get
+                (VisualizationProperties.PropNames.MAX_START_TIME))
+            .setMaxTimeRangeInt(VisualizationProperties.get
+                (VisualizationProperties.PropNames.MAX_TIME_RANGE_INTERVAL_IN_HOURS))
+            .build();
     RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
-        RequestResponse.LoadMainPanelResponse.newBuilder().addAllStream
-            (streamList).addAllCluster(clusterList).build();
+        RequestResponse.LoadMainPanelResponse.newBuilder()
+            .addAllStream(streamList).addAllCluster(clusterList)
+            .setClientConfig(clientConfiguration).build();
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder()
             .setLoadMainPanelResponse(loadMainPanelResponse).build());

@@ -18,18 +18,22 @@ message Response {
 
 message GraphDataResponse {
 	optional string jsonString = 1;
-	optional int32 agentSla = 2;
-	optional int32 vipSla = 3;
-	optional int32 collectorSla = 4;
-	optional int32 hdfsSla = 5;
-	optional int32 localSla = 6;
-	optional int32 mergeSla = 7;
-	optional int32 mirrorSla = 8;
-	optional float percentileForSla = 9;
-	optional float percentageForLoss = 10;
 }
 
 message LoadMainPanelResponse {
 	repeated string stream = 1;
 	repeated string cluster = 2;
+	optional ClientConfiguration clientConfig = 3;
+}
+
+message ClientConfiguration {
+	optional string agentSla = 1;
+	optional string vipSla = 2;
+	optional string collectorSla = 3;
+	optional string hdfsSla = 4;
+	optional string percentileForSla = 5;
+	optional string percentageForLoss = 6;
+	optional string percentageForWarn = 7;
+	optional string maxStartTime = 8;
+	optional string maxTimeRangeInt = 9;
 }
