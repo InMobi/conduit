@@ -5,7 +5,9 @@ var r = 180;
 var fullTreeList = []; // Full list of Node objects grouped by respective cluster name
 var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A", "#f96",
   "#ff0", "#ff0080"];
-var agentSla, vipSla, collectorSla, hdfsSla, percentileForSla, percentageForLoss, percentageForWarn;
+var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, percentileForSla,
+percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
+var publisherLatency, agentLatency, collectorLatency, hdfsLatency;
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -897,8 +899,8 @@ function getHealth(count1, count2) {
 	return health;
 }
 
-function appendHealthStatusIndicator(tier, health) {
-	var svg = d3.select("#healthCell"+tier)
+function appendHealthStatusIndicator(id, health) {
+	var svg = d3.select("#"+id)
 							.append("svg:svg")
 							.attr("width", 12)
 							.attr("height", 12)
@@ -959,19 +961,20 @@ function appendHealthStatusIndicator(tier, health) {
 	}
 }
 
-function addTierDetailsToSummary(div, currentRow, tier, received, sent, childCount) {
+function addTierCountDetailsToSummary(div, currentRow, tier, received, sent, childCount) {
 	var health;
 	if(tier == 'Publisher')
 		health = 0;
 	else
 		health = getHealth(received, childCount);
+	var id = "counthealthCell"+tier;
 	var t = div.firstChild;
 	var r, c, currentCol = 0;
 	r = t.insertRow(currentRow++);
 	c = r.insertCell(currentCol++);
 	c.innerHTML = tier;
 	c = r.insertCell(currentCol++);
-	c.id = "healthCell"+tier;
+	c.id = id;
 	c.style.width = "15px";
 	c.style.height = "15px";
 	c = r.insertCell(currentCol++);
@@ -980,13 +983,12 @@ function addTierDetailsToSummary(div, currentRow, tier, received, sent, childCou
 		c = r.insertCell(currentCol++);
 		c.innerHTML = sent+"(S)";
 	}
-	appendHealthStatusIndicator(tier, health);
+	appendHealthStatusIndicator(id, health);
 	return currentRow;
 }
 
-function addSummaryBox(isCountView, treeList) {
-  var tierList = ["Publisher", "Agent", "VIP", "Collector", "HDFS"];
-  if (isCountView) {
+
+function loadCountSummary(treeList) {
 	  var publisherCount = 0, agentReceivedCount = 0, agentSentCount = 0, collectorReceivedCount = 0, collectorSentCount = 0, hdfsCount = 0;
 		treeList.forEach(function (cl) {
 			cl.forEach(function (n){
@@ -1017,10 +1019,66 @@ function addSummaryBox(isCountView, treeList) {
 		div.appendChild(t);
 	  document.getElementById("summaryPanel").appendChild(div);
 
-  	currentRow = addTierDetailsToSummary(div, currentRow, "Publisher", publisherCount, 0, 0);
-  	currentRow = addTierDetailsToSummary(div, currentRow, "Agent", agentReceivedCount, agentSentCount, publisherCount);
-  	currentRow = addTierDetailsToSummary(div, currentRow, "Collector", collectorReceivedCount, collectorSentCount, agentSentCount);
-  	currentRow = addTierDetailsToSummary(div, currentRow, "HDFS", hdfsCount, 0, collectorSentCount);
+  	currentRow = addTierCountDetailsToSummary(div, currentRow, "Publisher",
+  	     publisherCount, 0, 0);
+  	currentRow = addTierCountDetailsToSummary(div, currentRow, "Agent",
+  	     agentReceivedCount, agentSentCount, publisherCount);
+  	currentRow = addTierCountDetailsToSummary(div, currentRow, "Collector",
+  	     collectorReceivedCount, collectorSentCount, agentSentCount);
+  	currentRow = addTierCountDetailsToSummary(div, currentRow, "HDFS",
+  	     hdfsCount, 0, collectorSentCount);
+}
+
+function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency, actualLatency) {
+	var health;
+	if(actualLatency <= expectedLatency - lossWarnThresholdDiff)
+	  health = 0;
+	if (actualLatency <= expectedLatency && actualLatency > expectedLatency - lossWarnThresholdDiff)
+	  health = 1;
+	if(actualLatency > expectedLatency)
+		health = 2;
+	var id = "counthealthCell"+tier;
+	var t = div.firstChild;
+	var r, c, currentCol = 0;
+	r = t.insertRow(currentRow++);
+	c = r.insertCell(currentCol++);
+	c.innerHTML = tier;
+	c = r.insertCell(currentCol++);
+	c.id = id;
+	c.style.width = "15px";
+	c.style.height = "15px";
+	c = r.insertCell(currentCol++);
+	c.innerHTML = actualLatency+"(A)";
+	c = r.insertCell(currentCol++);
+	c.innerHTML = expectedLatency+"(E)";
+	appendHealthStatusIndicator(id, health);
+	return currentRow;
+}
+
+function loadLatencySummary() {
+  	document.getElementById("summaryPanel").innerHTML = "";
+  	var div = document.createElement('div');
+  	var t = document.createElement('table');
+  	var currentRow = 0;
+  	t.insertRow(currentRow++).insertCell(0).innerHTML = "<b>Summary:</b>";
+		div.appendChild(t);
+	  document.getElementById("summaryPanel").appendChild(div);
+
+	  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Publisher",
+	       publisherSla, publisherLatency);
+	  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Agent",
+    	   agentSla, agentLatency);
+    currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Collector",
+    	   collectorSla, collectorLatency);
+    currentRow = addTierLatencyDetailsToSummary(div, currentRow, "HDFS",
+    	   hdfsSla, hdfsLatency);
+}
+
+function addSummaryBox(isCountView, treeList) {
+  if (isCountView) {
+    loadCountSummary(treeList);
+  } else {
+    loadLatencySummary();
   }
 }
 
@@ -1385,8 +1443,11 @@ function loadGraph(streamName, clusterName, isCountView) {
   addSummaryBox(isCountView, treeList);
 }
 
-function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, drillDownStream, agent, vip, collector, hdfs, percentileFrSla, percentageFrLoss, percentageFrWarn) {
+function drawGraph(result, cluster, stream, baseQueryString,
+drillDownCluster, drillDownStream, publisher, agent, vip, collector, hdfs,
+percentileFrSla, percentageFrLoss, percentageFrWarn, lWThresholdDiff) {
 
+  publisherSla = publisher;
   agentSla = agent;
   vipSla = vip;
   collectorSla = collector;
@@ -1394,6 +1455,7 @@ function drawGraph(result, cluster, stream, baseQueryString, drillDownCluster, d
   percentileForSla = percentileFrSla;
   percentageForLoss = percentageFrLoss;
   percentageForWarn = percentageFrWarn;
+  lossWarnThresholdDiff = lWThresholdDiff;
   document.getElementById("tabs").style.display = "block";
   queryString = baseQueryString;
   jsonresponse = JSON.parse(result);
@@ -1503,4 +1565,13 @@ function getStartIndex(nodeList) {
     }
   }
   return startindex;
+}
+
+function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency) {
+  publisherLatency = pLatency;
+  agentLatency = aLatency;
+  collectorLatency = cLatency;
+  hdfsLatency = hLatency;
+
+  loadLatencySummary();
 }

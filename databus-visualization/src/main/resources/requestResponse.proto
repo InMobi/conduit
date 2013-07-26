@@ -18,6 +18,16 @@ message Response {
 
 message GraphDataResponse {
 	optional string jsonString = 1;
+	optional TierLatencyResponse tierLatencyResponse = 2;
+}
+
+message TierLatencyResponse {
+	repeated TierLatencyObj tierLatencyObjList = 1;
+}
+
+message TierLatencyObj {
+	optional string tier = 1;
+	optional int32 latency = 2;
 }
 
 message LoadMainPanelResponse {
@@ -27,13 +37,15 @@ message LoadMainPanelResponse {
 }
 
 message ClientConfiguration {
-	optional string agentSla = 1;
-	optional string vipSla = 2;
-	optional string collectorSla = 3;
-	optional string hdfsSla = 4;
-	optional string percentileForSla = 5;
-	optional string percentageForLoss = 6;
-	optional string percentageForWarn = 7;
-	optional string maxStartTime = 8;
-	optional string maxTimeRangeInt = 9;
+	optional string publisherSla = 1;
+	optional string agentSla = 2;
+	optional string vipSla = 3;
+	optional string collectorSla = 4;
+	optional string hdfsSla = 5;
+	optional string percentileForSla = 6;
+	optional string percentageForLoss = 7;
+	optional string percentageForWarn = 8;
+	optional string maxStartTime = 9;
+	optional string maxTimeRangeInt = 10;
+	optional string warnLossThresholdDiff = 11;
 }

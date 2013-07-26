@@ -12,6 +12,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.datepicker.client.DatePicker;
+import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.visualization.client.util.ClientDataHelper;
 import com.inmobi.databus.visualization.client.util.DateUtils;
 
@@ -253,7 +254,7 @@ public class Visualization implements EntryPoint, ClickHandler {
             (clientConfig.get(ClientConstants.MAX_START_TIME));
         Date d = DateUtils.getDateWithZeroTime(dateShowRangeEvent.getStart());
         while (d.before(maxStartDate)) {
-          stDatePicker.setTransientEnabledOnDates(false, d);
+          endDatePicker.setTransientEnabledOnDates(false, d);
           d = DateUtils.getNextDay(d);
         }
         Date currentDate = new Date();
@@ -382,8 +383,15 @@ public class Visualization implements EntryPoint, ClickHandler {
       public void onSuccess(String result) {
         String nodesJson = ClientDataHelper.getInstance()
             .getJsonStrongFromGraphDataResponse(result);
+        Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
+            .getTierLatencyObjListFromResponse(result);
+        setTierLatencyValues(tierLatencyMap.get(ClientConstants.PUBLISHER),
+            tierLatencyMap.get(ClientConstants.AGENT),
+            tierLatencyMap.get(ClientConstants.COLLECTOR),
+            tierLatencyMap.get(ClientConstants.HDFS));
         drawGraph(nodesJson, selectedCluster, selectedStream,
             getQueryString(), drillDownCluster, drillDownStream,
+            Integer.parseInt(clientConfig.get(ClientConstants.PUBLISHER)),
             Integer.parseInt(clientConfig.get(ClientConstants.AGENT)),
             Integer.parseInt(clientConfig.get(ClientConstants.VIP)),
             Integer.parseInt(clientConfig.get(ClientConstants.COLLECTOR)),
@@ -393,10 +401,19 @@ public class Visualization implements EntryPoint, ClickHandler {
             Float.parseFloat(
                 clientConfig.get(ClientConstants.PERCENTAGE_FOR_LOSS)),
             Float.parseFloat(
-                clientConfig.get(ClientConstants.PERCENTAGE_FOR_WARN)));
+                clientConfig.get(ClientConstants.PERCENTAGE_FOR_WARN)),
+            Integer.parseInt(clientConfig.get(ClientConstants.LOSS_WARN_THRESHOLD_DIFF)));
       }
     });
   }
+
+  private native void setTierLatencyValues(int publisherLatency,
+                                           int agentLatency,
+                                           int collectorLatency,
+                                           int hdfsLatency)/*-{
+    $wnd.setTierLatencyValues(publisherLatency, agentLatency,
+    collectorLatency, hdfsLatency);
+  }-*/;
 
   private boolean validateParameters() {
     if (!DateUtils.checkTimeStringFormat(stTime)) {
@@ -460,13 +477,15 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   private native void drawGraph(String result, String cluster, String stream,
                                 String queryString, String drillDownCluster,
-                                String drillDownStream, Integer agentSla,
+                                String drillDownStream, Integer publisherSla,
+                                Integer agentSla,
                                 Integer vipSla, Integer collectorSla,
                                 Integer hdfsSla, Float percentileForSla,
                                 Float percentageForLoss,
-                                Float percentageForWarn)/*-{
+                                Float percentageForWarn,
+                                Integer lossWarnThresholdDiff)/*-{
     $wnd.drawGraph(result, cluster, stream, queryString, drillDownCluster,
-    drillDownStream, agentSla, vipSla, collectorSla, hdfsSla,
-    percentileForSla, percentageForLoss, percentageForWarn);
+    drillDownStream, publisherSla, agentSla, vipSla, collectorSla, hdfsSla,
+    percentileForSla, percentageForLoss, percentageForWarn, lossWarnThresholdDiff);
   }-*/;
 }

@@ -11,6 +11,7 @@ public class VisualizationProperties {
   public static enum PropNames {
     DATABUS_XML_PATH,
     PERCENTILE_STRING,
+    PUBLISHER_SLA,
     AGENT_SLA,
     VIP_SLA,
     COLLECTOR_SLA,
@@ -19,7 +20,8 @@ public class VisualizationProperties {
     PERCENTAGE_FOR_LOSS,
     PERCENTAGE_FOR_WARN,
     MAX_START_TIME,
-    MAX_TIME_RANGE_INTERVAL_IN_HOURS
+    MAX_TIME_RANGE_INTERVAL_IN_HOURS,
+    LOSS_WARN_THRESHOLD_DIFF_IN_MINS
   }
 
   private static Hashtable<String, String> propMap =
@@ -34,6 +36,8 @@ public class VisualizationProperties {
           p.get("databus.xml.path").toString());
       propMap.put(PropNames.PERCENTILE_STRING.name(),
           p.get("percentile.string").toString());
+      propMap.put(PropNames.PUBLISHER_SLA.name(),
+          p.get("publisher.sla").toString());
       propMap.put(PropNames.AGENT_SLA.name(),
           p.get("agent.sla").toString());
       propMap.put(PropNames.VIP_SLA.name(), p.get("vip.sla").toString());
@@ -51,6 +55,8 @@ public class VisualizationProperties {
           p.get("max.start.time").toString());
       propMap.put(PropNames.MAX_TIME_RANGE_INTERVAL_IN_HOURS.name(),
           p.get("max.time.range.interval.in.hours").toString());
+      propMap.put(PropNames.LOSS_WARN_THRESHOLD_DIFF_IN_MINS.name(),
+          p.get("loss.warn.threshold.diff.in.mins").toString());
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(

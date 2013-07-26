@@ -80,6 +80,8 @@ public class ClientDataHelper {
       e.printStackTrace();
     }
     Map<String, String> configMap = new HashMap<String, String>();
+    configMap.put(ClientConstants.PUBLISHER, response.getLoadMainPanelResponse()
+        .getClientConfig().getPublisherSla());
     configMap.put(ClientConstants.AGENT, response.getLoadMainPanelResponse()
         .getClientConfig().getAgentSla());
     configMap.put(ClientConstants.VIP, response.getLoadMainPanelResponse()
@@ -98,6 +100,28 @@ public class ClientDataHelper {
         .getClientConfig().getMaxStartTime());
     configMap.put(ClientConstants.MAX_TIME_INT_IN_HRS, response.getLoadMainPanelResponse()
         .getClientConfig().getMaxTimeRangeInt());
+    configMap.put(ClientConstants.LOSS_WARN_THRESHOLD_DIFF, response.getLoadMainPanelResponse()
+        .getClientConfig().getWarnLossThresholdDiff());
     return configMap;
+  }
+
+  public Map<String, Integer> getTierLatencyObjListFromResponse(
+      String serverJson) {
+    Map<String, Integer> tierLatencyMap = new HashMap<String, Integer>();
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance()
+              .createNewStreamFromJson(serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    for (RequestResponse.TierLatencyObj tierLatencyObj : response
+        .getGraphDataResponse().getTierLatencyResponse()
+        .getTierLatencyObjListList()) {
+       tierLatencyMap.put(tierLatencyObj.getTier().toLowerCase(),
+           tierLatencyObj.getLatency());
+    }
+    return tierLatencyMap;
   }
 }

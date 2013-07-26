@@ -1,6 +1,7 @@
 package com.inmobi.databus.visualization.server.util;
 
 import com.google.protobuf.gwt.server.ServerJsonStreamFactory;
+import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.visualization.server.MessageStats;
 import com.inmobi.databus.visualization.server.Node;
 import com.inmobi.databus.visualization.server.NodeKey;
@@ -11,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -77,7 +79,8 @@ public class ServerDataHelper {
     return endTime;
   }
 
-  public String setGraphDataResponse(Map<NodeKey, Node> nodeMap) {
+  public String setGraphDataResponse(Map<NodeKey, Node> nodeMap,
+                                     Map<Tuple, Map<Float, Integer>> tierLatencyMap) {
     JSONObject newObject = new JSONObject();
     JSONArray nodeArray = new JSONArray();
     try {
@@ -153,17 +156,42 @@ public class ServerDataHelper {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    RequestResponse.TierLatencyResponse tierLatency =
+        setTierLatencyResponseObject(tierLatencyMap);
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder().setGraphDataResponse(
             RequestResponse.GraphDataResponse.newBuilder()
-                .setJsonString(newObject.toString())).build());
+                .setJsonString(newObject.toString())
+                .setTierLatencyResponse(tierLatency)).build());
+  }
+
+  private RequestResponse.TierLatencyResponse setTierLatencyResponseObject(
+      Map<Tuple, Map<Float, Integer>> tierLatencyMap) {
+    Float percentileForSla = Float.valueOf(VisualizationProperties
+        .get(VisualizationProperties.PropNames.PERCENTILE_FOR_SLA));
+    List<RequestResponse.TierLatencyObj> tierLatencyObjList = new ArrayList
+        <RequestResponse.TierLatencyObj>();
+    for (Map.Entry<Tuple, Map<Float, Integer>> tierEntry : tierLatencyMap
+        .entrySet()) {
+      String tier = tierEntry.getKey().getTier();
+      int latency = tierEntry.getValue().get(percentileForSla);
+      RequestResponse.TierLatencyObj newObj = RequestResponse.TierLatencyObj
+          .newBuilder().setTier(tier).setLatency(latency).build();
+      tierLatencyObjList.add(newObj);
+    }
+    return RequestResponse.TierLatencyResponse.newBuilder().addAllTierLatencyObjList(
+        tierLatencyObjList).build();
   }
 
   public String setLoadMainPanelResponse(List<String> streamList,
                                          List<String> clusterList) {
     RequestResponse.ClientConfiguration clientConfiguration =
-        RequestResponse.ClientConfiguration.newBuilder().setAgentSla(VisualizationProperties
-                .get(VisualizationProperties.PropNames.AGENT_SLA)).setVipSla(VisualizationProperties
+        RequestResponse.ClientConfiguration.newBuilder().setPublisherSla(
+            VisualizationProperties
+                .get(VisualizationProperties.PropNames.PUBLISHER_SLA)).setAgentSla(
+            VisualizationProperties
+                .get(VisualizationProperties.PropNames.AGENT_SLA)).setVipSla(
+            VisualizationProperties
                 .get(VisualizationProperties.PropNames.VIP_SLA))
             .setCollectorSla(VisualizationProperties
                 .get(VisualizationProperties.PropNames.COLLECTOR_SLA))
@@ -173,12 +201,14 @@ public class ServerDataHelper {
                 .get(VisualizationProperties.PropNames.PERCENTILE_FOR_SLA))
             .setPercentageForLoss(VisualizationProperties
                 .get(VisualizationProperties.PropNames.PERCENTAGE_FOR_LOSS))
-            .setPercentageForWarn(VisualizationProperties.get
-                (VisualizationProperties.PropNames.PERCENTAGE_FOR_WARN))
-            .setMaxStartTime(VisualizationProperties.get
-                (VisualizationProperties.PropNames.MAX_START_TIME))
-            .setMaxTimeRangeInt(VisualizationProperties.get
-                (VisualizationProperties.PropNames.MAX_TIME_RANGE_INTERVAL_IN_HOURS))
+            .setPercentageForWarn(VisualizationProperties
+                .get(VisualizationProperties.PropNames.PERCENTAGE_FOR_WARN))
+            .setMaxStartTime(VisualizationProperties
+                .get(VisualizationProperties.PropNames.MAX_START_TIME))
+            .setMaxTimeRangeInt(VisualizationProperties.get(
+                VisualizationProperties.PropNames.MAX_TIME_RANGE_INTERVAL_IN_HOURS))
+            .setWarnLossThresholdDiff(VisualizationProperties.get(
+                VisualizationProperties.PropNames.LOSS_WARN_THRESHOLD_DIFF_IN_MINS))
             .build();
     RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
         RequestResponse.LoadMainPanelResponse.newBuilder()
