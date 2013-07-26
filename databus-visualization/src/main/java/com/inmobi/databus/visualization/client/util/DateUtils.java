@@ -10,6 +10,7 @@ import com.google.gwt.user.datepicker.client.CalendarUtil;
 import java.util.Date;
 
 public class DateUtils {
+  public static final long ONE_HOUR_IN_MINS = 60;
   public static final long ONE_MINUTE_IN_MILLIS = 60000;//millisecs
   public static final String AUDIT_DATE_FORMAT = "dd-MM-yyyy-HH:mm";
   public static final String BASE_DATE_FORMAT = "dd-MM-yyyy";
@@ -63,7 +64,6 @@ public class DateUtils {
     DateTimeFormat fmt = DateTimeFormat.getFormat("EEE MMM dd HH:mm:ss z " +
         "yyyy");
     Date currentDate = new Date();
-    System.out.println("Curren date:"+currentDate.getTime());
     TimeZone tz = TimeZone.createTimeZone(0);
     return fmt.format(currentDate, tz);
   }
@@ -72,7 +72,10 @@ public class DateUtils {
     DateTimeFormat fmt = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
     Date parsedDate = fmt.parse(date);
     Date currentDate = new Date();
-    return parsedDate.after(currentDate);
+    int tz = parsedDate.getTimezoneOffset();
+    Date newParsedDate = new Date(parsedDate.getTime()
+        -tz*ONE_MINUTE_IN_MILLIS);
+    return newParsedDate.getTime() >= currentDate.getTime();
   }
 
   public static boolean checkStAfterEt(String start, String end) {
@@ -143,5 +146,17 @@ public class DateUtils {
   public static Date getPreviousDay(Date date) {
     CalendarUtil.addDaysToDate(date, -1);
     return date;
+  }
+
+  public static boolean checkTimeInterval(String stTime, String edTime,
+                                          String maxTimeInt) {
+    DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
+    Date start = formatter.parse(stTime);
+    Date end = formatter.parse(edTime);
+    Integer maxInt = Integer.parseInt(maxTimeInt);
+    if((end.getTime() - start.getTime()) > (maxInt * ONE_HOUR_IN_MINS *
+        ONE_MINUTE_IN_MILLIS))
+      return true;
+    return false;
   }
 }

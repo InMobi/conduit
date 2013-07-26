@@ -38,8 +38,8 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
-  private String stTime, edTime, maxStDateStr;
-  private int maxTimeInt;
+  private String stTime;
+  private String edTime;
   private Map<String, String> clientConfig;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
@@ -98,8 +98,6 @@ public class Visualization implements EntryPoint, ClickHandler {
     RootPanel.get("headerContainer").add(headerVPanel);
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
-    System.out.println("Current time in GMT :"+DateUtils
-        .getCurrentTimeStringInGMT());
 
     String startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
     String endTime = Window.Location.getParameter(ClientConstants.QUERY_TO_TIME);
@@ -342,10 +340,8 @@ public class Visualization implements EntryPoint, ClickHandler {
       url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
       cluster + "&qstream=" + stream;
      */
-    /*url = url + "?qstart=" + startTime + "&qend=" + endTime +
-        "&qcluster=" + cluster + "&qstream=" + stream;*/
-    url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
-        cluster + "&qstream=" + stream;
+    url = url + "?qstart=" + startTime + "&qend=" + endTime +
+        "&qcluster=" + cluster + "&qstream=" + stream;
     System.out.println("Replacing URL after adding selected parameters");
     Window.Location.replace(url);
   }
@@ -356,8 +352,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     If running in GWT development mode;
     int index = url.indexOf("&");
      */
-    /*int index = url.indexOf("?");*/
-    int index = url.indexOf("&");
+    int index = url.indexOf("?");
     if(index != -1)
       newUrl = url.substring(0, index);
     else
@@ -385,10 +380,21 @@ public class Visualization implements EntryPoint, ClickHandler {
             .getJsonStrongFromGraphDataResponse(result);
         Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
             .getTierLatencyObjListFromResponse(result);
-        setTierLatencyValues(tierLatencyMap.get(ClientConstants.PUBLISHER),
-            tierLatencyMap.get(ClientConstants.AGENT),
-            tierLatencyMap.get(ClientConstants.COLLECTOR),
-            tierLatencyMap.get(ClientConstants.HDFS));
+        if (tierLatencyMap != null) {
+          Integer pLatency = tierLatencyMap.get(ClientConstants.PUBLISHER);
+          Integer aLatency = tierLatencyMap.get(ClientConstants.AGENT);
+          Integer cLatency = tierLatencyMap.get(ClientConstants.COLLECTOR);
+          Integer hLatency = tierLatencyMap.get(ClientConstants.HDFS);
+          if ( pLatency == null )
+            pLatency = -1;
+          if ( aLatency == null )
+            aLatency = -1;
+          if ( cLatency == null )
+            cLatency = -1;
+          if ( hLatency == null )
+            hLatency = -1;
+          setTierLatencyValues(pLatency, aLatency, cLatency,hLatency);
+        }
         drawGraph(nodesJson, selectedCluster, selectedStream,
             getQueryString(), drillDownCluster, drillDownStream,
             Integer.parseInt(clientConfig.get(ClientConstants.PUBLISHER)),
@@ -423,13 +429,18 @@ public class Visualization implements EntryPoint, ClickHandler {
       Window.alert("Incorrect format of endTime");
       return false;
     } else if (DateUtils.checkIfFutureDate(stTime)) {
-      Window.alert("Future tart time is not allowed");
+      Window.alert("Future start time is not allowed");
       return false;
     } else if (DateUtils.checkIfFutureDate(edTime)) {
       Window.alert("Future end time is not allowed");
       return false;
     } else if (DateUtils.checkStAfterEt(stTime, edTime)) {
       Window.alert("Start time is after end time");
+      return false;
+    } else if (DateUtils.checkTimeInterval(stTime, edTime,
+        clientConfig.get(ClientConstants.MAX_TIME_INT_IN_HRS))) {
+      Window.alert("Time Range is more than allowed "+clientConfig.get
+          (ClientConstants.MAX_TIME_INT_IN_HRS)+" hrs");
       return false;
     } else if (streamsList.getSelectedIndex() < 1) {
       Window.alert("Select Stream");
