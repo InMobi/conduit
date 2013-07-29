@@ -1351,8 +1351,7 @@ function loadGraph(streamName, clusterName, selectedTabID) {
         }
       });
     if (startindex == undefined) {
-      addClusterName(clusterName, tree, angle, yDiff, graphsvg,
-        isCountView);
+      addClusterName(clusterName, tree, angle, yDiff, graphsvg, selectedTabID);
       angle += diff;
       continue;
     }
@@ -1506,7 +1505,7 @@ function loadGraph(streamName, clusterName, selectedTabID) {
           mergeMirrorNode.on("click", latencynodeclick);
       });
     }
-    addClusterName(clusterName, tree, angle, yDiff, graphsvg, isCountView);
+    addClusterName(clusterName, tree, angle, yDiff, graphsvg, selectedTabID);
     angle += diff;
   }
   loadDefaultView(isCountView);
