@@ -53,6 +53,7 @@
           <groupId>org.apache.hadoop.inmobi.tools</groupId>
           <artifactId>hadoop-distcp</artifactId>
           <classifier>cdh3</classifier>
+          <scope>provided</scope>
         </dependency>
       </dependencies>
     </profile>
@@ -98,10 +99,12 @@
           <groupId>org.apache.hadoop.inmobi.tools</groupId>
           <artifactId>hadoop-distcp</artifactId>
           <classifier>cdh4</classifier>
+          <scope>provided</scope>
         </dependency>
         <dependency>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
+          <scope>provided</scope>
         </dependency>
       </dependencies>
     </profile>
