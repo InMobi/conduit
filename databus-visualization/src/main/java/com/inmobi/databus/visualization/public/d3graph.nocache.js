@@ -430,37 +430,60 @@ function nodeclick(n) {
   } else {
     var cell = 0;
     r = t.insertRow(currentRow);
-    if (n.tier.toLowerCase() == "hdfs") {
-      c = r.insertCell(cell);
-      c.innerHTML = "<b>Collector</b>";
-      cell++;
-    }
     c = r.insertCell(cell);
     c.innerHTML = "<b>Topic</b>";
     cell++;
     c = r.insertCell(cell);
     c.innerHTML = "<b>Received</b>";
     currentRow++;
-    n.allreceivedtopicstats.forEach(function (topicstats) {
-      r = t.insertRow(currentRow);
-      r.style.border = "2px solid black";
-      var cell = 0;
-      if (n.tier.toLowerCase() == "hdfs") {
+    if (n.tier.toLowerCase() == "hdfs") {
+      var aggregateList = [];
+      n.allreceivedtopicstats.forEach(function (topicstats) {
+        var isPresent = false;
+        aggregateList.forEach(function(prevStats) {
+          if (topicstats.topic == prevStats.topic) {
+            var prevCount = parseInt(prevStats.messages);
+            var currCount = parseInt(topicstats.messages);
+            var finalCount = prevCount + currCount;
+            prevStats.messages = finalCount;
+            isPresent = true;
+          }
+        });
+        if(!isPresent) {
+          var newTopicStats = new TopicStats(topicstats.topic, topicstats.messages);
+          aggregateList.push(newTopicStats);
+        }
+      });
+      aggregateList.forEach(function (topicstats) {
+        r = t.insertRow(currentRow);
+        var cell = 0;
         c = r.insertCell(cell);
-        c.innerHTML = topicstats.hostname;
+        c.innerHTML =
+          "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" +
+          topicstats.topic + "', '" + n.cluster +
+          "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+          topicstats.topic + "</button>";
         cell++;
-      }
-      c = r.insertCell(cell);
-      c.innerHTML =
-        "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" +
-        topicstats.topic + "', '" + n.cluster +
-        "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
-        topicstats.topic + "</button>";
-      cell++;
-      c = r.insertCell(cell);
-      c.innerHTML = topicstats.messages;
-      currentRow++;
-    });
+        c = r.insertCell(cell);
+        c.innerHTML = topicstats.messages;
+        currentRow++;
+      });
+    }  else {
+      n.allreceivedtopicstats.forEach(function (topicstats) {
+        r = t.insertRow(currentRow);
+        var cell = 0;
+        c = r.insertCell(cell);
+        c.innerHTML =
+          "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" +
+          topicstats.topic + "', '" + n.cluster +
+          "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+          topicstats.topic + "</button>";
+        cell++;
+        c = r.insertCell(cell);
+        c.innerHTML = topicstats.messages;
+        currentRow++;
+      });
+    }
   }
   t.className = "valuesTable";
   document.getElementById("infoPanel")
