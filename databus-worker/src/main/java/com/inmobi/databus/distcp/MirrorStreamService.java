@@ -14,6 +14,7 @@
 package com.inmobi.databus.distcp;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -170,8 +171,11 @@ public class MirrorStreamService extends DistcpBaseService {
       * multiple streams can get mirrored from the same cluster
       * streams can get processed in any order but we have to retain order
       * of paths within a stream*/
-    FileStatus[] fileStatuses = getDestFs().listStatus(tmpStreamRoot);
-
+    FileStatus[] fileStatuses = null;
+    try{
+      fileStatuses = getDestFs().listStatus(tmpStreamRoot);
+    } catch (FileNotFoundException e){
+    }
     //Retain the order of commitPaths
     LinkedHashMap<FileStatus, Path> commitPaths = new LinkedHashMap<FileStatus, Path>();
     if (fileStatuses != null) {
@@ -245,7 +249,12 @@ public class MirrorStreamService extends DistcpBaseService {
   void createListing(FileSystem fs, FileStatus fileStatus,
                              List<FileStatus> results) throws IOException {
     if (fileStatus.isDir()) {
-      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
+      FileStatus[] stats;
+      try {
+        stats = fs.listStatus(fileStatus.getPath());
+      } catch (FileNotFoundException e){
+        stats = new FileStatus[0];
+      }
       if (stats.length == 0) {
         results.add(fileStatus);
         LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");

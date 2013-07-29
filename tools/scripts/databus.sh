@@ -66,13 +66,20 @@ export _DATABUS_DAEMON_PIDFILE=$DATABUS_PID_DIR/databus.pid
 
 fi
 
+if [ -z $HADOOP_HOME ]; then
+  echo "Please define HADOOP_HOME to point to hadoop installation directory."
+  exit 1
+fi
+
 if [ -z $HADOOP_CONF_DIR ]; then
   echo "Please define HADOOP_CONF_DIR to point to hadoop configuration. eg:: /etc/hadoop/conf"
   exit 1
 fi
 
 #set classpath
-export CLASSPATH=`ls $DATABUS_DIR/lib/*jar | tr "\n" :`;
+export CLASSPATH=`ls $HADOOP_HOME/*jar | tr "\n" :`;
+export CLASSPATH=$CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+export CLASSPATH=$CLASSPATH:`ls $DATABUS_DIR/lib/*jar | tr "\n" :`;
 export CLASSPATH=$DATABUS_DIR/conf:$CLASSPATH:$HADOOP_CONF_DIR:$DATABUS_DIR/bin
 #echo setting classPath to $CLASSPATH
 

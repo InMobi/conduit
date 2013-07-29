@@ -1,5 +1,6 @@
 package com.inmobi.databus.utils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collection;
@@ -195,8 +196,8 @@ public class OrderlyCreationOfDirs {
   }
 
   /**
-   * @param  rootDirs : array of root directories
-   * @param  baseDirs : array of baseDirs
+   * @param  rootDir : array of root directories
+   * @param  baseDir : array of baseDirs
    * @param  streamNames : array of stream names
    * @return outOfOrderDirs: list of out of directories for all the streams.
    */
@@ -207,7 +208,12 @@ public class OrderlyCreationOfDirs {
     Path rootBaseDirPath = new Path(rootDir, baseDir);
     for (String streamName : streamNames) {
       Path streamDir = new Path(rootBaseDirPath , streamName);
-      FileStatus[] files = fs.listStatus(streamDir);
+      FileStatus[] files = null;
+      try{
+        files = fs.listStatus(streamDir);
+      } catch (FileNotFoundException e){
+
+      }
       if (files == null || files.length == 0) {
         LOG.info("No direcotries in that stream: " + streamName);
         continue;

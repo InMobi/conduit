@@ -25,6 +25,68 @@
 				</plugins>
 			</build>
 		</profile>
+    <!-- added for cdh4 update -->
+    <profile>
+      <id>hadoop-1.0</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>1</value>
+        </property>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-test</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>hadoop-2.0</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>2</value>
+        </property>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-test</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-minicluster</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
 	</profiles>
 
 	<artifactId>databus-audit</artifactId>
@@ -161,6 +223,6 @@
   </build>
 
 	<properties>
-		<messaging-client-version>3.2.0-SNAPSHOT</messaging-client-version>
+		<messaging-client-version>3.3.0-SNAPSHOT</messaging-client-version>
 	</properties>
 </project>

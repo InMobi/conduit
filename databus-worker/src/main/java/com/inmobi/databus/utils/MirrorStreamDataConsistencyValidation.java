@@ -1,5 +1,6 @@
 package com.inmobi.databus.utils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -166,7 +167,11 @@ public class MirrorStreamDataConsistencyValidation {
    */
   public void doRecursiveListing(Path dir, List<Path> listOfFiles, 
       FileSystem fs) throws IOException {
-    FileStatus[] fileStatuses = fs.listStatus(dir);
+    FileStatus[] fileStatuses = null;
+    try{
+      fileStatuses = fs.listStatus(dir);
+    } catch (FileNotFoundException e){
+    }
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + dir);
       listOfFiles.add(dir);

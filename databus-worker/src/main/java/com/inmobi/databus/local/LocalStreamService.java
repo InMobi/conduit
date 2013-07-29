@@ -15,6 +15,7 @@ package com.inmobi.databus.local;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -190,12 +191,22 @@ public class LocalStreamService extends AbstractService implements
 
     // find final destination paths
     Map<Path, Path> mvPaths = new LinkedHashMap<Path, Path>();
-    FileStatus[] categories = fs.listStatus(tmpJobOutputPath);
+    FileStatus[] categories = null;
+    try{
+      categories = fs.listStatus(tmpJobOutputPath);
+    } catch (FileNotFoundException e) {
+      categories = new FileStatus[0];
+    }
     for (FileStatus categoryDir : categories) {
       String categoryName = categoryDir.getPath().getName();
       Path destDir = new Path(srcCluster.getLocalDestDir(categoryName,
           commitTime));
-      FileStatus[] files = fs.listStatus(categoryDir.getPath());
+      FileStatus[] files;
+      try {
+        files = fs.listStatus(categoryDir.getPath());
+      } catch (FileNotFoundException e) {
+        files = new FileStatus[0];
+      }
       for (FileStatus file : files) {
         Path destPath = new Path(destDir, file.getPath().getName());
         LOG.debug("Moving [" + file.getPath() + "] to [" + destPath + "]");
@@ -382,7 +393,12 @@ public class LocalStreamService extends AbstractService implements
     for (FileStatus stream : streamsFileStatus) {
       String streamName = stream.getPath().getName();
       LOG.debug("createListing working on Stream [" + streamName + "]");
-      FileStatus[] collectors = fs.listStatus(stream.getPath());
+      FileStatus[] collectors;
+      try {
+        collectors = fs.listStatus(stream.getPath());
+      }catch (FileNotFoundException ex) {
+        collectors = new FileStatus[0];
+      }
       for (FileStatus collector : collectors) {
         TreeMap<String, FileStatus> collectorPaths = new TreeMap<String, FileStatus>();
         // check point for this collector
@@ -394,9 +410,12 @@ public class LocalStreamService extends AbstractService implements
           checkPointValue = new String(value);
         LOG.debug("CheckPoint Key [" + checkPointKey + "] value [ "
             + checkPointValue + "]");
-
-        FileStatus[] files = fs.listStatus(collector.getPath(),
+        FileStatus[] files= null;
+        try {
+          files = fs.listStatus(collector.getPath(),
             new CollectorPathFilter());
+        } catch (FileNotFoundException e) {
+        }
 
         if (files == null) {
           LOG.warn("No Files Found in the Collector " + collector.getPath()

@@ -1,6 +1,7 @@
 package com.inmobi.databus.local;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -116,7 +117,12 @@ public class TestLocalStreamService extends LocalStreamService implements
             + sstream.getValue().getName() + File.separator
             + srcCluster.getName() + File.separator;
         
-        FileStatus[] fStats = fs.listStatus(new Path(pathName));
+        FileStatus[] fStats = null;
+        try{
+          fStats = fs.listStatus(new Path(pathName));
+        } catch (FileNotFoundException e) {
+          fStats = new FileStatus[0];
+        }
         
         LOG.debug("Adding Previous Run Files in Path: " + pathName);
         for (FileStatus fStat : fStats) {
@@ -125,7 +131,7 @@ public class TestLocalStreamService extends LocalStreamService implements
         }
         
         List<String> filesList = createScribeData(fs, sstream.getValue()
-            .getName(), pathName, NUM_OF_FILES);
+          .getName(), pathName, NUM_OF_FILES);
         
         files.put(sstream.getValue().getName(), filesList);
         prevfiles.put(sstream.getValue().getName(), prevfilesList);

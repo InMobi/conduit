@@ -1,5 +1,6 @@
 package com.inmobi.databus.utils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -56,7 +57,11 @@ public class MergeStreamDataConsistency extends CompareDataConsistency {
   public void doRecursiveListing(Path streamDir, 
       TreeMap<String, Path> listOfFiles, FileSystem fs, List<Path> inconsistency) 
           throws IOException {
-    FileStatus[] fileStatuses = fs.listStatus(streamDir);
+    FileStatus[] fileStatuses = null;
+    try{
+      fileStatuses = fs.listStatus(streamDir);
+    } catch (FileNotFoundException e){
+    }
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + streamDir);
     } else {
