@@ -348,12 +348,12 @@ function addListToInfoPanel(n, isCountView) {
   c = r.insertCell(0);
   c.innerHTML = "Cluster";
   c = r.insertCell(1);
-  c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
-    n.cluster +
-    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
-    n.cluster + "</button>";
   if (isCountView) {
+    c.innerHTML =
+      "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+      n.cluster +
+      "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+      n.cluster + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Name";
@@ -371,6 +371,11 @@ function addListToInfoPanel(n, isCountView) {
     c.innerHTML = "Message Count Table:";
     c.style.fontWeight = "bold";
   } else {
+    c.innerHTML =
+      "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+      n.cluster +
+      "', 2)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+      n.cluster + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Latency Table:";
@@ -611,7 +616,7 @@ function linkclick(l) {
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
     l.source
     .cluster +
-    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.source.cluster + "</button>";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
@@ -631,7 +636,7 @@ function linkclick(l) {
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
     l.target
     .cluster +
-    "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.target.cluster + "</button>";
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
@@ -645,8 +650,7 @@ function linkclick(l) {
         "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" +
         s +
         "', '" + l.source.cluster +
-        "', true)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px;color:#ff0000\">" +
-        s + "</button>";
+        "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px;color:#ff0000\">" +s + "</button>";
     });
   }
   document.getElementById("infoPanel")
