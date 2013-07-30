@@ -52,7 +52,7 @@ public class TestMergedStreamService extends MergedStreamService
       List<String> fileList) 
           throws IOException {
     FileStatus[] fileStatuses = null;
-    try{
+    try {
       fileStatuses = fs.listStatus(listPath);
     } catch (FileNotFoundException e) {
     }

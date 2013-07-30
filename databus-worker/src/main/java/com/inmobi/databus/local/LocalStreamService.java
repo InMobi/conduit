@@ -191,8 +191,8 @@ public class LocalStreamService extends AbstractService implements
 
     // find final destination paths
     Map<Path, Path> mvPaths = new LinkedHashMap<Path, Path>();
-    FileStatus[] categories = null;
-    try{
+    FileStatus[] categories;
+    try {
       categories = fs.listStatus(tmpJobOutputPath);
     } catch (FileNotFoundException e) {
       categories = new FileStatus[0];
@@ -396,7 +396,7 @@ public class LocalStreamService extends AbstractService implements
       FileStatus[] collectors;
       try {
         collectors = fs.listStatus(stream.getPath());
-      }catch (FileNotFoundException ex) {
+      } catch (FileNotFoundException ex) {
         collectors = new FileStatus[0];
       }
       for (FileStatus collector : collectors) {
@@ -410,7 +410,7 @@ public class LocalStreamService extends AbstractService implements
           checkPointValue = new String(value);
         LOG.debug("CheckPoint Key [" + checkPointKey + "] value [ "
             + checkPointValue + "]");
-        FileStatus[] files= null;
+        FileStatus[] files = null;
         try {
           files = fs.listStatus(collector.getPath(),
             new CollectorPathFilter());

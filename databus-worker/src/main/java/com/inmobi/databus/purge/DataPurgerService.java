@@ -352,7 +352,7 @@ public class DataPurgerService extends AbstractService {
 
   private FileStatus[] getAllFilesInDir(Path dir, FileSystem fs)
       throws Exception {
-    FileStatus[]  files = null;
+    FileStatus[] files = null;
     try {
       files = fs.listStatus(dir);
     } catch (FileNotFoundException e) {

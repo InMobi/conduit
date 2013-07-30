@@ -172,9 +172,9 @@ public class MirrorStreamService extends DistcpBaseService {
       * streams can get processed in any order but we have to retain order
       * of paths within a stream*/
     FileStatus[] fileStatuses = null;
-    try{
+    try {
       fileStatuses = getDestFs().listStatus(tmpStreamRoot);
-    } catch (FileNotFoundException e){
+    } catch (FileNotFoundException e) {
     }
     //Retain the order of commitPaths
     LinkedHashMap<FileStatus, Path> commitPaths = new LinkedHashMap<FileStatus, Path>();
@@ -252,7 +252,7 @@ public class MirrorStreamService extends DistcpBaseService {
       FileStatus[] stats;
       try {
         stats = fs.listStatus(fileStatus.getPath());
-      } catch (FileNotFoundException e){
+      } catch (FileNotFoundException e) {
         stats = new FileStatus[0];
       }
       if (stats.length == 0) {

@@ -36,11 +36,11 @@ public class LocalStreamDataConsistency extends CompareDataConsistency {
 
   public void doRecursiveListing(Path pathName, TreeMap<String, Path> listOfFiles, 
       FileSystem fs, String baseDir, String streamName) throws Exception {
-    FileStatus [] fileStatuses = null;
+    FileStatus[] fileStatuses = null;
     try {
       fileStatuses = fs.listStatus(pathName, new LocalStreamService.
         CollectorPathFilter());
-    } catch (FileNotFoundException e){
+    } catch (FileNotFoundException e) {
     }
 
     if (fileStatuses == null || fileStatuses.length == 0) {

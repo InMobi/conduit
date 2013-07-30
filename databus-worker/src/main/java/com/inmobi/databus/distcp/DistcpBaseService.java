@@ -39,7 +39,6 @@ import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
-import org.codehaus.jackson.JsonNode;
 
 public abstract class DistcpBaseService extends AbstractService {
 

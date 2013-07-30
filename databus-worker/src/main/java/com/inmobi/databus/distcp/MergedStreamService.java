@@ -273,10 +273,9 @@ public class MergedStreamService extends DistcpBaseService {
       throws Exception {
     Map<String, List<Path>> categoriesToCommit = new HashMap<String, List<Path>>();
     FileStatus[] allFiles = null;
-    try{
-    allFiles = getDestFs().listStatus(tmpOut);
-    } catch (FileNotFoundException e) {
-
+    try {
+      allFiles = getDestFs().listStatus(tmpOut);
+    } catch (FileNotFoundException ignored) {
     }
     if (allFiles != null) {
       for (int i = 0; i < allFiles.length; i++) {

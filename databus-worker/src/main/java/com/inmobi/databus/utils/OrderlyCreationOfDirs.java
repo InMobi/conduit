@@ -44,7 +44,12 @@ public class OrderlyCreationOfDirs {
    */
   public void doRecursiveListing(Path dir, Set<Path> listing, 
       FileSystem fs, int streamDirlen) throws IOException {
-    FileStatus[] fileStatuses = fs.listStatus(dir);
+    FileStatus[] fileStatuses = null;
+    try {
+      fileStatuses = fs.listStatus(dir);
+    } catch (FileNotFoundException e) {
+
+    }
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + dir);
       if (dir.toString().length() == (streamDirlen + DATE_FORMAT_LENGTH + 1)) {
@@ -209,9 +214,9 @@ public class OrderlyCreationOfDirs {
     for (String streamName : streamNames) {
       Path streamDir = new Path(rootBaseDirPath , streamName);
       FileStatus[] files = null;
-      try{
+      try {
         files = fs.listStatus(streamDir);
-      } catch (FileNotFoundException e){
+      } catch (FileNotFoundException e) {
 
       }
       if (files == null || files.length == 0) {

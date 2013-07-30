@@ -67,9 +67,9 @@ public class TestLocalStreamCommit {
         LocalStreamService.class.getName());
     Path tmpConsumerPath = new Path(tmpPath, "testcluster2");
     FileStatus[] status = null;
-    try{
+    try {
       status = localFs.listStatus(tmpConsumerPath);
-    } catch (FileNotFoundException e){
+    } catch (FileNotFoundException e) {
       status = new FileStatus[0];
     }
     for (FileStatus tmpStatus : status) {

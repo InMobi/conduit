@@ -168,9 +168,9 @@ public class MirrorStreamDataConsistencyValidation {
   public void doRecursiveListing(Path dir, List<Path> listOfFiles, 
       FileSystem fs) throws IOException {
     FileStatus[] fileStatuses = null;
-    try{
+    try {
       fileStatuses = fs.listStatus(dir);
-    } catch (FileNotFoundException e){
+    } catch (FileNotFoundException e) {
     }
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + dir);
