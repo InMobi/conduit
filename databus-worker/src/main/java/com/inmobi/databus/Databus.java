@@ -235,6 +235,10 @@ public class Databus implements Service, DatabusConstants {
       LOG.warn("Error in initializing databus", e);
     }
 
+    // if there is any outstanding stop request meanwhile, handle it here
+    if (stopRequested) {
+      stop();
+    }
     // Block this method to avoid losing leadership of current work
     join();
   }
