@@ -1,16 +1,13 @@
-/*#page {
-  margin:0px 50px 0px;
-  border-style:solid;
-  border-width:2px;
-  border-color:#ccc;
-}*/
+#page {
+  background-color: #D8EAF3;
+}
 
 #gwtPanel {
   margin:0 auto;
 }
 
 #headerContainer {
-  padding: 0px 100px 0px;
+  padding: 0px 0px 0px;
   background-color: #2d3d4b;
   color: #fff;
 }
@@ -18,12 +15,12 @@
 #filterContainer {
     background-color: #4596b8;
     color: #fff;
-    padding: 0px 100px 0px;
+    padding: 0px 0px 0px;
 }
 
 #viewPanelContainer {
-       padding: 0px 100px 0px;
-       background-color: #c9e2ee;
+       padding: 0px 0px 0px;
+       background-color: #d8eaf3;
 }
 
 #header {
@@ -40,10 +37,12 @@
 
 #viewPanel {
   margin:0 auto;
+  height:940px;
+  background-color:#D8EAF3;
 }
 
 #goButton {
-  width:50px;
+  width:75px;
   float:right;
 }
 
@@ -51,22 +50,51 @@
   width:150px;
 }
 
+#graphInfoContainer > div
+{
+  display: inline-block;
+}
+
+#graphInfoContainer {
+  text-align: center;
+  width:100%;
+  background-color: #D8EAF3;
+}
+
 #graphPanel {
   border-style:solid;
   border-width:2px;
   border-color:#ccc;
   height:900px;
-  width:900px;
+  width:71%;
   background-color: #D8EAF3;
 }
 
-#infoPanel {
+#summaryAndInfoPanel {
+  float:right;
   border-style:solid;
   border-width:2px;
   border-color:#ccc;
   height:900px;
-  width:300px;
+  width:28%;
   background-color: #D8EAF3;
+}
+
+#summaryPanel {
+  border-bottom:2px solid #ccc;
+  width:100%;
+  background-color: #D8EAF3;
+  text-align:left;
+  padding-bottom:10px;
+  padding-left:5px;
+}
+
+#infoPanel {
+  padding-top:10px;
+  padding-left:5px;
+  width:100%;
+  background-color: #D8EAF3;
+  text-align:left;
 }
 
 div.tooltip {
@@ -151,4 +179,19 @@ div.tooltip {
 .valuesTable td, th
 {
 	border:2px solid #ADADAD;
+}
+
+div.healthtooltip {
+  position:absolute;
+  text-align:center;
+  padding:2px;
+  font:12px sans-serif;
+  background:#ccc;
+  border:0px;
+  border-radius:8px;
+}
+
+#currentTimeLabel {
+  float:right;
+  text-align:right;
 }

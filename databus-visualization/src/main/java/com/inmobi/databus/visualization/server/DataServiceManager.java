@@ -118,7 +118,6 @@ public class DataServiceManager {
       nodeMap.put(newNodeKey, node);
       LOG.debug("Node created: " + node);
     }
-
     buildPercentileMapOfAllNodes(nodeMap);
     addVIPNodesToNodesList(nodeMap, percentileSet);
     checkAndSetSourceListForMergeMirror(nodeMap);
@@ -126,9 +125,27 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
-    responseJson = ServerDataHelper.getInstance().setGraphDataResponse(nodeMap);
+    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTieLatencyMap(endTime, startTime);
+    responseJson = ServerDataHelper.getInstance().setGraphDataResponse
+        (nodeMap, tierLatencyMap);
     LOG.debug("Json response returned to client : " + responseJson);
     return responseJson;
+  }
+
+  private Map<Tuple, Map<Float, Integer>> getTieLatencyMap(String endTime,
+                                                           String startTime) {
+    ClientConfig config = ClientConfig.load(FEEDER_PROPERTIES_PATH);
+    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, null,
+        "TIER", TIMEZONE, VisualizationProperties.get(
+        VisualizationProperties.PropNames.PERCENTILE_FOR_SLA), config);
+    try {
+      dbQuery.execute();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    LOG.info("Audit query: " + dbQuery.toString());
+    dbQuery.displayResults();
+    return dbQuery.getPercentile();
   }
 
   private String setFilterString(String selectedStream,

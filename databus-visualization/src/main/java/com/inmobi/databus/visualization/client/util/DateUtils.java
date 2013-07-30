@@ -1,13 +1,19 @@
 package com.inmobi.databus.visualization.client.util;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.TimeZone;
+import com.google.gwt.i18n.client.TimeZoneInfo;
+import com.google.gwt.i18n.client.constants.TimeZoneConstants;
+import com.google.gwt.user.datepicker.client.CalendarUtil;
 
 import java.util.Date;
 
 public class DateUtils {
+  public static final long ONE_HOUR_IN_MINS = 60;
   public static final long ONE_MINUTE_IN_MILLIS = 60000;//millisecs
   public static final String AUDIT_DATE_FORMAT = "dd-MM-yyyy-HH:mm";
-  public static final String TEXTBOX_DATE_FORMAT = "dd-MM-yyyy";
+  public static final String BASE_DATE_FORMAT = "dd-MM-yyyy";
   public static final String HOUR_FORMAT = "HH";
   public static final String MINUTE_FORMAT = "mm";
 
@@ -54,11 +60,22 @@ public class DateUtils {
     return date + "-" + hour + ":" + minute;
   }
 
+  public static String getCurrentTimeStringInGMT() {
+    DateTimeFormat fmt = DateTimeFormat.getFormat("EEE MMM dd HH:mm:ss z " +
+        "yyyy");
+    Date currentDate = new Date();
+    TimeZone tz = TimeZone.createTimeZone(0);
+    return fmt.format(currentDate, tz);
+  }
+
   public static boolean checkIfFutureDate(String date) {
     DateTimeFormat fmt = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
     Date parsedDate = fmt.parse(date);
     Date currentDate = new Date();
-    return parsedDate.after(currentDate);
+    int tz = parsedDate.getTimezoneOffset();
+    Date newParsedDate = new Date(parsedDate.getTime()
+        -tz*ONE_MINUTE_IN_MILLIS);
+    return newParsedDate.getTime() >= currentDate.getTime();
   }
 
   public static boolean checkStAfterEt(String start, String end) {
@@ -68,30 +85,78 @@ public class DateUtils {
     return startDate.after(endDate);
   }
 
-  public static Date getDateFromDateString(String dateString) {
+  public static Date getDateFromAuditDateFormatString(String dateString) {
     DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
     return formatter.parse(dateString);
   }
 
-  public static String getTextBoxValueFromDateString(String dateString) {
+  public static String getBaseDateStringFromAuditDateFormat(String dateString) {
     DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
     Date date = formatter.parse(dateString);
     DateTimeFormat txtBoxFormatter =
-        DateTimeFormat.getFormat(TEXTBOX_DATE_FORMAT);
+        DateTimeFormat.getFormat(BASE_DATE_FORMAT);
     return txtBoxFormatter.format(date);
   }
 
-  public static String getHourFromDateString(String dateString) {
+  public static String getHourFromAuditDateFormatString(String dateString) {
     DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
     Date date = formatter.parse(dateString);
     DateTimeFormat hourFormatter = DateTimeFormat.getFormat(HOUR_FORMAT);
     return hourFormatter.format(date);
   }
 
-  public static String getMinuteFromDateString(String dateString) {
+  public static String getMinuteFromAuditDateFormatString(String dateString) {
     DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
     Date date = formatter.parse(dateString);
     DateTimeFormat minuteFormatter = DateTimeFormat.getFormat(MINUTE_FORMAT);
     return minuteFormatter.format(date);
+  }
+
+  public static String getPreviousDayString() {
+    Date currentDate = new Date();
+    CalendarUtil.addDaysToDate(currentDate, -1);
+    DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
+    return formatter.format(currentDate);
+  }
+
+  public static String incrementAndGetTimeAsAuditDateFormatString(String currentTime,
+                                           int numMinutes) {
+    DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
+    long curTime = formatter.parse(currentTime).getTime() + numMinutes *
+        ONE_MINUTE_IN_MILLIS;
+    return formatter.format(new Date(curTime));
+  }
+
+  public static Date getDateFromBaseDateFormatString(String dateString) {
+    DateTimeFormat formatter = DateTimeFormat.getFormat(BASE_DATE_FORMAT);
+    return formatter.parse(dateString);
+  }
+
+  public static Date getDateWithZeroTime(Date date)
+  {
+    return DateTimeFormat.getFormat(BASE_DATE_FORMAT).parse(DateTimeFormat.getFormat
+        (BASE_DATE_FORMAT).format(date));
+  }
+
+  public static Date getNextDay(Date date) {
+    CalendarUtil.addDaysToDate(date, 1);
+    return date;
+  }
+
+  public static Date getPreviousDay(Date date) {
+    CalendarUtil.addDaysToDate(date, -1);
+    return date;
+  }
+
+  public static boolean checkTimeInterval(String stTime, String edTime,
+                                          String maxTimeInt) {
+    DateTimeFormat formatter = DateTimeFormat.getFormat(AUDIT_DATE_FORMAT);
+    Date start = formatter.parse(stTime);
+    Date end = formatter.parse(edTime);
+    Integer maxInt = Integer.parseInt(maxTimeInt);
+    if((end.getTime() - start.getTime()) > (maxInt * ONE_HOUR_IN_MINS *
+        ONE_MINUTE_IN_MILLIS))
+      return true;
+    return false;
   }
 }
