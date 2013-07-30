@@ -157,14 +157,13 @@ public class Node {
     }
   }
 
-  public void buildPercentileMap(boolean isBuildPerTopic) {
+  public void buildPercentileMap() {
     /*
-    Build perTopicPercentileMap from perTopicCountMap if isBuildPerTopic is
-    true, aggreagate stats and populate latencyValues and finally create
+    Build perTopicPercentileMap from perTopicCountMap,
+    aggreagate stats and populate latencyValues and finally create
     percentileMap for the node.
     */
-    if (isBuildPerTopic)
-      buildPerTopicPercentileMapFromCountMap();
+    buildPerTopicPercentileMapFromCountMap();
     populateLatencyValues();
     percentileMap = populatePercentileMap(latencyValues);
 
