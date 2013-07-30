@@ -3,6 +3,8 @@ package com.inmobi.databus.visualization.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ShowRangeEvent;
+import com.google.gwt.event.logical.shared.ShowRangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -10,9 +12,11 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.datepicker.client.DatePicker;
+import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.visualization.client.util.ClientDataHelper;
 import com.inmobi.databus.visualization.client.util.DateUtils;
 
+import javax.ws.rs.HEAD;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,29 +24,49 @@ import java.util.Map;
 
 public class Visualization implements EntryPoint, ClickHandler {
 
-  private HorizontalPanel header, filterPanel;
   private ListBox streamsList, clusterList;
   private TextBox startTime, endtime;
   private VerticalPanel startTimeVPanel, endTimeVPanel, streamVPanel,
-      clusterVPanel;
+      clusterVPanel, headerVPanel;
   private ListBox stTimeHour, stTimeMinute, edTimeHour, edTimeMinute;
   private DatePicker stDatePicker, endDatePicker;
-  private HorizontalPanel etTimeHPanel, stTimeHPanel;
-  private Label stTimeLabel, etTimeLabel, streamLabel, clusterLabel;
+  private HorizontalPanel etTimeHPanel;
+  private HorizontalPanel stTimeHPanel;
+  private HorizontalPanel filterPanel;
+  private Label stTimeLabel, etTimeLabel, streamLabel, clusterLabel,
+      currentTimeLabel;
   private PopupPanel stcalendarPopup, etcalendarPopup;
 
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
-  private String stTime, edTime;
-  private boolean isReloaded = false;
+  private String stTime;
+  private String edTime;
+  private Map<String, String> clientConfig;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
   public void onModuleLoad() {
-    if (isReloaded) {
-      loadMainPanel();
+    if (checkParametersNull()) {
+      System.out.println("Loading default settings");
+      String stream = "All";
+      String cluster = "All";
+      String startTime = DateUtils.getPreviousDayString();
+      String endTime = DateUtils.incrementAndGetTimeAsAuditDateFormatString(startTime, 60);
+      replaceUrl(startTime, endTime, stream, cluster);
     } else {
       buildStreamsAndClustersList();
     }
+  }
+
+  private boolean checkParametersNull() {
+    String startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
+    String endTime = Window.Location.getParameter(ClientConstants.QUERY_TO_TIME);
+    String cluster = Window.Location.getParameter(ClientConstants.QUERY_CLUSTER);
+    String stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
+    if (startTime != null && endTime != null && cluster != null &&
+        stream != null) {
+      return false;
+    }
+    return true;
   }
 
   private void buildStreamsAndClustersList() {
@@ -61,6 +85,8 @@ public class Visualization implements EntryPoint, ClickHandler {
         clusters.addAll(
             ClientDataHelper.getInstance().getClusterListFromLoadMainPanelResponse
                 (result));
+        clientConfig = ClientDataHelper.getInstance()
+            .getClientConfigLoadMainPanelResponse(result);
         loadMainPanel();
       }
     });
@@ -70,7 +96,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     System.out.println("Loading main panel...");
     loadHeader();
     loadFilterPanel();
-    RootPanel.get("headerContainer").add(header);
+    RootPanel.get("headerContainer").add(headerVPanel);
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
@@ -80,26 +106,28 @@ public class Visualization implements EntryPoint, ClickHandler {
     String stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
     String drillDownCluster = Window.Location.getParameter(ClientConstants.GRAPH_CLUSTER);
     String drillDownStream = Window.Location.getParameter(ClientConstants.GRAPH_STREAM);
+    String selectedTab = Window.Location.getParameter(ClientConstants.SELECTED_TAB);
     if (startTime != null && endTime != null && cluster != null &&
         stream != null) {
       System.out.println("Retrieving parameters from URL");
       setSelectedParameterValues(startTime, endTime, cluster, stream);
-      sendRequest(startTime, endTime, cluster, stream, drillDownCluster, drillDownStream);
+      sendRequest(startTime, endTime, cluster, stream, drillDownCluster,
+          drillDownStream, selectedTab);
     }
   }
 
   private void setSelectedParameterValues(String stTime, String endTime,
                                           String cluster, String stream) {
-    startTime.setText(DateUtils.getTextBoxValueFromDateString(stTime));
-    endtime.setText(DateUtils.getTextBoxValueFromDateString(endTime));
-    stDatePicker.setValue(DateUtils.getDateFromDateString(stTime));
-    endDatePicker.setValue(DateUtils.getDateFromDateString(endTime));
-    setSelectedInListBox(stTimeHour, DateUtils.getHourFromDateString(stTime));
+    startTime.setText(DateUtils.getBaseDateStringFromAuditDateFormat(stTime));
+    endtime.setText(DateUtils.getBaseDateStringFromAuditDateFormat(endTime));
+    stDatePicker.setValue(DateUtils.getDateFromAuditDateFormatString(stTime));
+    endDatePicker.setValue(DateUtils.getDateFromAuditDateFormatString(endTime));
+    setSelectedInListBox(stTimeHour, DateUtils.getHourFromAuditDateFormatString(stTime));
     setSelectedInListBox(stTimeMinute,
-        DateUtils.getMinuteFromDateString(stTime));
-    setSelectedInListBox(edTimeHour, DateUtils.getHourFromDateString(endTime));
+        DateUtils.getMinuteFromAuditDateFormatString(stTime));
+    setSelectedInListBox(edTimeHour, DateUtils.getHourFromAuditDateFormatString(endTime));
     setSelectedInListBox(edTimeMinute,
-        DateUtils.getMinuteFromDateString(endTime));
+        DateUtils.getMinuteFromAuditDateFormatString(endTime));
     setSelectedInListBox(clusterList, cluster);
     setSelectedInListBox(streamsList, stream);
   }
@@ -116,11 +144,14 @@ public class Visualization implements EntryPoint, ClickHandler {
   }
 
   private void loadHeader() {
-    header = new HorizontalPanel();
+    headerVPanel = new VerticalPanel();
+    currentTimeLabel = new Label(DateUtils.getCurrentTimeStringInGMT());
     HTML heading = new HTML("<h1>Databus Visualization</h1>");
     heading.getElement().setId("heading");
-    header.getElement().setId("header");
-    header.add(heading);
+    currentTimeLabel.getElement().setId("currentTimeLabel");
+    headerVPanel.getElement().setId("header");
+    headerVPanel.add(heading);
+    headerVPanel.add(currentTimeLabel);
   }
 
   private void loadFilterPanel() {
@@ -180,7 +211,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     stDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.TEXTBOX_DATE_FORMAT);
+        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.BASE_DATE_FORMAT);
         String selectedDateString = fmt.format(selectedDate);
         startTime.setText(selectedDateString);
         stcalendarPopup.hide();
@@ -189,10 +220,50 @@ public class Visualization implements EntryPoint, ClickHandler {
     endDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.TEXTBOX_DATE_FORMAT);
+        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.BASE_DATE_FORMAT);
         String selectedDateString = fmt.format(selectedDate);
         endtime.setText(selectedDateString);
         etcalendarPopup.hide();
+      }
+    });
+    stDatePicker.addShowRangeHandler(new ShowRangeHandler<Date>()
+    {
+      @Override
+      public void onShowRange(final ShowRangeEvent<Date> dateShowRangeEvent)
+      {
+        Date maxStartDate = DateUtils.getDateFromBaseDateFormatString
+            (clientConfig.get(ClientConstants.MAX_START_TIME));
+        Date d = DateUtils.getDateWithZeroTime(dateShowRangeEvent.getStart());
+        while (d.before(maxStartDate)) {
+          stDatePicker.setTransientEnabledOnDates(false, d);
+          d = DateUtils.getNextDay(d);
+        }
+        Date currentDate = new Date();
+        d = DateUtils.getDateWithZeroTime(dateShowRangeEvent.getEnd());
+        while (d.after(currentDate)) {
+          stDatePicker.setTransientEnabledOnDates(false, d);
+          d = DateUtils.getPreviousDay(d);
+        }
+      }
+    });
+    endDatePicker.addShowRangeHandler(new ShowRangeHandler<Date>()
+    {
+      @Override
+      public void onShowRange(final ShowRangeEvent<Date> dateShowRangeEvent)
+      {
+        Date maxStartDate = DateUtils.getDateFromBaseDateFormatString
+            (clientConfig.get(ClientConstants.MAX_START_TIME));
+        Date d = DateUtils.getDateWithZeroTime(dateShowRangeEvent.getStart());
+        while (d.before(maxStartDate)) {
+          endDatePicker.setTransientEnabledOnDates(false, d);
+          d = DateUtils.getNextDay(d);
+        }
+        Date currentDate = new Date();
+        d = DateUtils.getDateWithZeroTime(dateShowRangeEvent.getEnd());
+        while (d.after(currentDate)) {
+          endDatePicker.setTransientEnabledOnDates(false, d);
+          d = DateUtils.getPreviousDay(d);
+        }
       }
     });
     startTime.setWidth("100px");
@@ -256,26 +327,24 @@ public class Visualization implements EntryPoint, ClickHandler {
     edTime = DateUtils.constructDateString(endtime.getText(),
         edTimeHour.getItemText(edTimeHour.getSelectedIndex()),
         edTimeMinute.getItemText(edTimeMinute.getSelectedIndex()));
-    System.out.println("stTime: " + stTime);
-    System.out.println("edTime: " + edTime);
     if (!validateParameters()) {
       return;
     }
-    String selectedStream =
-        streamsList.getItemText(streamsList.getSelectedIndex());
-    String selectedCluster = clusterList.getItemText(clusterList.getSelectedIndex());
+    replaceUrl(stTime, edTime, streamsList.getItemText(streamsList
+        .getSelectedIndex()), clusterList.getItemText(clusterList.getSelectedIndex()));
+  }
+
+  private void replaceUrl(String startTime, String endTime, String stream,
+                          String cluster) {
     String url = Window.Location.getHref();
     url = clearPreviousParameter(url);
     /*
       For running in GWT developement mode,
-      url = url + "&qstart=" + stTime + "&qend=" + edTime +
-        "&qcluster=" + selectedCluster +
-        "&qstream=" + selectedStream;
+      url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
+      cluster + "&qstream=" + stream;
      */
-    url = url + "?qstart=" + stTime + "&qend=" + edTime +
-        "&qcluster=" + selectedCluster +
-        "&qstream=" + selectedStream;
-    isReloaded = true;
+    url = url + "?qstart=" + startTime + "&qend=" + endTime +
+        "&qcluster=" + cluster + "&qstream=" + stream;
     System.out.println("Replacing URL after adding selected parameters");
     Window.Location.replace(url);
   }
@@ -298,7 +367,8 @@ public class Visualization implements EntryPoint, ClickHandler {
                           final String selectedCluster,
                           final String selectedStream,
                           final String drillDownCluster,
-                          final String drillDownStream) {
+                          final String drillDownStream,
+                          final String selectedTab) {
     System.out.println("Sending request to load graph");
     clearAndShowLoadingSymbol();
     String clientJson = ClientDataHelper.getInstance()
@@ -312,20 +382,51 @@ public class Visualization implements EntryPoint, ClickHandler {
       public void onSuccess(String result) {
         String nodesJson = ClientDataHelper.getInstance()
             .getJsonStrongFromGraphDataResponse(result);
-        Map<String, Integer> slaMap = ClientDataHelper.getInstance()
-            .getSlaMapFromGraphDataResponse(result);
+        Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
+            .getTierLatencyObjListFromResponse(result);
+        if (tierLatencyMap != null) {
+          Integer pLatency = tierLatencyMap.get(ClientConstants.PUBLISHER);
+          Integer aLatency = tierLatencyMap.get(ClientConstants.AGENT);
+          Integer cLatency = tierLatencyMap.get(ClientConstants.COLLECTOR);
+          Integer hLatency = tierLatencyMap.get(ClientConstants.HDFS);
+          if ( pLatency == null )
+            pLatency = -1;
+          if ( aLatency == null )
+            aLatency = -1;
+          if ( cLatency == null )
+            cLatency = -1;
+          if ( hLatency == null )
+            hLatency = -1;
+          setTierLatencyValues(pLatency, aLatency, cLatency,hLatency);
+        }
+        Integer selectedTabId = 1;
+        if(selectedTab != null)
+          selectedTabId =  Integer.parseInt(selectedTab);
         drawGraph(nodesJson, selectedCluster, selectedStream,
-            getQueryString(), drillDownCluster, drillDownStream,
-            slaMap.get(ClientConstants.AGENT), slaMap.get(ClientConstants
-            .VIP), slaMap.get(ClientConstants.COLLECTOR),
-            slaMap.get(ClientConstants.HDFS), slaMap.get(ClientConstants
-            .LOCAL), slaMap.get(ClientConstants.MERGE),
-            slaMap.get(ClientConstants.MIRROR), ClientDataHelper.getInstance
-            ().getPercentileForSlaFromGraphDataResponse(result), ClientDataHelper.getInstance
-            ().getPercentageForLossFromGraphDataResponse(result));
+            getQueryString(), drillDownCluster, drillDownStream, selectedTabId,
+            Integer.parseInt(clientConfig.get(ClientConstants.PUBLISHER)),
+            Integer.parseInt(clientConfig.get(ClientConstants.AGENT)),
+            Integer.parseInt(clientConfig.get(ClientConstants.VIP)),
+            Integer.parseInt(clientConfig.get(ClientConstants.COLLECTOR)),
+            Integer.parseInt(clientConfig.get(ClientConstants.HDFS)),
+            Float.parseFloat(
+                clientConfig.get(ClientConstants.PERCENTILE_FOR_SLA)),
+            Float.parseFloat(
+                clientConfig.get(ClientConstants.PERCENTAGE_FOR_LOSS)),
+            Float.parseFloat(
+                clientConfig.get(ClientConstants.PERCENTAGE_FOR_WARN)),
+            Integer.parseInt(clientConfig.get(ClientConstants.LOSS_WARN_THRESHOLD_DIFF)));
       }
     });
   }
+
+  private native void setTierLatencyValues(int publisherLatency,
+                                           int agentLatency,
+                                           int collectorLatency,
+                                           int hdfsLatency)/*-{
+    $wnd.setTierLatencyValues(publisherLatency, agentLatency,
+    collectorLatency, hdfsLatency);
+  }-*/;
 
   private boolean validateParameters() {
     if (!DateUtils.checkTimeStringFormat(stTime)) {
@@ -335,13 +436,18 @@ public class Visualization implements EntryPoint, ClickHandler {
       Window.alert("Incorrect format of endTime");
       return false;
     } else if (DateUtils.checkIfFutureDate(stTime)) {
-      Window.alert("Future tart time is not allowed");
+      Window.alert("Future start time is not allowed");
       return false;
     } else if (DateUtils.checkIfFutureDate(edTime)) {
       Window.alert("Future end time is not allowed");
       return false;
     } else if (DateUtils.checkStAfterEt(stTime, edTime)) {
       Window.alert("Start time is after end time");
+      return false;
+    } else if (DateUtils.checkTimeInterval(stTime, edTime,
+        clientConfig.get(ClientConstants.MAX_TIME_INT_IN_HRS))) {
+      Window.alert("Time Range is more than allowed "+clientConfig.get
+          (ClientConstants.MAX_TIME_INT_IN_HRS)+" hrs");
       return false;
     } else if (streamsList.getSelectedIndex() < 1) {
       Window.alert("Select Stream");
@@ -389,14 +495,17 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   private native void drawGraph(String result, String cluster, String stream,
                                 String queryString, String drillDownCluster,
-                                String drillDownStream, Integer agentSla,
+                                String drillDownStream,
+                                Integer selectedTabID, Integer publisherSla,
+                                Integer agentSla,
                                 Integer vipSla, Integer collectorSla,
-                                Integer hdfsSla, Integer localSla,
-                                Integer mergeSla, Integer mirrorSla,
-                                Float percentileForSla,
-                                Float percentageForSla)/*-{
+                                Integer hdfsSla, Float percentileForSla,
+                                Float percentageForLoss,
+                                Float percentageForWarn,
+                                Integer lossWarnThresholdDiff)/*-{
     $wnd.drawGraph(result, cluster, stream, queryString, drillDownCluster,
-    drillDownStream, agentSla, vipSla, collectorSla, hdfsSla, localSla,
-    mergeSla, mirrorSla, percentileForSla, percentageForSla);
+    drillDownStream, selectedTabID, publisherSla, agentSla, vipSla,
+    collectorSla, hdfsSla, percentileForSla, percentageForLoss,
+    percentageForWarn, lossWarnThresholdDiff);
   }-*/;
 }
