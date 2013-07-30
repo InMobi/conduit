@@ -188,10 +188,8 @@ public class Databus implements Service, DatabusConstants {
 
   @Override
   public void stop() throws Exception {
-
-    if (!databusStarted) {
-      stopRequested = true;
-    } else {
+    stopRequested = true;
+    if (databusStarted) {
       synchronized (services) {
         for (AbstractService service : services) {
           LOG.info("Stopping [" + service.getName() + "]");
