@@ -125,7 +125,8 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
-    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTieLatencyMap(endTime, startTime);
+    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTieLatencyMap
+        (endTime, startTime, filterString);
     responseJson = ServerDataHelper.getInstance().setGraphDataResponse
         (nodeMap, tierLatencyMap);
     LOG.debug("Json response returned to client : " + responseJson);
@@ -133,9 +134,10 @@ public class DataServiceManager {
   }
 
   private Map<Tuple, Map<Float, Integer>> getTieLatencyMap(String endTime,
-                                                           String startTime) {
+                                                           String startTime,
+                                                           String filterString) {
     ClientConfig config = ClientConfig.load(FEEDER_PROPERTIES_PATH);
-    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, null,
+    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
         "TIER", TIMEZONE, VisualizationProperties.get(
         VisualizationProperties.PropNames.PERCENTILE_FOR_SLA), config);
     try {
@@ -168,7 +170,7 @@ public class DataServiceManager {
 
   private void buildPercentileMapOfAllNodes(Map<NodeKey, Node> nodeMap) {
     for (Node node: nodeMap.values())
-      node.buildPercentileMap(false);
+      node.buildPercentileMap();
   }
 
   private void addVIPNodesToNodesList(Map<NodeKey, Node> nodeMap,
@@ -192,7 +194,7 @@ public class DataServiceManager {
       }
     }
     for (Map.Entry<String, Node> entry : vipNodeMap.entrySet()) {
-      entry.getValue().buildPercentileMap(true);
+      entry.getValue().buildPercentileMap();
       nodeMap.put(entry.getValue().getNodeKey(), entry.getValue());
     }
   }
