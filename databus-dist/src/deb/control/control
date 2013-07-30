@@ -3,7 +3,7 @@ Version: [[project.version]]
 Section:  misc
 Priority: high
 Architecture: all
-Pre-Depends: sun-java6-jre | java2-runtime
+Pre-Depends: sun-java6-jre | java2-runtime, hadoop-distcp, hadoop-0.20
 Maintainer: Inmobi
 Description: Databus is a distributed, highly available log processing platform
 Distribution: alpha
