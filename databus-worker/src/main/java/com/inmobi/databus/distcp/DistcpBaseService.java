@@ -13,10 +13,7 @@
  */
 package com.inmobi.databus.distcp;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.util.Calendar;
 import java.util.Date;
@@ -198,7 +195,12 @@ public abstract class DistcpBaseService extends AbstractService {
     if (!srcFs.exists(input))
       return null;
     // find all consumePaths which need to be pulled
-    FileStatus[] fileList = srcFs.listStatus(input);
+    FileStatus[] fileList = null;
+    try {
+      fileList = srcFs.listStatus(input);
+    } catch (FileNotFoundException e) {
+
+    }
     if (fileList != null) {
       Set<String> minFilesSet = new HashSet<String>();
       Set<Path> yetToBeMovedPaths = new HashSet<Path>();

@@ -14,6 +14,7 @@
 package com.inmobi.databus.distcp;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -271,7 +272,11 @@ public class MergedStreamService extends DistcpBaseService {
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)
       throws Exception {
     Map<String, List<Path>> categoriesToCommit = new HashMap<String, List<Path>>();
-    FileStatus[] allFiles = getDestFs().listStatus(tmpOut);
+    FileStatus[] allFiles = null;
+    try {
+      allFiles = getDestFs().listStatus(tmpOut);
+    } catch (FileNotFoundException ignored) {
+    }
     if (allFiles != null) {
       for (int i = 0; i < allFiles.length; i++) {
         String fileName = allFiles[i].getPath().getName();

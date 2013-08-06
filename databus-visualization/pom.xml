@@ -134,10 +134,21 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <tasks>
+                              <!-- Modifying the task to skip protocol recompilation-->
+                              <taskdef resource="net/sf/antcontrib/antcontrib.properties"
+                                       classpathref="maven.plugin.classpath" />
+                              <if>
+                                <equals arg1="${skipProtoc}" arg2="true"/>
+                                <then>
+                                  <echo message="skipping protocol generation"/>
+                                </then>
+                                <else>
                                 <exec executable="protoc">
                                     <arg value="--gwt_out=src/main/java" />
                                     <arg value="src/main/resources/requestResponse.proto" />
                                 </exec>
+                                </else>
+                              </if>
                             </tasks>
                             <sourceRoot>${artifactId}/src/main/java
                             </sourceRoot>
@@ -147,6 +158,13 @@
                         </goals>
                     </execution>
                 </executions>
+              <dependencies>
+                <dependency>
+                  <groupId>ant-contrib</groupId>
+                  <artifactId>ant-contrib</artifactId>
+                  <version>20020829</version>
+                </dependency>
+              </dependencies>
             </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

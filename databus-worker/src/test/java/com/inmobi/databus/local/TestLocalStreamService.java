@@ -1,6 +1,7 @@
 package com.inmobi.databus.local;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -87,8 +88,14 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public void doRecursiveListing(Path dir, Set<Path> listing,
   		FileSystem fs) throws IOException {
-  	FileStatus[] fileStatuses = fs.listStatus(dir);
-  	if (fileStatuses == null || fileStatuses.length == 0) {
+
+    FileStatus[] fileStatuses = null;
+    try {
+      fileStatuses = fs.listStatus(dir);
+    } catch (FileNotFoundException e) {
+
+    }
+    if (fileStatuses == null || fileStatuses.length == 0) {
   		LOG.debug("No files in directory:" + dir);
   	} else {
   		for (FileStatus file : fileStatuses) {
@@ -115,9 +122,14 @@ public class TestLocalStreamService extends LocalStreamService implements
         String pathName = srcCluster.getDataDir() + File.separator
             + sstream.getValue().getName() + File.separator
             + srcCluster.getName() + File.separator;
-        
-        FileStatus[] fStats = fs.listStatus(new Path(pathName));
-        
+
+        FileStatus[] fStats = null;
+        try {
+          fStats = fs.listStatus(new Path(pathName));
+        } catch (FileNotFoundException e) {
+          fStats = new FileStatus[0];
+        }
+
         LOG.debug("Adding Previous Run Files in Path: " + pathName);
         for (FileStatus fStat : fStats) {
           LOG.debug("Previous File: " + fStat.getPath().getName());
@@ -125,7 +137,7 @@ public class TestLocalStreamService extends LocalStreamService implements
         }
         
         List<String> filesList = createScribeData(fs, sstream.getValue()
-            .getName(), pathName, NUM_OF_FILES);
+          .getName(), pathName, NUM_OF_FILES);
         
         files.put(sstream.getValue().getName(), filesList);
         prevfiles.put(sstream.getValue().getName(), prevfilesList);
