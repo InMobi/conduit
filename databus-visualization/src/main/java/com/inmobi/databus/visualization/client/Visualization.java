@@ -12,11 +12,9 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.datepicker.client.DatePicker;
-import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.visualization.client.util.ClientDataHelper;
 import com.inmobi.databus.visualization.client.util.DateUtils;
 
-import javax.ws.rs.HEAD;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
