@@ -177,8 +177,12 @@ public abstract class DistcpBaseService extends AbstractService {
     for (Map.Entry<Path, FileSystem> consumePathEntry : consumeEntries) {
       FileSystem fileSystem = consumePathEntry.getValue();
       Path consumePath = consumePathEntry.getKey();
-      fileSystem.delete(consumePath);
+      if (retriableDelete(fileSystem, consumePath)) {
       LOG.debug("Deleting/Commiting [" + consumePath + "]");
+      } else {
+        LOG.error("Deleting [" + consumePath + "] failed");
+        throw new Exception("Deleting [" + consumePath + "] failed");
+      }
     }
 
   }

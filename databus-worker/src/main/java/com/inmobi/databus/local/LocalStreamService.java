@@ -175,13 +175,14 @@ public class LocalStreamService extends AbstractService implements
     }
   }
 
-  private void checkPoint(Map<String, FileStatus> checkPointPaths) {
+  private void checkPoint(Map<String, FileStatus> checkPointPaths)
+      throws Exception {
     Set<Entry<String, FileStatus>> entries = checkPointPaths.entrySet();
     for (Entry<String, FileStatus> entry : entries) {
       String value = entry.getValue().getPath().getName();
       LOG.debug("Check Pointing Key [" + entry.getKey() + "] with value ["
           + value + "]");
-      checkpointProvider.checkpoint(entry.getKey(), value.getBytes());
+      retriableCheckPoint(checkpointProvider, entry.getKey(), value.getBytes());
     }
   }
 
@@ -292,7 +293,7 @@ public class LocalStreamService extends AbstractService implements
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       fs.mkdirs(entry.getValue().getParent());
-      if (fs.rename(entry.getKey(), entry.getValue()) == false) {
+      if (retriableRename(fs, entry.getKey(), entry.getValue()) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
             + "dataloss. Partial data replay could happen in next run");
         throw new Exception("Abort transaction Commit. Rename failed from ["
