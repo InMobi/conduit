@@ -87,6 +87,7 @@ export CLASSPATH=$CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
 export CLASSPATH=$CLASSPATH:`ls $DATABUS_DIR/lib/*jar | tr "\n" :`;
 export CLASSPATH=$CLASSPATH:`ls $HADOOP_DISTCP_HOME/*jar | tr "\n" :`;
 export CLASSPATH=$DATABUS_DIR/conf:$CLASSPATH:$HADOOP_CONF_DIR:$DATABUS_DIR/bin
+export DATABUS_OPTS="-Dcom.sun.management.jmxremote.port=9089 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
 #echo setting classPath to $CLASSPATH
 
 case $startStop in
@@ -104,7 +105,7 @@ case $startStop in
 
     echo starting DATABUS
 
-   nohup java -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
+   nohup java -DATABUS_OPTS -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
    if [ $? -eq 0 ]
     then
       if /bin/echo -n $! > "$_DATABUS_DAEMON_PIDFILE"
