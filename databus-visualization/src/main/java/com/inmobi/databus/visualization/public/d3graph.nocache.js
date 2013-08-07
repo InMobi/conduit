@@ -1575,44 +1575,44 @@ function highlightTab(selectedTabID) {
 
 function tabSelected(selectedTabID, stream, cluster) {
   if (stream == 'null' && cluster == 'null') {
-    stream = window.History.getState().data.qstream;
-    cluster = window.History.getState().data.qcluster;
+    stream = window.History.getState().data.gstream;
+    cluster = window.History.getState().data.gcluster;
   }
   clearSvgAndAddLoadSymbol();
   saveHistoryAndLoadGraph(stream, cluster, selectedTabID);
 }
 
 function getTreeList(streamName, clusterName) {
-  var treeList = undefined;
-  if ((streamName == undefined || streamName.toLowerCase() == 'all') && (
-    clusterName == undefined || clusterName.toLowerCase() == 'all')) {
-    isPartial = false;
+  var treeList = [];
+  if (streamName.toLowerCase() == 'all' && clusterName.toLowerCase() == 'all') {
     treeList = fullTreeList;
-  } else {
-    treeList = [];
-    if (streamName != undefined && streamName.toLowerCase() != 'all' &&
-      clusterName != undefined) {
-      var clusterList = [];
-      fullTreeList.forEach(function (l) {
-        if (l[0].cluster == clusterName) {
-          l.forEach(function (nodeInCluster) {
-            clusterList.push(cloneNode(nodeInCluster));
-          });
-        }
-      });
-      treeList.push(clusterList);
-      popAllTopicStatsNotBelongingToStream(streamName, treeList);
-    } else if (clusterName != undefined) {
-      var clusterList = [];
-      fullTreeList.forEach(function (l) {
-        if (l[0].cluster == clusterName) {
-          l.forEach(function (nodeInCluster) {
-            clusterList.push(cloneNode(nodeInCluster));
-          });
-        }
-      });
-      treeList.push(clusterList);
-    }
+  } else if (streamName.toLowerCase() == 'all' && clusterName.toLowerCase() != 'all') {
+      if (fullTreeList.length != 0) {
+        var clusterList = [];
+        fullTreeList.forEach(function (l) {
+          if (l[0] != undefined && l[0].cluster == clusterName) {
+            l.forEach(function (nodeInCluster) {
+              clusterList.push(cloneNode(nodeInCluster));
+            });
+          }
+        });
+        treeList.push(clusterList);
+      }
+  } else if (streamName.toLowerCase() != 'all' && clusterName.toLowerCase() == 'all') {
+    treeList = fullTreeList;
+  } else if (streamName.toLowerCase() != 'all' && clusterName.toLowerCase() != 'all') {
+      if (fullTreeList.length != 0) {
+        var clusterList = [];
+        fullTreeList.forEach(function (l) {
+          if (l[0] != undefined && l[0].cluster == clusterName) {
+            l.forEach(function (nodeInCluster) {
+              clusterList.push(cloneNode(nodeInCluster));
+            });
+          }
+        });
+        treeList.push(clusterList);
+        popAllTopicStatsNotBelongingToStream(streamName, treeList);
+      }
   }
   return treeList;
 }
