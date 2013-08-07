@@ -33,6 +33,7 @@ import org.apache.hadoop.fs.Path;
 
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
+import com.inmobi.messaging.publisher.MessagePublisher;
 
 /*
  * Handles MergedStreams for a Cluster
@@ -45,9 +46,10 @@ public class MergedStreamService extends DistcpBaseService {
   private Set<String> primaryCategories;
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster) throws Exception {
+      Cluster destinationCluster, Cluster currentCluster,
+      MessagePublisher publisher) throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster);
+        destinationCluster, currentCluster, publisher);
     primaryCategories = destinationCluster.getPrimaryDestinationStreams();
   }
 

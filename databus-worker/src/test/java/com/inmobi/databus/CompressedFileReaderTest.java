@@ -13,22 +13,18 @@
 */
 package com.inmobi.databus;
 
+import java.io.OutputStream;
+
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.io.compress.CompressionInputStream;
-import org.apache.hadoop.io.compress.GzipCodec;
-import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.log4j.Logger;
 
 import com.inmobi.databus.utils.FileUtil;
-
-import java.io.OutputStream;
 
 public class CompressedFileReaderTest {
   private static Logger LOG = Logger.getLogger(Databus.class);
@@ -62,7 +58,8 @@ public class CompressedFileReaderTest {
   }
 
   private void compress(String fileName) throws Exception{
-    FileUtil.gzip(new Path(fileName), new Path(fileName + ".gz"), new Configuration());
+    FileUtil.gzip(new Path(fileName), new Path(fileName + ".gz"),
+        new Configuration(), null);
   }
 
   public static void main(String[] args) throws Exception{

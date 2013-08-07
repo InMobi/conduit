@@ -42,6 +42,7 @@ import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.messaging.publisher.MessagePublisher;
 
 public abstract class DistcpBaseService extends AbstractService {
 
@@ -55,10 +56,11 @@ public abstract class DistcpBaseService extends AbstractService {
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService.class);
 
   public DistcpBaseService(DatabusConfig config, String name,
-      Cluster srcCluster, Cluster destCluster, Cluster currentCluster)
+      Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
+      MessagePublisher publisher)
       throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config);
+        config, publisher);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)

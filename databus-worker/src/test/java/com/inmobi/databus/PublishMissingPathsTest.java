@@ -95,7 +95,7 @@ public class PublishMissingPathsTest {
     Cluster cluster = clusterList.get(0);
     TestLocalStreamService service = new TestLocalStreamService(config,
         cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()),
-        streamsToProcess);
+        streamsToProcess, null);
     
     ArrayList<SourceStream> sstreamList = new ArrayList<SourceStream>(config
         .getSourceStreams().values());

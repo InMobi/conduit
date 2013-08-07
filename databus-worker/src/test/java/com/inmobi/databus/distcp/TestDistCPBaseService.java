@@ -70,9 +70,9 @@ public class TestDistCPBaseService  {
         sourceNames);
 
     // create mirror service
-    mirrorService = new MirrorStreamService(null, cluster, cluster, null);
+    mirrorService = new MirrorStreamService(null, cluster, cluster, null, null);
     // create merged service
-    mergeService = new MergedStreamService(null, cluster, cluster, null);
+    mergeService = new MergedStreamService(null, cluster, cluster, null, null);
     // create data
     createValidData();
 
@@ -314,7 +314,7 @@ public class TestDistCPBaseService  {
     Cluster destinationCluster = config.getClusters().get("testcluster2");
     Cluster currentCluster = null;
     mergedService1 = new MergedStreamService(config, srcCluster,
-        destinationCluster, currentCluster);
+        destinationCluster, currentCluster, null);
     srcFs = FileSystem.get(new URI(srcCluster.getHdfsUrl()),
         srcCluster.getHadoopConf());
     return config;

@@ -16,6 +16,9 @@ package com.inmobi.databus.local;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,31 +38,49 @@ import com.inmobi.databus.utils.FileUtil;
 public class CopyMapper extends Mapper<Text, FileStatus, Text,
     Text> implements ConfigConstants{
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
+  private static final String AUDIT_ENABLED_KEY = "audit.enabled";
+  public static final String COUNTER_GROUP = "audit";
+  public static final String DELIMITER = "#";
 
   @Override
   public void map(Text key, FileStatus value, Context context) throws IOException,
       InterruptedException {
     Path src = value.getPath();
+    String filename = src.getName();
     String dest = key.toString();
     String collector = src.getParent().getName();
     String category = src.getParent().getParent().getName();
-
+    Map<Long,Long> received = null;
+    if (context.getConfiguration().getBoolean(AUDIT_ENABLED_KEY, true))
+      received = new HashMap<Long, Long>();
     Configuration srcConf = new Configuration();
     srcConf.set(FS_DEFAULT_NAME_KEY,
         context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
 
     FileSystem fs = FileSystem.get(srcConf);
     Path target = getTempPath(context, src, category, collector);
-    FileUtil.gzip(src, target, srcConf);
+    FileUtil.gzip(src, target, srcConf, received);
     // move to final destination
     fs.mkdirs(new Path(dest).makeQualified(fs));
     Path destPath = new Path(dest + File.separator + collector + "-"
         + src.getName() + ".gz");
     LOG.info("Renaming file " + target + " to " + destPath);
     fs.rename(target, destPath);
+    if (received != null) {
+
+      for (Entry<Long, Long> entry : received.entrySet()) {
+        String counterName = getCounterName(filename,
+            entry.getKey());
+        context.getCounter(COUNTER_GROUP, counterName).increment(
+            entry.getValue());
+      }
+    }
 
   }
 
+  private String getCounterName(String filename, Long timeWindow) {
+    return filename + DELIMITER + timeWindow;
+  }
   private Path getTempPath(Context context, Path src, String category,
       String collector) {
     Path tempPath = new Path(getTaskAttemptTmpDir(context), category + "-"

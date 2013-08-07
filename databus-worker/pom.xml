@@ -104,10 +104,21 @@
       <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
+      <version>${messaging-client-version}</version>
+      <type>jar</type>
+    </dependency>
+         <dependency>
+      <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-core</artifactId>
+      <version>${messaging-client-version}</version>
       <type>test-jar</type>
       <scope>test</scope>
-      <version>${messaging-client-version}</version>
     </dependency>
+    <dependency>
+  <groupId>com.google.guava</groupId>
+  <artifactId>guava</artifactId>
+  <version>14.0.1</version>
+</dependency>
   </dependencies>
   <properties>
     <messaging-client-version>3.3.0-SNAPSHOT</messaging-client-version>

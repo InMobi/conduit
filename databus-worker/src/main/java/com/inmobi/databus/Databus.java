@@ -40,12 +40,20 @@ import com.inmobi.databus.purge.DataPurgerService;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.databus.utils.SecureLoginUtil;
 import com.inmobi.databus.zookeeper.CuratorLeaderManager;
+import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
 
 public class Databus implements Service, DatabusConstants {
   private static Logger LOG = Logger.getLogger(Databus.class);
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
+  private MessagePublisher publisher;
+
+  public void setPublisher(MessagePublisher publisher) {
+    this.publisher = publisher;
+  }
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -102,7 +110,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
-                streamsToProcess));
+                streamsToProcess, publisher));
             streamsToProcess = new ArrayList<String>();
           }
         }
@@ -131,11 +139,13 @@ public class Databus implements Service, DatabusConstants {
 
 			for (String remote : mergedStreamRemoteClusters) {
         services.add(getMergedStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster));
+            config.getClusters().get(remote), cluster, currentCluster,
+            publisher));
       }
 			for (String remote : mirroredRemoteClusters) {
         services.add(getMirrorStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster));
+            config.getClusters().get(remote), cluster, currentCluster,
+            publisher));
       }
     }
 
@@ -167,22 +177,28 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
+      Cluster cluster, Cluster currentCluster, List<String> streamsToProcess,
+      MessagePublisher publisher)
       throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
+        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
+        publisher);
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+      MessagePublisher publisher) throws
       Exception {
-    return new MergedStreamService(config, srcCluster, dstCluster, currentCluster);
+    return new MergedStreamService(config, srcCluster, dstCluster,
+        currentCluster, publisher);
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+      MessagePublisher publisher) throws
       Exception {
-    return new MirrorStreamService(config, srcCluster, dstCluster, currentCluster);
+    return new MirrorStreamService(config, srcCluster, dstCluster,
+        currentCluster, publisher);
   }
 
   @Override
@@ -234,6 +250,14 @@ public class Databus implements Service, DatabusConstants {
     return null;
   }
 
+  private static MessagePublisher getMessagePublisher(Properties prop)
+      throws IOException {
+    String configFile = prop.getProperty(AUDIT_PUBLISHER_CONFIG_FILE);
+    ClientConfig config = ClientConfig.load(configFile);
+    return MessagePublisherFactory.create(config);
+
+  }
+
   public static void main(String[] args) throws Exception {
     try {
       if (args.length != 1 ) {
@@ -244,7 +268,8 @@ public class Databus implements Service, DatabusConstants {
       String cfgFile = args[0].trim();
       Properties prop = new Properties();
       prop.load(new FileReader(cfgFile));
-
+      
+      
       String streamperLocal = prop.getProperty(STREAMS_PER_LOCALSERVICE);
       if (streamperLocal != null) {
         numStreamsLocalService = Integer.parseInt(streamperLocal);
@@ -330,6 +355,7 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
+      databus.setPublisher(getMessagePublisher(prop));
       if (enableZookeeper) {
         LOG.info("Starting CuratorLeaderManager for eleader election ");
         CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(

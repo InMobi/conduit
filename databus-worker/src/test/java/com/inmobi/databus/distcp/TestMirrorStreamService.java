@@ -1,28 +1,25 @@
 package com.inmobi.databus.distcp;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.testng.Assert;
 
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.testng.Assert;
+import com.inmobi.messaging.publisher.MessagePublisher;
 
 public class TestMirrorStreamService extends MirrorStreamService
     implements AbstractServiceTest {
@@ -37,8 +34,9 @@ public class TestMirrorStreamService extends MirrorStreamService
   private long mergeCommitTime = 0;
   
   public TestMirrorStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster) throws Exception {
-    super(config, srcCluster, destinationCluster, currentCluster);
+      Cluster destinationCluster, Cluster currentCluster,
+      MessagePublisher publisher) throws Exception {
+    super(config, srcCluster, destinationCluster, currentCluster, publisher);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());

@@ -7,10 +7,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +23,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
+import com.inmobi.messaging.publisher.MessagePublisher;
 
 public class TestMergedStreamService extends MergedStreamService
     implements AbstractServiceTest {
@@ -39,9 +38,10 @@ public class TestMergedStreamService extends MergedStreamService
   private Date todaysdate = null;
   
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster) throws Exception {
+      Cluster destinationCluster, Cluster currentCluster,
+      MessagePublisher publisher) throws Exception {
 
-    super(config, srcCluster, destinationCluster, currentCluster);
+    super(config, srcCluster, destinationCluster, currentCluster, publisher);
     this.srcCluster = srcCluster;
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());

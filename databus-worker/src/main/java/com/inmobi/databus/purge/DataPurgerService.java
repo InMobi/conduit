@@ -18,16 +18,17 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.TreeSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -55,7 +56,7 @@ public class DataPurgerService extends AbstractService {
 
   public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
       throws Exception {
-    super(DataPurgerService.class.getName(), databusConfig, 60000 * 60);
+    super(DataPurgerService.class.getName(), databusConfig, 60000 * 60, null);
     this.cluster = cluster;
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(

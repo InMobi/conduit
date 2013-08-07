@@ -22,15 +22,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.utils.DatePathComparator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCpOptions;
+
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.messaging.publisher.MessagePublisher;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
  * (i)   1 Mirror Thread per src DatabusConfig.Cluster from where streams need to be mirrored on destCluster
@@ -44,9 +46,10 @@ public class MirrorStreamService extends DistcpBaseService {
 
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
                              Cluster destinationCluster,
-                             Cluster currentCluster) throws Exception {
+ Cluster currentCluster,
+      MessagePublisher publisher) throws Exception {
     super(config, MirrorStreamService.class.getName(), srcCluster,
-    destinationCluster, currentCluster);
+        destinationCluster, currentCluster, publisher);
   }
 
   @Override

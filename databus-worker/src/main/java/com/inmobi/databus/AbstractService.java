@@ -13,22 +13,15 @@
 */
 package com.inmobi.databus;
 
-import java.util.TreeSet;
-
-import java.util.Set;
-
-import java.util.ArrayList;
-
-import java.util.List;
-
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,6 +30,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.messaging.publisher.MessagePublisher;
 
 public abstract class AbstractService implements Service, Runnable {
 
@@ -54,21 +48,35 @@ public abstract class AbstractService implements Service, Runnable {
 	protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
 	    "yyyy/MM/dd, hh:mm");
 	private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
+  protected String hostname;
+  protected static final int DEFAULT_WINDOW_SIZE = 60;
+  protected final MessagePublisher publisher;
 
-  public AbstractService(String name, DatabusConfig config) {
-    this(name, config, DEFAULT_RUN_INTERVAL);
+
+  public AbstractService(String name, DatabusConfig config,
+      MessagePublisher publisher) {
+    this(name, config, DEFAULT_RUN_INTERVAL, publisher);
   }
 
   public AbstractService(String name, DatabusConfig config,
-                         long runIntervalInMsec) {
+      long runIntervalInMsec, MessagePublisher publisher) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
+    try {
+      hostname = InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException e) {
+      LOG.error("Unable to find the hostanme of the worker box,audit packets"
+          + " won't contain hostname");
+      hostname = "";
+    }
+    this.publisher = publisher;
   }
 
   public AbstractService(String name, DatabusConfig config,
-                         long runIntervalInMsec, CheckpointProvider provider) {
-    this(name, config, runIntervalInMsec);
+      long runIntervalInMsec, CheckpointProvider provider,
+      MessagePublisher publisher) {
+    this(name, config, runIntervalInMsec, publisher);
     this.checkpointProvider = provider;
   }
 

@@ -23,6 +23,7 @@ import com.inmobi.databus.distcp.TestMergedStreamService;
 import com.inmobi.databus.distcp.TestMirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
 import com.inmobi.databus.local.TestLocalStreamService;
+import com.inmobi.messaging.publisher.MessagePublisher;
 
 public class DatabusTest extends TestMiniClusterUtil {
   
@@ -48,27 +49,31 @@ public class DatabusTest extends TestMiniClusterUtil {
   
     @Override
     protected LocalStreamService getLocalStreamService(DatabusConfig config,
-        Cluster cluster, Cluster currentCluster, List<String> streamsToProcess)
+        Cluster cluster, Cluster currentCluster, List<String> streamsToProcess,
+        MessagePublisher publisher)
         throws IOException {
       return new TestLocalStreamService(config, cluster, currentCluster,
           new FSCheckpointProvider(cluster.getCheckpointDir()),
-          streamsToProcess);
+          streamsToProcess, null);
     }
     
     @Override
     protected MergedStreamService getMergedStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+        MessagePublisher publisher) throws
         Exception {
-      return new TestMergedStreamService(config,
-          srcCluster, dstCluster, currentCluster);
+      return new TestMergedStreamService(config, srcCluster, dstCluster,
+          currentCluster, null);
     }
     
     @Override
     protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster) throws
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+        MessagePublisher publisher) throws
         Exception {
       return new TestMirrorStreamService(config,
-          srcCluster, dstCluster, currentCluster);
+ srcCluster, dstCluster,
+          currentCluster, null);
     }
     
   }

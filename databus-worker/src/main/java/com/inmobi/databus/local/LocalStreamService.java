@@ -16,8 +16,10 @@ package com.inmobi.databus.local;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,18 +43,27 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
+import org.apache.thrift.TException;
+import org.apache.thrift.TSerializer;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
-
+import com.inmobi.messaging.Message;
+import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.util.AuditUtil;
 
 /*
  * Handles Local Streams for a Cluster
@@ -84,14 +95,19 @@ public class LocalStreamService extends AbstractService implements
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
+  private final static char TOPIC_SEPARATOR_FILENAME = '-';
+  private List<AuditMessage> auditMessages;
+  private CounterGroup counterGrp;
+  private static final String TIER = "local";
+  private final TSerializer serializer = new TSerializer();
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      List<String> streamsToProcess) throws IOException {
+      List<String> streamsToProcess, MessagePublisher publisher)
+      throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
-        + getServiceName(streamsToProcess), config,
-        DEFAULT_RUN_INTERVAL,
-        provider);
+        + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
+        provider, publisher);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -104,8 +120,8 @@ public class LocalStreamService extends AbstractService implements
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
     streamsToProcessName = getServiceName(streamsToProcess);
-  }
 
+  }
 
   private static final String getServiceName(List<String> streamsToProcess) {
     String servicename = "";
@@ -114,6 +130,7 @@ public class LocalStreamService extends AbstractService implements
     }
     return servicename;
   }
+
   private void cleanUpTmp(FileSystem fs) throws Exception {
     if (fs.exists(tmpPath)) {
       LOG.info("Deleting tmpPath recursively [" + tmpPath + "]");
@@ -136,7 +153,8 @@ public class LocalStreamService extends AbstractService implements
       cleanUpTmp(fs);
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
-
+      auditMessages=new ArrayList<AuditMessage>();
+      counterGrp=null;
       for (String stream : streamsToProcess) {
         Set<Path> missingPaths = publishMissingPaths(fs,
             srcCluster.getLocalFinalDestDirRoot(), commitTime, stream);
@@ -161,19 +179,24 @@ public class LocalStreamService extends AbstractService implements
       Job job = createJob(tmpJobInputPath, totalSize);
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
+         counterGrp = job.getCounters().getGroup(
+            CopyMapper.COUNTER_GROUP);
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
-        commit(prepareForCommit(commitTime));
+        commit(prepareForCommit(commitTime), true);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
-        commit(populateTrashCommitPaths(trashSet));
+        commit(populateTrashCommitPaths(trashSet), false);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
+
       }
     } catch (Exception e) {
       LOG.warn("Error in running LocalStreamService " + e);
       throw e;
     }
   }
+
+
 
   private void checkPoint(Map<String, FileStatus> checkPointPaths) {
     Set<Entry<String, FileStatus>> entries = checkPointPaths.entrySet();
@@ -286,9 +309,13 @@ public class LocalStreamService extends AbstractService implements
     return trashPaths;
   }
 
-  private void commit(Map<Path, Path> commitPaths) throws Exception {
+
+  private void commit(Map<Path, Path> commitPaths, boolean generateAudit)
+      throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
+    Table<String, Long, Long> parsedCounters= parseCounters(counterGrp);
+
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       fs.mkdirs(entry.getValue().getParent());
@@ -298,20 +325,87 @@ public class LocalStreamService extends AbstractService implements
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
+      if (generateAudit) {
+        // file name ending with .gz and starting with name of collector
+        // eg:gsdc3001.red.ua2.inmobi.com-rr-2013-08-03-15-58_00000.gz
+        String fileCopiedWithExtension = entry.getKey().getName();
+        String fileWithoutExt = fileCopiedWithExtension.substring(0,
+            fileCopiedWithExtension.length() - 3);
+        int index = fileWithoutExt.indexOf("-");
+        if (index == -1) {
+          LOG.error("Malformed filename: " + fileCopiedWithExtension);
+          continue;
+        }
+        String filename = fileWithoutExt.substring(index + 1);
+        Map<Long, Long> received = parsedCounters.row(filename);
+        if (!received.isEmpty()) {
+        // create audit message
+          AuditMessage auditMsg = createAuditMessage(filename, received);
+          publishAuditMessage(auditMsg);
+        } else {
+          LOG.info("Not publishing audit packet as counters are empty");
+        }
+
+      }
     }
 
   }
 
-  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
+  private void publishAuditMessage(AuditMessage auditMsg) {
+    try {
+      LOG.debug("Publishing audit message from local stream service "
+          + auditMsg);
+      publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
+          ByteBuffer.wrap(serializer.serialize(auditMsg))));
+    } catch (TException e) {
+      LOG.error("Publishing of audit message failed", e);
+    }
+  }
+  private AuditMessage createAuditMessage(String fileName,
+      Map<Long, Long> received) {
+    String topic = getTopicNameFromFileName(fileName);
+    AuditMessage auditMsg = new AuditMessage(new Date().getTime(), topic, TIER,
+        hostname, DEFAULT_WINDOW_SIZE, received, null, null, null);
+    return auditMsg;
+  }
+  private Table<String, Long, Long> parseCounters(CounterGroup counterGrp) {
+    Table<String, Long, Long> result = HashBasedTable.create();
+
+    for (Counter counter : counterGrp) {
+      String counterName = counter.getName();
+      String tmp[] = counterName.split(CopyMapper.DELIMITER);
+      if (tmp.length < 2) {
+        LOG.error("Malformed counter name,skipping " + counterName);
+        continue;
+      }
+      String filename = tmp[0];
+      Long publishTimeWindow = Long.parseLong(tmp[1]);
+      Long numOfMsgs = counter.getValue();
+      result.put(filename, publishTimeWindow, numOfMsgs);
+    }
+    return result;
+
+  }
+
+  private String getTopicNameFromFileName(String fileName) {
+    int index = fileName.indexOf(TOPIC_SEPARATOR_FILENAME);
+    if (index == -1)
+      return null;
+    return fileName.substring(0, index);
+  }
+
+  private long createMRInput(Path inputPath,
+      Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
+      Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
-    trashSet, checkpointPaths);
-    
+        trashSet, checkpointPaths);
+
     // the total size of data present in all files
     long totalSize = 0;
-    SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-      inputPath, Text.class, FileStatus.class);
+    SequenceFile.Writer out = SequenceFile.createWriter(fs,
+        srcCluster.getHadoopConf(), inputPath, Text.class, FileStatus.class);
     try {
       Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
           .iterator();
@@ -322,21 +416,22 @@ public class LocalStreamService extends AbstractService implements
               inputPath, Text.class, entry.getKey().getClass());
         }
         out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
-        
-        // Create a sync point after each entry. This will ensure that SequenceFile
-        // Reader can work at file entry level granularity, given that SequenceFile
+
+        // Create a sync point after each entry. This will ensure that
+        // SequenceFile
+        // Reader can work at file entry level granularity, given that
+        // SequenceFile
         // Reader reads from the starting of sync point.
         out.sync();
-        
+
         totalSize += entry.getKey().getLen();
       }
     } finally {
       out.close();
     }
-    
+
     return totalSize;
   }
-
 
   // This method is taken from DistCp SimpleCopyListing class.
   private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
@@ -344,21 +439,20 @@ public class LocalStreamService extends AbstractService implements
     if (fileStatus.getClass() == FileStatus.class) {
       return fileStatus;
     }
-    
-    // Else if it is a local file, we need to convert it to an instance of 
-    // FileStatus class. The reason is that SequenceFile.Writer/Reader does 
+
+    // Else if it is a local file, we need to convert it to an instance of
+    // FileStatus class. The reason is that SequenceFile.Writer/Reader does
     // an exact match for FileStatus class.
     FileStatus status = new FileStatus();
-    
+
     buffer.reset();
     DataOutputStream out = new DataOutputStream(buffer);
     fileStatus.write(out);
-    
+
     in.reset(buffer.toByteArray(), 0, buffer.size());
     status.readFields(in);
     return status;
   }
-
 
   public static class CollectorPathFilter implements PathFilter {
     public boolean accept(Path path) {
@@ -371,8 +465,7 @@ public class LocalStreamService extends AbstractService implements
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths)
-          throws IOException {
+      Map<String, FileStatus> checkpointPaths) throws IOException {
     List<FileStatus> streamsFileStatus = new ArrayList<FileStatus>();
     FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
     for (String stream : streamsToProcess) {
@@ -541,7 +634,7 @@ public class LocalStreamService extends AbstractService implements
 
     // get last file from set
     FileStatus lastFile = sortedFiles.last();
-      return lastFile.getPath().getName();
+    return lastFile.getPath().getName();
   }
 
   private String getCategoryFromSrcPath(Path src) {
@@ -557,23 +650,25 @@ public class LocalStreamService extends AbstractService implements
     return new Path(tmpJobOutputPath, category);
   }
 
-
   protected void setBytesPerMapper(long bytesPerMapper) {
     BYTES_PER_MAPPER = bytesPerMapper;
   }
-  
+
   /*
-    The visiblity of method is set to protected to enable unit testing
+   * The visiblity of method is set to protected to enable unit testing
    */
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
-   
+
     Job job = new Job(conf);
     job.setJobName(jobName);
-    //DistributedCache.addFileToClassPath(inputFormatJarDestPath, job.getConfiguration());
-    job.getConfiguration().set("tmpjars", inputFormatJarDestPath.toString());
-    LOG.debug("Adding file ["  + inputFormatJarDestPath + "] to distributed cache");
+    // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
+    // job.getConfiguration());
+    job.getConfiguration().set(
+"tmpjars", inputFormatJarDestPath.toString());
+    LOG.debug("Adding file [" + inputFormatJarDestPath
+        + "] to distributed cache");
     job.setInputFormatClass(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
 
     Class<? extends Mapper> mapperClass = getMapperClass();
@@ -588,7 +683,7 @@ public class LocalStreamService extends AbstractService implements
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
     job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
-    
+
     // set configurations needed for UniformSizeInputFormat
     int numMaps = getNumMapsForJob(totalSize);
     job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
@@ -596,12 +691,12 @@ public class LocalStreamService extends AbstractService implements
         DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalSize);
     job.getConfiguration().set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH,
         inputPath.toString());
-    LOG.info("Expected number of maps [" + numMaps + "] Total data size [" + 
-        totalSize + "]");
+    LOG.info("Expected number of maps [" + numMaps + "] Total data size ["
+        + totalSize + "]");
 
     return job;
   }
-  
+
   private int getNumMapsForJob(long totalSize) {
     String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
     if (mbPerMapper != null) {
