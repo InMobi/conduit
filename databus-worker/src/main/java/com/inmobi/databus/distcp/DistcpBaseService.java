@@ -180,8 +180,7 @@ public abstract class DistcpBaseService extends AbstractService {
       if (retriableDelete(fileSystem, consumePath)) {
       LOG.debug("Deleting/Commiting [" + consumePath + "]");
       } else {
-        LOG.error("Deleting [" + consumePath + "] failed");
-        throw new Exception("Deleting [" + consumePath + "] failed");
+        LOG.error("Deleting [" + consumePath + "] failed,Data replay possible");
       }
     }
 
