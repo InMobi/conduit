@@ -292,7 +292,7 @@ public class LocalStreamService extends AbstractService implements
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      fs.mkdirs(entry.getValue().getParent());
+      retriableMkDirs(fs, entry.getValue().getParent());
       if (retriableRename(fs, entry.getKey(), entry.getValue()) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
             + "dataloss. Partial data replay could happen in next run");
