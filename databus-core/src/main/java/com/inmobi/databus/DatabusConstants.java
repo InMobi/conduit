@@ -28,5 +28,6 @@ public interface DatabusConstants {
   public static final String MB_PER_MAPPER = "com.inmobi.databus.MBPerMapper";
   public static final String STREAMS_PER_LOCALSERVICE = "com.inmobi.databus."
       + "streamsPerLocal";
+  public static final String NUM_RETRIES = "com.inmobi.databus.retries";
 
 }
