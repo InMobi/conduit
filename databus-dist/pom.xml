@@ -5,7 +5,7 @@
   <parent>
     <artifactId>databus-parent</artifactId>
     <groupId>com.inmobi.databus</groupId>
-    <version>1.6.3-SNAPSHOT</version>
+    <version>1.6.3</version>
   </parent>
 
   <artifactId>databus-dist</artifactId>
