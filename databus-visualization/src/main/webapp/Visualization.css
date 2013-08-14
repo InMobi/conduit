@@ -116,11 +116,12 @@ div.tooltip {
 }
 
 #tabs {
-    width: 100%;
+    width: 71%;
     margin: auto;
     overflow: hidden;
     background: #D8EAF3;
     display: none;
+    float:left;
 }
 
 #tabs ul {
@@ -130,10 +131,14 @@ div.tooltip {
     margin: 0;
 }
 
+#tabs li {
+    float: right;
+}
+
 #tabs li a {
     color: #444444;
+    font-weight: bold;
     display: block;
-    float: left;
     padding: 10px;
     text-align: center;
     text-decoration: none;
@@ -148,7 +153,7 @@ div.tooltip {
     cursor: hand;
 }
 
-#tabs li:first-child a {
+#tabs li:last-child a {
     border-left:none;
 }
 
@@ -156,15 +161,15 @@ div.tooltip {
     background:#EBF4F8;
     border:none;
     border-left:1px solid #ccc;
-    border-bottom:1px solid #FFFFFF;
+    border-bottom:1px solid #ccc;
 }
 
-#tabs li:first-child a.active {
+#tabs li:last-child a.active {
     border:none;
     border-bottom:1px solid #FFFFFF;
 }
 
-#tabs li:last-child a.active {
+#tabs li:first-child a.active {
     border:none;
     border-left:1px solid #ccc;
     border-bottom:1px solid #FFFFFF
