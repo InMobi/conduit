@@ -1140,11 +1140,13 @@ function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency,
   c.id = id;
   c.style.width = "15px";
   c.style.height = "15px";
-  c = r.insertCell(currentCol++);
-  c.innerHTML = actualLatency + "(A)";
-  c = r.insertCell(currentCol++);
-  c.innerHTML = expectedLatency + "(E)";
   appendHealthStatusIndicator(id, health);
+  if (actualLatency != -1) {
+		c = r.insertCell(currentCol++);
+		c.innerHTML = actualLatency + "(A)";
+		c = r.insertCell(currentCol++);
+		c.innerHTML = expectedLatency + "(E)";
+  }
   return currentRow;
 }
 
