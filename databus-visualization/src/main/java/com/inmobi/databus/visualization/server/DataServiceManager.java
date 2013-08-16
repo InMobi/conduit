@@ -19,6 +19,7 @@ public class DataServiceManager {
       "/usr/local/databus-visualization/conf/audit-feeder.properties";
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String TIMEZONE = "GMT";
+  public static final String AUDIT_STREAM = "_audit";
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
   private static DataServiceManager instance = null;
   private List<DatabusConfig> dataBusConfig;
@@ -64,10 +65,12 @@ public class DataServiceManager {
       streamSet.addAll(config.getSourceStreams().keySet());
       clusterSet.addAll(config.getClusters().keySet());
     }
+    streamSet.remove(AUDIT_STREAM);
     List<String> streamList = new ArrayList<String>(streamSet);
     List<String> clusterList = new ArrayList<String>(clusterSet);
     streamList.add(0, "All");
     clusterList.add(0, "All");
+    LOG.info("Returning stream list:"+streamList+" and cluster list:"+clusterList);
     String serverJson =
         ServerDataHelper.getInstance().setLoadMainPanelResponse(streamList,
             clusterList);

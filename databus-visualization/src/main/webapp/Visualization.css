@@ -116,7 +116,7 @@ div.tooltip {
 }
 
 #tabs {
-    width: 71%;
+    width: 71.5%;
     margin: auto;
     overflow: hidden;
     background: #D8EAF3;
@@ -133,6 +133,8 @@ div.tooltip {
 
 #tabs li {
     float: right;
+    border: 1px solid #ccc;
+    border-bottom: none;
 }
 
 #tabs li a {
@@ -142,9 +144,6 @@ div.tooltip {
     padding: 10px;
     text-align: center;
     text-decoration: none;
-    border:none;
-    border-left:1px solid #ccc;
-    border-bottom:1px solid #ccc;
 }
 
 #tabs li a:hover {
@@ -153,36 +152,16 @@ div.tooltip {
     cursor: hand;
 }
 
-#tabs li:last-child a {
-    border-left:none;
-}
-
 #tabs li a.active {
     background:#EBF4F8;
-    border:none;
-    border-left:1px solid #ccc;
-    border-bottom:1px solid #ccc;
 }
 
-#tabs li:last-child a.active {
-    border:none;
-    border-bottom:1px solid #FFFFFF;
-}
-
-#tabs li:first-child a.active {
-    border:none;
-    border-left:1px solid #ccc;
-    border-bottom:1px solid #FFFFFF
-}
-
-.valuesTable
-{
+.valuesTable {
 	border-collapse:collapse;
 	border:2px solid #ADADAD;
 }
 
-.valuesTable td, th
-{
+.valuesTable td, th {
 	border:2px solid #ADADAD;
 }
 
