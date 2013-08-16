@@ -388,6 +388,17 @@ function addListToInfoPanel(n, isCountView) {
 function nodeclick(n) {
   document.getElementById("infoPanel")
     .innerHTML = "";
+  d3.selectAll("path.link")
+  	.style("stroke-width", "2px");
+  d3.selectAll("g.node")
+  	.select("circle")
+  	.attr("r", 5);
+  d3.selectAll("g.node")
+  	.filter(function(d) {
+  		return d.cluster == n.cluster && d.name == n.name && d.tier == n.tier;
+  	})
+  	.select("circle")
+  	.attr("r", 7);
   addListToInfoPanel(n, true);
   var c, r, t;
   var currentRow = 0;
@@ -492,6 +503,17 @@ function nodeclick(n) {
 
 function latencynodeclick(n) {
   document.getElementById("infoPanel").innerHTML = "";
+  d3.selectAll("path.link")
+  	.style("stroke-width", "2px");
+  d3.selectAll("g.node")
+  	.select("circle")
+  	.attr("r", 5);
+  d3.selectAll("g.node")
+  	.filter(function(d) {
+  		return d.cluster == n.cluster && d.name == n.name && d.tier == n.tier;
+  	})
+  	.select("circle")
+  	.attr("r", 7);
   addListToInfoPanel(n, false);
   var c, r, t;
   var currentRow = 0;
@@ -614,6 +636,19 @@ function getStreamsCausingDataLoss(l) {
 function linkclick(l) {
   document.getElementById("infoPanel")
     .innerHTML = "";
+  d3.selectAll("path.link")
+  	.style("stroke-width", "2px");
+  d3.selectAll("g.node")
+  	.select("circle")
+  	.attr("r", 5);
+  d3.selectAll("path.link")
+  	.filter(function(d) {
+  		return d.target.cluster == l.target.cluster && d.target.name == l
+  		.target.name && d.target.tier == l.target.tier && d.source.cluster == l
+  		.source.cluster && d.source.name == l.source.name && d.source.tier == l
+  		.source.tier;
+  	})
+  	.style("stroke-width", "5px");
   var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');
