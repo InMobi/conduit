@@ -20,13 +20,23 @@ public class DataServiceManager {
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String TIMEZONE = "GMT";
   public static final String AUDIT_STREAM = "_audit";
+  public static final String STREAM_FILTER = "stream";
+  public static final String CLUSTER_FILTER = "cluster";
+  public static final String START_TIME_FILTER = "startTime";
+  public static final String END_TIME_FILTER = "endTime";
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
   private static DataServiceManager instance = null;
   private List<DatabusConfig> dataBusConfig;
 
-  private DataServiceManager() {
+  protected DataServiceManager(boolean init) {
     String folderPath = VisualizationProperties
         .get(VisualizationProperties.PropNames.DATABUS_XML_PATH);
+    if (init) {
+      initConfig(folderPath);
+    }
+  }
+
+  protected void initConfig(String folderPath) {
     File folder = new File(folderPath);
     File[] xmlFiles = folder.listFiles(new FileFilter() {
       @Override
@@ -51,9 +61,9 @@ public class DataServiceManager {
     }
   }
 
-  public static DataServiceManager get() {
+  public static DataServiceManager get(boolean init) {
     if (instance == null) {
-      instance = new DataServiceManager();
+      instance = new DataServiceManager(init);
     }
     return instance;
   }
@@ -79,20 +89,13 @@ public class DataServiceManager {
 
   public String getData(String filterValues) {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
-    String responseJson;
-    String selectedStream =
-        ServerDataHelper.getInstance().getStreamFromGraphDataReq(filterValues);
-    String selectedCluster =
-        ServerDataHelper.getInstance().getColoFromGraphDataReq(filterValues);
-    String startTime = ServerDataHelper.getInstance()
-        .getStartTimeFromGraphDataReq(filterValues);
-    String endTime =
-        ServerDataHelper.getInstance().getEndTimeFromGraphDataReq(filterValues);
-    String filterString = setFilterString(selectedStream, selectedCluster);
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
     ClientConfig config = ClientConfig.load(FEEDER_PROPERTIES_PATH);
-    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
-        GROUPBY_STRING, TIMEZONE, VisualizationProperties.get(
-        VisualizationProperties.PropNames.PERCENTILE_STRING), config);
+    AuditDbQuery dbQuery = new AuditDbQuery(filterMap.get(END_TIME_FILTER),
+        filterMap.get(START_TIME_FILTER), filterString, GROUPBY_STRING,
+        TIMEZONE, VisualizationProperties.get(VisualizationProperties
+        .PropNames.PERCENTILE_STRING), config);
     try {
       dbQuery.execute();
     } catch (Exception e) {
@@ -105,41 +108,8 @@ public class DataServiceManager {
     Map<Tuple, Map<Float, Integer>> tuplesPercentileMap = dbQuery.getPercentile();
     LOG.debug("Percentile Set:"+percentileSet);
     LOG.debug("Tuples Percentile Map:"+tuplesPercentileMap);
-
     for (Tuple tuple : tupleSet) {
-      LOG.info("Creating node from tuple :"+tuple);
-      String name, hostname = null;
-      if(tuple.getTier().equalsIgnoreCase(Tier.HDFS.toString())) {
-        name = tuple.getCluster();
-        hostname = tuple.getHostname();
-      } else
-        name = tuple.getHostname();
-      MessageStats receivedMessageStat =
-          new MessageStats(tuple.getTopic(), tuple.getReceived(), hostname);
-      MessageStats sentMessageStat =
-          new MessageStats(tuple.getTopic(), tuple.getSent(), hostname);
-      NodeKey newNodeKey = new NodeKey(name, tuple.getCluster(), tuple.getTier());
-      List<MessageStats> receivedMessageStatsList = new ArrayList<MessageStats>(),
-          sentMessageStatsList = new ArrayList<MessageStats>();
-      receivedMessageStatsList.add(receivedMessageStat);
-      sentMessageStatsList.add(sentMessageStat);
-      Node node = nodeMap.get(newNodeKey);
-      if(node == null) {
-        node = new Node(name, tuple.getCluster(), tuple.getTier());
-      }
-      if (node.getReceivedMessagesList().size() > 0) {
-        receivedMessageStatsList.addAll(node.getReceivedMessagesList());
-      }
-      if (node.getSentMessagesList().size() > 0) {
-        sentMessageStatsList.addAll(node.getSentMessagesList());
-      }
-      node.setReceivedMessagesList(receivedMessageStatsList);
-      node.setSentMessagesList(sentMessageStatsList);
-      node.setPercentileSet(percentileSet);
-      node.addToTopicPercentileMap(tuple.getTopic(), tuplesPercentileMap.get(tuple));
-      node.addToTopicCountMap(tuple.getTopic(), tuple.getLatencyCountMap());
-      nodeMap.put(newNodeKey, node);
-      LOG.debug("Node created: " + node);
+      createNode(tuple, nodeMap, percentileSet, tuplesPercentileMap.get(tuple));
     }
     buildPercentileMapOfAllNodes(nodeMap);
     addVIPNodesToNodesList(nodeMap, percentileSet);
@@ -149,11 +119,60 @@ public class DataServiceManager {
       LOG.debug("Final node :" + node);
     }
     Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTieLatencyMap
-        (endTime, startTime, filterString);
-    responseJson = ServerDataHelper.getInstance().setGraphDataResponse
-        (nodeMap, tierLatencyMap);
-    LOG.debug("Json response returned to client : " + responseJson);
-    return responseJson;
+        (filterMap.get(END_TIME_FILTER), filterMap.get(START_TIME_FILTER), filterString);
+    return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
+        tierLatencyMap);
+  }
+
+  private Map<String, String> getFilterMap(String filterValues) {
+    Map<String, String> filterMap = new HashMap<String, String>();
+    filterMap.put(STREAM_FILTER, ServerDataHelper.getInstance()
+        .getStreamFromGraphDataReq(filterValues));
+    filterMap.put(CLUSTER_FILTER, ServerDataHelper.getInstance()
+        .getColoFromGraphDataReq(filterValues));
+    filterMap.put(START_TIME_FILTER, ServerDataHelper.getInstance()
+        .getStartTimeFromGraphDataReq(filterValues));
+    filterMap.put(END_TIME_FILTER, ServerDataHelper.getInstance()
+        .getEndTimeFromGraphDataReq(filterValues));
+    return filterMap;
+  }
+
+  private void createNode(Tuple tuple, Map<NodeKey, Node> nodeMap,
+                          Set<Float> percentileSet,
+                          Map<Float, Integer> tuplePercentileMap) {
+    LOG.info("Creating node from tuple :"+tuple);
+    String name, hostname = null;
+    if(tuple.getTier().equalsIgnoreCase(Tier.HDFS.toString())) {
+      name = tuple.getCluster();
+      hostname = tuple.getHostname();
+    } else
+      name = tuple.getHostname();
+    MessageStats receivedMessageStat =
+        new MessageStats(tuple.getTopic(), tuple.getReceived(), hostname);
+    MessageStats sentMessageStat =
+        new MessageStats(tuple.getTopic(), tuple.getSent(), hostname);
+    NodeKey newNodeKey = new NodeKey(name, tuple.getCluster(), tuple.getTier());
+    List<MessageStats> receivedMessageStatsList = new ArrayList<MessageStats>(),
+        sentMessageStatsList = new ArrayList<MessageStats>();
+    receivedMessageStatsList.add(receivedMessageStat);
+    sentMessageStatsList.add(sentMessageStat);
+    Node node = nodeMap.get(newNodeKey);
+    if(node == null) {
+      node = new Node(name, tuple.getCluster(), tuple.getTier());
+    }
+    if (node.getReceivedMessagesList().size() > 0) {
+      receivedMessageStatsList.addAll(node.getReceivedMessagesList());
+    }
+    if (node.getSentMessagesList().size() > 0) {
+      sentMessageStatsList.addAll(node.getSentMessagesList());
+    }
+    node.setReceivedMessagesList(receivedMessageStatsList);
+    node.setSentMessagesList(sentMessageStatsList);
+    node.setPercentileSet(percentileSet);
+    node.addToTopicPercentileMap(tuple.getTopic(), tuplePercentileMap);
+    node.addToTopicCountMap(tuple.getTopic(), tuple.getLatencyCountMap());
+    nodeMap.put(newNodeKey, node);
+    LOG.debug("Node created: " + node);
   }
 
   private Map<Tuple, Map<Float, Integer>> getTieLatencyMap(String endTime,
@@ -173,9 +192,10 @@ public class DataServiceManager {
     return dbQuery.getPercentile();
   }
 
-  private String setFilterString(String selectedStream,
-                                 String selectedCluster) {
+  private String setFilterString(Map<String, String> filterMap) {
     String filterString;
+    String selectedStream = filterMap.get(STREAM_FILTER);
+    String selectedCluster = filterMap.get(CLUSTER_FILTER);
     if (selectedStream.compareTo("All") == 0) {
       filterString = null;
     } else {
@@ -259,7 +279,7 @@ public class DataServiceManager {
 
   /**
    * If any node in the nodeList is a merge/mirror tier node, set the source
-   * node's names' list for it.
+   * node's names list for merge/mirror node.
    *
    * @param nodeMap map of all nodeKey::nodes returned by the query
    */
@@ -274,5 +294,9 @@ public class DataServiceManager {
         }
       }
     }
+  }
+
+  public List<DatabusConfig> getDataBusConfig() {
+    return Collections.unmodifiableList(dataBusConfig);
   }
 }

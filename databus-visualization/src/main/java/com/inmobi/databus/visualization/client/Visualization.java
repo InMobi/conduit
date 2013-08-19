@@ -340,9 +340,11 @@ public class Visualization implements EntryPoint, ClickHandler {
       For running in GWT developement mode,
       url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
       cluster + "&qstream=" + stream;
-     */
+     *//*
     url = url + "?qstart=" + startTime + "&qend=" + endTime +
-        "&qcluster=" + cluster + "&qstream=" + stream;
+        "&qcluster=" + cluster + "&qstream=" + stream;*/
+    url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
+        cluster + "&qstream=" + stream;
     System.out.println("Replacing URL after adding selected parameters");
     Window.Location.replace(url);
   }
@@ -352,8 +354,9 @@ public class Visualization implements EntryPoint, ClickHandler {
     /*
     If running in GWT development mode;
     int index = url.indexOf("&");
-     */
-    int index = url.indexOf("?");
+     *//*
+    int index = url.indexOf("?");*/
+    int index = url.indexOf("&");
     if(index != -1)
       newUrl = url.substring(0, index);
     else
