@@ -14,7 +14,7 @@
 
     <servlet-mapping>
         <servlet-name>graphServlet</servlet-name>
-        <url-pattern>/Visualization/graph</url-pattern>
+        <url-pattern>/</url-pattern>
     </servlet-mapping>
 
     <!-- Default page to serve -->
