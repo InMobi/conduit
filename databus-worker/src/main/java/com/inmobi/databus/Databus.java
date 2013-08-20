@@ -311,6 +311,10 @@ public class Databus implements Service, DatabusConstants {
       if (mbPerMapper != null) {
         System.setProperty(MB_PER_MAPPER, mbPerMapper);
       }
+      String numRetries = prop.getProperty(NUM_RETRIES);
+      if (numRetries != null) {
+        System.setProperty(NUM_RETRIES, numRetries);
+      }
       prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {
