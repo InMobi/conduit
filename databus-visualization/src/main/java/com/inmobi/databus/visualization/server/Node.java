@@ -26,64 +26,12 @@ public class Node {
     sentMessagesList = new ArrayList<MessageStats>();
   }
 
-  public List<MessageStats> getReceivedMessagesList() {
-    return receivedMessagesList;
-  }
-
-  public void setReceivedMessagesList(List<MessageStats> receivedMessagesList) {
-    this.receivedMessagesList = receivedMessagesList;
-    if (this.receivedMessagesList.size() > 0) {
-      aggregateMessagesReceived =
-          calculateAggregateMessages(this.receivedMessagesList);
-    }
-  }
-
-  public List<MessageStats> getSentMessagesList() {
-    return sentMessagesList;
-  }
-
-  public void setSentMessagesList(List<MessageStats> sentMessagesList) {
-    this.sentMessagesList = sentMessagesList;
-    if (this.sentMessagesList.size() > 0) {
-      aggregateMessagesSent = calculateAggregateMessages(this.sentMessagesList);
-    }
-  }
-
   private Long calculateAggregateMessages(List<MessageStats> messageStatsList) {
     Long aggregateMessages = 0L;
     for (MessageStats stats : messageStatsList) {
       aggregateMessages += stats.getMessages();
     }
     return aggregateMessages;
-  }
-
-  public String getName() {
-    return nodeKey.getHostname();
-  }
-
-  public String getClusterName() {
-    return nodeKey.getCluster();
-  }
-
-  public Long getAggregateMessagesReceived() {
-    return aggregateMessagesReceived;
-  }
-
-  public String getTier() {
-    return nodeKey.getTier();
-  }
-
-  public Long getAggregateMessagesSent() {
-    return aggregateMessagesSent;
-  }
-
-  public List<String> getSourceList() {
-    return sourceList;
-  }
-
-  public void setSourceList(Set<String> sourceList) {
-    this.sourceList = new ArrayList<String>();
-    this.sourceList.addAll(sourceList);
   }
 
   public void addToTopicPercentileMap(String topic, Map<Float,
@@ -98,10 +46,6 @@ public class Node {
     if (value == null)
       value = 0l;
     latencyValues.put(column, prevVal + value);
-  }
-
-  public void setPercentileSet(Set<Float> percentileSet) {
-    this.percentileSet = percentileSet;
   }
 
   public Map<Float, Integer> populatePercentileMap(Map<LatencyColumns,
@@ -219,6 +163,38 @@ public class Node {
     }
   }
 
+  public String getName() {
+    return nodeKey.getHostname();
+  }
+
+  public String getClusterName() {
+    return nodeKey.getCluster();
+  }
+
+  public Long getAggregateMessagesReceived() {
+    return aggregateMessagesReceived;
+  }
+
+  public String getTier() {
+    return nodeKey.getTier();
+  }
+
+  public Long getAggregateMessagesSent() {
+    return aggregateMessagesSent;
+  }
+
+  public List<MessageStats> getReceivedMessagesList() {
+    return receivedMessagesList;
+  }
+
+  public List<MessageStats> getSentMessagesList() {
+    return sentMessagesList;
+  }
+
+  public List<String> getSourceList() {
+    return sourceList;
+  }
+
   public Map<String, Map<Float, Integer>> getPerTopicPercentileMap() {
     return perTopicPercentileMap;
   }
@@ -229,6 +205,30 @@ public class Node {
 
   public NodeKey getNodeKey() {
     return nodeKey;
+  }
+
+  public void setReceivedMessagesList(List<MessageStats> receivedMessagesList) {
+    this.receivedMessagesList = receivedMessagesList;
+    if (this.receivedMessagesList.size() > 0) {
+      aggregateMessagesReceived =
+          calculateAggregateMessages(this.receivedMessagesList);
+    }
+  }
+
+  public void setSentMessagesList(List<MessageStats> sentMessagesList) {
+    this.sentMessagesList = sentMessagesList;
+    if (this.sentMessagesList.size() > 0) {
+      aggregateMessagesSent = calculateAggregateMessages(this.sentMessagesList);
+    }
+  }
+
+  public void setSourceList(Set<String> sourceList) {
+    this.sourceList = new ArrayList<String>();
+    this.sourceList.addAll(sourceList);
+  }
+
+  public void setPercentileSet(Set<Float> percentileSet) {
+    this.percentileSet = percentileSet;
   }
 
   @Override

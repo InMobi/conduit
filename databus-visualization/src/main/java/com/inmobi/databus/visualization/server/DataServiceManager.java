@@ -29,9 +29,9 @@ public class DataServiceManager {
   private List<DatabusConfig> dataBusConfig;
 
   protected DataServiceManager(boolean init) {
-    String folderPath = VisualizationProperties
-        .get(VisualizationProperties.PropNames.DATABUS_XML_PATH);
     if (init) {
+      String folderPath = VisualizationProperties
+          .get(VisualizationProperties.PropNames.DATABUS_XML_PATH);
       initConfig(folderPath);
     }
   }
@@ -118,7 +118,7 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
-    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTieLatencyMap
+    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
         (filterMap.get(END_TIME_FILTER), filterMap.get(START_TIME_FILTER), filterString);
     return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
         tierLatencyMap);
@@ -157,7 +157,7 @@ public class DataServiceManager {
     receivedMessageStatsList.add(receivedMessageStat);
     sentMessageStatsList.add(sentMessageStat);
     Node node = nodeMap.get(newNodeKey);
-    if(node == null) {
+    if (node == null) {
       node = new Node(name, tuple.getCluster(), tuple.getTier());
     }
     if (node.getReceivedMessagesList().size() > 0) {
@@ -175,7 +175,7 @@ public class DataServiceManager {
     LOG.debug("Node created: " + node);
   }
 
-  private Map<Tuple, Map<Float, Integer>> getTieLatencyMap(String endTime,
+  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
                                                            String startTime,
                                                            String filterString) {
     ClientConfig config = ClientConfig.load(FEEDER_PROPERTIES_PATH);
