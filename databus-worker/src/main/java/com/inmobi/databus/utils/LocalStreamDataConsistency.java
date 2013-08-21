@@ -70,7 +70,12 @@ public class LocalStreamDataConsistency extends CompareDataConsistency {
   public void getStreamCollectorNames( Path streamDir, List<String>  
   streamCollectorNames) throws Exception {
     FileSystem fs = streamDir.getFileSystem(new Configuration());
-    FileStatus [] filestatuses = fs.listStatus(streamDir);
+    FileStatus[] filestatuses;
+    try {
+      filestatuses = fs.listStatus(streamDir);
+    } catch (FileNotFoundException fe) {
+      filestatuses = null;
+    }
     for (FileStatus file : filestatuses) {
       streamCollectorNames.add(file.getPath().getName());
     }

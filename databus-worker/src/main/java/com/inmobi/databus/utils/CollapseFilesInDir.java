@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.OutputStreamWriter;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,7 +36,12 @@ public class CollapseFilesInDir {
     configuration.set("fs.default.name", args[0]);
     String dir = args[1];
     FileSystem fs = FileSystem.get(configuration);
-    FileStatus[] fileList = fs.listStatus(new Path(dir));
+    FileStatus[] fileList;
+    try {
+      fileList = fs.listStatus(new Path(dir));
+    } catch (FileNotFoundException fe) {
+      fileList = null;
+    }
     if (fileList != null) {
       if (fileList.length > 1) {
         Set<Path> sourceFiles = new HashSet<Path>();

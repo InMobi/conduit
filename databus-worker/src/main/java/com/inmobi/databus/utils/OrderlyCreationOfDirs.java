@@ -122,8 +122,13 @@ public class OrderlyCreationOfDirs {
   streamNames) throws Exception {
     FileSystem baseDirFs = new Path(rootDir, baseDir).getFileSystem
         (new Configuration());
-    FileStatus[] streamFileStatuses = baseDirFs.listStatus(new Path
+    FileStatus[] streamFileStatuses;
+    try {
+      streamFileStatuses = baseDirFs.listStatus(new Path
         (rootDir, baseDir));
+    } catch (FileNotFoundException e) {
+      streamFileStatuses = new FileStatus[0];
+    }
     if (streamFileStatuses != null) {
       for (FileStatus file : streamFileStatuses) {
         if (!streamNames.contains(file.getPath().getName())) {
