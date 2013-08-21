@@ -192,7 +192,12 @@ public class MirrorStreamDataConsistencyValidation {
     List<Path> inconsistentData = new ArrayList<Path>();
     if (args.length == 2) {
       FileSystem fs = mirrorStreamDirs.get(0).getFileSystem(new Configuration());
-      FileStatus[] fileStatuses = fs.listStatus(mirrorStreamDirs.get(0));
+      FileStatus[] fileStatuses;
+      try {
+        fileStatuses = fs.listStatus(mirrorStreamDirs.get(0));
+      } catch (FileNotFoundException fe) {
+        fileStatuses = null;
+      }
       if (fileStatuses != null && fileStatuses.length != 0) {
         for (FileStatus file : fileStatuses) {  
           streamNames.add(file.getPath().getName());

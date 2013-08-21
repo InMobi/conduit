@@ -13,6 +13,7 @@
 */
 package com.inmobi.databus;
 
+import java.io.FileNotFoundException;
 import java.util.TreeSet;
 
 import java.util.Set;
@@ -162,8 +163,13 @@ public abstract class AbstractService implements Service, Runnable {
 	}
 
 	private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
-		FileStatus[] fileStatus = fs.listStatus(Dir);
 
+    FileStatus[] fileStatus;
+    try {
+     fileStatus = fs.listStatus(Dir);
+    } catch (FileNotFoundException fe) {
+      fileStatus = null;
+    }
 		if (fileStatus != null && fileStatus.length > 0) {
 			FileStatus latestfile = fileStatus[0];
 			for (FileStatus currentfile : fileStatus) {
@@ -248,7 +254,12 @@ public abstract class AbstractService implements Service, Runnable {
 	    throws Exception {
     Map<String, Set<Path>> missingDirectories = new HashMap<String, Set<Path>>();
     Set<Path> missingdirsinstream = null;
-		FileStatus[] fileStatus = fs.listStatus(new Path(destDir));
+    FileStatus[] fileStatus;
+		try {
+      fileStatus = fs.listStatus(new Path(destDir));
+    } catch (FileNotFoundException fe) {
+      fileStatus = null;
+    }
 		LOG.info("Create All the Missing Paths in " + destDir);
 		if (fileStatus != null) {
 			for (FileStatus file : fileStatus) {
