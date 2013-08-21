@@ -13,6 +13,7 @@
 */
 package com.inmobi.databus;
 
+import java.io.FileNotFoundException;
 import java.util.TreeSet;
 
 import java.util.Set;
@@ -162,8 +163,13 @@ public abstract class AbstractService implements Service, Runnable {
 	}
 
 	private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
-		FileStatus[] fileStatus = fs.listStatus(Dir);
 
+    FileStatus[] fileStatus;
+    try {
+     fileStatus = fs.listStatus(Dir);
+    } catch (FileNotFoundException fe) {
+      fileStatus = null;
+    }
 		if (fileStatus != null && fileStatus.length > 0) {
 			FileStatus latestfile = fileStatus[0];
 			for (FileStatus currentfile : fileStatus) {
