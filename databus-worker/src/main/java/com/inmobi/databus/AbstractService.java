@@ -254,7 +254,12 @@ public abstract class AbstractService implements Service, Runnable {
 	    throws Exception {
     Map<String, Set<Path>> missingDirectories = new HashMap<String, Set<Path>>();
     Set<Path> missingdirsinstream = null;
-		FileStatus[] fileStatus = fs.listStatus(new Path(destDir));
+    FileStatus[] fileStatus;
+		try {
+      fileStatus = fs.listStatus(new Path(destDir));
+    } catch (FileNotFoundException fe) {
+      fileStatus = null;
+    }
 		LOG.info("Create All the Missing Paths in " + destDir);
 		if (fileStatus != null) {
 			for (FileStatus file : fileStatus) {
