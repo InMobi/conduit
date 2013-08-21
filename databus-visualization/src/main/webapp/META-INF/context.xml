@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Context>
-    <Loader className="org.apache.catalina.loader.VirtualWebappLoader" virtualClasspath="/usr/local/hadoop/hadoop-core-1.2.1.jar"/>
+    <Loader className="org.apache.catalina.loader.VirtualWebappLoader" virtualClasspath="${hadoop.home}"/>
 </Context>
 
