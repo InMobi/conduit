@@ -354,4 +354,16 @@ public class DataPurgerService extends AbstractService {
       throws Exception {
     return fs.listStatus(dir);
   }
+
+  @Override
+  protected String getTopicNameFromFileName(String fileName) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  protected String getTier() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }

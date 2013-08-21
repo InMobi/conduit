@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,7 +42,6 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -52,7 +50,6 @@ import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractService;
@@ -95,10 +92,10 @@ public class LocalStreamService extends AbstractService implements
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
-  private final static char TOPIC_SEPARATOR_FILENAME = '-';
+
   private List<AuditMessage> auditMessages;
   private CounterGroup counterGrp;
-  private static final String TIER = "local";
+
   private final TSerializer serializer = new TSerializer();
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
@@ -361,33 +358,9 @@ public class LocalStreamService extends AbstractService implements
       LOG.error("Publishing of audit message failed", e);
     }
   }
-  private AuditMessage createAuditMessage(String fileName,
-      Map<Long, Long> received) {
-    String topic = getTopicNameFromFileName(fileName);
-    AuditMessage auditMsg = new AuditMessage(new Date().getTime(), topic, TIER,
-        hostname, DEFAULT_WINDOW_SIZE, received, null, null, null);
-    return auditMsg;
-  }
-  private Table<String, Long, Long> parseCounters(CounterGroup counterGrp) {
-    Table<String, Long, Long> result = HashBasedTable.create();
 
-    for (Counter counter : counterGrp) {
-      String counterName = counter.getName();
-      String tmp[] = counterName.split(CopyMapper.DELIMITER);
-      if (tmp.length < 2) {
-        LOG.error("Malformed counter name,skipping " + counterName);
-        continue;
-      }
-      String filename = tmp[0];
-      Long publishTimeWindow = Long.parseLong(tmp[1]);
-      Long numOfMsgs = counter.getValue();
-      result.put(filename, publishTimeWindow, numOfMsgs);
-    }
-    return result;
 
-  }
-
-  private String getTopicNameFromFileName(String fileName) {
+  protected String getTopicNameFromFileName(String fileName) {
     int index = fileName.indexOf(TOPIC_SEPARATOR_FILENAME);
     if (index == -1)
       return null;
@@ -725,5 +698,9 @@ public class LocalStreamService extends AbstractService implements
 
   public Cluster getCurrentCluster() {
     return currentCluster;
+  }
+
+  protected String getTier() {
+    return "local";
   }
 }

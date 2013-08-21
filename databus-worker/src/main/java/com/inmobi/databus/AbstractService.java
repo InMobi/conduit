@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +29,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
+import com.inmobi.databus.local.CopyMapper;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.messaging.publisher.MessagePublisher;
 
@@ -51,6 +58,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected String hostname;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   protected final MessagePublisher publisher;
+  protected final static char TOPIC_SEPARATOR_FILENAME = '-';
 
 
   public AbstractService(String name, DatabusConfig config,
@@ -283,4 +291,35 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
+  protected Table<String, Long, Long> parseCounters(CounterGroup counterGrp) {
+    Table<String, Long, Long> result = HashBasedTable.create();
+
+    for (Counter counter : counterGrp) {
+      String counterName = counter.getName();
+      String tmp[] = counterName.split(CopyMapper.DELIMITER);
+      if (tmp.length < 2) {
+        LOG.error("Malformed counter name,skipping " + counterName);
+        continue;
+      }
+      String filename = tmp[0];
+      Long publishTimeWindow = Long.parseLong(tmp[1]);
+      Long numOfMsgs = counter.getValue();
+      result.put(filename, publishTimeWindow, numOfMsgs);
+    }
+    return result;
+
+  }
+
+  protected AuditMessage createAuditMessage(String fileName,
+      Map<Long, Long> received) {
+    String topic = getTopicNameFromFileName(fileName);
+    AuditMessage auditMsg = new AuditMessage(new Date().getTime(), topic,
+        getTier(),
+        hostname, DEFAULT_WINDOW_SIZE, received, null, null, null);
+    return auditMsg;
+  }
+
+  abstract protected String getTopicNameFromFileName(String fileName);
+
+  abstract protected String getTier();
 } 

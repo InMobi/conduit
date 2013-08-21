@@ -436,4 +436,19 @@ public abstract class DistcpBaseService extends AbstractService {
     // for tests
     return currentCluster;
   }
+
+  /*
+   * FileName is of format
+   * <collectorName>-<topicName>-<yy-mm-dd-hh-mm_number>.gz
+   * eg:rbgs4101.grid.ua2.
+   * inmobi.com-adroit_report_obj_uj1-2013-08-19-07-58_00000.gz
+   */
+  @Override
+  protected String getTopicNameFromFileName(String fileName) {
+    String tmp[] = fileName.split("" + TOPIC_SEPARATOR_FILENAME);
+
+    if (tmp.length < 7)
+      return null;
+    return tmp[1];
+  }
 }

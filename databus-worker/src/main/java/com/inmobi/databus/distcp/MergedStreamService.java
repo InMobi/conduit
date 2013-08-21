@@ -390,4 +390,9 @@ public class MergedStreamService extends DistcpBaseService {
     removePathWithDuplicateFileNames(minFilesSet);
 
   }
+
+  @Override
+  protected String getTier() {
+    return "merged";
+  }
 }

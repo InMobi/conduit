@@ -81,10 +81,6 @@
       <artifactId>commons-cli</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hadoop.inmobi.tools</groupId>
-      <artifactId>hadoop-distcp</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
     </dependency>
@@ -115,12 +111,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+    <groupId>com.inmobi.databus</groupId>
+    <artifactId>databus-distcp</artifactId>
+    <version>${project.version}</version>
+    </dependency>
+    <dependency>
   <groupId>com.google.guava</groupId>
   <artifactId>guava</artifactId>
   <version>14.0.1</version>
 </dependency>
   </dependencies>
-  <properties>
-    <messaging-client-version>3.3.0-SNAPSHOT</messaging-client-version>
-  </properties>
 </project>

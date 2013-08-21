@@ -4,6 +4,7 @@
 
   <properties>
     <excluded.testng.groups>integration</excluded.testng.groups>
+    <messaging-client-version>3.3.0-SNAPSHOT</messaging-client-version>
   </properties>
 
   <groupId>com.inmobi.databus</groupId>
@@ -224,6 +225,7 @@
     <module>databus-dist</module>
     <module>databus-audit</module>
     <module>databus-visualization</module>
+    <module>databus-distcp</module>
   </modules>
 
 </project>

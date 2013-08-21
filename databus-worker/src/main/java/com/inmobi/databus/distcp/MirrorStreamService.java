@@ -270,4 +270,9 @@ public class MirrorStreamService extends DistcpBaseService {
     return;
 
   }
+
+  @Override
+  protected String getTier() {
+    return "mirror";
+  }
 }
