@@ -629,7 +629,7 @@ public class LocalStreamService extends AbstractService implements
     }
     int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
     if (numMaps == 0) {
-      LOG.warn("number of maps were evaluated to zero. Making it is one");
+      LOG.warn("number of maps were evaluated to zero. Making it as one ");
       numMaps = 1;
     }
     return numMaps;
