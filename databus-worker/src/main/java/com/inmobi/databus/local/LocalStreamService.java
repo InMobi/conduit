@@ -628,6 +628,9 @@ public class LocalStreamService extends AbstractService implements
       BYTES_PER_MAPPER = Long.parseLong(mbPerMapper) * 1024 * 1024;
     }
     int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
+    if (numMaps == 0) {
+      numMaps = 1;
+    }
     return numMaps;
   }
 
