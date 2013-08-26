@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.google.common.collect.Table;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.messaging.publisher.MessagePublisher;
@@ -354,6 +355,7 @@ public class MergedStreamService extends DistcpBaseService {
   private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
+    Table<String, Long, Long> parsedCounters = parseCounters(counterGrp);
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       fs.mkdirs(entry.getValue().getParent());
@@ -363,6 +365,8 @@ public class MergedStreamService extends DistcpBaseService {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
+      String filename = entry.getKey().getName();
+      generateAndPublishAudit(filename, parsedCounters);
     }
   }
 

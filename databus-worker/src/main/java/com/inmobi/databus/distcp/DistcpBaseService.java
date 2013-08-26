@@ -34,9 +34,11 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
+import org.apache.hadoop.tools.mapred.CopyMapper;
 
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
@@ -118,7 +120,8 @@ public abstract class DistcpBaseService extends AbstractService {
         "_" + getDestCluster().getName());
     DistCp distCp = new DistCp(conf, options);
     try {
-      distCp.execute();
+      Job job = distCp.execute();
+      counterGrp = job.getCounters().getGroup(CopyMapper.COUNTER_GROUP);
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;

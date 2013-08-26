@@ -84,6 +84,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
   private static final String AUDIT_ENABLED_KEY = "audit.enabled";
   public static final String COUNTER_GROUP = "audit";
   public static final String DELIMITER = "#";
+  protected final static char TOPIC_SEPARATOR_FILENAME = '-';
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
@@ -252,6 +253,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
       handleFailures(exception, sourceFileStatus, target, context);
     }
   }
+
 
   private String getCounterName(String filename, Long timeWindow) {
     return filename + DELIMITER + timeWindow;

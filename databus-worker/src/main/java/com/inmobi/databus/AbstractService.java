@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,13 +32,17 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
+import org.apache.thrift.TException;
+import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.local.CopyMapper;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.util.AuditUtil;
 
 public abstract class AbstractService implements Service, Runnable {
 
@@ -59,6 +64,8 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   protected final MessagePublisher publisher;
   protected final static char TOPIC_SEPARATOR_FILENAME = '-';
+  protected CounterGroup counterGrp;
+  private final TSerializer serializer = new TSerializer();
 
 
   public AbstractService(String name, DatabusConfig config,
@@ -292,6 +299,10 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   protected Table<String, Long, Long> parseCounters(CounterGroup counterGrp) {
+    if (counterGrp == null) {
+      LOG.error("Counter Group is null");
+      return null;
+    }
     Table<String, Long, Long> result = HashBasedTable.create();
 
     for (Counter counter : counterGrp) {
@@ -313,6 +324,11 @@ public abstract class AbstractService implements Service, Runnable {
   protected AuditMessage createAuditMessage(String fileName,
       Map<Long, Long> received) {
     String topic = getTopicNameFromFileName(fileName);
+    if (topic == null) {
+      LOG.error("Topic name can't be found from filename " + fileName
+          + " skipping generation of audit message");
+      return null;
+    }
     AuditMessage auditMsg = new AuditMessage(new Date().getTime(), topic,
         getTier(),
         hostname, DEFAULT_WINDOW_SIZE, received, null, null, null);
@@ -322,4 +338,33 @@ public abstract class AbstractService implements Service, Runnable {
   abstract protected String getTopicNameFromFileName(String fileName);
 
   abstract protected String getTier();
+
+  protected void generateAndPublishAudit(String filename,
+      Table<String, Long, Long> parsedCounters) {
+    if (parsedCounters == null) {
+      LOG.equals("Not generating audit message as parsed counters are null");
+      return;
+    }
+    Map<Long, Long> received = parsedCounters.row(filename);
+    if (!received.isEmpty()) {
+      // create audit message
+      AuditMessage auditMsg = createAuditMessage(filename, received);
+      if (auditMsg == null)
+        return;
+      publishAuditMessage(auditMsg);
+    } else {
+      LOG.info("Not publishing audit packet as counters are empty");
+    }
+  }
+
+  private void publishAuditMessage(AuditMessage auditMsg) {
+    try {
+      LOG.debug("Publishing audit message from local stream service "
+          + auditMsg);
+      publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
+          ByteBuffer.wrap(serializer.serialize(auditMsg))));
+    } catch (TException e) {
+      LOG.error("Publishing of audit message failed", e);
+    }
+  }
 } 

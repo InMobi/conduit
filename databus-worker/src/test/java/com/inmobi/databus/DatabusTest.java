@@ -62,6 +62,7 @@ public class DatabusTest extends TestMiniClusterUtil {
         Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
         MessagePublisher publisher) throws
         Exception {
+
       return new TestMergedStreamService(config, srcCluster, dstCluster,
           currentCluster, null);
     }

@@ -29,6 +29,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCpOptions;
 
+import com.google.common.collect.Table;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.DatePathComparator;
@@ -121,6 +122,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   void doLocalCommit(Map<FileStatus, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    Table<String, Long, Long> parsedCounters = parseCounters(counterGrp);
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey() + "] to [" + entry.getValue()
       +"]");
@@ -139,6 +141,8 @@ public class MirrorStreamService extends DistcpBaseService {
           throw new Exception("Rename failed from [" + entry.getKey() + "] to "
           + "[" + entry.getValue() + "]");
         }
+        generateAndPublishAudit(entry.getKey().getPath().getName(),
+            parsedCounters);
       }
     }
   }

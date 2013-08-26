@@ -16,7 +16,6 @@ package com.inmobi.databus.local;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -42,25 +41,19 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
-import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.Table;
-import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
-import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
-import com.inmobi.messaging.util.AuditUtil;
 
 /*
  * Handles Local Streams for a Cluster
@@ -93,10 +86,6 @@ public class LocalStreamService extends AbstractService implements
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
 
-  private List<AuditMessage> auditMessages;
-  private CounterGroup counterGrp;
-
-  private final TSerializer serializer = new TSerializer();
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
@@ -150,7 +139,6 @@ public class LocalStreamService extends AbstractService implements
       cleanUpTmp(fs);
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
-      auditMessages=new ArrayList<AuditMessage>();
       counterGrp=null;
       for (String stream : streamsToProcess) {
         Set<Path> missingPaths = publishMissingPaths(fs,
@@ -323,41 +311,32 @@ public class LocalStreamService extends AbstractService implements
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
       if (generateAudit) {
-        // file name ending with .gz and starting with name of collector
-        // eg:gsdc3001.red.ua2.inmobi.com-rr-2013-08-03-15-58_00000.gz
-        String fileCopiedWithExtension = entry.getKey().getName();
-        String fileWithoutExt = fileCopiedWithExtension.substring(0,
-            fileCopiedWithExtension.length() - 3);
-        int index = fileWithoutExt.indexOf("-");
-        if (index == -1) {
-          LOG.error("Malformed filename: " + fileCopiedWithExtension);
+
+        String filename = removeCollectorNameAndExt(entry.getKey().getName());
+        if (filename == null) {
+          LOG.error("Malformed filename: " + entry.getKey().getName());
           continue;
         }
-        String filename = fileWithoutExt.substring(index + 1);
-        Map<Long, Long> received = parsedCounters.row(filename);
-        if (!received.isEmpty()) {
-        // create audit message
-          AuditMessage auditMsg = createAuditMessage(filename, received);
-          publishAuditMessage(auditMsg);
-        } else {
-          LOG.info("Not publishing audit packet as counters are empty");
-        }
-
+        generateAndPublishAudit(filename, parsedCounters);
       }
     }
 
   }
 
-  private void publishAuditMessage(AuditMessage auditMsg) {
-    try {
-      LOG.debug("Publishing audit message from local stream service "
-          + auditMsg);
-      publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
-          ByteBuffer.wrap(serializer.serialize(auditMsg))));
-    } catch (TException e) {
-      LOG.error("Publishing of audit message failed", e);
-    }
+  /*
+   * file name ending with .gz and starting with name of collector
+   * eg:gsdc3001.red.ua2.inmobi.com-rr-2013-08-03-15-58_00000.gz
+   */
+
+  private String removeCollectorNameAndExt(String fileName) {
+    String fileWithoutExt = fileName.substring(0, fileName.length() - 3);
+    int firstIndex = fileWithoutExt.indexOf(TOPIC_SEPARATOR_FILENAME);
+    if (firstIndex == -1)
+      return null;
+    return fileWithoutExt.substring(firstIndex + 1);
+
   }
+
 
 
   protected String getTopicNameFromFileName(String fileName) {
