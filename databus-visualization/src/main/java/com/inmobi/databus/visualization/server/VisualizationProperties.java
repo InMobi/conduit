@@ -6,74 +6,62 @@ import java.util.Hashtable;
 import java.util.Properties;
 
 public class VisualizationProperties {
-  public static enum PropNames {
-    DATABUS_XML_PATH,
-    PERCENTILE_STRING,
-    PUBLISHER_SLA,
-    AGENT_SLA,
-    VIP_SLA,
-    COLLECTOR_SLA,
-    HDFS_SLA,
-    PERCENTILE_FOR_SLA,
-    PERCENTAGE_FOR_LOSS,
-    PERCENTAGE_FOR_WARN,
-    MAX_START_TIME,
-    MAX_TIME_RANGE_INTERVAL_IN_HOURS,
-    LOSS_WARN_THRESHOLD_DIFF_IN_MINS
-  }
 
   private static Hashtable<String, String> propMap =
       new Hashtable<String, String>();
 
-  static {
-    try {
-      Properties p = new Properties();
-      p.load(new FileInputStream(
-          new File("/usr/local/databus-visualization/conf/visualization.properties")));
-      propMap.put(PropNames.DATABUS_XML_PATH.name(),
-          p.get("databus.xml.path").toString());
-      propMap.put(PropNames.PERCENTILE_STRING.name(),
-          p.get("percentile.string").toString());
-      propMap.put(PropNames.PUBLISHER_SLA.name(),
-          p.get("publisher.sla").toString());
-      propMap.put(PropNames.AGENT_SLA.name(),
-          p.get("agent.sla").toString());
-      propMap.put(PropNames.VIP_SLA.name(), p.get("vip.sla").toString());
-      propMap.put(PropNames.COLLECTOR_SLA.name(),
-          p.get("collector.sla").toString());
-      propMap.put(PropNames.HDFS_SLA.name(),
-          p.get("hdfs.sla").toString());
-      propMap.put(PropNames.PERCENTILE_FOR_SLA.name(),
-          p.get("percentile.for.sla").toString());
-      propMap.put(PropNames.PERCENTAGE_FOR_LOSS.name(),
-          p.get("percentage.for.loss").toString());
-      propMap.put(PropNames.PERCENTAGE_FOR_WARN.name(),
-          p.get("percentage.for.warn").toString());
-      propMap.put(PropNames.MAX_START_TIME.name(),
-          p.get("max.start.time").toString());
-      propMap.put(PropNames.MAX_TIME_RANGE_INTERVAL_IN_HOURS.name(),
-          p.get("max.time.range.interval.in.hours").toString());
-      propMap.put(PropNames.LOSS_WARN_THRESHOLD_DIFF_IN_MINS.name(),
-          p.get("loss.warn.threshold.diff.in.mins").toString());
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(
-          "Error while initializing VisualizationProperties:" +
-              " " + e.getMessage());
+  public VisualizationProperties(String propertiesFilePath) {
+    if (propertiesFilePath == null || propertiesFilePath.length() == 0) {
+      loadPropMap(ServerConstants.VISUALIZATION_PROPERTIES_DEFAULT_PATH);
+    } else {
+      loadPropMap(propertiesFilePath);
     }
   }
 
-  public static boolean set(String key, String value) {
+  private void loadPropMap(String filePath) {
     try {
-      propMap.put(PropNames.valueOf(key).name(), value);
+      Properties p = new Properties();
+      p.load(new FileInputStream(new File(filePath)));
+      propMap.put(ServerConstants.DATABUS_XML_PATH, p.get("databus.xml.path")
+          .toString());
+      propMap.put(ServerConstants.PERCENTILE_STRING,
+          p.get("percentile.string").toString());
+      propMap.put(ServerConstants.PUBLISHER_SLA, p.get("publisher.sla")
+          .toString());
+      propMap.put(ServerConstants.AGENT_SLA, p.get("agent.sla").toString());
+      propMap.put(ServerConstants.VIP_SLA, p.get("vip.sla").toString());
+      propMap.put(ServerConstants.COLLECTOR_SLA, p.get("collector.sla")
+          .toString());
+      propMap.put(ServerConstants.HDFS_SLA, p.get("hdfs.sla").toString());
+      propMap.put(ServerConstants.PERCENTILE_FOR_SLA,
+          p.get("percentile.for.sla").toString());
+      propMap.put(ServerConstants.PERCENTAGE_FOR_LOSS,
+          p.get("percentage.for.loss").toString());
+      propMap.put(ServerConstants.PERCENTAGE_FOR_WARN,
+          p.get("percentage.for.warn").toString());
+      propMap.put(ServerConstants.MAX_START_TIME, p.get("max.start.time")
+          .toString());
+      propMap.put(ServerConstants.MAX_TIME_RANGE_INTERVAL_IN_HOURS,
+          p.get("max.time.range.interval.in.hours").toString());
+      propMap.put(ServerConstants.LOSS_WARN_THRESHOLD_DIFF_IN_MINS,
+          p.get("loss.warn.threshold.diff.in.mins").toString());
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException("Error while initializing propMap:" + e.getMessage());
+    }
+  }
+
+  public boolean set(String key, String value) {
+    try {
+      propMap.put(key, value);
       return true;
     } catch (IllegalArgumentException e) {
       return false;
     }
   }
 
-  public static String get(PropNames name) {
-    return propMap.get(name.name());
+  public String get(String name) {
+    return propMap.get(name);
   }
 
 }
