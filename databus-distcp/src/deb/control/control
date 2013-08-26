@@ -1,0 +1,9 @@
+Package: hadoop-distcp
+Version: [[project.version]] 
+Section:  misc
+Priority: high
+Architecture: all
+Pre-Depends: sun-java6-jre | java2-runtime
+Maintainer: Inmobi
+Description: Distcp is tool  used to copy data across hadoop cluster
+Distribution: alpha
