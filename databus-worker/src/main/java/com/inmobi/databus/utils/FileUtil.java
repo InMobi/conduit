@@ -48,15 +48,18 @@ public class FileUtil {
           incrementReceived(decodedMsg, received);
         }
         compressedOut.write(msg);
+        // compressedOut.flush();
+        
       }
       // IOUtils.copyBytes(in, compressedOut, conf);
     } catch (Exception e) {
       LOG.error("Error in compressing ", e);
     } finally {
-      in.close();
-      CodecPool.returnCompressor(gzipCompressor);
       compressedOut.close();
+      in.close();
       out.close();
+      CodecPool.returnCompressor(gzipCompressor);
+      
     }
   }
 

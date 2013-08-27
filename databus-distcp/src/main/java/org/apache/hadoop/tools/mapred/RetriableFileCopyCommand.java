@@ -20,8 +20,10 @@ package org.apache.hadoop.tools.mapred;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.Map;
@@ -43,7 +45,6 @@ import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.tools.util.RetriableCommand;
 import org.apache.hadoop.tools.util.ThrottledInputStream;
-import org.apache.hadoop.util.LineReader;
 
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -188,25 +189,27 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     // Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
 
     final CompressionCodec codec = compressionCodecs.getCodec(source);
-    int totalBytes;
     Text txt = new Text();
+    InputStream compressedIn = null;
+    OutputStream commpressedOut = null;
+    BufferedReader reader = null;
 
     try {
       inStream = getInputStream(source, context.getConfiguration());
-      InputStream compressedIn = codec.createInputStream(inStream);
-      OutputStream commpressedOut = codec.createOutputStream(outStream);
-      LineReader reader = new LineReader(compressedIn,
-          context.getConfiguration(), null);
-      byte[] bytesRead = readLine(reader, txt);
+      compressedIn = codec.createInputStream(inStream);
+      commpressedOut = codec.createOutputStream(outStream);
+      // LineReader reader = new LineReader(compressedIn,
+      // context.getConfiguration(), null);
+      reader = new BufferedReader(new InputStreamReader(compressedIn));
+      byte[] bytesRead = readLine(reader);
       while (bytesRead != null) {
-        // totalBytesRead += bytesRead.length;
         commpressedOut.write(bytesRead);
         updateContextStatus(totalBytesRead, context, sourceFileStatus);
         byte[] decodedMsg = Base64.decodeBase64(bytesRead);
         if (received != null) {
           incrementReceived(decodedMsg, received);
         }
-        bytesRead = readLine(reader, txt);
+        bytesRead = readLine(reader);
       }
       context.getCounter(CopyMapper.Counter.SLEEP_TIME_MS).
           increment(inStream.getTotalSleepTime());
@@ -215,6 +218,12 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       if (mustCloseStream) {
         IOUtils.cleanup(LOG, inStream);
         try {
+          if (reader != null)
+            reader.close();
+          if (compressedIn != null)
+            compressedIn.close();
+          if (commpressedOut != null)
+            commpressedOut.close();
           outStream.close();
         }
         catch(IOException exception) {
@@ -266,13 +275,13 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     }
   }
 
-  private static byte[] readLine(LineReader reader, Text txt)
+  private static byte[] readLine(BufferedReader reader)
       throws IOException {
-    int compressedBytesRead = reader.readLine(txt);
+    String line = reader.readLine();
 
-    if (compressedBytesRead == 0)
+    if (line == null)
       return null;
-    return txt.toString().getBytes();
+    return line.getBytes();
 
   }
 
