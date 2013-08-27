@@ -336,17 +336,17 @@ function addListToInfoPanel(n, isCountView) {
   c.style.fontWeight = "bold";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Name";
+  c.innerHTML = "Name:";
   c = r.insertCell(1);
   c.innerHTML = n.name;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Tier";
+  c.innerHTML = "Tier:";
   c = r.insertCell(1);
   c.innerHTML = n.tier;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Cluster";
+  c.innerHTML = "Cluster:";
   c = r.insertCell(1);
   if (isCountView) {
     c.innerHTML =
@@ -356,13 +356,13 @@ function addListToInfoPanel(n, isCountView) {
       n.cluster + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
-    c.innerHTML = "Name";
+    c.innerHTML = "Aggregate Received:";
     c = r.insertCell(1);
     c.innerHTML = n.aggregatemessagesreceived;
     if (n.tier == "agent" || n.tier == "collector") {
       r = t.insertRow(currentRow++);
       c = r.insertCell(0);
-      c.innerHTML = "Aggregate Sent";
+      c.innerHTML = "Aggregate Sent:";
       c = r.insertCell(1);
       c.innerHTML = n.aggregatemessagesent;
     }
