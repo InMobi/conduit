@@ -658,17 +658,17 @@ function linkclick(l) {
   c.style.fontWeight = "bold";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Source Name:";
+  c.innerHTML = "Target Name:";
   c = r.insertCell(1);
   c.innerHTML = l.source.name;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Source Tier:";
+  c.innerHTML = "Target Tier:";
   c = r.insertCell(1);
   c.innerHTML = l.source.tier;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Source Cluster:";
+  c.innerHTML = "Target Cluster:";
   c = r.insertCell(1);
   c.innerHTML =
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
@@ -678,17 +678,17 @@ function linkclick(l) {
     l.source.cluster + "</button>";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Target Name:";
+  c.innerHTML = "Source Name:";
   c = r.insertCell(1);
   c.innerHTML = l.target.name;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Target Tier:";
+  c.innerHTML = "Source Tier:";
   c = r.insertCell(1);
   c.innerHTML = l.target.tier;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Target Cluster:";
+  c.innerHTML = "Source Cluster:";
   c = r.insertCell(1);
   c.innerHTML =
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
