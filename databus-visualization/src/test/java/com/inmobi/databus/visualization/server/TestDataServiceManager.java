@@ -6,12 +6,13 @@ import com.inmobi.databus.visualization.server.util.TestUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 
+import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class TestDataServiceManager {
   DataServiceManagerTest serviceManager;
-  SimpleDateFormat auditDateFormatter = new SimpleDateFormat("dd-MM-yy-mm:HH");
+  SimpleDateFormat auditDateFormatter = new SimpleDateFormat("dd-MM-yy-HH:mm");
 
   @Test
   public void testAuditStreamNotAdded() {
@@ -285,5 +286,37 @@ public class TestDataServiceManager {
         stream, cluster);
     filterMap = serviceManager.getFilterMap(filterValues);
     Assert.assertEquals(cluster, filterMap.get(ServerConstants.CLUSTER_FILTER));
+  }
+
+  @Test
+  public void testCheckIfNodesPassFilters() {
+
+  }
+
+  @Test
+  public void testGetNodes() {
+    Connection connection = null;
+    try {
+      connection = TestUtil.setupDB();
+      serviceManager = DataServiceManagerTest.get("" +
+          "./src/test/resources/xmlfolder2",
+          "./src/test/resources/visualization2.properties",
+          "./src/test/resources/audit-feeder.properties");
+      String startDate = auditDateFormatter.format(TestUtil.incrementDate
+          (TestUtil.getCurrentDate(), -1));
+      String endDate = auditDateFormatter.format(TestUtil.incrementDate
+          (TestUtil.getCurrentDate(), 5));
+      String stream = "All";
+      String cluster = "All";
+      String filterValues = TestUtil.getFilterStringFromParameters(startDate,
+          endDate, stream, cluster);
+      String response = serviceManager.getData(filterValues);
+      List<Node> nodeList = TestUtil.getNodeListFromResponse(response);
+      Assert.assertEquals(8, nodeList.size());
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      TestUtil.shutDownDB(connection);
+    }
   }
 }

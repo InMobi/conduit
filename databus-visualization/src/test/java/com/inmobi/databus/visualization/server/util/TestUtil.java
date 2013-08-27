@@ -1,23 +1,26 @@
 package com.inmobi.databus.visualization.server.util;
 
-import com.google.protobuf.gwt.client.ClientJsonStreamFactory;
 import com.google.protobuf.gwt.server.ServerJsonStreamFactory;
 import com.inmobi.databus.audit.Column;
 import com.inmobi.databus.audit.LatencyColumns;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.audit.util.AuditDBConstants;
+import com.inmobi.databus.audit.util.AuditDBHelper;
+import com.inmobi.databus.visualization.server.MessageStats;
+import com.inmobi.databus.visualization.server.Node;
 import com.inmobi.databus.visualization.server.NodeKey;
 import com.inmobi.databus.visualization.shared.RequestResponse;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assert;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 public class TestUtil {
 
@@ -100,11 +103,20 @@ public class TestUtil {
     String table = config.getString(UtilConstants.TABLE_NAME);
 
     Connection connection = getConnection(driverName, url, username, password);
-    Assert.assertTrue(dropTable(connection, table));
-    Assert.assertTrue(createTable(connection, table));
+    dropTable(connection, table);
+    createTable(connection, table);
     String insertStatement = getInsertStatement(table);
     PreparedStatement preparedStatement = connection.prepareStatement
         (insertStatement);
+    AuditDBHelper dbHelper = new AuditDBHelper(config);
+    Assert.assertTrue(dbHelper.update(new HashSet<Tuple>(tupleList)));
+    ResultSet rs = connection.prepareStatement("select * from "+table+";")
+        .executeQuery();
+    int ki = rs.getFetchSize();
+    while (rs.next()) {
+      System.out.println(rs.getString(1));
+    }
+    /*
     for (Tuple tuple : tupleList) {
       int index = 1;
       Map<LatencyColumns, Long> latencyCountMap = tuple.getLatencyCountMap();
@@ -124,7 +136,7 @@ public class TestUtil {
     }
     preparedStatement.executeBatch();
     connection.commit();
-    preparedStatement.close();
+    preparedStatement.close();*/
     return connection;
   }
 
@@ -144,11 +156,20 @@ public class TestUtil {
 
   private static Connection getConnection(String driverName, String url,
                                           String username,
-                                          String password) throws Exception {
+                                          String password) {
     LOG.debug("Connecting to Test DB");
-    Class.forName(driverName).newInstance();
-    Connection connection = DriverManager.getConnection(url, username, password);
-    connection.setAutoCommit(false);
+    try {
+      Class.forName(driverName).newInstance();
+    } catch (Exception e) {
+      LOG.error("Exception while registering jdbc driver ", e);
+    }
+    Connection connection = null;
+    try {
+      connection = DriverManager.getConnection(url, username, password);
+      connection.setAutoCommit(false);
+    } catch (SQLException e) {
+      LOG.error("Exception while creating db connection ", e);
+    }
     Assert.assertTrue(connection != null);
     LOG.debug("Connected to Test DB");
     return connection;
@@ -177,10 +198,12 @@ public class TestUtil {
   }
 
   public static void shutDownDB(Connection connection) {
-    try {
-      connection.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
+    if (connection != null) {
+      try {
+        connection.close();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -257,5 +280,97 @@ public class TestUtil {
   public static Tuple getVipTuple() {
     return new Tuple("testCluster1", "VIP", "testCluster1",
         currentDate, null);
+  }
+
+  public static Date getCurrentDate() {
+    return currentDate;
+  }
+
+  public static Date incrementDate(Date date, int i) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    calendar.add(Calendar.MINUTE, i);
+    return calendar.getTime();
+  }
+
+  public static List<Node> getNodeListFromResponse(String dataString) {
+    List<Node> nodeList = new ArrayList<Node>();
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ServerJsonStreamFactory.getInstance()
+              .createNewStreamFromJson(dataString)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    String jsonString = response.getGraphDataResponse().getJsonString();
+    try {
+      JSONObject dataObject = new JSONObject(jsonString);
+      JSONArray nodeArray = dataObject.getJSONArray("nodes");
+      for ( int i = 0; i < nodeArray.length(); i++) {
+        JSONObject nodeObj = nodeArray.getJSONObject(i);
+        Node node = new Node(nodeObj.getString("name"),
+            nodeObj.getString("cluster"), nodeObj.getString("tier"));
+        node.setAggregateMessagesReceived(nodeObj.getLong("aggregatereceived"));
+        node.setAggregateMessagesSent(nodeObj.getLong("aggregatesent"));
+        List<MessageStats> receivedList = new ArrayList<MessageStats>();
+        JSONArray receivedArray = nodeObj.getJSONArray
+            ("receivedtopicStatsList");
+        for (int j = 0; j < receivedArray.length(); j++) {
+          JSONObject messageObj = receivedArray.getJSONObject(j);
+          MessageStats messageStats = new MessageStats(messageObj.getString
+              ("topic"), messageObj.getLong("messages"),
+              messageObj.getString("hostname"));
+          receivedList.add(messageStats);
+        }
+        node.setReceivedMessagesList(receivedList);
+        List<MessageStats> sentList = new ArrayList<MessageStats>();
+        JSONArray sentArray = nodeObj.getJSONArray
+            ("senttopicStatsList");
+        for (int j = 0; j < sentArray.length(); j++) {
+          JSONObject messageObj = sentArray.getJSONObject(j);
+          MessageStats messageStats = new MessageStats(messageObj.getString
+              ("topic"), messageObj.getLong("messages"),
+              messageObj.getString("hostname"));
+          sentList.add(messageStats);
+        }
+        node.setSentMessagesList(sentList);
+        if ((node.getTier().equalsIgnoreCase("merge") ||
+            node.getTier().equalsIgnoreCase("mirror"))) {
+          JSONArray sourceArray = nodeObj.getJSONArray("source");
+          Set<String> sourceSet = new HashSet<String>();
+          for (int j = 0; j < sourceArray.length(); j++) {
+            sourceSet.add(sourceArray.getString(j));
+          }
+          node.setSourceList(sourceSet);
+        }
+        JSONArray percentileLatencyArray = nodeObj.getJSONArray
+            ("overallLatency");
+        Map<Float, Integer> percentileMap = new HashMap<Float, Integer>();
+        for (int j=0; j < percentileLatencyArray.length(); j++) {
+          JSONObject obj = percentileLatencyArray.getJSONObject(j);
+          percentileMap.put((Float) obj.get("percentile"), obj.getInt("latency"));
+        }
+        node.setPercentileMap(percentileMap);
+        JSONArray topicPercentileArray = nodeObj.getJSONArray("topicLatency");
+        for (int j = 0; j < topicPercentileArray.length(); j++) {
+          JSONObject topicMapObj = topicPercentileArray.getJSONObject(j);
+          String topic = topicMapObj.getString("topic");
+          JSONArray topicMapArray = topicMapObj.getJSONArray
+              ("percentileLatencyList");
+          Map<Float, Integer> topicPercentileMap = new HashMap<Float, Integer>();
+          for (int k=0; k< topicMapArray.length(); k++) {
+            JSONObject percentileLatencyObj = topicMapArray.getJSONObject(k);
+            topicPercentileMap.put((Float) percentileLatencyObj.get("percentile"),
+                percentileLatencyObj.getInt("latency"));
+          }
+          node.addToTopicPercentileMap(topic, topicPercentileMap);
+        }
+        nodeList.add(node);
+      }
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+    return nodeList;
   }
 }

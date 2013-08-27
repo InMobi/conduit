@@ -207,6 +207,14 @@ public class Node {
     return nodeKey;
   }
 
+  public void setAggregateMessagesSent(Long aggregateMessagesSent) {
+    this.aggregateMessagesSent = aggregateMessagesSent;
+  }
+
+  public void setAggregateMessagesReceived(Long aggregateMessagesReceived) {
+    this.aggregateMessagesReceived = aggregateMessagesReceived;
+  }
+
   public void setReceivedMessagesList(List<MessageStats> receivedMessagesList) {
     this.receivedMessagesList = receivedMessagesList;
     if (this.receivedMessagesList.size() > 0) {
@@ -220,6 +228,10 @@ public class Node {
     if (this.sentMessagesList.size() > 0) {
       aggregateMessagesSent = calculateAggregateMessages(this.sentMessagesList);
     }
+  }
+
+  public void setPercentileMap(Map<Float, Integer> percentileMap) {
+    this.percentileMap = percentileMap;
   }
 
   public void setSourceList(Set<String> sourceList) {
