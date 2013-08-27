@@ -658,26 +658,6 @@ function linkclick(l) {
   c.style.fontWeight = "bold";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Target Name:";
-  c = r.insertCell(1);
-  c.innerHTML = l.source.name;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Target Tier:";
-  c = r.insertCell(1);
-  c.innerHTML = l.source.tier;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Target Cluster:";
-  c = r.insertCell(1);
-  c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
-    l.source
-    .cluster +
-    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
-    l.source.cluster + "</button>";
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
   c.innerHTML = "Source Name:";
   c = r.insertCell(1);
   c.innerHTML = l.target.name;
@@ -696,6 +676,26 @@ function linkclick(l) {
     .cluster +
     "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.target.cluster + "</button>";
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Name:";
+  c = r.insertCell(1);
+  c.innerHTML = l.source.name;
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Tier:";
+  c = r.insertCell(1);
+  c.innerHTML = l.source.tier;
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Cluster:";
+  c = r.insertCell(1);
+  c.innerHTML =
+    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+    l.source
+    .cluster +
+    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+    l.source.cluster + "</button>";
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
     r = t.insertRow(currentRow++);
