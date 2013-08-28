@@ -16,6 +16,7 @@ package com.inmobi.databus.distcp;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -248,10 +249,13 @@ public class MirrorStreamService extends DistcpBaseService {
    * minute to the path return its equivalent on source cluster.If not found
    * than it would check on the source cluster to compute the first merged path
    * and would return that. This method can return null in cases where its not
-   * able to calculate the starting directory
+   * able to calculate the starting directory. Also it compares the last
+   * directory on the destination with corresponding dir on source to find
+   * uncopied files
    */
   @Override
-  protected Path getStartingDirectory(String stream) throws IOException {
+  protected Path getStartingDirectory(String stream,
+      List<FileStatus> filesToBeCopied) throws IOException {
     Path finalDestDir = new Path(destCluster.getFinalDestDirRoot());
     Path streamFinalDestDir = new Path(finalDestDir, stream);
     Path finalSrcDir = new Path(srcCluster.getFinalDestDirRoot());
@@ -278,8 +282,40 @@ public class MirrorStreamService extends DistcpBaseService {
 
       Date date = CalendarHelper.getDateFromStreamDir(streamFinalDestDir,
           lastMirroredPath);
+      Path correspondingMergePath = CalendarHelper.getPathFromDate(date,
+          streamFinalSrctDir);
+      List<FileStatus> files = findDifferentFiles(
+          getSrcFs().listStatus(correspondingMergePath), getDestFs()
+              .listStatus(lastMirroredPath));
+      if (files != null)
+        filesToBeCopied.addAll(files);
       result = CalendarHelper.getNextMinutePathFromDate(date,
           streamFinalSrctDir);
+    }
+    return result;
+  }
+
+  /*
+   * Return files which are present in first array and not present in second
+   */
+  private List<FileStatus> findDifferentFiles(FileStatus[] files1,
+      FileStatus[] files2) {
+    if (files2 == null || files2.length == 0)
+      return Arrays.asList(files1);
+    if (files1 == null || files1.length == 0)
+      return new ArrayList<FileStatus>();
+    List<FileStatus> result = new ArrayList<FileStatus>();
+    for (FileStatus filestatus1 : files1) {
+      boolean found = false;
+      for (FileStatus filestatus2 : files2) {
+        if (filestatus1.getPath().getName()
+            .equalsIgnoreCase(filestatus2.getPath().getName())) {
+          found = true;
+          break;
+        }
+      }
+      if (!found)
+        result.add(filestatus1);
     }
     return result;
   }

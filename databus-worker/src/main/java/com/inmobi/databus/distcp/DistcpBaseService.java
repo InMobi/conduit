@@ -15,6 +15,7 @@ package com.inmobi.databus.distcp;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -174,7 +175,8 @@ public abstract class DistcpBaseService extends AbstractService {
   }
 
 
-  protected abstract Path getStartingDirectory(String stream) throws IOException;
+  protected abstract Path getStartingDirectory(String stream,
+      List<FileStatus> filesToBeCopied) throws IOException;
 
   /*
    * Return a map of destination path,source path file status Since the map uses
@@ -193,6 +195,7 @@ public abstract class DistcpBaseService extends AbstractService {
       Path inputPath = new Path(getInputPath(), stream);
       Path lastCheckPointPath = null;
       Path nextPath = null;
+      List<FileStatus> filesLastCopiedDir;
       if (value != null) {
         String checkPointValue = new String(value);
         // creating a path object from empty string throws exception;hence
@@ -212,11 +215,22 @@ public abstract class DistcpBaseService extends AbstractService {
         }
       }
       if (nextPath == null) {
+        filesLastCopiedDir = new ArrayList<FileStatus>();
         LOG.info("Finding the starting directoryfor stream [" + stream + "]");
-        nextPath = getStartingDirectory(stream);
+        nextPath = getStartingDirectory(stream, filesLastCopiedDir);
         if (nextPath == null) {
           LOG.debug("No start directory found,returning the empty result");
           continue;
+        }
+        LOG.debug("Uncopied Files from directory last copied are "
+            + FileUtil.toStringOfFileStatus(filesLastCopiedDir));
+        for (FileStatus fileStatus : filesLastCopiedDir) {
+          String destnPath = getFinalDestinationPath(fileStatus);
+          if (destnPath != null) {
+            LOG.info("Adding to input of Distcp.Move [" + fileStatus.getPath()
+                + "] to " + destnPath);
+            result.put(destnPath, fileStatus);
+          }
         }
       }
       LOG.info("Starting directory for stream [" + stream + "]" + " is ["

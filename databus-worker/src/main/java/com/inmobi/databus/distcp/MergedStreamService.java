@@ -36,6 +36,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 
 /*
  * Handles MergedStreams for a Cluster
@@ -231,13 +232,7 @@ public class MergedStreamService extends DistcpBaseService {
 
   }
 
-  private String toStringOfFileStatus(List<FileStatus> list) {
-    StringBuffer str = new StringBuffer();
-    for (FileStatus f : list) {
-      str.append(f.getPath().toString()).append(",");
-    }
-    return str.toString();
-  }
+
 
   private boolean isValidYYMMDDHHMMPath(Path prefix, Path path) {
     if (path.depth() < prefix.depth() + 5)
@@ -260,9 +255,15 @@ public class MergedStreamService extends DistcpBaseService {
    * searched in the all the folders of source. One minute would be added to the
    * found path and would be returned. If we cannot compute the starting
    * directory by this way than the first path on the source would be returned.
+   * Also during migration from V1 to V2 there is a possibility that some paths
+   * of the last minute directory found at source may still not be copied (due
+   * to ytm file) hence returning the uncopied path of last directory as well
+   * 
+   * @throws IOException
    */
   @Override
-  protected Path getStartingDirectory(String stream) {
+  protected Path getStartingDirectory(String stream,
+      List<FileStatus> filesToBeCopied) throws IOException {
     LOG.info("Finding starting directory for merge stream from SrcCluster "
         + srcCluster.getName() + " to Destination cluster "
         + destCluster.getName() + " for stream " + stream);
@@ -276,7 +277,7 @@ public class MergedStreamService extends DistcpBaseService {
         filterInvalidPaths(destnFiles, pathToBeListed);
         Collections.sort(destnFiles, new DatePathComparator());
         LOG.debug("File found on destination after sorting for stream" + stream
-            + " are " + toStringOfFileStatus(destnFiles));
+            + " are " + FileUtil.toStringOfFileStatus(destnFiles));
       }
     } catch (IOException e) {
       LOG.error("Error while listing path" + pathToBeListed
@@ -291,7 +292,7 @@ public class MergedStreamService extends DistcpBaseService {
         filterInvalidPaths(sourceFiles, pathToBeListed);
         Collections.sort(sourceFiles, new DatePathComparator());
         LOG.debug("File found on source after sorting for stream" + stream
-            + " are " + toStringOfFileStatus(sourceFiles));
+            + " are " + FileUtil.toStringOfFileStatus(sourceFiles));
       }
     } catch (IOException e) {
       LOG.error("Error while listing path" + pathToBeListed + " on source Fs");
@@ -330,8 +331,16 @@ public class MergedStreamService extends DistcpBaseService {
       }
 
     } else {
-      // Starting path was computed from source files;adding one minute to the
-      // found path to get the starting directory
+      // Starting path was computed from source files
+      // checking whether last directory was completely copied
+      FileStatus[] filesInLastDir = getSrcFs().listStatus(lastLocalPathOnSrc);
+      for (FileStatus fileStatus : filesInLastDir) {
+        if (searchFileInSource(fileStatus, destnFiles) == null) {
+          // file present in source but absent in destination
+          filesToBeCopied.add(fileStatus);
+        }
+      }
+      // adding one minute to the found path to get the starting directory
       Path streamLevelLocalDir = new Path(getSrcCluster()
           .getLocalFinalDestDirRoot() + stream);
       Date date = CalendarHelper.getDateFromStreamDir(streamLevelLocalDir,

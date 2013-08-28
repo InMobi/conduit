@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -123,5 +124,13 @@ public class FileUtil {
       return new FileStatus[0];
     return null;
 
+  }
+
+  public static String toStringOfFileStatus(List<FileStatus> list) {
+    StringBuffer str = new StringBuffer();
+    for (FileStatus f : list) {
+      str.append(f.getPath().toString()).append(",");
+    }
+    return str.toString();
   }
 }
