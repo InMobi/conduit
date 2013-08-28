@@ -336,17 +336,17 @@ function addListToInfoPanel(n, isCountView) {
   c.style.fontWeight = "bold";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Name";
+  c.innerHTML = "Name:";
   c = r.insertCell(1);
   c.innerHTML = n.name;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Tier";
+  c.innerHTML = "Tier:";
   c = r.insertCell(1);
   c.innerHTML = n.tier;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Cluster";
+  c.innerHTML = "Cluster:";
   c = r.insertCell(1);
   if (isCountView) {
     c.innerHTML =
@@ -356,13 +356,13 @@ function addListToInfoPanel(n, isCountView) {
       n.cluster + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
-    c.innerHTML = "Name";
+    c.innerHTML = "Aggregate Received:";
     c = r.insertCell(1);
     c.innerHTML = n.aggregatemessagesreceived;
     if (n.tier == "agent" || n.tier == "collector") {
       r = t.insertRow(currentRow++);
       c = r.insertCell(0);
-      c.innerHTML = "Aggregate Sent";
+      c.innerHTML = "Aggregate Sent:";
       c = r.insertCell(1);
       c.innerHTML = n.aggregatemessagesent;
     }
@@ -660,35 +660,15 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Source Name:";
   c = r.insertCell(1);
-  c.innerHTML = l.source.name;
+  c.innerHTML = l.target.name;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Source Tier:";
   c = r.insertCell(1);
-  c.innerHTML = l.source.tier;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Source Cluster:";
-  c = r.insertCell(1);
-  c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
-    l.source
-    .cluster +
-    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
-    l.source.cluster + "</button>";
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Target Name:";
-  c = r.insertCell(1);
-  c.innerHTML = l.target.name;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Target Tier:";
-  c = r.insertCell(1);
   c.innerHTML = l.target.tier;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Target Cluster:";
+  c.innerHTML = "Source Cluster:";
   c = r.insertCell(1);
   c.innerHTML =
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
@@ -696,6 +676,26 @@ function linkclick(l) {
     .cluster +
     "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.target.cluster + "</button>";
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Name:";
+  c = r.insertCell(1);
+  c.innerHTML = l.source.name;
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Tier:";
+  c = r.insertCell(1);
+  c.innerHTML = l.source.tier;
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Cluster:";
+  c = r.insertCell(1);
+  c.innerHTML =
+    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+    l.source
+    .cluster +
+    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+    l.source.cluster + "</button>";
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
     r = t.insertRow(currentRow++);
