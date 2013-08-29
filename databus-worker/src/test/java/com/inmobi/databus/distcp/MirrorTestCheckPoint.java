@@ -113,33 +113,31 @@ public class MirrorTestCheckPoint {
     Map<String, List<String>> srcRemoteMirrorMap = new HashMap<String, List<String>>();
     Map<String, Set<String>> mirrorSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
     for (Cluster cluster : config.getClusters().values()) {
-      for (DestinationStream stream : cluster.getDestinationStreams().values()) {
-        if (!stream.isPrimary()) {
-          Cluster remote = config.getPrimaryClusterForDestinationStream(stream
-              .getName());
-          if (remote != null) {
-            if (mirrorSrcClusterToStreamsMap.get(remote.getName()) != null) {
-              mirrorSrcClusterToStreamsMap.get(remote.getName()).add(
-                  stream.getName());
-            } else {
-              Set<String> tmp = new HashSet<String>();
-              tmp.add(stream.getName());
-              mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
-            }
-          }
+      for(DestinationStream stream:cluster.getDestinationStreams().values()){
+        if(!stream.isPrimary()){
+         Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
+         if(remote!=null){
+           if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
+             mirrorSrcClusterToStreamsMap.get(remote.getName()).add(stream.getName());
+           }else {
+             Set<String> tmp = new HashSet<String>();
+             tmp.add(stream.getName());
+             mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
+           }  
+         }
         }
       }
-      for (String remote : mirrorSrcClusterToStreamsMap.keySet()) {
+      for(String remote:mirrorSrcClusterToStreamsMap.keySet()){
         Cluster srcCluster = config.getClusters().get(remote);
         MirrorStreamService service = new TestMirrorStreamService(config,
             srcCluster, cluster, cluster,
             mirrorSrcClusterToStreamsMap.get(remote));
         service.execute();
-        if (srcRemoteMirrorMap.get(remote) == null) {
+        if(srcRemoteMirrorMap.get(remote)==null){
           List<String> tmp = new ArrayList<String>();
           tmp.add(cluster.getName());
           srcRemoteMirrorMap.put(remote, tmp);
-        } else {
+        }else{
           srcRemoteMirrorMap.get(remote).add(cluster.getName());
         }
       }
@@ -232,7 +230,8 @@ public class MirrorTestCheckPoint {
     Cluster srcCluster = config.getClusters().get("testcluster1");
     String finalRelativePath = pathToBeCreated.toString();
     String srcRootDir = new Path(srcCluster.getRootDir()).toString();
-    String tmp = finalRelativePath.substring(srcRootDir.length() + 1,
+    String tmp = finalRelativePath.substring(
+srcRootDir.length() + 1,
         finalRelativePath.length());
     Path finalPath = remoteFs.makeQualified(new Path(destnCluster.getRootDir(),
         tmp));
@@ -256,8 +255,8 @@ public class MirrorTestCheckPoint {
         .equals(checkPointValue));
 
   }
-
-  /*
+  
+   /*
    * no distcp should be launched hence no paths on target
    */
   @Test
@@ -300,7 +299,8 @@ public class MirrorTestCheckPoint {
     Path checkPointPath1 = fStatus1.get(0).getPath().getParent();
     provider.checkpoint(checkPointKey1, checkPointPath1.toString().getBytes());
     launchMirrorServices(config);
-    Path pathToBeListed = new Path(destnCluster.getFinalDestDirRoot() + "test1");
+    Path pathToBeListed = new Path(destnCluster.getFinalDestDirRoot()
+        + "test1");
 
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
     List<FileStatus> results = new ArrayList<FileStatus>();

@@ -60,7 +60,7 @@ import com.inmobi.databus.utils.FileUtil;
  */
 
 public class LocalStreamService extends AbstractService implements
-    ConfigConstants {
+ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
 
@@ -70,7 +70,6 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
-
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -101,6 +100,8 @@ public class LocalStreamService extends AbstractService implements
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
   }
 
+
+
   private void cleanUpTmp(FileSystem fs) throws Exception {
     if (fs.exists(tmpPath)) {
       LOG.info("Deleting tmpPath recursively [" + tmpPath + "]");
@@ -124,8 +125,8 @@ public class LocalStreamService extends AbstractService implements
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
 
-      publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot(),
-          commitTime, streamsToProcess);
+      publishMissingPaths(fs,
+          srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
@@ -189,7 +190,6 @@ public class LocalStreamService extends AbstractService implements
     return mvPaths;
   }
 
-
   Map<Path, Path> populateTrashCommitPaths(Set<FileStatus> trashSet) {
     // find trash paths
     Map<Path, Path> trashPaths = new TreeMap<Path, Path>();
@@ -222,19 +222,24 @@ public class LocalStreamService extends AbstractService implements
 
   }
 
-  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
+  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
+      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
-    trashSet, checkpointPaths);
-    
+        trashSet, checkpointPaths);
+
+    // if file listing is empty, simply return
+    if (fileListing.isEmpty()) {
+      return 0;
+    }
+
     // the total size of data present in all files
     long totalSize = 0;
     SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-      inputPath, Text.class, FileStatus.class);
+        inputPath, Text.class, FileStatus.class);
     try {
-      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
-          .iterator();
+      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
         FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
@@ -244,13 +249,13 @@ public class LocalStreamService extends AbstractService implements
         // Reader can work at file entry level granularity, given that SequenceFile
         // Reader reads from the starting of sync point.
         out.sync();
-        
+
         totalSize += entry.getKey().getLen();
       }
     } finally {
       out.close();
     }
-    
+
     return totalSize;
   }
 

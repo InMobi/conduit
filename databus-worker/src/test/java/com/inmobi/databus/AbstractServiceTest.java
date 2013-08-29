@@ -13,9 +13,6 @@
  */
 package com.inmobi.databus;
 
-
 public interface AbstractServiceTest {
-
   public abstract Cluster getCluster();
-
 }

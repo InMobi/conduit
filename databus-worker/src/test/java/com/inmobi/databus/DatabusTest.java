@@ -56,8 +56,7 @@ public class DatabusTest extends TestMiniClusterUtil {
     
     @Override
     protected MergedStreamService getMergedStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-        Set<String> streamsToProcess) throws
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster, Set<String> streamsToProcess) throws
         Exception {
       return new TestMergedStreamService(config,
  srcCluster, dstCluster,
@@ -66,8 +65,7 @@ public class DatabusTest extends TestMiniClusterUtil {
     
     @Override
     protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-        Set<String> streamsToProcess) throws
+        Cluster srcCluster, Cluster dstCluster, Cluster currentCluster, Set<String> streamsToProcess) throws
         Exception {
       return new TestMirrorStreamService(config,
  srcCluster, dstCluster,

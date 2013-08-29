@@ -40,8 +40,7 @@ public class TestMergedStreamService extends MergedStreamService
   private Date todaysdate = null;
   
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster,
-      Set<String> streamsToProcess) throws Exception {
+      Cluster destinationCluster, Cluster currentCluster, Set<String> streamsToProcess) throws Exception {
 
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
@@ -60,11 +59,13 @@ public class TestMergedStreamService extends MergedStreamService
     FileStatus lastFile = null;
     DatePathComparator comparator = new DatePathComparator();
     FileStatus[] fileStatuses = fs.listStatus(listPath);
+
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + listPath);
       if (fs.exists(listPath))
       lastFile = fs.getFileStatus(listPath);
     } else {
+
       for (FileStatus file : fileStatuses) { 
         if (file.isDir()) {
           lastFile = getAllFiles(file.getPath(), fs, fileList);
@@ -83,7 +84,6 @@ public class TestMergedStreamService extends MergedStreamService
   @Override
   protected void preExecute() throws Exception {
     try {
-      // PublishMissingPathsTest.testPublishMissingPaths(this, false);
       if (files != null)
         files.clear();
       files = null;
@@ -157,8 +157,10 @@ public class TestMergedStreamService extends MergedStreamService
               }
             } catch (NumberFormatException e) {
             }
+
           }
         }
+
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -183,7 +185,6 @@ public class TestMergedStreamService extends MergedStreamService
     postExecute();
   }
 
-  
   @Override
   public Cluster getCluster() {
     return destinationCluster;

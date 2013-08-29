@@ -38,7 +38,6 @@ import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 import com.inmobi.databus.utils.FileUtil;
 
-
 /*
  * Handles MergedStreams for a Cluster
  */
@@ -46,13 +45,12 @@ import com.inmobi.databus.utils.FileUtil;
 public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
-  private Map<String, Set<Path>> missingDirsCommittedPaths;
-  private Set<String> primaryCategories;
+
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
-      throws Exception {
+          throws Exception {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
@@ -60,11 +58,12 @@ public class MergedStreamService extends DistcpBaseService {
 
   @Override
   protected Path getDistCpTargetPath() {
-    return new Path(getDestCluster().getTmpPath(), "distcp_mergedStream_"
-        + getSrcCluster().getName() + "_" + getDestCluster().getName() + "_"
+    return new Path(getDestCluster().getTmpPath(),
+        "distcp_mergedStream_" + getSrcCluster().getName() + "_"
+        + getDestCluster().getName() + "_"
         + getServiceName(streamsToProcess)).makeQualified(getDestFs());
   }
-
+  
   @Override
   public void execute() throws Exception {
     LOG.info("Starting a run of service " + getName());
@@ -134,8 +133,8 @@ public class MergedStreamService extends DistcpBaseService {
 
   private void publishMissingPaths(long commitTime,
       Set<String> categoriesToCommit) throws Exception {
-    publishMissingPaths(getDestFs(), getDestCluster().getFinalDestDirRoot(),
-        commitTime, categoriesToCommit);
+    publishMissingPaths(getDestFs(),
+        getDestCluster().getFinalDestDirRoot(), commitTime, categoriesToCommit);
   }
 
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)
@@ -146,27 +145,27 @@ public class MergedStreamService extends DistcpBaseService {
       for (int i = 0; i < allFiles.length; i++) {
         String fileName = allFiles[i].getPath().getName();
         if (fileName != null) {
-          String category = getCategoryFromFileName(fileName,
-              streamsToProcess);
+          String category = getCategoryFromFileName(fileName, streamsToProcess);
           if (category != null) {
             Path intermediatePath = new Path(tmpOut, category);
             if (!getDestFs().exists(intermediatePath))
               getDestFs().mkdirs(intermediatePath);
             Path source = allFiles[i].getPath().makeQualified(getDestFs());
 
-            Path intermediateFilePath = new Path(
-                intermediatePath.makeQualified(getDestFs()).toString() +
-                    File.separator + fileName);
+            Path intermediateFilePath = new Path(intermediatePath
+                .makeQualified(getDestFs()).toString()
+                + File.separator
+                + fileName);
             if (getDestFs().rename(source, intermediateFilePath) == false) {
-              LOG.warn("Failed to Rename [" + source + "] to [" +
-                  intermediateFilePath + "]");
-              LOG.warn("Aborting Tranasction prepareForCommit to avoid data " +
-                  "LOSS. Retry would happen in next run");
-              throw new Exception("Rename [" + source + "] to [" +
-                  intermediateFilePath + "]");
+              LOG.warn("Failed to Rename [" + source + "] to ["
+                  + intermediateFilePath + "]");
+              LOG.warn("Aborting Tranasction prepareForCommit to avoid data "
+                  + "LOSS. Retry would happen in next run");
+              throw new Exception("Rename [" + source + "] to ["
+                  + intermediateFilePath + "]");
             }
-            LOG.debug("Moving [" + source + "] to intermediateFilePath [" +
-                intermediateFilePath + "]");
+            LOG.debug("Moving [" + source + "] to intermediateFilePath ["
+                + intermediateFilePath + "]");
             List<Path> fileList = categoriesToCommit.get(category);
             if (fileList == null) {
               fileList = new ArrayList<Path>();
@@ -206,10 +205,10 @@ public class MergedStreamService extends DistcpBaseService {
             category, commitTime));
         Path commitPath = new Path(destParentPath, filePath.getName());
         mvPaths.put(filePath, commitPath);
-        }
       }
-    return mvPaths;
     }
+    return mvPaths;
+  }
 
   private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
@@ -229,8 +228,8 @@ public class MergedStreamService extends DistcpBaseService {
   protected Path getInputPath() throws IOException {
     String finalDestDir = getSrcCluster().getLocalFinalDestDirRoot();
     return new Path(finalDestDir);
-  }
 
+  }
 
 
 
@@ -247,7 +246,7 @@ public class MergedStreamService extends DistcpBaseService {
         iterator.remove();
     }
   }
-  
+
   /**
    * This method would first try to find the starting directory by comparing the
    * destination files with source files. For eg: If a file
@@ -396,6 +395,7 @@ public class MergedStreamService extends DistcpBaseService {
     return null;
 
   }
+
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
     if (srcPath.isDir())
@@ -404,4 +404,5 @@ public class MergedStreamService extends DistcpBaseService {
       return File.separator + srcPath.getPath().getName();
 
   }
+
 }

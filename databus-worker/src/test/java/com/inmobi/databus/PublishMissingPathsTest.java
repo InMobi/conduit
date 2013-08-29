@@ -4,7 +4,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -67,9 +69,9 @@ public class PublishMissingPathsTest {
     fs.mkdirs(new Path(publishPaths));
     {
       Calendar todaysdate = new GregorianCalendar();
-      long commitTime = cluster.getCommitTime();
-      service.publishMissingPaths(fs, cluster.getLocalFinalDestDirRoot(),
-          commitTime, streamsToProcess);
+      long commitTime = cluster.getCommitTime();      
+      service.publishMissingPaths(fs,
+          cluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);
     }
@@ -77,8 +79,8 @@ public class PublishMissingPathsTest {
     {
       Calendar todaysdate = new GregorianCalendar();
       long commitTime = cluster.getCommitTime();
-      service.publishMissingPaths(fs, cluster.getLocalFinalDestDirRoot(),
-          commitTime, streamsToProcess);
+      service.publishMissingPaths(fs,
+          cluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       VerifyMissingPublishPaths(fs, todaysdate.getTimeInMillis(), behinddate,
           basepublishPaths);
     }

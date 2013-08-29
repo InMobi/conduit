@@ -441,7 +441,6 @@ public class Databus implements Service, DatabusConstants {
           }
         }
       });
-      
            if (enableZookeeper) {
         LOG.info("Starting CuratorLeaderManager for leader election ");
         databus.startCuratorLeaderManager(zkConnectString, databusClusterId, databus);

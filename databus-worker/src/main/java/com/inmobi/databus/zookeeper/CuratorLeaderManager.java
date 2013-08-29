@@ -92,4 +92,5 @@ public class CuratorLeaderManager implements LeaderSelectorListener {
       client.close();
     }
   }
+
 }

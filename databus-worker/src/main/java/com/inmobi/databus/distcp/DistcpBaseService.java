@@ -13,7 +13,6 @@
  */
 package com.inmobi.databus.distcp;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -64,7 +63,7 @@ public abstract class DistcpBaseService extends AbstractService {
       CheckpointProvider provider, Set<String> streamsToProcess)
       throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config,streamsToProcess);
+        config, streamsToProcess);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
@@ -81,6 +80,7 @@ public abstract class DistcpBaseService extends AbstractService {
       numOfDirPerDistcp = Integer.parseInt(tmp);
     } else
       numOfDirPerDistcp = DEFAULT_NUM_DIR_PER_DISTCP;
+
   }
 
   protected Cluster getSrcCluster() {
@@ -99,24 +99,17 @@ public abstract class DistcpBaseService extends AbstractService {
     return destFs;
   }
 
-  /**
-   * Set Common or default DistCp options here.
-   * 
-   * @param inputPathListing
-   * @param target
-   * @return options instance
-   */
 
 
-  protected Boolean executeDistCp(String serviceName,
+  protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
       throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
     conf.set("mapred.job.name", serviceName);
-
-    // The first argument 'sourceFileListing' to DistCpOptions is not needed now
+    
+    // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
     DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
@@ -138,9 +131,9 @@ public abstract class DistcpBaseService extends AbstractService {
    * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
-
+  
   /*
-   * @return the target path where distcp will copy paths from source cluster
+   * @return the target path where distcp will copy paths from source cluster 
    */
   protected abstract Path getDistCpTargetPath();
 
@@ -182,115 +175,112 @@ public abstract class DistcpBaseService extends AbstractService {
   }
 
 
-
-
   protected abstract Path getStartingDirectory(String stream,
       List<FileStatus> filesToBeCopied) throws IOException;
 
   /*
-  * Return a map of destination path,source path file status Since the map uses
-  * destination path as the key,no conflicting duplicates paths would be passed
-  * on to distcp
-  *
-  * @return
-  */
-    protected Map<String, FileStatus> getDistCPInputFile()
-        throws Exception {
-      Map<String,FileStatus> result = new HashMap<String, FileStatus>();
-      int pathsAlreadyAdded = 0;
-      for (String stream : streamsToProcess) {
-        LOG.info("Processing stream " + stream);
-        byte[] value = provider.read(getCheckPointKey(stream));
-        Path inputPath = new Path(getInputPath(), stream);
-        Path lastCheckPointPath = null;
-        Path nextPath = null;
-        List<FileStatus> filesLastCopiedDir;
-        if (value != null) {
-          String checkPointValue = new String(value);
-          // creating a path object from empty string throws exception;hence
-          // checking for it
-          if (!checkPointValue.trim().equals("")) {
-          lastCheckPointPath = new Path(checkPointValue);
-          }
-          if (lastCheckPointPath == null
-              || !getSrcFs().exists(lastCheckPointPath)) {
-            LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
-                + "] for stream " + stream + ";Ignoring it");
-          } else {
-            Date lastDate = CalendarHelper.getDateFromStreamDir(inputPath,
-                lastCheckPointPath);
-            nextPath = CalendarHelper.getNextMinutePathFromDate(lastDate,
-                inputPath);
-          }
+   * Return a map of destination path,source path file status Since the map uses
+   * destination path as the key,no conflicting duplicates paths would be passed
+   * on to distcp
+   * 
+   * @return
+   */
+  protected Map<String, FileStatus> getDistCPInputFile()
+      throws Exception {
+    Map<String,FileStatus> result = new HashMap<String, FileStatus>();
+    int pathsAlreadyAdded = 0;
+    for (String stream : streamsToProcess) {
+      LOG.info("Processing stream " + stream);
+      byte[] value = provider.read(getCheckPointKey(stream));
+      Path inputPath = new Path(getInputPath(), stream);
+      Path lastCheckPointPath = null;
+      Path nextPath = null;
+      List<FileStatus> filesLastCopiedDir;
+      if (value != null) {
+        String checkPointValue = new String(value);
+        // creating a path object from empty string throws exception;hence
+        // checking for it
+        if (!checkPointValue.trim().equals("")) {
+        lastCheckPointPath = new Path(checkPointValue);
         }
-        if (nextPath == null) {
-          filesLastCopiedDir = new ArrayList<FileStatus>();
-          LOG.info("Finding the starting directoryfor stream [" + stream + "]");
-          nextPath = getStartingDirectory(stream, filesLastCopiedDir);
-          if (nextPath == null) {
-            LOG.debug("No start directory found,returning the empty result");
-            continue;
-          }
-          LOG.debug("Uncopied Files from directory last copied are "
-              + FileUtil.toStringOfFileStatus(filesLastCopiedDir));
-          for (FileStatus fileStatus : filesLastCopiedDir) {
-            String destnPath = getFinalDestinationPath(fileStatus);
-            if (destnPath != null) {
-              LOG.info("Adding to input of Distcp.Move [" + fileStatus.getPath()
-                  + "] to " + destnPath);
-              result.put(destnPath, fileStatus);
-            }
-          }
-        }
-        LOG.info("Starting directory for stream [" + stream + "]" + " is ["
-            + nextPath + "]");
-        Date nextDate = CalendarHelper.getDateFromStreamDir(inputPath, nextPath);
-        // if next to next path exist than only add the next path so that the path
-        // being added to disctp input is not the current path
-        Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
-            inputPath);
-        Path lastPathAdded = null;
-        FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
-        FileStatus[] nextToNextPathFileStatus;
-        while (pathsAlreadyAdded <= numOfDirPerDistcp
-            && nextPathFileStatus != null
-            && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
-                nextToNextPath)) != null) {
-          if(nextPathFileStatus.length==0){
-            LOG.info(nextPath + " is an empty directory");
-            FileStatus srcFileStatus = srcFs.getFileStatus(nextPath);
-            String destnPath= getFinalDestinationPath(srcFileStatus);
-            if(destnPath!=null){
-              LOG.info("Adding to input of Distcp.Move ["+nextPath+"] to "+destnPath);
-              result.put(destnPath,srcFileStatus);
-            }
-          }
-          else{
-            for(FileStatus fStatus:nextPathFileStatus){
-              String destnPath = getFinalDestinationPath(fStatus);
-              if(destnPath!=null){
-                LOG.info("Adding to input of Distcp.Move ["+fStatus.getPath()+"] to "+destnPath);
-                result.put(destnPath,fStatus);
-              }
-            }
-          }
-          pathsAlreadyAdded++;
-          lastPathAdded = nextPath;
-          nextPath = nextToNextPath;
-          nextDate = CalendarHelper.addAMinute(nextDate);
-          nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
+        if (lastCheckPointPath == null
+            || !getSrcFs().exists(lastCheckPointPath)) {
+          LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
+              + "] for stream " + stream + ";Ignoring it");
+        } else {
+          Date lastDate = CalendarHelper.getDateFromStreamDir(inputPath,
+              lastCheckPointPath);
+          nextPath = CalendarHelper.getNextMinutePathFromDate(lastDate,
               inputPath);
-          nextPathFileStatus=nextToNextPathFileStatus;
-          nextToNextPathFileStatus=null;
         }
-        if (lastPathAdded != null) {
-          checkPointPaths.put(stream, lastPathAdded);
-        }
-
       }
-      return result;
-    }
+      if (nextPath == null) {
+        filesLastCopiedDir = new ArrayList<FileStatus>();
+        LOG.info("Finding the starting directoryfor stream [" + stream + "]");
+        nextPath = getStartingDirectory(stream, filesLastCopiedDir);
+        if (nextPath == null) {
+          LOG.debug("No start directory found,returning the empty result");
+          continue;
+        }
+        LOG.debug("Uncopied Files from directory last copied are "
+            + FileUtil.toStringOfFileStatus(filesLastCopiedDir));
+        for (FileStatus fileStatus : filesLastCopiedDir) {
+          String destnPath = getFinalDestinationPath(fileStatus);
+          if (destnPath != null) {
+            LOG.info("Adding to input of Distcp.Move [" + fileStatus.getPath()
+                + "] to " + destnPath);
+            result.put(destnPath, fileStatus);
+          }
+        }
+      }
+      LOG.info("Starting directory for stream [" + stream + "]" + " is ["
+          + nextPath + "]");
+      Date nextDate = CalendarHelper.getDateFromStreamDir(inputPath, nextPath);
+      // if next to next path exist than only add the next path so that the path
+      // being added to disctp input is not the current path
+      Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
+          inputPath);
+      Path lastPathAdded = null;
+      FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
+      FileStatus[] nextToNextPathFileStatus;
+      while (pathsAlreadyAdded <= numOfDirPerDistcp
+          && nextPathFileStatus != null
+          && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
+              nextToNextPath)) != null) {
+        if(nextPathFileStatus.length==0){
+          LOG.info(nextPath + " is an empty directory");
+          FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
+          String destnPath= getFinalDestinationPath(srcFileStatus);
+          if(destnPath!=null){
+            LOG.info("Adding to input of Distcp.Move ["+nextPath+"] to "+destnPath);
+            result.put(destnPath,srcFileStatus);
+          }
+        }
+        else{
+          for(FileStatus fStatus:nextPathFileStatus){
+            String destnPath = getFinalDestinationPath(fStatus);
+            if(destnPath!=null){
+              LOG.info("Adding to input of Distcp.Move ["+fStatus.getPath()+"] to "+destnPath);
+              result.put(destnPath,fStatus);
+            }
+          }
+        } 
+        pathsAlreadyAdded++;
+        lastPathAdded = nextPath;
+        nextPath = nextToNextPath;
+        nextDate = CalendarHelper.addAMinute(nextDate);
+        nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
+            inputPath);
+        nextPathFileStatus=nextToNextPathFileStatus;
+        nextToNextPathFileStatus=null;
+      }
+      if (lastPathAdded != null) {
+        checkPointPaths.put(stream, lastPathAdded);
+      }
 
+    }
+    return result;
+  }
 
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
 
@@ -298,6 +288,8 @@ public abstract class DistcpBaseService extends AbstractService {
     return getCheckPointKey(getClass().getSimpleName(), stream,
         srcCluster.getName());
   }
+
+ 
 
   protected void finalizeCheckPoints() {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
@@ -320,12 +312,12 @@ public abstract class DistcpBaseService extends AbstractService {
       // method was called
       if (stats != null) {
         if (stats.length == 0) {
-          results.add(fileStatus);
-          LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-        }
-        for (FileStatus stat : stats) {
-          createListing(fs, stat, results);
-        }
+        results.add(fileStatus);
+        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
+      }
+      for (FileStatus stat : stats) {
+        createListing(fs, stat, results);
+      }
       }
     } else {
       LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");

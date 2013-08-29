@@ -49,6 +49,7 @@ public class TestMirrorStreamService extends MirrorStreamService
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
   }
+  
   @Override
   protected void preExecute() throws Exception {
     try {
@@ -153,8 +154,6 @@ public class TestMirrorStreamService extends MirrorStreamService
     postExecute();
   }
 
-
-  
   @Override
   public Cluster getCluster() {
     return destinationCluster;

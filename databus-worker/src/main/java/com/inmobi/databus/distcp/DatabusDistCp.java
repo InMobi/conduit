@@ -83,24 +83,21 @@ public class DatabusDistCp extends DistCp {
         totalPaths++;
       }
     } finally {
-      if (fileListWriter != null) {
+      if (fileListWriter != null)  {
         fileListWriter.close();
       }
     }
-
+    
     LOG.info("Number of paths considered for copy: " + totalPaths);
     LOG.info("Number of bytes considered for copy: " + totalBytesToCopy
-        + " (Actual number of bytes copied depends on whether any files are "
-        + "skipped or overwritten.)");
-
+            + " (Actual number of bytes copied depends on whether any files are "
+            + "skipped or overwritten.)");
+    
     // set distcp configurations
-    config.set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH,
-        fileListingPath.toString());
-    config.setLong(DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED,
-        totalBytesToCopy);
-    config.setLong(DistCpConstants.CONF_LABEL_TOTAL_NUMBER_OF_RECORDS,
-        totalPaths);
-
+    config.set(DistCpConstants.CONF_LABEL_LISTING_FILE_PATH, fileListingPath.toString());
+    config.setLong(DistCpConstants.CONF_LABEL_TOTAL_BYTES_TO_BE_COPIED, totalBytesToCopy);
+    config.setLong(DistCpConstants.CONF_LABEL_TOTAL_NUMBER_OF_RECORDS, totalPaths);
+    
     return fileListingPath;
   }
 

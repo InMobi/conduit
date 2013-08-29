@@ -6,4 +6,8 @@
   <name>mapred.max.split.size</name>
   <value>2048</value>
 </property>
+<property>
+  <name>mapred.child.java.opts</name>
+  <value>-Xmx200m -Djava.security.krb5.realm= -Djava.security.krb5.kdc=</value>
+</property>
 </configuration>

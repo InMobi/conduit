@@ -95,7 +95,7 @@ public class MirrorStreamDataConsistencyValidation {
    * @param mirrorStreamDirPath: mirror stream dir path for finding   
    * 				minute dirs paths only
    * @param mergedStreamDirPath : merged stream dir path for finding 
-   * 			  minute dirs paths only
+   *        minute dirs paths only
    * @param inconsistentData : stores all the missed paths and data replay paths
    */
   void compareMergedAndMirror(List<Path> mergedStreamFiles, 
@@ -133,8 +133,8 @@ public class MirrorStreamDataConsistencyValidation {
         }
       } else {
         // System.out.println("match between   " + i + " and  " + j);
-      }	   
-    }	
+      }    
+    } 
     if((i == j) && i== mergedStreamFiles.size() && j == mirrorStreamFiles.
         size()) {
       System.out.println("There are no missing paths");
@@ -145,12 +145,12 @@ public class MirrorStreamDataConsistencyValidation {
       if(i == mergedStreamFiles.size() ) {
         for(;j < mirrorStreamFiles.size(); j++) {
           System.out.println("Extra files are in the Mirrored Stream: " + 
-              mirrorStreamFiles.get(j));	
+              mirrorStreamFiles.get(j));  
           inconsistentData.add(mirrorStreamFiles.get(j));
         }
       } else {
         for( ; i < mergedStreamFiles.size(); i++) {
-          System.out.println("To be Mirrored files: " + mergedStreamFiles.get(i));	
+          System.out.println("To be Mirrored files: " + mergedStreamFiles.get(i));  
           inconsistentData.add(mergedStreamFiles.get(i));
         }
       }

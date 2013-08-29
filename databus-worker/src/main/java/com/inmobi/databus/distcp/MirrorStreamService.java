@@ -46,7 +46,6 @@ import com.inmobi.databus.utils.DatePathComparator;
 public class MirrorStreamService extends DistcpBaseService {
   private static final Log LOG = LogFactory.getLog(MirrorStreamService.class);
 
-
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
@@ -58,11 +57,11 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected Path getInputPath() throws IOException {
-   String finalDestDir = getSrcCluster().getFinalDestDirRoot();
+    String finalDestDir = getSrcCluster().getFinalDestDirRoot();
 
     return new Path(finalDestDir);
   }
-
+  
   @Override
   protected Path getDistCpTargetPath() {
     return new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
@@ -122,7 +121,7 @@ public class MirrorStreamService extends DistcpBaseService {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey() + "] to [" + entry.getValue()
-      +"]");
+          + "]");
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue());
       } else {
@@ -163,7 +162,7 @@ public class MirrorStreamService extends DistcpBaseService {
      */
 
     Path tmpStreamRoot = new Path(tmpOut.makeQualified(getDestFs()).toString()
-    + File.separator + getSrcCluster().getUnqaulifiedFinalDestDirRoot());
+        + File.separator + getSrcCluster().getUnqaulifiedFinalDestDirRoot());
     LOG.debug("tmpStreamRoot [" + tmpStreamRoot + "]");
 
      /* tmpStreamRoot eg -
@@ -175,7 +174,7 @@ public class MirrorStreamService extends DistcpBaseService {
       * of paths within a stream*/
     FileStatus[] fileStatuses = getDestFs().listStatus(tmpStreamRoot);
 
-    //Retain the order of commitPaths
+    // Retain the order of commitPaths
     LinkedHashMap<FileStatus, Path> commitPaths = new LinkedHashMap<FileStatus, Path>();
     if (fileStatuses != null) {
       for (FileStatus streamRoot : fileStatuses) {
@@ -366,8 +365,8 @@ public class MirrorStreamService extends DistcpBaseService {
   }
 
   /*
-* Full path needs to be preserved for mirror stream
-*/
+   * Full path needs to be preserved for mirror stream
+   */
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
     return srcPath.getPath().toUri().getPath();

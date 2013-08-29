@@ -30,7 +30,7 @@ public class CalendarHelper {
   static String minDirFormatStr = "yyyy" + File.separator + "MM" +
       File.separator + "dd" + File.separator + "HH" + File.separator +"mm";
 
-  static final ThreadLocal<DateFormat> minDirFormat =
+  public static final ThreadLocal<DateFormat> minDirFormat =
       new ThreadLocal<DateFormat>() {
         @Override
         protected SimpleDateFormat initialValue() {
@@ -43,10 +43,6 @@ public class CalendarHelper {
   public static Date getDateFromStreamDir(Path streamDirPrefix, Path dir) {
     String pathStr = dir.toString();
     int startIndex = streamDirPrefix.toString().length() + 1;
-    /* logger.debug("StartIndex [" + startIndex + "] PathStr [" + pathStr
-   +"] endIndex [" +  (startIndex + minDirFormatStr.length()) + "] length ["
-   + pathStr.length() +"]");
-    */
     String dirString = pathStr.substring(startIndex,
         startIndex + minDirFormatStr.length());
     try {
@@ -169,6 +165,7 @@ public class CalendarHelper {
     return new Path(dirPrefix, suffix);
 
   }
+
   public static Path getNextMinutePathFromDate(Date date, Path dirPrefix) {
     return getPathFromDate(addAMinute(date), dirPrefix);
   }

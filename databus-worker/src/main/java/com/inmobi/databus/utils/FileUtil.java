@@ -79,7 +79,6 @@ public class FileUtil {
     }
     return null;
   }
-
   
   // This method is taken from DistCp SimpleCopyListing class.
   public static FileStatus getFileStatus(FileStatus fileStatus,

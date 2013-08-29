@@ -33,12 +33,14 @@ import com.inmobi.databus.utils.DatePathComparator;
 
 public class MergeTestCheckpoint {
 
-  private static final Log LOG = LogFactory.getLog(MergeTestCheckpoint.class);
+  private static final Log LOG = LogFactory
+      .getLog(MergeTestCheckpoint.class);
   private static final NumberFormat idFormat = NumberFormat.getInstance();
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
   }
+
 
   private static String getDateAsYYYYMMDDHHmm(Date date) {
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
@@ -77,20 +79,20 @@ public class MergeTestCheckpoint {
     Map<String, List<Path>> srcClusterToPathMap = new HashMap<String, List<Path>>();
     for (String stream : sourceClusters.keySet()) {
       for (String cluster : sourceClusters.get(stream)) {
-        Cluster srcCluster = config.getClusters().get(cluster);
-        List<Path> paths = new ArrayList<Path>();
-        FileSystem fs = FileSystem.getLocal(new Configuration());
+      Cluster srcCluster = config.getClusters().get(cluster);
+      List<Path> paths = new ArrayList<Path>();
+    FileSystem fs = FileSystem.getLocal(new Configuration());
         Path streamLevelDir = new Path(srcCluster.getLocalFinalDestDirRoot()
             + stream);
         paths.addAll(createData(fs, streamLevelDir, date, stream, cluster));
-        Date nextDate = CalendarHelper.addAMinute(date);
+    Date nextDate = CalendarHelper.addAMinute(date);
         paths.addAll(createData(fs, streamLevelDir, nextDate, stream, cluster));
-        srcClusterToPathMap.put(cluster, paths);
+      srcClusterToPathMap.put(cluster, paths);
         // Add a dummy empty directory in the end
         Date lastDate = CalendarHelper.addAMinute(nextDate);
         fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
 
-      }
+    }
     }
     return srcClusterToPathMap;
   }
@@ -146,9 +148,9 @@ public class MergeTestCheckpoint {
           srcRemoteMergeMap.get(remote).add(cluster);
         }
       }
-    }
+      }
     return srcRemoteMergeMap;
-  }
+    }
 
   private void assertAllPathsOnSrcPresentOnDest(
       Map<String, List<Path>> srcPathList,
@@ -247,9 +249,9 @@ public class MergeTestCheckpoint {
     Collections.sort(results, new DatePathComparator());
     assert (results.get(0).getPath().equals(fileToBeCreated));
     assert (!results.get(0).getPath().getParent()
-        .equals(results.get(1).getPath().getParent()));// first path and other
-                                                       // paths should be
-                                                       // different directories
+        .equals(results.get(1)
+        .getPath().getParent()));// first path and other paths should be
+                                 // different directories
 
   }
 
