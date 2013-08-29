@@ -289,7 +289,7 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getName());
   }
 
-  // protected abstract void filterMinFilePaths(Set<String> minFilesSet);
+ 
 
   protected void finalizeCheckPoints() {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {

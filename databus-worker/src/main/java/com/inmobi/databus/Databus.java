@@ -51,6 +51,11 @@ public class Databus implements Service, DatabusConstants {
   private static int numStreamsMergeService = 5;
   private static int numStreamsMirrorService = 1;
   private static boolean isPurgerEnabled = true;
+  private final Set<String> clustersToProcess;
+  private final List<AbstractService> services = new ArrayList<AbstractService>();
+  private volatile boolean stopRequested = false;
+  private CuratorLeaderManager curatorLeaderManager = null;
+  private volatile boolean databusStarted = false;
 
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
@@ -62,10 +67,6 @@ public class Databus implements Service, DatabusConstants {
   public Set<String> getClustersToProcess() {
     return clustersToProcess;
   }
-
-  private final Set<String> clustersToProcess;
-  private final List<AbstractService> services = new ArrayList<AbstractService>();
-
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess) {
     this.config = config;
@@ -247,11 +248,18 @@ public class Databus implements Service, DatabusConstants {
 
   @Override
   public void stop() throws Exception {
-    for (AbstractService service : services) {
-      LOG.info("Stopping [" + service.getName() + "]");
-      service.stop();
+    stopRequested = true;
+    if (databusStarted) {
+      synchronized (services) {
+        for (AbstractService service : services) {
+          LOG.info("Stopping [" + service.getName() + "]");
+          service.stop();
+        }
+      }
     }
-    LOG.info("Databus Shutdown complete..");
+    if (curatorLeaderManager != null) {
+      curatorLeaderManager.close();
+    }
   }
 
   @Override
@@ -260,6 +268,7 @@ public class Databus implements Service, DatabusConstants {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
+    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -271,12 +280,23 @@ public class Databus implements Service, DatabusConstants {
   
   public void startDatabus() throws Exception {
     try {
-      init();
-      for (AbstractService service : services) {
-        service.start();
+      synchronized (services) {
+        if (stopRequested) {
+          return;
+        }
+        init();
+        for (AbstractService service : services) {
+          service.start();
+        }
       }
+      databusStarted = true;
     } catch (Exception e) {
-      LOG.warn("Error is starting service", e);
+      LOG.warn("Error in initializing databus", e);
+    }
+
+    // if there is any outstanding stop request meanwhile, handle it here
+    if (stopRequested) {
+      stop();
     }
     // Block this method to avoid losing leadership of current work
     join();
@@ -366,6 +386,10 @@ public class Databus implements Service, DatabusConstants {
       if (mbPerMapper != null) {
         System.setProperty(MB_PER_MAPPER, mbPerMapper);
       }
+      String numRetries = prop.getProperty(NUM_RETRIES);
+      if (numRetries != null) {
+        System.setProperty(NUM_RETRIES, numRetries);
+      }
       prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {
@@ -405,14 +429,7 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
-      if (enableZookeeper) {
-        LOG.info("Starting CuratorLeaderManager for eleader election ");
-        CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(
-            databus, databusClusterId.toString(), zkConnectString);
-        curatorLeaderManager.start();
-      } else
-        databus.start();
-      Signal.handle(new Signal("INT"), new SignalHandler() {
+      Signal.handle(new Signal("TERM"), new SignalHandler() {
         @Override
         public void handle(Signal signal) {
           try {
@@ -424,11 +441,25 @@ public class Databus implements Service, DatabusConstants {
           }
         }
       });
+           if (enableZookeeper) {
+        LOG.info("Starting CuratorLeaderManager for leader election ");
+        databus.startCuratorLeaderManager(zkConnectString, databusClusterId, databus);
+      } else {
+        databus.start();
+      }
     }
     catch (Exception e) {
       LOG.warn("Error in starting Databus daemon", e);
       throw new Exception(e);
     }
+  }
+
+  private void startCuratorLeaderManager(
+      String zkConnectString, StringBuffer databusClusterId,
+      final Databus databus) throws Exception {
+    curatorLeaderManager = new CuratorLeaderManager(
+        databus, databusClusterId.toString(), zkConnectString);
+    curatorLeaderManager.start();
   }
 
 }

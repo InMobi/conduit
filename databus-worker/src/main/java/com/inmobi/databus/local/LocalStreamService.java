@@ -315,7 +315,7 @@ ConfigConstants {
           continue;
         }
 
-        String currentFile = getCurrentFile(fs, files, lastFileTimeout);
+        String currentFile = getCurrentFile(fs, files);
 
         for (FileStatus file : files) {
           processFile(file, currentFile, checkPointValue, fs, results,
@@ -371,7 +371,7 @@ ConfigConstants {
     } catch (IOException e) {
       LOG.error(
           "Unable to find if file is empty or not [" + fileStatus.getPath()
-          + "]", e);
+              + "]", e);
     } finally {
       if (in != null) {
         try {
@@ -422,27 +422,23 @@ ConfigConstants {
   }
 
   /*
-   * @returns null: if there are no files or the most significant timestamped
-   * file is 5 min back.
+   * @returns null: if there are no files
    */
-  protected String getCurrentFile(FileSystem fs, FileStatus[] files,
-      long lastFileTimeout) {
+  protected String getCurrentFile(FileSystem fs, FileStatus[] files) {
     // Proposed Algo :-> Sort files based on timestamp
-    // if ((currentTimeStamp - last file's timestamp) > 5min ||
     // if there are no files)
     // then null (implying process this file as non-current file)
     // else
     // return last file as the current file
-    class FileTimeStampComparator implements Comparator {
-      public int compare(Object o, Object o1) {
-        FileStatus file1 = (FileStatus) o;
-        FileStatus file2 = (FileStatus) o1;
+    class FileTimeStampComparator implements Comparator<FileStatus> {
+      public int compare(FileStatus file1, FileStatus file2) {
         long file1Time = file1.getModificationTime();
         long file2Time = file2.getModificationTime();
         if ((file1Time < file2Time))
           return -1;
         else
           return 1;
+
       }
     }
 
@@ -456,12 +452,6 @@ ConfigConstants {
 
     // get last file from set
     FileStatus lastFile = sortedFiles.last();
-
-    long currentTime = System.currentTimeMillis();
-    long lastFileTime = lastFile.getModificationTime();
-    if (currentTime - lastFileTime >= lastFileTimeout) {
-      return null;
-    } else
       return lastFile.getPath().getName();
   }
 
@@ -489,7 +479,7 @@ ConfigConstants {
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
-
+   
     Job job = new Job(conf);
     job.setJobName(jobName);
     //DistributedCache.addFileToClassPath(inputFormatJarDestPath, job.getConfiguration());
@@ -509,7 +499,7 @@ ConfigConstants {
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
     job.getConfiguration().set(SRC_FS_DEFAULT_NAME_KEY,
         srcCluster.getHadoopConf().get(FS_DEFAULT_NAME_KEY));
-
+    
     // set configurations needed for UniformSizeInputFormat
     int numMaps = getNumMapsForJob(totalSize);
     job.getConfiguration().setInt(DistCpConstants.CONF_LABEL_NUM_MAPS, numMaps);
@@ -522,7 +512,7 @@ ConfigConstants {
 
     return job;
   }
-
+  
   private int getNumMapsForJob(long totalSize) {
     String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
     if (mbPerMapper != null) {

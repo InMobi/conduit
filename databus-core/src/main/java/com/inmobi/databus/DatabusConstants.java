@@ -35,5 +35,6 @@ public interface DatabusConstants {
   public static final String NUM_DIR_PER_DISTCP = "com.inmobi.databus."
       + "numDirPerDistcp";
   public static final String PERGER_ENABLED = "com.inmobi.databus.purgerEnabled";
+  public static final String NUM_RETRIES = "com.inmobi.databus.retries";
 
 }

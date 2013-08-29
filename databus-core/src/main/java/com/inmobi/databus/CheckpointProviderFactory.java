@@ -51,8 +51,8 @@ public class CheckpointProviderFactory {
       String line;
       String providerName = null;
       String providerDir = null;
-      line = reader.readLine();
-      while (line != null) {
+      do {
+        line = reader.readLine();
         String[] keyVal = line.split("=");
         if (keyVal != null && keyVal.length == 2 && keyVal[0].equalsIgnoreCase
         (CHECKPOINT_PROVIDER)) {
@@ -64,8 +64,7 @@ public class CheckpointProviderFactory {
         (CHECKPOINT_PROVIDER_DIR)) {
           providerDir = keyVal[1];
         }
-        line = reader.readLine();
-      }
+      } while (line != null);
 
       if (providerName != null && providerDir != null){
         Class providerClass = Class.forName(providerName);
