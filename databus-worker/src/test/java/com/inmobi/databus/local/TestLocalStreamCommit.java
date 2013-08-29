@@ -1,5 +1,6 @@
 package com.inmobi.databus.local;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -65,7 +66,12 @@ public class TestLocalStreamCommit {
     Path tmpPath = new Path(cluster1.getTmpPath(),
         LocalStreamService.class.getName());
     Path tmpConsumerPath = new Path(tmpPath, "testcluster2");
-    FileStatus[] status = localFs.listStatus(tmpConsumerPath);
+    FileStatus[] status = null;
+    try {
+      status = localFs.listStatus(tmpConsumerPath);
+    } catch (FileNotFoundException e) {
+      status = new FileStatus[0];
+    }
     for (FileStatus tmpStatus : status) {
       // opening the consumer file written for testcluster2
       // it should not have any entry for stream 1 as testcluster2 is primary

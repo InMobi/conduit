@@ -31,7 +31,7 @@ public class FileUtil {
       throws IOException {
     FileSystem fs = FileSystem.get(conf);
     FSDataOutputStream out = fs.create(target);
-    GzipCodec gzipCodec = (GzipCodec) ReflectionUtils.newInstance(
+    GzipCodec gzipCodec = ReflectionUtils.newInstance(
         GzipCodec.class, conf);
     Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
     OutputStream compressedOut = gzipCodec.createOutputStream(out,

@@ -13,6 +13,7 @@
  */
 package com.inmobi.databus.purge;
 
+import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -354,6 +355,12 @@ public class DataPurgerService extends AbstractService {
 
   private FileStatus[] getAllFilesInDir(Path dir, FileSystem fs)
       throws Exception {
-    return fs.listStatus(dir);
+    FileStatus[] files = null;
+    try {
+      files = fs.listStatus(dir);
+    } catch (FileNotFoundException e) {
+
+    }
+    return files;
   }
 }

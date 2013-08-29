@@ -213,6 +213,7 @@ public abstract class DistcpBaseService extends AbstractService {
           nextPath = CalendarHelper.getNextMinutePathFromDate(lastDate,
               inputPath);
         }
+
       }
       if (nextPath == null) {
         filesLastCopiedDir = new ArrayList<FileStatus>();

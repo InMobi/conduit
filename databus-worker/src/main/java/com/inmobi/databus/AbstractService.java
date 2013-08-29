@@ -14,6 +14,7 @@
 package com.inmobi.databus;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -168,8 +169,13 @@ public abstract class AbstractService implements Service, Runnable {
 	}
 
 	private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
-		FileStatus[] fileStatus = fs.listStatus(Dir);
 
+    FileStatus[] fileStatus;
+    try {
+     fileStatus = fs.listStatus(Dir);
+    } catch (FileNotFoundException fe) {
+      fileStatus = null;
+    }
 		if (fileStatus != null && fileStatus.length > 0) {
 			FileStatus latestfile = fileStatus[0];
 			for (FileStatus currentfile : fileStatus) {
@@ -213,8 +219,6 @@ public abstract class AbstractService implements Service, Runnable {
       prevRuntimeForCategory.put(categoryName, commitTime);
 		}
 	}
-
-  
 
   /*
    * publish all the missing paths and clears missingDirCommittedPaths map

@@ -1,5 +1,6 @@
 package com.inmobi.databus.utils;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -35,8 +36,13 @@ public class LocalStreamDataConsistency extends CompareDataConsistency {
 
   public void doRecursiveListing(Path pathName, TreeMap<String, Path> listOfFiles, 
       FileSystem fs, String baseDir, String streamName) throws Exception {
-    FileStatus [] fileStatuses = fs.listStatus(pathName, new LocalStreamService.
+    FileStatus[] fileStatuses = null;
+    try {
+      fileStatuses = fs.listStatus(pathName, new LocalStreamService.
         CollectorPathFilter());
+    } catch (FileNotFoundException e) {
+    }
+
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + pathName);
     } else {
@@ -64,7 +70,12 @@ public class LocalStreamDataConsistency extends CompareDataConsistency {
   public void getStreamCollectorNames( Path streamDir, List<String>  
   streamCollectorNames) throws Exception {
     FileSystem fs = streamDir.getFileSystem(new Configuration());
-    FileStatus [] filestatuses = fs.listStatus(streamDir);
+    FileStatus[] filestatuses;
+    try {
+      filestatuses = fs.listStatus(streamDir);
+    } catch (FileNotFoundException fe) {
+      filestatuses = null;
+    }
     for (FileStatus file : filestatuses) {
       streamCollectorNames.add(file.getPath().getName());
     }

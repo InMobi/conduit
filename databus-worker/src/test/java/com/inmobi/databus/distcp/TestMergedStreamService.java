@@ -1,6 +1,7 @@
 package com.inmobi.databus.distcp;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -56,10 +57,14 @@ public class TestMergedStreamService extends MergedStreamService
   public static FileStatus getAllFiles(Path listPath, FileSystem fs,
       List<String> fileList) 
           throws IOException {
+
     FileStatus lastFile = null;
     DatePathComparator comparator = new DatePathComparator();
-    FileStatus[] fileStatuses = fs.listStatus(listPath);
-
+    FileStatus[] fileStatuses = null;
+    try {
+      fileStatuses = fs.listStatus(listPath);
+    } catch (FileNotFoundException e) {
+    }
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + listPath);
       if (fs.exists(listPath))
