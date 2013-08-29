@@ -163,4 +163,21 @@ public class CalendarHelper {
     return calendar;
   }
 
+  public static Path getPathFromDate(Date date, Path dirPrefix) {
+    DateFormat dateFormat = new SimpleDateFormat(minDirFormatStr);
+    String suffix = dateFormat.format(date);
+    return new Path(dirPrefix, suffix);
+
+  }
+  public static Path getNextMinutePathFromDate(Date date, Path dirPrefix) {
+    return getPathFromDate(addAMinute(date), dirPrefix);
+  }
+
+  public static Date addAMinute(Date date) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    calendar.add(Calendar.MINUTE, 1);
+    return calendar.getTime();
+  }
+
 }

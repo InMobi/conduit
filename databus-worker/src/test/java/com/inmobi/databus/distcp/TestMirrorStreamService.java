@@ -1,28 +1,26 @@
 package com.inmobi.databus.distcp;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.inmobi.databus.AbstractServiceTest;
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.PublishMissingPathsTest;
-import com.inmobi.databus.SourceStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
+
+import com.inmobi.databus.AbstractServiceTest;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.FSCheckpointProvider;
+import com.inmobi.databus.PublishMissingPathsTest;
+import com.inmobi.databus.SourceStream;
 
 public class TestMirrorStreamService extends MirrorStreamService
     implements AbstractServiceTest {
@@ -37,13 +35,15 @@ public class TestMirrorStreamService extends MirrorStreamService
   private long mergeCommitTime = 0;
   
   public TestMirrorStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster) throws Exception {
-    super(config, srcCluster, destinationCluster, currentCluster);
+      Cluster destinationCluster, Cluster currentCluster,
+      Set<String> streamsToProcess) throws Exception {
+    super(config, srcCluster, destinationCluster, currentCluster,
+        new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
+        streamsToProcess);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
   }
-  
   @Override
   protected void preExecute() throws Exception {
     try {
@@ -128,11 +128,7 @@ public class TestMirrorStreamService extends MirrorStreamService
     postExecute();
   }
 
-  @Override
-  public void publishMissingPaths(long commitTime) throws Exception {
-    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot(), 
-        commitTime);
-  }
+
   
   @Override
   public Cluster getCluster() {

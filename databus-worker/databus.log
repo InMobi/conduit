@@ -1,0 +1,156 @@
+08 May 2013 17:28:56,269 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - rootDir = /mergeservice global retentionInHours 24 global trashretentionInHours 48
+08 May 2013 17:28:56,271 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster1
+08 May 2013 17:28:56,271 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster2
+08 May 2013 17:28:56,272 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster1 retentionInHours 24 isPrimary true
+08 May 2013 17:28:56,272 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster2 retentionInHours 24 isPrimary false
+08 May 2013 17:28:56,273 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:///tmp/mergeservicetest/testcluster1
+08 May 2013 17:28:56,273 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:28:56,273 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:28:56,273 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster1
+08 May 2013 17:28:56,273 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster1
+08 May 2013 17:28:56,317 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:////tmp/mergeservicetest/testcluster2
+08 May 2013 17:28:56,318 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:28:56,318 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:28:56,318 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster2
+08 May 2013 17:28:56,318 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster2
+08 May 2013 17:28:56,428 [main] DEBUG org.apache.hadoop.security.Groups  -  Creating new Groups object
+08 May 2013 17:28:56,499 [main] DEBUG org.apache.hadoop.security.Groups  - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000
+08 May 2013 17:28:56,505 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login
+08 May 2013 17:28:56,506 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login commit
+08 May 2013 17:28:56,507 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - using local user:UnixPrincipal: rohit.kochar
+08 May 2013 17:28:56,509 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - UGI loginUser:rohit.kochar (auth:SIMPLE)
+08 May 2013 17:28:56,574 [main] DEBUG org.apache.hadoop.fs.FileSystem  - Creating filesystem for file:///tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:28:56,586 [main] INFO  com.inmobi.databus.FSCheckpointProvider  - CheckPoint provider initialized with baseDir: file:/tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:28:56,586 [main] ERROR com.inmobi.databus.utils.CheckPointCreator  - Stream test2 is not destination stream of cluster testcluster2
+08 May 2013 17:28:56,588 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///
+08 May 2013 17:28:56,588 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///
+08 May 2013 17:29:38,391 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - rootDir = /mergeservice global retentionInHours 24 global trashretentionInHours 48
+08 May 2013 17:29:38,393 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster1
+08 May 2013 17:29:38,394 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster2
+08 May 2013 17:29:38,394 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster1 retentionInHours 24 isPrimary true
+08 May 2013 17:29:38,395 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster2 retentionInHours 24 isPrimary false
+08 May 2013 17:29:38,396 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:///tmp/mergeservicetest/testcluster1
+08 May 2013 17:29:38,396 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:29:38,396 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:29:38,396 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster1
+08 May 2013 17:29:38,396 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster1
+08 May 2013 17:29:38,452 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:////tmp/mergeservicetest/testcluster2
+08 May 2013 17:29:38,452 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:29:38,452 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:29:38,452 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster2
+08 May 2013 17:29:38,452 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster2
+08 May 2013 17:30:17,577 [main] DEBUG org.apache.hadoop.security.Groups  -  Creating new Groups object
+08 May 2013 17:30:17,796 [main] DEBUG org.apache.hadoop.security.Groups  - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000
+08 May 2013 17:30:17,811 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login
+08 May 2013 17:30:17,813 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login commit
+08 May 2013 17:30:17,815 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - using local user:UnixPrincipal: rohit.kochar
+08 May 2013 17:30:17,820 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - UGI loginUser:rohit.kochar (auth:SIMPLE)
+08 May 2013 17:30:18,058 [main] DEBUG org.apache.hadoop.fs.FileSystem  - Creating filesystem for file:///tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:30:18,099 [main] INFO  com.inmobi.databus.FSCheckpointProvider  - CheckPoint provider initialized with baseDir: file:/tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:31:34,562 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - rootDir = /mergeservice global retentionInHours 24 global trashretentionInHours 48
+08 May 2013 17:31:34,564 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster1
+08 May 2013 17:31:34,564 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster2
+08 May 2013 17:31:34,564 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster1 retentionInHours 24 isPrimary true
+08 May 2013 17:31:34,565 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster2 retentionInHours 24 isPrimary false
+08 May 2013 17:31:34,565 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:///tmp/mergeservicetest/testcluster1
+08 May 2013 17:31:34,566 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:31:34,566 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:31:34,566 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster1
+08 May 2013 17:31:34,566 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster1
+08 May 2013 17:31:34,608 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:////tmp/mergeservicetest/testcluster2
+08 May 2013 17:31:34,608 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:31:34,608 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:31:34,609 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster2
+08 May 2013 17:31:34,609 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster2
+08 May 2013 17:31:34,718 [main] DEBUG org.apache.hadoop.security.Groups  -  Creating new Groups object
+08 May 2013 17:31:34,789 [main] DEBUG org.apache.hadoop.security.Groups  - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000
+08 May 2013 17:31:34,796 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login
+08 May 2013 17:31:34,797 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login commit
+08 May 2013 17:31:34,799 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - using local user:UnixPrincipal: rohit.kochar
+08 May 2013 17:31:34,801 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - UGI loginUser:rohit.kochar (auth:SIMPLE)
+08 May 2013 17:31:34,857 [main] DEBUG org.apache.hadoop.fs.FileSystem  - Creating filesystem for file:///tmp/mergeservicetest/testcluster1/mergeservice/system/checkpoint
+08 May 2013 17:31:34,869 [main] INFO  com.inmobi.databus.FSCheckpointProvider  - CheckPoint provider initialized with baseDir: file:/tmp/mergeservicetest/testcluster1/mergeservice/system/checkpoint
+08 May 2013 17:31:34,869 [main] ERROR com.inmobi.databus.utils.CheckPointCreator  - Stream stream2 is not destination stream of cluster testcluster1
+08 May 2013 17:31:34,871 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///
+08 May 2013 17:31:34,871 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///
+08 May 2013 17:32:09,820 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - rootDir = /mergeservice global retentionInHours 24 global trashretentionInHours 48
+08 May 2013 17:32:09,822 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster1
+08 May 2013 17:32:09,822 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster2
+08 May 2013 17:32:09,822 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster1 retentionInHours 24 isPrimary true
+08 May 2013 17:32:09,823 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster2 retentionInHours 24 isPrimary false
+08 May 2013 17:32:09,823 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:///tmp/mergeservicetest/testcluster1
+08 May 2013 17:32:09,823 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:32:09,824 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:32:09,824 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster1
+08 May 2013 17:32:09,824 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster1
+08 May 2013 17:32:09,874 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:////tmp/mergeservicetest/testcluster2
+08 May 2013 17:32:09,874 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:32:09,874 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:32:09,874 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster2
+08 May 2013 17:32:09,874 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster2
+08 May 2013 17:32:09,983 [main] DEBUG org.apache.hadoop.security.Groups  -  Creating new Groups object
+08 May 2013 17:32:10,053 [main] DEBUG org.apache.hadoop.security.Groups  - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000
+08 May 2013 17:32:10,059 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login
+08 May 2013 17:32:10,060 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login commit
+08 May 2013 17:32:10,061 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - using local user:UnixPrincipal: rohit.kochar
+08 May 2013 17:32:10,063 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - UGI loginUser:rohit.kochar (auth:SIMPLE)
+08 May 2013 17:32:10,116 [main] DEBUG org.apache.hadoop.fs.FileSystem  - Creating filesystem for file:///tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:32:10,132 [main] INFO  com.inmobi.databus.FSCheckpointProvider  - CheckPoint provider initialized with baseDir: file:/tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:32:10,133 [main] ERROR com.inmobi.databus.utils.CheckPointCreator  - Stream stream1 is not destination stream of cluster testcluster2
+08 May 2013 17:32:10,134 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///
+08 May 2013 17:32:10,135 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///
+08 May 2013 17:32:24,940 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - rootDir = /mergeservice global retentionInHours 24 global trashretentionInHours 48
+08 May 2013 17:32:24,943 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster1
+08 May 2013 17:32:24,943 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname test1 retentioninhours 24 clusterName testcluster2
+08 May 2013 17:32:24,943 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster1 retentionInHours 24 isPrimary true
+08 May 2013 17:32:24,944 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name test1 cluster testcluster2 retentionInHours 24 isPrimary false
+08 May 2013 17:32:24,944 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:///tmp/mergeservicetest/testcluster1
+08 May 2013 17:32:24,944 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:32:24,945 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:32:24,945 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster1
+08 May 2013 17:32:24,945 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster1
+08 May 2013 17:32:24,994 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:////tmp/mergeservicetest/testcluster2
+08 May 2013 17:32:24,995 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:32:24,995 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:32:24,995 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster2
+08 May 2013 17:32:24,995 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster2
+08 May 2013 17:32:37,330 [main] DEBUG org.apache.hadoop.security.Groups  -  Creating new Groups object
+08 May 2013 17:32:37,554 [main] DEBUG org.apache.hadoop.security.Groups  - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000
+08 May 2013 17:32:37,572 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login
+08 May 2013 17:32:37,573 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login commit
+08 May 2013 17:32:37,576 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - using local user:UnixPrincipal: rohit.kochar
+08 May 2013 17:32:37,580 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - UGI loginUser:rohit.kochar (auth:SIMPLE)
+08 May 2013 17:32:37,837 [main] DEBUG org.apache.hadoop.fs.FileSystem  - Creating filesystem for file:///tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:32:37,866 [main] INFO  com.inmobi.databus.FSCheckpointProvider  - CheckPoint provider initialized with baseDir: file:/tmp/mergeservicetest/testcluster2/mergeservice/system/checkpoint
+08 May 2013 17:33:42,512 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - rootDir = /localstreamcommit global retentionInHours 24 global trashretentionInHours 48
+08 May 2013 17:33:42,515 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname stream1 retentioninhours 24 clusterName testcluster1
+08 May 2013 17:33:42,515 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname stream1 retentioninhours 24 clusterName testcluster2
+08 May 2013 17:33:42,515 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name stream1 cluster testcluster2 retentionInHours 24 isPrimary true
+08 May 2013 17:33:42,517 [main] DEBUG com.inmobi.databus.DatabusConfigParser  -  StreamSource :: streamname stream2 retentioninhours 24 clusterName testcluster1
+08 May 2013 17:33:42,517 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name stream2 cluster testcluster1 retentionInHours 24 isPrimary true
+08 May 2013 17:33:42,518 [main] INFO  com.inmobi.databus.DatabusConfigParser  - Reading Stream Destination Details :: Stream Name stream2 cluster testcluster2 retentionInHours 24 isPrimary false
+08 May 2013 17:33:42,518 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:///tmp/databussimpleservice/testcluster1
+08 May 2013 17:33:42,518 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:33:42,518 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:33:42,518 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster1
+08 May 2013 17:33:42,518 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster1
+08 May 2013 17:33:42,568 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:////tmp/databussimpleservice/testcluster2
+08 May 2013 17:33:42,568 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:33:42,568 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:33:42,568 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster2
+08 May 2013 17:33:42,568 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster2
+08 May 2013 17:33:42,595 [main] INFO  com.inmobi.databus.DatabusConfigParser  - hdfsurl:file:////tmp/databussimpleservice/testcluster3
+08 May 2013 17:33:42,595 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jobqueuename:default
+08 May 2013 17:33:42,595 [main] INFO  com.inmobi.databus.DatabusConfigParser  - jturl:local
+08 May 2013 17:33:42,595 [main] INFO  com.inmobi.databus.DatabusConfigParser  - name:testcluster3
+08 May 2013 17:33:42,595 [main] DEBUG com.inmobi.databus.DatabusConfigParser  - getting consume streams for Cluster ::testcluster3
+08 May 2013 17:33:42,707 [main] DEBUG org.apache.hadoop.security.Groups  -  Creating new Groups object
+08 May 2013 17:33:42,777 [main] DEBUG org.apache.hadoop.security.Groups  - Group mapping impl=org.apache.hadoop.security.ShellBasedUnixGroupsMapping; cacheTimeout=300000
+08 May 2013 17:33:42,784 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login
+08 May 2013 17:33:42,784 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - hadoop login commit
+08 May 2013 17:33:42,786 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - using local user:UnixPrincipal: rohit.kochar
+08 May 2013 17:33:42,788 [main] DEBUG org.apache.hadoop.security.UserGroupInformation  - UGI loginUser:rohit.kochar (auth:SIMPLE)
+08 May 2013 17:33:42,846 [main] DEBUG org.apache.hadoop.fs.FileSystem  - Creating filesystem for file:///tmp/databussimpleservice/testcluster2/localstreamcommit/system/checkpoint
+08 May 2013 17:33:42,859 [main] INFO  com.inmobi.databus.FSCheckpointProvider  - CheckPoint provider initialized with baseDir: file:/tmp/databussimpleservice/testcluster2/localstreamcommit/system/checkpoint
+08 May 2013 17:33:42,901 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///
+08 May 2013 17:33:42,901 [Thread-1] DEBUG org.apache.hadoop.fs.FileSystem  - Removing filesystem for file:///

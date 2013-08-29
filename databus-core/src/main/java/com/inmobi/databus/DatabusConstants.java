@@ -28,6 +28,13 @@ public interface DatabusConstants {
   public static final String MB_PER_MAPPER = "com.inmobi.databus.MBPerMapper";
   public static final String STREAMS_PER_LOCALSERVICE = "com.inmobi.databus."
       + "streamsPerLocal";
+  public static final String STREAMS_PER_MERGE = "com.inmobi.databus."
+      + "streamsPerMerge";
+  public static final String STREAMS_PER_MIRROR = "com.inmobi.databus."
+      + "streamsPerMirror";
+  public static final String NUM_DIR_PER_DISTCP = "com.inmobi.databus."
+      + "numDirPerDistcp";
+  public static final String PERGER_ENABLED = "com.inmobi.databus.purgerEnabled";
   public static final String NUM_RETRIES = "com.inmobi.databus.retries";
 
 }
