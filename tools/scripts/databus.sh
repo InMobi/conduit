@@ -113,7 +113,7 @@ case $startStop in
     if [ -f $_DATABUS_DAEMON_PIDFILE ]; then
       if kill -0 `cat $_DATABUS_DAEMON_PIDFILE` > /dev/null 2>&1; then
         echo -n Please be patient. It may take upto 1 min or more in stopping DATABUS..
-        kill -s SIGINT `cat $_DATABUS_DAEMON_PIDFILE`
+        kill -s SIGTERM `cat $_DATABUS_DAEMON_PIDFILE`
       while :
         do 
           if kill -0 `cat $_DATABUS_DAEMON_PIDFILE` > /dev/null 2>&1; then
@@ -134,8 +134,8 @@ case $startStop in
     ;;
 
   (restart)
-    $0 start $configFile
     $0 stop $configFile
+    $0 start $configFile
     ;;
 
   (collapse)

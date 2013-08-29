@@ -1,16 +1,16 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package com.inmobi.databus;
 
 import java.io.File;
@@ -44,6 +44,8 @@ public abstract class AbstractService implements Service, Runnable {
       "yyyy/MM/dd, hh:mm");
   private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
   protected final Set<String> streamsToProcess;
+  private final static long TIME_RETRY_IN_MILLIS = 500;
+  private int numOfRetries;
 
   public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
     this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
@@ -55,6 +57,12 @@ public abstract class AbstractService implements Service, Runnable {
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
     this.streamsToProcess=streamsToProcess;
+     String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
+    if (retries == null) {
+      numOfRetries = Integer.MAX_VALUE;
+    } else {
+      numOfRetries = Integer.parseInt(retries);
+    }
   }
 
   public AbstractService(String name, DatabusConfig config,
@@ -170,6 +178,171 @@ public abstract class AbstractService implements Service, Runnable {
       return latestfile.getPath();
     }
     return null;
+  }
+ /*
+   * Retries renaming a file to a given num of times defined by
+   * "com.inmobi.databus.retries" system property Returns the outcome of last
+   * retry;throws exception in case last retry threw an exception
+   */
+  protected boolean retriableRename(FileSystem fs, Path src, Path dst)
+      throws Exception {
+    int count = 0;
+    boolean result = false;
+    Exception exception = null;
+    while (count < numOfRetries) {
+      try {
+        result = fs.rename(src, dst);
+        exception = null;
+        break;
+      } catch (Exception e) {
+        LOG.warn("Moving " + src + " to " + dst + " failed.Retrying ", e);
+        exception = e;
+        if (stopped)
+          break;
+      }
+      count++;
+      try {
+        Thread.sleep(TIME_RETRY_IN_MILLIS);
+      } catch (InterruptedException e) {
+        LOG.warn(e);
+      }
+    }
+    if (count == numOfRetries) {
+      LOG.error("Max retries done for moving " + src + " to " + dst
+          + " quitting now");
+    }
+    if (exception == null) {
+      return result;
+    } else {
+      throw exception;
+    }
+  }
+
+  protected boolean retriableDelete(FileSystem fs, Path path) throws Exception {
+    int count = 0;
+    boolean result = false;
+    Exception exception = null;
+    while (count < numOfRetries) {
+      try {
+        result = fs.delete(path, false);
+        exception = null;
+        break;
+
+      } catch (Exception e) {
+        LOG.warn("Couldn't delete path " + path + " .Retrying ", e);
+        exception = e;
+        if (stopped)
+          break;
+      }
+      count++;
+      try {
+        Thread.sleep(TIME_RETRY_IN_MILLIS);
+      } catch (InterruptedException e) {
+        LOG.warn(e);
+      }
+    }
+    if (count == numOfRetries) {
+      LOG.error("Max retries done for deleting " + path + " quitting");
+    }
+    if (exception == null) {
+      return result;
+    } else {
+      throw exception;
+    }
+
+  }
+
+  protected void retriableCheckPoint(CheckpointProvider provider, String key,
+      byte[] checkpoint) throws Exception {
+    int count = 0;
+    Exception ex = null;
+    while (count < numOfRetries) {
+      try {
+        provider.checkpoint(key, checkpoint);
+        ex = null;
+        break;
+      } catch (Exception e) {
+        LOG.warn("Couldn't checkpoint key " + key + " .Retrying ", e);
+        ex = e;
+        if (stopped)
+          break;
+      }
+      count++;
+      try {
+        Thread.sleep(TIME_RETRY_IN_MILLIS);
+      } catch (InterruptedException e) {
+        LOG.error(e);
+      }
+    }
+    if (count == numOfRetries) {
+      LOG.error("Max retries done for checkpointing for key " + key);
+    }
+    if (ex != null)
+      throw ex;
+  }
+
+  protected boolean retriableMkDirs(FileSystem fs, Path p) throws Exception {
+    int count = 0;
+    boolean result = false;
+    Exception ex = null;
+    while (count < numOfRetries) {
+      try {
+        result = fs.mkdirs(p);
+        ex = null;
+        break;
+
+      } catch (Exception e) {
+        LOG.warn("Couldn't make directories for path " + p + " .Retrying ", e);
+        ex = e;
+        if (stopped)
+          break;
+      }
+      count++;
+      try {
+        Thread.sleep(TIME_RETRY_IN_MILLIS);
+      } catch (InterruptedException e) {
+        LOG.warn(e);
+      }
+    }
+    if (count == numOfRetries) {
+      LOG.error("Max retries done for mkdirs " + p + " quitting");
+    }
+    if (ex == null)
+      return result;
+    else
+      throw ex;
+  }
+
+  protected boolean retriableExists(FileSystem fs, Path p) throws Exception {
+    int count = 0;
+    boolean result = false;
+    Exception ex = null;
+    while (count < numOfRetries) {
+      try {
+        result = fs.exists(p);
+        ex = null;
+        break;
+      } catch (Exception e) {
+        LOG.warn("Error while checking for existence of " + p + " .Retrying ",
+            e);
+        ex = e;
+        if (stopped)
+          break;
+      }
+      count++;
+      try {
+        Thread.sleep(TIME_RETRY_IN_MILLIS);
+      } catch (InterruptedException e) {
+        LOG.error(e);
+      }
+    }
+    if (count == numOfRetries) {
+      LOG.error("Max retries done for mkdirs " + p + " quitting");
+    }
+    if (ex == null)
+      return result;
+    else
+      throw ex;
   }
 
   private long getPreviousRuntime(FileSystem fs, String destDir, String category)

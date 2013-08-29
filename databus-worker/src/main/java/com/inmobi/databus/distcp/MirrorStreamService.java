@@ -123,19 +123,20 @@ public class MirrorStreamService extends DistcpBaseService {
       LOG.info("Renaming [" + entry.getKey() + "] to [" + entry.getValue()
           + "]");
       if (entry.getKey().isDir()) {
-        getDestFs().mkdirs(entry.getValue());
+        retriableMkDirs(getDestFs(), entry.getValue());
       } else {
-        if (getDestFs().exists(entry.getValue())) {
+        if (retriableExists(getDestFs(), entry.getValue())) {
           LOG.warn("File with Path [" + entry.getValue()
               + "] already exist,hence skipping renaming operation");
           continue;
         }
-        getDestFs().mkdirs(entry.getValue().getParent());
-        if (getDestFs().rename(entry.getKey().getPath(), entry.getValue()) == false) {
+        retriableMkDirs(getDestFs(), entry.getValue().getParent());
+        if (retriableRename(getDestFs(), entry.getKey().getPath(),
+            entry.getValue()) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
-              + "data loss. Partial data replay could happen in next run");
+          + "data loss. Partial data replay could happen in next run");
           throw new Exception("Rename failed from [" + entry.getKey() + "] to "
-              + "[" + entry.getValue() + "]");
+          + "[" + entry.getValue() + "]");
         }
       }
     }
@@ -146,17 +147,16 @@ public class MirrorStreamService extends DistcpBaseService {
    * 
    * @param Path - tmpOut
    */
-  LinkedHashMap<FileStatus, Path> prepareForCommit(Path tmpOut)
-      throws Exception {
+  LinkedHashMap<FileStatus, Path> prepareForCommit(Path tmpOut) throws Exception {
     /*
      * tmpOut would be like -
      * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/ After
      * distcp paths inside tmpOut would be eg:
-     * 
+     *
      * /databus/system/distcp_mirror_ua1_uj1
      * /databus/streams/<streamName>/2012/1/13/15/7/
      * <hostname>-<streamName>-2012-01-16-07-21_00000.gz
-     * 
+     *
      * tmpStreamRoot eg: /databus/system/distcp_mirror_<srcCluster>_
      * <destCluster>/databus/streams/
      */
@@ -180,38 +180,42 @@ public class MirrorStreamService extends DistcpBaseService {
     LinkedHashMap<FileStatus, Path> commitPaths = new LinkedHashMap<FileStatus, Path>();
     if (fileStatuses != null) {
       for (FileStatus streamRoot : fileStatuses) {
-        // for each stream : list the path in order of YYYY/mm/DD/HH/MM
-        LOG.debug("StreamRoot [" + streamRoot.getPath() + "] streamName ["
-            + streamRoot.getPath().getName() + "]");
+        //for each stream : list the path in order of YYYY/mm/DD/HH/MM
+        LOG.debug("StreamRoot [" + streamRoot.getPath() + "] streamName [" +
+        streamRoot.getPath().getName() + "]");
         List<FileStatus> streamPaths = new ArrayList<FileStatus>();
         createListing(getDestFs(), streamRoot, streamPaths);
         Collections.sort(streamPaths, new DatePathComparator());
-        LOG.debug("createListing size: [" + streamPaths.size() + "]");
+        LOG.debug("createListing size: [" + streamPaths.size() +"]");
         createCommitPaths(commitPaths, streamPaths);
       }
     }
     return commitPaths;
   }
 
+
+
+
   private void createCommitPaths(LinkedHashMap<FileStatus, Path> commitPaths,
-      List<FileStatus> streamPaths) {
-    /*
-     * Path eg in streamPaths -
-     * /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
-     * /<streamName>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
-     * -21_00000.gz
-     * 
-     * or it could be an emptyDir like /* Path eg in streamPaths -
-     * /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
-     * /<streamName>/2012/1/13/15/7/
-     */
+                                 List<FileStatus> streamPaths) {
+   /*  Path eg in streamPaths -
+    *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+    *  /<streamName>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
+    *  -21_00000.gz
+    *
+    * or it could be an emptyDir like
+    *  /* Path eg in streamPaths -
+    *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+    *  /<streamName>/2012/1/13/15/7/
+    *
+    */
 
     for (FileStatus fileStatus : streamPaths) {
       String fileName = null;
 
       Path prefixDir = null;
       if (fileStatus.isDir()) {
-        // empty directory
+        //empty directory
         prefixDir = fileStatus.getPath();
       } else {
         fileName = fileStatus.getPath().getName();
@@ -219,25 +223,24 @@ public class MirrorStreamService extends DistcpBaseService {
       }
 
       Path min = prefixDir;
-      Path hr = min.getParent();
+      Path hr =  min.getParent() ;
       Path day = hr.getParent();
       Path month = day.getParent();
       Path year = month.getParent();
       Path streamName = year.getParent();
 
-      String finalPath = getDestCluster().getFinalDestDirRoot()
-          + File.separator + streamName.getName() + File.separator
-          + year.getName() + File.separator + month.getName() + File.separator
-          + day.getName() + File.separator + hr.getName() + File.separator
-          + min.getName();
+      String finalPath = getDestCluster().getFinalDestDirRoot() + File
+      .separator + streamName.getName() + File.separator + year.getName() + File
+      .separator + month.getName() + File.separator + day.getName() + File
+      .separator + hr.getName() + File.separator + min.getName();
 
       if (fileName != null) {
         finalPath += File.separator + fileName;
       }
 
       commitPaths.put(fileStatus, new Path(finalPath));
-      LOG.debug("Going to commit [" + fileStatus.getPath() + "] to ["
-          + finalPath + "]");
+      LOG.debug("Going to commit [" + fileStatus.getPath() + "] to [" +
+      finalPath + "]");
     }
 
   }
