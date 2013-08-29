@@ -115,10 +115,10 @@ public class TestCreateListing {
  "data")), results, trashSet,
         checkpointPaths);
 
-    // this is not the current file and hence should be processed
-    assert results.size() == 1;
+    // only 1 file exist at this point hence won't be picked
+    assert results.size() == 0;
     assert trashSet.size() == 0;
-    assert checkpointPaths.size() == 1;
+    assert checkpointPaths.size() == 0;
 
      out = localFs.create(new Path(collectorPath,
     "datafile3"));

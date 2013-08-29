@@ -212,7 +212,6 @@ public class TestDistCPBaseService  {
      writer.close();
    }
 
-  @Test
   public void testDuplicateFileNamesForMirrorService() throws Exception {
 
     cleanUP();
