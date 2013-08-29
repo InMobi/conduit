@@ -35,7 +35,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final long DEFAULT_RUN_INTERVAL = 60000;
 
   private final String name;
-  private final DatabusConfig config;
+  protected final DatabusConfig config;
   protected final long runIntervalInMsec;
   protected Thread thread;
   protected volatile boolean stopped = false;
@@ -49,13 +49,12 @@ public abstract class AbstractService implements Service, Runnable {
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
 
-  public AbstractService(String name, DatabusConfig config,
-      Set<String> streamsToProcess) {
-    this(name, config, DEFAULT_RUN_INTERVAL, streamsToProcess);
+  public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
   }
 
   public AbstractService(String name, DatabusConfig config,
-      long runIntervalInMsec, Set<String> streamsToProcess) {
+      long runIntervalInMsec,Set<String> streamsToProcess) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
@@ -74,7 +73,6 @@ public abstract class AbstractService implements Service, Runnable {
     this(name, config, runIntervalInMsec, streamsToProcess);
     this.checkpointProvider = provider;
   }
-
 
   protected final static String getServiceName(Set<String> streamsToProcess) {
     StringBuffer serviceName = new StringBuffer("");
@@ -184,43 +182,7 @@ public abstract class AbstractService implements Service, Runnable {
 		return null;
 	}
 
-	private long getPreviousRuntime(FileSystem fs, String destDir, String category)
-	    throws Exception {
-		String localDestDir = destDir + File.separator + category;
-		LOG.warn("Querying Directory [" + localDestDir + "]");
-		Path latestyeardir = getLatestDir(fs, new Path(localDestDir));
-		int latestyear = 0, latestmonth = 0, latestday = 0, latesthour = 0, latestminute = 0;
 
-		if (latestyeardir != null) {
-			latestyear = Integer.parseInt(latestyeardir.getName());
-			Path latestmonthdir = getLatestDir(fs, latestyeardir);
-			if (latestmonthdir != null) {
-				latestmonth = Integer.parseInt(latestmonthdir.getName());
-				Path latestdaydir = getLatestDir(fs, latestmonthdir);
-				if (latestdaydir != null) {
-					latestday = Integer.parseInt(latestdaydir.getName());
-					Path latesthourdir = getLatestDir(fs, latestdaydir);
-					if (latesthourdir != null) {
-						latesthour = Integer.parseInt(latesthourdir.getName());
-						Path latestminutedir = getLatestDir(fs, latesthourdir);
-						if (latestminutedir != null) {
-							latestminute = Integer.parseInt(latestminutedir.getName());
-						}
-					}
-				}
-			}
-		} else
-			return -1;
-		LOG.debug("Date Found " + latestyear + File.separator + latestmonth
-		    + File.separator + latestday + File.separator + latesthour
-		    + File.separator + latestminute);
-		return CalendarHelper.getDateHourMinute(latestyear, latestmonth, latestday,
-		    latesthour, latestminute).getTimeInMillis();
-	}
-
-	private boolean isMissingPaths(long commitTime, long prevRuntime) {
-		return ((commitTime - prevRuntime) >= MILLISECONDS_IN_MINUTE);
-	}
 
   protected void publishMissingPaths(FileSystem fs, String destDir,
 	    long commitTime, String categoryName) throws Exception {
@@ -439,6 +401,44 @@ public abstract class AbstractService implements Service, Runnable {
       return result;
     else
       throw ex;
+  }
+
+  private long getPreviousRuntime(FileSystem fs, String destDir, String category)
+      throws Exception {
+    String localDestDir = destDir + File.separator + category;
+    LOG.warn("Querying Directory [" + localDestDir + "]");
+    Path latestyeardir = getLatestDir(fs, new Path(localDestDir));
+    int latestyear = 0, latestmonth = 0, latestday = 0, latesthour = 0, latestminute = 0;
+
+    if (latestyeardir != null) {
+      latestyear = Integer.parseInt(latestyeardir.getName());
+      Path latestmonthdir = getLatestDir(fs, latestyeardir);
+      if (latestmonthdir != null) {
+        latestmonth = Integer.parseInt(latestmonthdir.getName());
+        Path latestdaydir = getLatestDir(fs, latestmonthdir);
+        if (latestdaydir != null) {
+          latestday = Integer.parseInt(latestdaydir.getName());
+          Path latesthourdir = getLatestDir(fs, latestdaydir);
+          if (latesthourdir != null) {
+            latesthour = Integer.parseInt(latesthourdir.getName());
+            Path latestminutedir = getLatestDir(fs, latesthourdir);
+            if (latestminutedir != null) {
+              latestminute = Integer.parseInt(latestminutedir.getName());
+            }
+          }
+        }
+      }
+    } else
+      return -1;
+    LOG.debug("Date Found " + latestyear + File.separator + latestmonth
+        + File.separator + latestday + File.separator + latesthour
+        + File.separator + latestminute);
+    return CalendarHelper.getDateHourMinute(latestyear, latestmonth, latestday,
+        latesthour, latestminute).getTimeInMillis();
+  }
+
+  private boolean isMissingPaths(long commitTime, long prevRuntime) {
+    return ((commitTime - prevRuntime) >= MILLISECONDS_IN_MINUTE);
   }
 
   protected void publishMissingPaths(FileSystem fs, String destDir,

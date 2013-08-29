@@ -56,7 +56,6 @@ public class MergedStreamService extends DistcpBaseService {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
-    primaryCategories = destinationCluster.getPrimaryDestinationStreams();
   }
 
   @Override
@@ -148,7 +147,7 @@ public class MergedStreamService extends DistcpBaseService {
         String fileName = allFiles[i].getPath().getName();
         if (fileName != null) {
           String category = getCategoryFromFileName(fileName,
-              getDestCluster().getPrimaryDestinationStreams());
+              streamsToProcess);
           if (category != null) {
             Path intermediatePath = new Path(tmpOut, category);
             if (!getDestFs().exists(intermediatePath))
@@ -228,7 +227,8 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   protected Path getInputPath() throws IOException {
-    return getSrcCluster().getConsumePath(getDestCluster());
+    String finalDestDir = getSrcCluster().getLocalFinalDestDirRoot();
+    return new Path(finalDestDir);
   }
 
 

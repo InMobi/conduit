@@ -107,17 +107,6 @@ public abstract class DistcpBaseService extends AbstractService {
    * @return options instance
    */
 
-  protected DistCpOptions getDistCpOptions(Path inputPathListing, Path target) {
-    DistCpOptions options = new DistCpOptions(inputPathListing, target);
-    options.setBlocking(true);
-    options.setSkipPathValidation(true);
-    options.setUseSimpleFileListing(true);
-    // If more command line options need to be passed to DistCP then,
-    // Create options instance using OptionParser.parse and set default options
-    // on the returned instance.
-    // with the arguments as sent in by the Derived Service
-    return options;
-  }
 
   protected Boolean executeDistCp(String serviceName,
       Map<String, FileStatus> fileListingMap, Path targetPath)
@@ -192,20 +181,7 @@ public abstract class DistcpBaseService extends AbstractService {
     return (runIntervalInSec - currentSec) * 1000;
   }
 
-  protected void doFinalCommit(Map<Path, FileSystem> consumePaths)
-      throws Exception {
-    // commit distcp consume Path from remote cluster
-    Set<Map.Entry<Path, FileSystem>> consumeEntries = consumePaths.entrySet();
-    for (Map.Entry<Path, FileSystem> consumePathEntry : consumeEntries) {
-      FileSystem fileSystem = consumePathEntry.getValue();
-      Path consumePath = consumePathEntry.getKey();
-      if (retriableDelete(fileSystem, consumePath)) {
-      LOG.debug("Deleting/Commiting [" + consumePath + "]");
-      } else {
-        LOG.error("Deleting [" + consumePath + "] failed,Data replay possible");
-      }
-    }
-  }
+
 
 
   protected abstract Path getStartingDirectory(String stream,
@@ -315,44 +291,6 @@ public abstract class DistcpBaseService extends AbstractService {
       return result;
     }
 
-
-  /*
-   * Helper function to find next minute directory given a path eg: Path p =
-   * "hdfsUrl/databus/streams/<streamName>/2013/01/10/12/33"
-   */
-  private Path getNextMinuteDirectory(Path p) {
-    String rootString = srcCluster.getRootDir();
-    Path root = new Path(rootString);// this will clean the root path string of
-                                     // all extra slashes(/)
-    // eg: root = "hdfsUrl/databus/"
-    LOG.debug("Path given to getNextMinuteDirectory function [" + p + "]");
-    String path = p.toString();
-    // if it is a valid path than this condition should be true
-    if (path.length() >= root.toString().length() + 1) {
-      // tmpPath will have value of form
-      // "streams/<streamName>/2013/01/10/12/33"
-      String tmpPath = path.substring(root.toString().length() + 1);
-      String tmp[] = tmpPath.split(File.separator);
-      if (tmp.length >= 2) {
-        // tmp[0] value should either be streams or steam_local and tmp[1] value
-        // will be name of topic
-        Path pathTillStream = new Path(root, tmp[0]);
-        Path pathTillTopic = new Path(pathTillStream, tmp[1]);
-        // pathTillTopic value will be of form
-        // hdfsUrl/databus/streams/<streamName>/
-        Date pathDate = CalendarHelper.getDateFromStreamDir(pathTillTopic, p);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(pathDate);
-        calendar.add(Calendar.MINUTE, 1);
-        Date nextdate = calendar.getTime();
-        String suffix = Cluster.getDateAsYYYYMMDDHHMNPath(nextdate);
-        Path nextPath = new Path(pathTillTopic, suffix);
-        return nextPath;
-      }
-    }
-
-    return null;
-  }
 
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
 

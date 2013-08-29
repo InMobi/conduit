@@ -33,54 +33,52 @@ import org.apache.hadoop.tools.DistCpOptions;
 import com.inmobi.databus.utils.FileUtil;
 
 /**
- * This class extends DistCp class and overrides createInputFileListing() method
- * that writes the listing file directly using the file listing map passed by
- * merge/mirror stream service.
+ * This class extends DistCp class and overrides createInputFileListing()
+ * method that writes the listing file directly using the file listing map
+ * passed by merge/mirror stream service.
  */
 public class DatabusDistCp extends DistCp {
-
+  
   private static final Log LOG = LogFactory.getLog(DistCp.class);
-
-  // The fileListing map contains key as the destination file name,
+  
+  // The fileListing map contains key as the destination file name, 
   // and value as source FileStatus
   private Map<String, FileStatus> fileListingMap = null;
   // counter for the total number of paths to be copied
   private long totalPaths = 0;
-  // counter for the total bytes to be copied
+  //counter for the total bytes to be copied
   private long totalBytesToCopy = 0;
   private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
   private DataInputBuffer in = new DataInputBuffer();
 
   public DatabusDistCp(Configuration configuration, DistCpOptions inputOptions,
-      Map<String, FileStatus> fileListingMap) throws Exception {
+      Map<String, FileStatus> fileListingMap)
+      throws Exception {
     super(configuration, inputOptions);
     this.fileListingMap = fileListingMap;
   }
-
+  
   @Override
   protected Path createInputFileListing(Job job) throws IOException {
     // get the file path where copy listing file has to be saved
     Path fileListingPath = getFileListingPath();
     Configuration config = job.getConfiguration();
-
+    
     SequenceFile.Writer fileListWriter = null;
     try {
-      fileListWriter = SequenceFile.createWriter(
-          fileListingPath.getFileSystem(config), config, fileListingPath,
-          Text.class, FileStatus.class, SequenceFile.CompressionType.NONE);
-
+      fileListWriter = SequenceFile.createWriter(fileListingPath.getFileSystem(config),
+          config, fileListingPath, Text.class, FileStatus.class, 
+          SequenceFile.CompressionType.NONE);
+      
       for (Map.Entry<String, FileStatus> entry : fileListingMap.entrySet()) {
-        FileStatus status = FileUtil
-            .getFileStatus(entry.getValue(), buffer, in);
+        FileStatus status = FileUtil.getFileStatus(entry.getValue(), buffer, in);
         fileListWriter.append(new Text(entry.getKey()), status);
-
-        // Create a sync point after each entry. This will ensure that
-        // SequenceFile
-        // Reader can work at file entry level granularity, given that
-        // SequenceFile
+        
+        // Create a sync point after each entry. This will ensure that SequenceFile
+        // Reader can work at file entry level granularity, given that SequenceFile
         // Reader reads from the starting of sync point.
         fileListWriter.sync();
-
+        
         totalBytesToCopy += entry.getValue().getLen();
         totalPaths++;
       }
