@@ -206,6 +206,6 @@
   </build>
 
 	<properties>
-		<messaging-client-version>3.3.0-SNAPSHOT</messaging-client-version>
+		<messaging-client-version>3.2.2</messaging-client-version>
 	</properties>
 </project>
