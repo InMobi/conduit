@@ -137,7 +137,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     DatabusConfig config = parser.getConfig();
     Set<String> streamsToProcessLocal = new HashSet<String>();
     streamsToProcessLocal.addAll(config.getSourceStreams().keySet());
-    System.setProperty(DatabusConstants.NUM_DIR_PER_DISTCP, "200");
+    System.setProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM, "200");
 
     Cluster currentCluster = null;
     if (currentClusterName != null) {

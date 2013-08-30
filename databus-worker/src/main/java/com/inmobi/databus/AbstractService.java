@@ -15,7 +15,6 @@ package com.inmobi.databus;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -220,27 +219,6 @@ public abstract class AbstractService implements Service, Runnable {
 		}
 	}
 
-  /*
-   * publish all the missing paths and clears missingDirCommittedPaths map
-   * after publishing
-   */
-  public void commitPublishMissingPaths(FileSystem fs, 
-      Map<String, Set<Path>> missingDirsCommittedPaths, long commitTime) 
-          throws IOException {
-    if (missingDirsCommittedPaths != null && missingDirsCommittedPaths.size() > 0) {
-      for (String category : missingDirsCommittedPaths.keySet()) {
-        Set<Path> missingPathsPerCategory = missingDirsCommittedPaths.get(category);
-        for (Path missingdir : missingPathsPerCategory) {
-          if (!fs.exists(missingdir)) {
-            LOG.debug("Creating Missing Directory [" + missingdir + "]");
-            fs.mkdirs(missingdir);
-          }
-        }
-        prevRuntimeForCategory.put(category, commitTime);
-      }
-      missingDirsCommittedPaths.clear();
-    }
-  }
  /*
    * Retries renaming a file to a given num of times defined by
    * "com.inmobi.databus.retries" system property Returns the outcome of last

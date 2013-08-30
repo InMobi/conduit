@@ -53,10 +53,10 @@ public abstract class DistcpBaseService extends AbstractService {
   protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
   protected final CheckpointProvider provider;
   protected Map<String, Path> checkPointPaths = new HashMap<String, Path>();
-  private static final int DEFAULT_NUM_DIR_PER_DISTCP = 30;
+  private static final int DEFAULT_NUM_DIR_PER_DISTCP_STREAM = 30;
 
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService.class);
-  private final int numOfDirPerDistcp;
+  private final int numOfDirPerDistcpPerStream;
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
@@ -76,10 +76,10 @@ public abstract class DistcpBaseService extends AbstractService {
         destCluster.getHadoopConf());
     this.provider = provider;
     String tmp;
-    if ((tmp = System.getProperty(DatabusConstants.NUM_DIR_PER_DISTCP)) != null) {
-      numOfDirPerDistcp = Integer.parseInt(tmp);
+    if ((tmp = System.getProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM)) != null) {
+      numOfDirPerDistcpPerStream = Integer.parseInt(tmp);
     } else
-      numOfDirPerDistcp = DEFAULT_NUM_DIR_PER_DISTCP;
+      numOfDirPerDistcpPerStream = DEFAULT_NUM_DIR_PER_DISTCP_STREAM;
 
   }
 
@@ -188,8 +188,8 @@ public abstract class DistcpBaseService extends AbstractService {
   protected Map<String, FileStatus> getDistCPInputFile()
       throws Exception {
     Map<String,FileStatus> result = new HashMap<String, FileStatus>();
-    int pathsAlreadyAdded = 0;
     for (String stream : streamsToProcess) {
+      int pathsAlreadyAdded = 0;
       LOG.info("Processing stream " + stream);
       byte[] value = provider.read(getCheckPointKey(stream));
       Path inputPath = new Path(getInputPath(), stream);
@@ -244,7 +244,7 @@ public abstract class DistcpBaseService extends AbstractService {
       Path lastPathAdded = null;
       FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
       FileStatus[] nextToNextPathFileStatus;
-      while (pathsAlreadyAdded <= numOfDirPerDistcp
+      while (pathsAlreadyAdded <= numOfDirPerDistcpPerStream
           && nextPathFileStatus != null
           && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
               nextToNextPath)) != null) {
@@ -292,9 +292,10 @@ public abstract class DistcpBaseService extends AbstractService {
 
  
 
-  protected void finalizeCheckPoints() {
+  protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
-      provider.checkpoint(getCheckPointKey(entry.getKey()), entry.getValue()
+      retriableCheckPoint(provider, getCheckPointKey(entry.getKey()), entry
+          .getValue()
           .toString().getBytes());
     }
     checkPointPaths.clear();

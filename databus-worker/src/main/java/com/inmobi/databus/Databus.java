@@ -339,9 +339,9 @@ public class Databus implements Service, DatabusConstants {
       if (streamperMirror != null) {
         numStreamsMirrorService = Integer.parseInt(streamperMirror);
       }
-      String numOfDirPerDistcpService = prop.getProperty(NUM_DIR_PER_DISTCP);
+      String numOfDirPerDistcpService = prop.getProperty(DIR_PER_DISTCP_PER_STREAM);
       if (numOfDirPerDistcpService != null) {
-        System.setProperty(NUM_DIR_PER_DISTCP, numOfDirPerDistcpService);
+        System.setProperty(DIR_PER_DISTCP_PER_STREAM, numOfDirPerDistcpService);
       }
 
       String log4jFile = getProperty(prop, LOG4J_FILE);

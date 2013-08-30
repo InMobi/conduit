@@ -32,8 +32,8 @@ public interface DatabusConstants {
       + "streamsPerMerge";
   public static final String STREAMS_PER_MIRROR = "com.inmobi.databus."
       + "streamsPerMirror";
-  public static final String NUM_DIR_PER_DISTCP = "com.inmobi.databus."
-      + "numDirPerDistcp";
+  public static final String DIR_PER_DISTCP_PER_STREAM = "com.inmobi.databus.distcp."
+      + "dirsPerStream";
   public static final String PERGER_ENABLED = "com.inmobi.databus.purgerEnabled";
   public static final String NUM_RETRIES = "com.inmobi.databus.retries";
 

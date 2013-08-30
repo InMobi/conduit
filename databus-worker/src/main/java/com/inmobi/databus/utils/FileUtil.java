@@ -2,6 +2,7 @@ package com.inmobi.databus.utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
@@ -117,7 +118,12 @@ public class FileUtil {
    */
   public static FileStatus[] listStatusAsPerHDFS(FileSystem fs, Path p)
       throws IOException {
-    FileStatus[] fStatus = fs.listStatus(p);
+    FileStatus[] fStatus;
+    try {
+      fStatus = fs.listStatus(p);
+    } catch (FileNotFoundException ignore) {
+      return null;
+    }
     if (fStatus != null && fStatus.length > 0)
       return fStatus;
     if (fs.exists(p))
