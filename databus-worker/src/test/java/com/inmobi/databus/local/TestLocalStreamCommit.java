@@ -2,8 +2,8 @@ package com.inmobi.databus.local;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -23,7 +23,7 @@ public class TestLocalStreamCommit {
   static Path rootDir = new Path("/tmp/test-databus/databus/");
 
   static FileSystem localFs;
-  private List<String> streamsToProcess = new ArrayList<String>();
+  private Set<String> streamsToProcess = new HashSet<String>();
    
   private void createData(Cluster cluster) throws IOException {
     Path tmpPath = new Path(cluster.getTmpPath(),

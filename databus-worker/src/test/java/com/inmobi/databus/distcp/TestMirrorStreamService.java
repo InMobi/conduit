@@ -1,28 +1,31 @@
 package com.inmobi.databus.distcp;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.inmobi.databus.AbstractServiceTest;
-import com.inmobi.databus.Cluster;
-import com.inmobi.databus.DatabusConfig;
-import com.inmobi.databus.PublishMissingPathsTest;
-import com.inmobi.databus.SourceStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
+
+import com.inmobi.databus.AbstractServiceTest;
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DatabusConfig;
+import com.inmobi.databus.FSCheckpointProvider;
+import com.inmobi.databus.PublishMissingPathsTest;
+import com.inmobi.databus.SourceStream;
+import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.DatePathComparator;
 
 public class TestMirrorStreamService extends MirrorStreamService
     implements AbstractServiceTest {
@@ -37,8 +40,11 @@ public class TestMirrorStreamService extends MirrorStreamService
   private long mergeCommitTime = 0;
   
   public TestMirrorStreamService(DatabusConfig config, Cluster srcCluster,
-      Cluster destinationCluster, Cluster currentCluster) throws Exception {
-    super(config, srcCluster, destinationCluster, currentCluster);
+      Cluster destinationCluster, Cluster currentCluster,
+      Set<String> streamsToProcess) throws Exception {
+    super(config, srcCluster, destinationCluster, currentCluster,
+        new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
+        streamsToProcess);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -62,6 +68,26 @@ public class TestMirrorStreamService extends MirrorStreamService
             + sstream.getValue().getName();     
         TestMergedStreamService.getAllFiles(new Path(listPath), fs, filesList);
         files.put(sstream.getValue().getName(), filesList);
+
+        for (String stream : streamsToProcess) {
+          Cluster srcCluster = config
+              .getPrimaryClusterForDestinationStream(stream);
+          Path streamLevelPath = new Path(srcCluster.getFinalDestDirRoot(),
+              stream);
+          List<FileStatus> results = new ArrayList<FileStatus>();
+          createListing(getSrcFs(), getSrcFs().getFileStatus(streamLevelPath),
+              results);
+          Collections.sort(results, new DatePathComparator());
+          FileStatus lastFile = results.get(results.size() - 1);
+          LOG.info("Last path created for stream " + stream + " in merger is "
+              + lastFile.getPath());
+          Date lastPathDate = CalendarHelper.getDateFromStreamDir(
+              streamLevelPath, lastFile.getPath());
+          Path nextPath = CalendarHelper.getNextMinutePathFromDate(
+              lastPathDate, streamLevelPath);
+          LOG.debug("Empty directory created by preExecute is" + nextPath);
+          fs.mkdirs(nextPath);
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -128,12 +154,6 @@ public class TestMirrorStreamService extends MirrorStreamService
     postExecute();
   }
 
-  @Override
-  public void publishMissingPaths(long commitTime) throws Exception {
-    super.publishMissingPaths(fs, destinationCluster.getFinalDestDirRoot(), 
-        commitTime);
-  }
-  
   @Override
   public Cluster getCluster() {
     return destinationCluster;
