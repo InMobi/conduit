@@ -36,6 +36,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
  * (i)   1 Mirror Thread per src DatabusConfig.Cluster from where streams need to be mirrored on destCluster
@@ -290,8 +291,8 @@ public class MirrorStreamService extends DistcpBaseService {
       Path correspondingMergePath = CalendarHelper.getPathFromDate(date,
           streamFinalSrctDir);
       List<FileStatus> files = findDifferentFiles(
-          getSrcFs().listStatus(correspondingMergePath), getDestFs()
-              .listStatus(lastMirroredPath));
+          FileUtil.listStatusAsPerHDFS(getSrcFs(), correspondingMergePath),
+          FileUtil.listStatusAsPerHDFS(getDestFs(), lastMirroredPath));
       if (files != null)
         filesToBeCopied.addAll(files);
       result = CalendarHelper.getNextMinutePathFromDate(date,
@@ -331,7 +332,8 @@ public class MirrorStreamService extends DistcpBaseService {
       throws IOException {
     if (fileStatus.isDir()) {
 
-      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
+      FileStatus[] stats = FileUtil.listStatusAsPerHDFS(fs,
+          fileStatus.getPath());
       if (stats != null) {
         for (FileStatus stat : stats) {
           if (depth == 4) {

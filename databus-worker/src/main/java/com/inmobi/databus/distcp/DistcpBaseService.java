@@ -309,7 +309,8 @@ public abstract class DistcpBaseService extends AbstractService {
   public static void createListing(FileSystem fs, FileStatus fileStatus,
       List<FileStatus> results) throws IOException {
     if (fileStatus.isDir()) {
-      FileStatus[] stats = fs.listStatus(fileStatus.getPath());
+      FileStatus[] stats = FileUtil.listStatusAsPerHDFS(fs,
+          fileStatus.getPath());
       // stats can be null in case where purger deleted the path while this
       // method was called
       if (stats != null) {

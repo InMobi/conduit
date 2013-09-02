@@ -143,7 +143,7 @@ public class MergedStreamService extends DistcpBaseService {
     Map<String, List<Path>> categoriesToCommit = new HashMap<String, List<Path>>();
     FileStatus[] allFiles = null;
     try {
-      allFiles = getDestFs().listStatus(tmpOut);
+      allFiles = FileUtil.listStatusAsPerHDFS(getDestFs(), tmpOut);
     } catch (FileNotFoundException ignored) {
     }
     if (allFiles != null) {
@@ -337,7 +337,8 @@ public class MergedStreamService extends DistcpBaseService {
     } else {
       // Starting path was computed from source files
       // checking whether last directory was completely copied
-      FileStatus[] filesInLastDir = getSrcFs().listStatus(lastLocalPathOnSrc);
+      FileStatus[] filesInLastDir = FileUtil.listStatusAsPerHDFS(getSrcFs(),
+          lastLocalPathOnSrc);
       for (FileStatus fileStatus : filesInLastDir) {
         if (searchFileInSource(fileStatus, destnFiles) == null) {
           // file present in source but absent in destination
@@ -364,8 +365,7 @@ public class MergedStreamService extends DistcpBaseService {
    */
   private Path searchFileInSource(FileStatus destnPath,
       List<FileStatus> srcFiles) {
-    LOG.debug("Searching path " + destnPath.getPath().toString()
-        + " at the source");
+    LOG.debug("Searching path " + destnPath.getPath().toString());
     for (int i = srcFiles.size() - 1; i >= 0; i--) {
       FileStatus current = srcFiles.get(i);
       if (current.isDir())
