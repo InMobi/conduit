@@ -118,11 +118,11 @@ public class CalendarHelper {
     if (includeMinute) {
       minute = Integer.toString(calendar.get(Calendar.MINUTE));
     }
-    if (includeHour) {
-      fileNameInnYYMMDDHRMNFormat = year + "-" + month + "-" + day + "-" + hour;
-    } else if (includeMinute) {
+    if (includeMinute) {
       fileNameInnYYMMDDHRMNFormat = year + "-" + month + "-" + day + "-" + hour
           + "-" + minute;
+    } else if (includeHour) {
+      fileNameInnYYMMDDHRMNFormat = year + "-" + month + "-" + day + "-" + hour;
     } else {
       fileNameInnYYMMDDHRMNFormat = year + "-" + month + "-" + day;
     }
