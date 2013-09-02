@@ -1,0 +1,63 @@
+CREATE OR REPLACE FUNCTION rollup(destnTable text,srcTable text,startTime bigint, endTime bigint ,intervalLength bigint )
+RETURNS void AS
+$BODY$
+DECLARE 
+ tmpstart bigint :=startTime;
+ tmpend bigint :=startTime + intervalLength;
+ query text;
+ rec record;
+ selectquery text;
+ valueString text;
+BEGIN
+while(tmpend<=endTime) LOOP
+selectquery = 'select tier,topic,hostname,cluster,sum(sent) as sent from '||srcTable|| ' where timeinterval>='||tmpstart|| ' and timeinterval<'||tmpend||'group by tier,topic,hostname,cluster';
+FOR rec IN EXECUTE selectquery LOOP
+valueString = tmpstart||','||quote_literal(rec.tier)||','||quote_literal(rec.topic)||','||quote_literal(rec.hostname)||','||quote_literal(rec.cluster)||','||rec.sent;
+query = 'insert into '|| destnTable || '(timeinterval,tier,topic,hostname,cluster,sent) values('||valueString||')';
+execute query;
+END LOOP;
+tmpstart=tmpend;
+tmpend=tmpend+intervalLength;
+END LOOP;
+END
+$BODY$
+ LANGUAGE 'plpgsql'
+ 
+ 
+ 
+ 
+CREATE OR REPLACE FUNCTION modifyconstraint(tablename text,endtime bigint )
+RETURNS void AS
+$BODY$
+DECLARE
+ query text;
+BEGIN
+query='alter table '||tablename||' drop constraint upper';
+execute query;
+query='alter table '||tablename||' add constraint upper check(timeinterval<'||endtime||')';
+execute query;
+END
+$BODY$
+ LANGUAGE 'plpgsql'
+ 
+ 
+CREATE OR REPLACE FUNCTION daily_insert_trigger_function()
+RETURNS TRIGGER AS $$
+DECLARE 
+ dt_var varchar;
+ timeinterval bigint;
+ dateresult date;
+ BEGIN
+ timeinterval=NEW.timeinterval/1000;
+ SELECT (TIMESTAMP WITH TIME ZONE 'epoch' + timeinterval * INTERVAL '1  second')::date into dateresult;
+ select to_char(dateresult,'yyyymmdd') into dt_var ;
+ execute'insert into audit_daily'||dt_var||  ' select  $1.*' using new;
+ RETURN NULL;
+ END;
+ $$
+LANGUAGE plpgsql;
+
+
+CREATE TRIGGER daily_insert_trigger
+  BEFORE INSERT ON audit_daily
+  FOR EACH ROW EXECUTE PROCEDURE daily_insert_trigger_function();
