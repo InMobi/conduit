@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.testng.annotations.Test;
 
+import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
@@ -189,10 +190,10 @@ public class MergeTestCheckpoint {
     Map<String, List<String>> srcToRemote = launchMergeServices(config);
     assertAllPathsOnSrcPresentOnDest(srcPathList, srcToRemote, config);
 
-    String checkPointKey1 = TestMergedStreamService.class.getSimpleName()
-        + "testcluster1" + "test1";
-    String checkPointKey2 = TestMergedStreamService.class.getSimpleName()
-        + "testcluster2" + "test1";
+    String checkPointKey1 = AbstractService.getCheckPointKey(
+        TestMergedStreamService.class.getSimpleName(), "test1", "testcluster1");
+    String checkPointKey2 = AbstractService.getCheckPointKey(
+        TestMergedStreamService.class.getSimpleName(), "test1", "testcluster2");
 
     Cluster destnCluster1 = config.getClusters().get("testcluster1");
     List<Path> pathsCreated1 = srcPathList.get("testcluster1");
@@ -237,15 +238,13 @@ public class MergeTestCheckpoint {
     remoteFs.create(fileToBeCreated);
 
     launchMergeServices(config);
-    // Last directory on target should have only 6 files instead of 8 as it
-    // should skip first two files from source=testcluster1
+    // Last directory on target should have all 8 files
 
     FileStatus pathToBeListed = remoteFs.getFileStatus(new Path(destnCluster
         .getFinalDestDirRoot(), "test1"));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
-    assert (results.size() == 7);// 1 path was created as part of setup and 6
-                                 // were copied via merge
+    assert (results.size() == 8);
     Collections.sort(results, new DatePathComparator());
     assert (results.get(0).getPath().equals(fileToBeCreated));
     assert (!results.get(0).getPath().getParent()
@@ -299,15 +298,13 @@ public class MergeTestCheckpoint {
     remoteFs.create(fileToBeCreated2);
 
     launchMergeServices(config);
-    // Last directory on target should have only 4 files instead of 8 as it
-    // should skip first two files from both sources
+
 
     FileStatus pathToBeListed = remoteFs.getFileStatus(new Path(destnCluster1
         .getFinalDestDirRoot()));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
-    assert (results.size() == 6);// 2 paths were created as part of setup and 4
-                                 // were copied via merge
+    assert (results.size() == 8);
     Collections.sort(results, new DatePathComparator());
     assert (!results.get(1).getPath().getParent()
         .equals(results.get(2).getPath().getParent()));// second path and other
@@ -331,10 +328,10 @@ public class MergeTestCheckpoint {
     List<Path> pathsCreated2 = srcPathList.get("testcluster2");
     FSCheckpointProvider provider = new FSCheckpointProvider(
         destnCluster1.getCheckpointDir());
-    String checkPointKey1 = TestMergedStreamService.class.getSimpleName()
-        + "testcluster1" + "test1";
-    String checkPointKey2 = TestMergedStreamService.class.getSimpleName()
-        + "testcluster2" + "test1";
+    String checkPointKey1 = AbstractService.getCheckPointKey(
+        TestMergedStreamService.class.getSimpleName(), "test1", "testcluster1");
+    String checkPointKey2 = AbstractService.getCheckPointKey(
+        TestMergedStreamService.class.getSimpleName(), "test1", "testcluster2");
     Path checkPointPath1 = pathsCreated1.get(0).getParent();
     Path checkPointPath2 = pathsCreated2.get(0).getParent();
     provider.checkpoint(checkPointKey1, checkPointPath1.toString().getBytes());
