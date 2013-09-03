@@ -302,6 +302,7 @@ public class TestDataServiceManager {
           "./src/test/resources/xmlfolder2",
           "./src/test/resources/visualization2.properties",
           "./src/test/resources/audit-feeder.properties");
+      auditDateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"));
       String startDate = auditDateFormatter.format(TestUtil.incrementDate
           (TestUtil.getCurrentDate(), -1));
       String endDate = auditDateFormatter.format(TestUtil.incrementDate

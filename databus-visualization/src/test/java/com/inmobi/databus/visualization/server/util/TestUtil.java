@@ -29,9 +29,11 @@ public class TestUtil {
   public static List<Tuple> tupleList = new ArrayList<Tuple>();
   static Date currentDate;
 
-  static {
-    currentDate = new Date();
+  static {/*
+    currentDate = new Date();*/
     Calendar currentCal = Calendar.getInstance();
+    long offset = TimeZone.getDefault().getRawOffset();
+    currentDate = new Date(currentCal.getTime().getTime() + offset);
     currentCal.setTime(currentDate);
     currentCal.add(Calendar.MINUTE, 2);
     Date currPlusTwo = currentCal.getTime();

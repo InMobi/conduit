@@ -96,11 +96,13 @@ public class DataServiceManager {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
-    ClientConfig config = ClientConfig.load(feederPropertiesPath);
+    ClientConfig config = ClientConfig.load(feederPropertiesPath);/*
+    String timeZone = TimeZone.getDefault().getID();*/
+    String timeZone = ServerConstants.TIMEZONE;
     AuditDbQuery dbQuery =
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_STRING, ServerConstants.TIMEZONE,
+            filterMap.get(ServerConstants.START_TIME_FILTER), null,
+            ServerConstants.GROUPBY_STRING, timeZone,
             properties.get(ServerConstants.PERCENTILE_STRING), config);
     try {
       dbQuery.execute();

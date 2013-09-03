@@ -258,6 +258,8 @@ public class AuditDBHelper {
     try {
       preparedstatement = connection.prepareStatement(statement);
       int index = 1;
+      System.out.println("Print fromDate of db query:"+fromDate.getTime());
+      System.out.println("Print toDate of db query:"+toDate.getTime());
       preparedstatement.setLong(index++, fromDate.getTime());
       preparedstatement.setLong(index++, toDate.getTime());
       if (filter.getFilters() != null) {
