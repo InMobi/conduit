@@ -153,9 +153,7 @@ public class AuditDbQuery {
     groupBy = new GroupBy(groupByString);
     filter = new Filter(filterString);
     fromTime = getDate(fromTimeString);
-    System.out.println("Printing fromdate after parsing:"+fromTime.getTime());
     toTime = getDate(toTimeString);
-    System.out.println("Printing todate after parsing:"+toTime.getTime());
     percentileSet = getPercentileList(percentileString);
   }
 

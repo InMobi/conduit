@@ -12,7 +12,8 @@ import java.util.*;
 
 public class TestDataServiceManager {
   DataServiceManagerTest serviceManager;
-  SimpleDateFormat auditDateFormatter = new SimpleDateFormat("dd-MM-yy-HH:mm");
+  SimpleDateFormat auditDateFormatter = new SimpleDateFormat
+      ("dd-MM-yyyy-HH:mm");
 
   @Test
   public void testAuditStreamNotAdded() {
@@ -290,7 +291,36 @@ public class TestDataServiceManager {
 
   @Test
   public void testCheckIfNodesPassFilters() {
-
+    Connection connection = null;
+    try {
+      connection = TestUtil.setupDB();
+      serviceManager = DataServiceManagerTest.get("" +
+          "./src/test/resources/xmlfolder2",
+          "./src/test/resources/visualization2.properties",
+          "./src/test/resources/audit-feeder.properties");
+      auditDateFormatter.setTimeZone(TimeZone.getTimeZone("GMT"));
+      String startDate = auditDateFormatter.format(TestUtil.incrementDate
+          (TestUtil.getCurrentDate(), -1));
+      String endDate = auditDateFormatter.format(TestUtil.incrementDate
+          (TestUtil.getCurrentDate(), 5));
+      String stream = "testTopic1";
+      String cluster = "All";
+      String filterValues = TestUtil.getFilterStringFromParameters(startDate,
+          endDate, stream, cluster);
+      String response = serviceManager.getData(filterValues);
+      List<Node> nodeList = TestUtil.getNodeListFromResponse(response);
+      Assert.assertEquals(6, nodeList.size());
+      stream = "testTopic2";
+      filterValues = TestUtil.getFilterStringFromParameters(startDate,
+          endDate, stream, cluster);
+      response = serviceManager.getData(filterValues);
+      nodeList = TestUtil.getNodeListFromResponse(response);
+      Assert.assertEquals(5, nodeList.size());
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      TestUtil.shutDownDB(connection);
+    }
   }
 
   @Test

@@ -96,13 +96,11 @@ public class DataServiceManager {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
-    ClientConfig config = ClientConfig.load(feederPropertiesPath);/*
-    String timeZone = TimeZone.getDefault().getID();*/
-    String timeZone = ServerConstants.TIMEZONE;
+    ClientConfig config = ClientConfig.load(feederPropertiesPath);
     AuditDbQuery dbQuery =
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), null,
-            ServerConstants.GROUPBY_STRING, timeZone,
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+            ServerConstants.GROUPBY_STRING, ServerConstants.TIMEZONE,
             properties.get(ServerConstants.PERCENTILE_STRING), config);
     try {
       dbQuery.execute();
@@ -128,7 +126,7 @@ public class DataServiceManager {
       LOG.debug("Final node :" + node);
     }
     Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
-        (null, filterMap.get(ServerConstants.END_TIME_FILTER),
+        (feederPropertiesPath, filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
     return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
         tierLatencyMap, properties);
@@ -213,7 +211,7 @@ public class DataServiceManager {
     return dbQuery.getPercentile();
   }
 
-  private String setFilterString(Map<String, String> filterMap) {
+  protected String setFilterString(Map<String, String> filterMap) {
     String filterString;
     String selectedStream = filterMap.get(ServerConstants.STREAM_FILTER);
     String selectedCluster = filterMap.get(ServerConstants.CLUSTER_FILTER);

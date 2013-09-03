@@ -29,8 +29,7 @@ public class TestUtil {
   public static List<Tuple> tupleList = new ArrayList<Tuple>();
   static Date currentDate;
 
-  static {/*
-    currentDate = new Date();*/
+  static {
     Calendar currentCal = Calendar.getInstance();
     long offset = TimeZone.getDefault().getRawOffset();
     currentDate = new Date(currentCal.getTime().getTime() + offset);
@@ -107,53 +106,9 @@ public class TestUtil {
     Connection connection = getConnection(driverName, url, username, password);
     dropTable(connection, table);
     createTable(connection, table);
-    String insertStatement = getInsertStatement(table);
-    PreparedStatement preparedStatement = connection.prepareStatement
-        (insertStatement);
     AuditDBHelper dbHelper = new AuditDBHelper(config);
     Assert.assertTrue(dbHelper.update(new HashSet<Tuple>(tupleList)));
-    ResultSet rs = connection.prepareStatement("select * from "+table+";")
-        .executeQuery();
-    int ki = rs.getFetchSize();
-    while (rs.next()) {
-      System.out.println(rs.getString(1));
-    }
-    /*
-    for (Tuple tuple : tupleList) {
-      int index = 1;
-      Map<LatencyColumns, Long> latencyCountMap = tuple.getLatencyCountMap();
-      for (LatencyColumns latencyColumn : LatencyColumns.values()) {
-        Long count = latencyCountMap.get(latencyColumn);
-        if (count == null)
-          count = 0l;
-        preparedStatement.setLong(index++, count);
-      }
-      preparedStatement.setLong(index++, tuple.getTimestamp().getTime());
-      preparedStatement.setString(index++, tuple.getHostname());
-      preparedStatement.setString(index++, tuple.getTier());
-      preparedStatement.setString(index++, tuple.getTopic());
-      preparedStatement.setString(index++, tuple.getCluster());
-      preparedStatement.setLong(index++, tuple.getSent());
-      preparedStatement.addBatch();
-    }
-    preparedStatement.executeBatch();
-    connection.commit();
-    preparedStatement.close();*/
     return connection;
-  }
-
-  private static String getInsertStatement(String table) {
-    String columnString = "", columnNames = "";
-    for (LatencyColumns column : LatencyColumns.values()) {
-      columnNames += column.toString() + ", ";
-      columnString += "?, ";
-    }
-    String insertStatement = "insert into " + table + " (" + columnNames
-        + AuditDBConstants.TIMESTAMP + "," + Column.HOSTNAME + ", "
-        + Column.TIER + ", " + Column.TOPIC + ", " + Column.CLUSTER + ", "
-        + AuditDBConstants.SENT + ") values " + "(" + columnString
-        + "?, ?, ?, ?, ?, ?)";
-    return insertStatement;
   }
 
   private static Connection getConnection(String driverName, String url,
@@ -320,9 +275,11 @@ public class TestUtil {
             ("receivedtopicStatsList");
         for (int j = 0; j < receivedArray.length(); j++) {
           JSONObject messageObj = receivedArray.getJSONObject(j);
+          String hostname = null;
+          if (messageObj.has("hostname"))
+            hostname = messageObj.getString("hostname");
           MessageStats messageStats = new MessageStats(messageObj.getString
-              ("topic"), messageObj.getLong("messages"),
-              messageObj.getString("hostname"));
+              ("topic"), messageObj.getLong("messages"), hostname);
           receivedList.add(messageStats);
         }
         node.setReceivedMessagesList(receivedList);
@@ -331,9 +288,11 @@ public class TestUtil {
             ("senttopicStatsList");
         for (int j = 0; j < sentArray.length(); j++) {
           JSONObject messageObj = sentArray.getJSONObject(j);
+          String hostname = null;
+          if (messageObj.has("hostname"))
+            hostname = messageObj.getString("hostname");
           MessageStats messageStats = new MessageStats(messageObj.getString
-              ("topic"), messageObj.getLong("messages"),
-              messageObj.getString("hostname"));
+              ("topic"), messageObj.getLong("messages"), hostname);
           sentList.add(messageStats);
         }
         node.setSentMessagesList(sentList);
@@ -351,7 +310,8 @@ public class TestUtil {
         Map<Float, Integer> percentileMap = new HashMap<Float, Integer>();
         for (int j=0; j < percentileLatencyArray.length(); j++) {
           JSONObject obj = percentileLatencyArray.getJSONObject(j);
-          percentileMap.put((Float) obj.get("percentile"), obj.getInt("latency"));
+          percentileMap.put(Float.parseFloat(obj.getString("percentile")),
+              obj.getInt("latency"));
         }
         node.setPercentileMap(percentileMap);
         JSONArray topicPercentileArray = nodeObj.getJSONArray("topicLatency");
@@ -363,8 +323,8 @@ public class TestUtil {
           Map<Float, Integer> topicPercentileMap = new HashMap<Float, Integer>();
           for (int k=0; k< topicMapArray.length(); k++) {
             JSONObject percentileLatencyObj = topicMapArray.getJSONObject(k);
-            topicPercentileMap.put((Float) percentileLatencyObj.get("percentile"),
-                percentileLatencyObj.getInt("latency"));
+            topicPercentileMap.put(Float.parseFloat(percentileLatencyObj.getString
+                ("percentile")), percentileLatencyObj.getInt("latency"));
           }
           node.addToTopicPercentileMap(topic, topicPercentileMap);
         }
