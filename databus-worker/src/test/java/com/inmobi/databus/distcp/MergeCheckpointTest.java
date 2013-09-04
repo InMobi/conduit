@@ -32,10 +32,10 @@ import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
-public class MergeTestCheckpoint {
+public class MergeCheckpointTest {
 
   private static final Log LOG = LogFactory
-      .getLog(MergeTestCheckpoint.class);
+      .getLog(MergeCheckpointTest.class);
   private static final NumberFormat idFormat = NumberFormat.getInstance();
   static {
     idFormat.setGroupingUsed(false);

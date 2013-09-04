@@ -31,9 +31,9 @@ import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
-public class MirrorTestCheckPoint {
+public class MirrorCheckPointTest {
 
-  private static final Log LOG = LogFactory.getLog(MirrorTestCheckPoint.class);
+  private static final Log LOG = LogFactory.getLog(MirrorCheckPointTest.class);
   private static final NumberFormat idFormat = NumberFormat.getInstance();
   static {
     idFormat.setGroupingUsed(false);
