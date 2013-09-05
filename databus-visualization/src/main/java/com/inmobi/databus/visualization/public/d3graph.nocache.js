@@ -9,6 +9,7 @@ var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A",
 var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, percentileForSla,
   percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
 var publisherLatency, agentLatency, collectorLatency, hdfsLatency;
+var qStream, qCluster;
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -430,7 +431,7 @@ function nodeclick(n) {
       if (sent != received) {
         c.firstChild.style.color = "#ff0000";
       } else {
-        c.firstChild.style.color = "#00ff00";
+        c.firstChild.style.color = "#00a000";
       }
       c = r.insertCell(1);
       c.innerHTML = received;
@@ -589,7 +590,7 @@ function getStreamsCausingDataLoss(l) {
             streamslist.push(t.topic);
         }
       });
-      if (!isstreampresent && !(streamslist.contains(t.topic)))
+      if (!isstreampresent &&  !(streamslist.contains(t.topic)))
         streamslist.push(t.topic);
       isstreampresent = false;
     });
@@ -600,21 +601,32 @@ function getStreamsCausingDataLoss(l) {
           .tier.toLowerCase() == "collector";
       })
       .data();
-    l.target.allreceivedtopicstats.forEach(function (t) {
-      var parentCount = 0;
-      linkList.forEach(function (cl) {
-        cl.source.allreceivedtopicstats.forEach(function (s) {
-          if (t.topic == s.topic) {
-            parentCount += s.messages;
-            isstreampresent = true;
+    var aggMsgList = [];
+    linkList.forEach(function(l) {
+    	l.source.allreceivedtopicstats.forEach(function(stat) {
+    		var isPresent = false;
+    		for(var index = 0; index < aggMsgList.length; index++) {
+          if(aggMsgList[index].topic == stat.topic) {
+          	aggMsgList[index].messages += stat.messages;
+          	isPresent = true;
+          	break;
           }
-        });
-        if (isLoss(parentCount, t.messages) || (!
-          isstreampresent && !(streamslist.contains(t.topic))
-        ))
-          streamslist.push(t.topic);
-        isstreampresent = false;
-      });
+    		}
+    		if(!isPresent)
+    			aggMsgList.push(new TopicStats(stat.topic, stat.messages));
+    	});
+    });
+    l.target.allreceivedtopicstats.forEach(function (t) {
+    	aggMsgList.forEach(function (s) {
+        if (t.topic == s.topic) {
+          isstreampresent = true;
+          if (isLoss(s.messages, t.messages))
+            streamslist.push(t.topic);
+        }
+    	});
+      if (!isstreampresent && !(streamslist.contains(t.topic)))
+        streamslist.push(t.topic);
+      isstreampresent = false;
     });
   } else {
     l.target.allreceivedtopicstats.forEach(function (t) {
@@ -1566,6 +1578,8 @@ function drawGraph(result, cluster, stream, baseQueryString,
   lossWarnThresholdDiff = lWThresholdDiff;
   document.getElementById("tabs").style.display = "block";
   queryString = baseQueryString;
+  qStream = stream;
+  qCluster = cluster;
   jsonresponse = JSON.parse(result);
   while (fullTreeList.length > 0) {
     fullTreeList.pop();
@@ -1612,8 +1626,8 @@ function highlightTab(selectedTabID) {
 
 function tabSelected(selectedTabID, stream, cluster) {
   if (stream == 'null' && cluster == 'null') {
-    stream = window.History.getState().data.gstream;
-    cluster = window.History.getState().data.gcluster;
+    stream = qStream;
+    cluster = qCluster;
   }
   clearSvgAndAddLoadSymbol();
   saveHistoryAndLoadGraph(stream, cluster, selectedTabID);
