@@ -1,5 +1,7 @@
 package com.inmobi.databus.visualization.server;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 import com.inmobi.messaging.ClientConfig;
@@ -17,18 +19,35 @@ public class DataServiceManager {
       "/usr/local/databus-visualization/conf/audit-feeder.properties";
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String TIMEZONE = "GMT";
+  public static final String AUDIT_STREAM = "_audit";
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
   private static DataServiceManager instance = null;
-  private DatabusConfig dataBusConfig;
+  private List<DatabusConfig> dataBusConfig;
 
   private DataServiceManager() {
-    String filename = VisualizationProperties
+    String folderPath = VisualizationProperties
         .get(VisualizationProperties.PropNames.DATABUS_XML_PATH);
-    try {
-      DatabusConfigParser parser = new DatabusConfigParser(filename);
-      dataBusConfig = parser.getConfig();
-    } catch (Exception e) {
-      e.printStackTrace();
+    File folder = new File(folderPath);
+    File[] xmlFiles = folder.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        if (file.getName().toLowerCase().endsWith(".xml")) {
+          return true;
+        }
+        return false;
+      }
+    });
+    LOG.info("Databus xmls included in the conf folder:");
+    dataBusConfig = new ArrayList<DatabusConfig>();
+    for (File file : xmlFiles) {
+      String fullPath = file.getAbsolutePath();
+      LOG.info("File:"+fullPath);
+      try {
+        DatabusConfigParser parser = new DatabusConfigParser(fullPath);
+        dataBusConfig.add(parser.getConfig());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -40,14 +59,18 @@ public class DataServiceManager {
   }
 
   public String getStreamAndClusterList() {
-    List<String> streamList = new ArrayList<String>();
-    streamList.addAll(dataBusConfig.getSourceStreams().keySet());
-    Collections.sort(streamList);
+    Set<String> streamSet = new TreeSet<String>();
+    Set<String> clusterSet = new TreeSet<String>();
+    for(DatabusConfig config : dataBusConfig) {
+      streamSet.addAll(config.getSourceStreams().keySet());
+      clusterSet.addAll(config.getClusters().keySet());
+    }
+    streamSet.remove(AUDIT_STREAM);
+    List<String> streamList = new ArrayList<String>(streamSet);
+    List<String> clusterList = new ArrayList<String>(clusterSet);
     streamList.add(0, "All");
-    List<String> clusterList = new ArrayList<String>();
-    clusterList.addAll(dataBusConfig.getClusters().keySet());
-    Collections.sort(clusterList);
     clusterList.add(0, "All");
+    LOG.info("Returning stream list:"+streamList+" and cluster list:"+clusterList);
     String serverJson =
         ServerDataHelper.getInstance().setLoadMainPanelResponse(streamList,
             clusterList);
@@ -244,9 +267,11 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       if (node.getTier().equalsIgnoreCase("merge") ||
           node.getTier().equalsIgnoreCase("mirror")) {
-        node.setSourceList(
-            dataBusConfig.getClusters().get(node.getClusterName())
-                .getDestinationStreams().keySet());
+        for (DatabusConfig config : dataBusConfig) {
+          node.setSourceList(
+              config.getClusters().get(node.getClusterName())
+                  .getDestinationStreams().keySet());
+        }
       }
     }
   }

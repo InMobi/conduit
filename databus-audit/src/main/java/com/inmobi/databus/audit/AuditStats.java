@@ -4,10 +4,9 @@ import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
@@ -34,19 +33,53 @@ public class AuditStats {
   private static final Log LOG = LogFactory.getLog(AuditStats.class);
   public final static MetricRegistry metrics = new MetricRegistry();
   private final ClientConfig config;
+  private List<DatabusConfig> databusConfigList;
+  private Map<String, Cluster> clusterMap;
+
   public AuditStats(List<AuditDBService> feeders) throws Exception {
     config = ClientConfig.loadFromClasspath(CONF_FILE);
     config.set(MessagingConsumerConfig.hadoopConfigFileKey,
         "audit-core-site.xml");
-    String databusConf = config.getString(DATABUS_CONF_FILE_KEY);
-    DatabusConfigParser parser = new DatabusConfigParser(databusConf);
-    DatabusConfig dataBusConfig = parser.getConfig();
-    for (Entry<String, Cluster> cluster : dataBusConfig.getClusters()
-        .entrySet()) {
+    String databusConfFolder = config.getString(DATABUS_CONF_FILE_KEY);
+    loadConfigFiles(databusConfFolder);
+    createClusterMap();
+    for (Entry<String, Cluster> cluster : clusterMap.entrySet()) {
       String rootDir = cluster.getValue().getRootDir();
       AuditDBService feeder = new AuditFeederService(cluster.getKey(), rootDir,
           config);
       feeders.add(feeder);
+    }
+  }
+
+  private void createClusterMap() {
+    clusterMap = new HashMap<String, Cluster>();
+    for (DatabusConfig dataBusConfig : databusConfigList) {
+      clusterMap.putAll(dataBusConfig.getClusters());
+    }
+  }
+
+  private void loadConfigFiles(String databusConfFolder) {
+    File folder = new File(databusConfFolder);
+    File[] xmlFiles = folder.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        if (file.getName().toLowerCase().endsWith(".xml")) {
+          return true;
+        }
+        return false;
+      }
+    });
+    LOG.info("Databus xmls included in the conf folder:");
+    databusConfigList = new ArrayList<DatabusConfig>();
+    for (File file : xmlFiles) {
+      String fullPath = file.getAbsolutePath();
+      LOG.info("File:"+fullPath);
+      try {
+        DatabusConfigParser parser = new DatabusConfigParser(fullPath);
+        databusConfigList.add(parser.getConfig());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 
