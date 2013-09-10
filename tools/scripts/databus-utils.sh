@@ -86,7 +86,7 @@ case "$mode" in
   localstreamdataconsistency)
     opt_local=1;
     ;;
-  -admin)
+  admin)
     opt_admin=1;
     ;;
   *)
@@ -131,12 +131,21 @@ if [ -z "${DATABUS_HOME}" ] ; then
   DATABUS_HOME=$(cd $(dirname $0)/..; pwd)
 fi
 
-# Append to the classpath
-if [ -n "${DATABUS_CLASSPATH}" ] ; then
-  DATABUS_CLASSPATH="${DATABUS_HOME}/lib/*:$DEV_CLASSPATH:$DATABUS_CLASSPATH"
-else
-  DATABUS_CLASSPATH="${DATABUS_HOME}/lib/*:$DEV_CLASSPATH"
+if [ -z $HADOOP_HOME ]; then
+  echo "Please define HADOOP_HOME to point to hadoop installation directory."
+  exit 1
 fi
+
+if [ -z $HADOOP_DISTCP_HOME ]; then
+  echo "Please define $HADOOP_DISCTP_HOME to point to distcp install folder.EG:: /usr/local/inmobi-distcp-0.8-cdh3"
+  exit 1
+fi
+
+export DATABUS_CLASSPATH=`ls $HADOOP_HOME/*jar | tr "\n" :`;
+export DATABUS_CLASSPATH=$CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+export DATABUS_CLASSPATH=$CLASSPATH:`ls $HADOOP_DISTCP_HOME/*jar | tr "\n" :`;
+export DATABUS_CLASSPATH="${DATABUS_HOME}/lib/*:$DEV_CLASSPATH:$DATABUS_CLASSPATH"
+
 
 # finally, invoke the appropriate command
 if [ -n "$opt_order" ] ; then
