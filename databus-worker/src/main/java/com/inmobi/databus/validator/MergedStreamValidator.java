@@ -71,6 +71,9 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
     //find duplicates on merged cluster
     findDuplicates(mergeStreamFileStatuses, mergeStreamFileListing);
+    if (duplicateFiles.isEmpty()) {
+      System.out.println("No duplicate files found on the Merged stream");
+    }
     // find holes on merge cluster
     holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
     if (!holesInMerge.isEmpty()) {
