@@ -46,7 +46,7 @@
       </activation>
       <properties>
         <hadoop.version>0.20.2-cdh3u5</hadoop.version>
-        <hadoop-distcp.version>0.8-SNAPSHOT</hadoop-distcp.version>
+        <hadoop-distcp.version>0.8</hadoop-distcp.version>
       </properties>
       <dependencyManagement>
         <dependencies>
