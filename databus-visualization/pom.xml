@@ -122,6 +122,7 @@
                 </executions>
                 <configuration>
                     <webappDirectory>${webappDirectory}</webappDirectory>
+                    <warName>databus-visualization</warName>
                 </configuration>
             </plugin>
 

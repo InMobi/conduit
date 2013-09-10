@@ -9,6 +9,7 @@ var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A",
 var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, percentileForSla,
   percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
 var publisherLatency, agentLatency, collectorLatency, hdfsLatency;
+var qStream, qCluster;
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -336,17 +337,17 @@ function addListToInfoPanel(n, isCountView) {
   c.style.fontWeight = "bold";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Name";
+  c.innerHTML = "Name:";
   c = r.insertCell(1);
   c.innerHTML = n.name;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Tier";
+  c.innerHTML = "Tier:";
   c = r.insertCell(1);
   c.innerHTML = n.tier;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Cluster";
+  c.innerHTML = "Cluster:";
   c = r.insertCell(1);
   if (isCountView) {
     c.innerHTML =
@@ -356,13 +357,13 @@ function addListToInfoPanel(n, isCountView) {
       n.cluster + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
-    c.innerHTML = "Name";
+    c.innerHTML = "Aggregate Received:";
     c = r.insertCell(1);
     c.innerHTML = n.aggregatemessagesreceived;
     if (n.tier == "agent" || n.tier == "collector") {
       r = t.insertRow(currentRow++);
       c = r.insertCell(0);
-      c.innerHTML = "Aggregate Sent";
+      c.innerHTML = "Aggregate Sent:";
       c = r.insertCell(1);
       c.innerHTML = n.aggregatemessagesent;
     }
@@ -388,6 +389,17 @@ function addListToInfoPanel(n, isCountView) {
 function nodeclick(n) {
   document.getElementById("infoPanel")
     .innerHTML = "";
+  d3.selectAll("path.link")
+  	.style("stroke-width", "2px");
+  d3.selectAll("g.node")
+  	.select("circle")
+  	.attr("r", 5);
+  d3.selectAll("g.node")
+  	.filter(function(d) {
+  		return d.cluster == n.cluster && d.name == n.name && d.tier == n.tier;
+  	})
+  	.select("circle")
+  	.attr("r", 7);
   addListToInfoPanel(n, true);
   var c, r, t;
   var currentRow = 0;
@@ -419,7 +431,7 @@ function nodeclick(n) {
       if (sent != received) {
         c.firstChild.style.color = "#ff0000";
       } else {
-        c.firstChild.style.color = "#00ff00";
+        c.firstChild.style.color = "#00a000";
       }
       c = r.insertCell(1);
       c.innerHTML = received;
@@ -492,6 +504,17 @@ function nodeclick(n) {
 
 function latencynodeclick(n) {
   document.getElementById("infoPanel").innerHTML = "";
+  d3.selectAll("path.link")
+  	.style("stroke-width", "2px");
+  d3.selectAll("g.node")
+  	.select("circle")
+  	.attr("r", 5);
+  d3.selectAll("g.node")
+  	.filter(function(d) {
+  		return d.cluster == n.cluster && d.name == n.name && d.tier == n.tier;
+  	})
+  	.select("circle")
+  	.attr("r", 7);
   addListToInfoPanel(n, false);
   var c, r, t;
   var currentRow = 0;
@@ -567,7 +590,7 @@ function getStreamsCausingDataLoss(l) {
             streamslist.push(t.topic);
         }
       });
-      if (!isstreampresent && !(streamslist.contains(t.topic)))
+      if (!isstreampresent &&  !(streamslist.contains(t.topic)))
         streamslist.push(t.topic);
       isstreampresent = false;
     });
@@ -578,21 +601,32 @@ function getStreamsCausingDataLoss(l) {
           .tier.toLowerCase() == "collector";
       })
       .data();
-    l.target.allreceivedtopicstats.forEach(function (t) {
-      var parentCount = 0;
-      linkList.forEach(function (cl) {
-        cl.source.allreceivedtopicstats.forEach(function (s) {
-          if (t.topic == s.topic) {
-            parentCount += s.messages;
-            isstreampresent = true;
+    var aggMsgList = [];
+    linkList.forEach(function(l) {
+    	l.source.allreceivedtopicstats.forEach(function(stat) {
+    		var isPresent = false;
+    		for(var index = 0; index < aggMsgList.length; index++) {
+          if(aggMsgList[index].topic == stat.topic) {
+          	aggMsgList[index].messages += stat.messages;
+          	isPresent = true;
+          	break;
           }
-        });
-        if (isLoss(parentCount, t.messages) || (!
-          isstreampresent && !(streamslist.contains(t.topic))
-        ))
-          streamslist.push(t.topic);
-        isstreampresent = false;
-      });
+    		}
+    		if(!isPresent)
+    			aggMsgList.push(new TopicStats(stat.topic, stat.messages));
+    	});
+    });
+    l.target.allreceivedtopicstats.forEach(function (t) {
+    	aggMsgList.forEach(function (s) {
+        if (t.topic == s.topic) {
+          isstreampresent = true;
+          if (isLoss(s.messages, t.messages))
+            streamslist.push(t.topic);
+        }
+    	});
+      if (!isstreampresent && !(streamslist.contains(t.topic)))
+        streamslist.push(t.topic);
+      isstreampresent = false;
     });
   } else {
     l.target.allreceivedtopicstats.forEach(function (t) {
@@ -614,6 +648,19 @@ function getStreamsCausingDataLoss(l) {
 function linkclick(l) {
   document.getElementById("infoPanel")
     .innerHTML = "";
+  d3.selectAll("path.link")
+  	.style("stroke-width", "2px");
+  d3.selectAll("g.node")
+  	.select("circle")
+  	.attr("r", 5);
+  d3.selectAll("path.link")
+  	.filter(function(d) {
+  		return d.target.cluster == l.target.cluster && d.target.name == l
+  		.target.name && d.target.tier == l.target.tier && d.source.cluster == l
+  		.source.cluster && d.source.name == l.source.name && d.source.tier == l
+  		.source.tier;
+  	})
+  	.style("stroke-width", "5px");
   var c, r, t;
   var currentRow = 0;
   t = document.createElement('table');
@@ -625,35 +672,15 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Source Name:";
   c = r.insertCell(1);
-  c.innerHTML = l.source.name;
+  c.innerHTML = l.target.name;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Source Tier:";
   c = r.insertCell(1);
-  c.innerHTML = l.source.tier;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Source Cluster:";
-  c = r.insertCell(1);
-  c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
-    l.source
-    .cluster +
-    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
-    l.source.cluster + "</button>";
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Target Name:";
-  c = r.insertCell(1);
-  c.innerHTML = l.target.name;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(0);
-  c.innerHTML = "Target Tier:";
-  c = r.insertCell(1);
   c.innerHTML = l.target.tier;
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
-  c.innerHTML = "Target Cluster:";
+  c.innerHTML = "Source Cluster:";
   c = r.insertCell(1);
   c.innerHTML =
     "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
@@ -661,6 +688,26 @@ function linkclick(l) {
     .cluster +
     "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
     l.target.cluster + "</button>";
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Name:";
+  c = r.insertCell(1);
+  c.innerHTML = l.source.name;
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Tier:";
+  c = r.insertCell(1);
+  c.innerHTML = l.source.tier;
+  r = t.insertRow(currentRow++);
+  c = r.insertCell(0);
+  c.innerHTML = "Target Cluster:";
+  c = r.insertCell(1);
+  c.innerHTML =
+    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+    l.source
+    .cluster +
+    "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
+    l.source.cluster + "</button>";
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
     r = t.insertRow(currentRow++);
@@ -1105,11 +1152,13 @@ function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency,
   c.id = id;
   c.style.width = "15px";
   c.style.height = "15px";
-  c = r.insertCell(currentCol++);
-  c.innerHTML = actualLatency + "(A)";
-  c = r.insertCell(currentCol++);
-  c.innerHTML = expectedLatency + "(E)";
   appendHealthStatusIndicator(id, health);
+  if (actualLatency != -1) {
+		c = r.insertCell(currentCol++);
+		c.innerHTML = actualLatency + "(A)";
+		c = r.insertCell(currentCol++);
+		c.innerHTML = expectedLatency + "(E)";
+  }
   return currentRow;
 }
 
@@ -1529,6 +1578,8 @@ function drawGraph(result, cluster, stream, baseQueryString,
   lossWarnThresholdDiff = lWThresholdDiff;
   document.getElementById("tabs").style.display = "block";
   queryString = baseQueryString;
+  qStream = stream;
+  qCluster = cluster;
   jsonresponse = JSON.parse(result);
   while (fullTreeList.length > 0) {
     fullTreeList.pop();
@@ -1575,44 +1626,44 @@ function highlightTab(selectedTabID) {
 
 function tabSelected(selectedTabID, stream, cluster) {
   if (stream == 'null' && cluster == 'null') {
-    stream = window.History.getState().data.qstream;
-    cluster = window.History.getState().data.qcluster;
+    stream = qStream;
+    cluster = qCluster;
   }
   clearSvgAndAddLoadSymbol();
   saveHistoryAndLoadGraph(stream, cluster, selectedTabID);
 }
 
 function getTreeList(streamName, clusterName) {
-  var treeList = undefined;
-  if ((streamName == undefined || streamName.toLowerCase() == 'all') && (
-    clusterName == undefined || clusterName.toLowerCase() == 'all')) {
-    isPartial = false;
+  var treeList = [];
+  if (streamName.toLowerCase() == 'all' && clusterName.toLowerCase() == 'all') {
     treeList = fullTreeList;
-  } else {
-    treeList = [];
-    if (streamName != undefined && streamName.toLowerCase() != 'all' &&
-      clusterName != undefined) {
-      var clusterList = [];
-      fullTreeList.forEach(function (l) {
-        if (l[0].cluster == clusterName) {
-          l.forEach(function (nodeInCluster) {
-            clusterList.push(cloneNode(nodeInCluster));
-          });
-        }
-      });
-      treeList.push(clusterList);
-      popAllTopicStatsNotBelongingToStream(streamName, treeList);
-    } else if (clusterName != undefined) {
-      var clusterList = [];
-      fullTreeList.forEach(function (l) {
-        if (l[0].cluster == clusterName) {
-          l.forEach(function (nodeInCluster) {
-            clusterList.push(cloneNode(nodeInCluster));
-          });
-        }
-      });
-      treeList.push(clusterList);
-    }
+  } else if (streamName.toLowerCase() == 'all' && clusterName.toLowerCase() != 'all') {
+      if (fullTreeList.length != 0) {
+        var clusterList = [];
+        fullTreeList.forEach(function (l) {
+          if (l[0] != undefined && l[0].cluster == clusterName) {
+            l.forEach(function (nodeInCluster) {
+              clusterList.push(cloneNode(nodeInCluster));
+            });
+          }
+        });
+        treeList.push(clusterList);
+      }
+  } else if (streamName.toLowerCase() != 'all' && clusterName.toLowerCase() == 'all') {
+    treeList = fullTreeList;
+  } else if (streamName.toLowerCase() != 'all' && clusterName.toLowerCase() != 'all') {
+      if (fullTreeList.length != 0) {
+        var clusterList = [];
+        fullTreeList.forEach(function (l) {
+          if (l[0] != undefined && l[0].cluster == clusterName) {
+            l.forEach(function (nodeInCluster) {
+              clusterList.push(cloneNode(nodeInCluster));
+            });
+          }
+        });
+        treeList.push(clusterList);
+        popAllTopicStatsNotBelongingToStream(streamName, treeList);
+      }
   }
   return treeList;
 }
