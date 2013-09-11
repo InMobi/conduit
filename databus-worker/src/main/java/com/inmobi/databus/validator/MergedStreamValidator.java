@@ -108,7 +108,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
         System.out.println("holes in [ " + srcCluster.getName() + " ] "
             + holesInLocalCluster);
       } else {
-        System.out.println("No holes found on on cluster [" + srcCluster.getName()
+        System.out.println("No holes found on cluster [" + srcCluster.getName()
             + "] for " +" local stream " + streamName);
       }
       convertListToMap(localStreamFileStatuses, localStreamFileListing);
