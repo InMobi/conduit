@@ -144,12 +144,11 @@ fi
 #set classpath
 for f in $HADOOP_HOME/hadoop-*.jar;do
   if [[ "$f" != *tool* ]]; then
-export DATABUS_CLASSPATH=$CLASSPATH:$f
+export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:$f
   fi
 done
-export DATABUS_CLASSPATH=`ls $HADOOP_HOME/*jar | tr "\n" :`;
-export DATABUS_CLASSPATH=$CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
-export DATABUS_CLASSPATH=$CLASSPATH:`ls $HADOOP_DISTCP_HOME/*jar | tr "\n" :`;
+export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:`ls $HADOOP_DISTCP_HOME/*jar | tr "\n" :`;
 export DATABUS_CLASSPATH="${DATABUS_HOME}/lib/*:$DEV_CLASSPATH:$DATABUS_CLASSPATH"
 
 
