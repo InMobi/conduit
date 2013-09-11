@@ -72,8 +72,8 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     //find duplicates on merged cluster
     findDuplicates(mergeStreamFileStatuses, mergeStreamFileListing);
     if (duplicateFiles.isEmpty()) {
-      System.out.println("No duplicate files found on cluster [" + mergeCluster
-          + "] for " + " Merged stream " + streamName);
+      System.out.println("No duplicate files found on cluster ["
+          + mergeCluster.getName() + "] for " + " Merged stream " + streamName);
     }
     // find holes on merge cluster
     holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
@@ -116,7 +116,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
       if (missingPaths.isEmpty()) {
         System.out.println("No missing paths found on cluster [" +
-      mergeCluster.getName() + "] for " + " Merged stream " + streamName);
+            mergeCluster.getName() + "] for " + " Merged stream " + streamName);
       }
 
       if (fix && !missingPaths.isEmpty()) {
