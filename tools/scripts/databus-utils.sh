@@ -137,7 +137,7 @@ if [ -z $HADOOP_HOME ]; then
 fi
 
 if [ -z $HADOOP_DISTCP_HOME ]; then
-  echo "Please define $HADOOP_DISCTP_HOME to point to distcp install folder.EG:: /usr/local/inmobi-distcp-0.8-cdh3"
+  echo "Please define HADOOP_DISCTP_HOME to point to distcp install folder.EG:: /usr/local/inmobi-distcp-0.8-cdh3"
   exit 1
 fi
 
