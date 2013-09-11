@@ -76,7 +76,8 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     if (!holesInMerge.isEmpty()) {
       System.out.println("holes in [ " + mergedCluster.getName() + " ] " + holesInMerge);
     } else {
-      System.out.println("No holes found on the merged stream");
+      System.out.println("No holes found on cluster [" + mergedCluster.getName()
+          + "]" + " for  merged stream " + streamName);
     }
 
     // perform parallel recursive listing of paths in destination cluster
@@ -94,13 +95,15 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     if (!holesInMirror.isEmpty()) {
       System.out.println("holes in [ " + mirrorCluster.getName() + " ] " + holesInMirror);
     } else {
-      System.out.println("No holes found on the mirror stream");
+      System.out.println("No holes found on cluster [" + mirrorCluster.getName()
+          + "]" + " for  mirror stream " + streamName);
     }
 
     // find the missing and extra paths 
     findMissingAndExtraPaths(mergedStreamFiles, mirrorStreamFiles);
     if (missingPaths.isEmpty()) {
-      System.out.println("No missing paths ");
+      System.out.println("No missing paths on cluster [" + mirrorCluster.getName()
+          + "]" + " for  mirror stream " + streamName);
     }
 
     // check if there are missing paths that need to be copied to mirror stream
