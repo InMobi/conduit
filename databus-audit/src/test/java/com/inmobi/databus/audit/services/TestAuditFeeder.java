@@ -3,6 +3,7 @@ package com.inmobi.databus.audit.services;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.audit.*;
 import com.inmobi.databus.audit.services.AuditFeederService.TupleKey;
+import com.inmobi.databus.audit.util.AuditDBConstants;
 import com.inmobi.databus.audit.util.AuditFeederTestUtil;
 import com.inmobi.messaging.ClientConfig;
 import org.testng.Assert;
@@ -97,7 +98,7 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
     publisher.close();
     setupAuditDB();
     AuditFeederService feeder = new AuditFeederServiceTest(cluster, "mock",
-        ClientConfig.loadFromClasspath(AuditStats.CONF_FILE), publisher);
+        ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE), publisher);
     feeder.execute();
     feeder.stop();
     int n = getNumberOfRowsInAuditDB();
@@ -132,7 +133,7 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
     Thread.sleep(30000);
     setupAuditDB();
     AuditFeederService feeder = new AuditFeederServiceTest(cluster, "mock",
-        ClientConfig.loadFromClasspath(AuditStats.CONF_FILE), publisher);
+        ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE), publisher);
     feeder.execute();
     addConstraintToAuditDB();
     generateData(topic1, totalData/2);

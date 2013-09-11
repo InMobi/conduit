@@ -20,7 +20,6 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class AuditFeederTestUtil {
-  protected final static String TABLE_NAME_CONF = "audit.table.master";
   protected AuditMessage msg1, msg2;
   protected String tier1 = "agent", tier2 = "publisher", host = "localhost",
        topic = "testTopic", cluster = "testCluster", topic1 = "testTopic1";
@@ -84,8 +83,8 @@ public class AuditFeederTestUtil {
   }
 
   public void setupAuditDB() {
-    ClientConfig config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
-    String tableName = config.getString(TABLE_NAME_CONF);
+    ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
+    String tableName = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
     connection = AuditDBHelper.getConnection(
         config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
         config.getString(AuditDBConstants.DB_URL),
@@ -111,8 +110,8 @@ public class AuditFeederTestUtil {
   }
 
   protected ResultSet getAllRowsInAuditDB() {
-    String tableName = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE).getString(
-        TABLE_NAME_CONF);
+    String tableName = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE).getString(
+        AuditDBConstants.MASTER_TABLE_NAME);
     String selectAllRows = "SELECT * FROM "+tableName+" ORDER BY "+ Column
         .TOPIC.toString();
     ResultSet rs = null;
@@ -125,8 +124,8 @@ public class AuditFeederTestUtil {
   }
 
   protected int getNumberOfRowsInAuditDB() {
-    String tableName = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE).getString(
-        TABLE_NAME_CONF);
+    String tableName = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE).getString(
+        AuditDBConstants.MASTER_TABLE_NAME);
     String countStmt = "SELECT COUNT(*) AS NUMTUPLES FROM "+tableName;
     int n = -1;
     try {
@@ -140,8 +139,8 @@ public class AuditFeederTestUtil {
   }
 
   protected void addConstraintToAuditDB() {
-    String tableName = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE).getString(
-        TABLE_NAME_CONF);
+    String tableName = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE).getString(
+        AuditDBConstants.MASTER_TABLE_NAME);
     String addConstraint = "ALTER TABLE "+tableName+" ADD CONSTRAINT " +
         "topicConstraint CHECK("+Column.TOPIC.toString()+"='"+topic+"');";
     try {
@@ -152,8 +151,8 @@ public class AuditFeederTestUtil {
   }
 
   protected void dropConstraintOfAuditDB() {
-    String tableName = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE).getString(
-        TABLE_NAME_CONF);
+    String tableName = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE).getString(
+        AuditDBConstants.MASTER_TABLE_NAME);
     String addConstraint = "ALTER TABLE "+tableName+" DROP CONSTRAINT " +
         "topicConstraint;";
     try {
@@ -169,5 +168,9 @@ public class AuditFeederTestUtil {
     } catch (SQLException e) {
       e.printStackTrace();
     }
+  }
+
+  public void shutDown() {
+    //To change body of created methods use File | Settings | File Templates.
   }
 }

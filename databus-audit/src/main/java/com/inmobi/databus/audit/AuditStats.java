@@ -1,13 +1,13 @@
 package com.inmobi.databus.audit;
 
+import com.inmobi.databus.audit.services.AuditRollUpService;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
@@ -29,41 +29,80 @@ import com.inmobi.messaging.consumer.databus.MessagingConsumerConfig;
  * This class is responsible for launching multiple AuditStatsFeeder instances one per cluster
  */
 public class AuditStats {
-  public static final String CONF_FILE = "audit-feeder.properties";
-  private static final String DATABUS_CONF_FILE_KEY = "feeder.databus.conf";
+
   private static final Log LOG = LogFactory.getLog(AuditStats.class);
   public final static MetricRegistry metrics = new MetricRegistry();
+
+  final List<AuditDBService> feeders = new ArrayList<AuditDBService>();
+  final AuditDBService rollupService;
   private final ClientConfig config;
-  public AuditStats(List<AuditDBService> feeders) throws Exception {
-    config = ClientConfig.loadFromClasspath(CONF_FILE);
+  private List<DatabusConfig> databusConfigList;
+  private Map<String, Cluster> clusterMap;
+
+  public AuditStats() throws Exception {
+    config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     config.set(MessagingConsumerConfig.hadoopConfigFileKey,
         "audit-core-site.xml");
-    String databusConf = config.getString(DATABUS_CONF_FILE_KEY);
-    DatabusConfigParser parser = new DatabusConfigParser(databusConf);
-    DatabusConfig dataBusConfig = parser.getConfig();
-    for (Entry<String, Cluster> cluster : dataBusConfig.getClusters()
-        .entrySet()) {
+    String databusConfFolder = config.getString(AuditDBConstants
+        .DATABUS_CONF_FILE_KEY);
+    loadConfigFiles(databusConfFolder);
+    createClusterMap();
+    for (Entry<String, Cluster> cluster : clusterMap.entrySet()) {
       String rootDir = cluster.getValue().getRootDir();
       AuditDBService feeder = new AuditFeederService(cluster.getKey(), rootDir,
           config);
       feeders.add(feeder);
     }
+    rollupService = new AuditRollUpService(config);
   }
 
-  private synchronized void start(List<AuditDBService> feeders) throws Exception {
+  private void createClusterMap() {
+    clusterMap = new HashMap<String, Cluster>();
+    for (DatabusConfig dataBusConfig : databusConfigList) {
+      clusterMap.putAll(dataBusConfig.getClusters());
+    }
+  }
+
+  private void loadConfigFiles(String databusConfFolder) {
+    File folder = new File(databusConfFolder);
+    File[] xmlFiles = folder.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        if (file.getName().toLowerCase().endsWith(".xml")) {
+          return true;
+        }
+        return false;
+      }
+    });
+    LOG.info("Databus xmls included in the conf folder:");
+    databusConfigList = new ArrayList<DatabusConfig>();
+    for (File file : xmlFiles) {
+      String fullPath = file.getAbsolutePath();
+      LOG.info("File:"+fullPath);
+      try {
+        DatabusConfigParser parser = new DatabusConfigParser(fullPath);
+        databusConfigList.add(parser.getConfig());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  private synchronized void start() throws Exception {
     // start all feeders
     for (AuditDBService feeder : feeders) {
       LOG.info("starting feeder for cluster " + feeder.getServiceName());
       feeder.start();
     }
-
+    rollupService.start();
     startMetricsReporter(config);
   }
 
-  private void join(List<AuditDBService> feeders) {
+  private void join() {
     for (AuditDBService feeder : feeders) {
       feeder.join();
     }
+    rollupService.join();
   }
 
   private void startMetricsReporter(ClientConfig config) {
@@ -87,10 +126,9 @@ public class AuditStats {
         .formatFor(Locale.US).convertRatesTo(TimeUnit.SECONDS)
         .convertDurationsTo(TimeUnit.MILLISECONDS).build(new File(csvDir));
     csvreporter.start(1, TimeUnit.MINUTES);
-
   }
 
-  public synchronized void stop(List<AuditDBService> feeders) {
+  public synchronized void stop() {
 
     try {
       LOG.info("Stopping Feeder...");
@@ -99,6 +137,9 @@ public class AuditStats {
         feeder.stop();
       }
       LOG.info("All feeders signalled to  stop");
+      LOG.info("Stopping Rollup Service...");
+      rollupService.stop();
+      LOG.info("Stopped Rollup Service...");
     } catch (Exception e) {
       LOG.warn("Error in shutting down feeder", e);
     }
@@ -106,14 +147,12 @@ public class AuditStats {
   }
 
   public static void main(String args[]) throws Exception {
-
-    final List<AuditDBService> feeders = new ArrayList<AuditDBService>();
-    final AuditStats stats = new AuditStats(feeders);
+    final AuditStats stats = new AuditStats();
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        stats.stop(feeders);
-        stats.join(feeders);
+        stats.stop();
+        stats.join();
         LOG.info("Finishing the shutdown hook");
       }
     });
@@ -121,12 +160,11 @@ public class AuditStats {
     // in next version
 
     try {
-      stats.start(feeders);
+      stats.start();
       // wait for all feeders to finish
-      stats.join(feeders);
+      stats.join();
     } finally {
-      stats.stop(feeders);
+      stats.stop();
     }
-
   }
 }

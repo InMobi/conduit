@@ -1,14 +1,10 @@
 package com.inmobi.databus.audit.services;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
+import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.*;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
@@ -23,45 +19,41 @@ import com.inmobi.messaging.ClientConfig;
 public class AuditRollUpService extends AuditDBService {
 
   final private ClientConfig config;
-  final private int rollUpHourOfDay;
+  final private int rollUpHourOfDay, tilldays;
   final private long intervalLength;
-  final private String checkPointDir;
-  private final String destnTableName, srcTableName;
-  final private int tilldays;
-  private static String ROLLUP_HOUR_KEY = "feeder.rollup.hour";
-  private static String INTERVAL_LENGTH_KEY = "feeder.rollup.intervallength.millis";
-  private static String CHECKPOINT_DIR_KEY = "feeder.rollup.checkpoint.dir";
-  private static String CHECKPOINT_KEY = "feeder";
-  private static String TILLDAYS_KEY = "feeder.rollup.tilldays";
-  private static String MONTHLY_TABLE_KEY = "feeder.rollup.table.monthly";
-  private static String DAILY_TABLE_KEY = "feeder.rollup.table.daily";
+  final private String checkPointDir, checkpointKey;
+  final private SimpleDateFormat tableDateFormat = new SimpleDateFormat
+      ("yyyyMMdd");
+  private boolean startRun = true;/*
+  private boolean stopAfterOneRun = false;*/
   private static final Log LOG = LogFactory.getLog(AuditRollUpService.class);
+
+  //this constructor is used for UTs
+  public AuditRollUpService(ClientConfig config, boolean startRun) {
+    this(config);
+    this.startRun = startRun;/*
+    if (!startRun)
+      stopAfterOneRun = true;*/
+  }
 
   public AuditRollUpService(ClientConfig config) {
     this.config = config;
-    rollUpHourOfDay = config.getInteger(ROLLUP_HOUR_KEY, 0);
-    intervalLength = config.getLong(INTERVAL_LENGTH_KEY, 3600000l);
-    checkPointDir = config.getString(CHECKPOINT_DIR_KEY);
-    tilldays = config.getInteger(TILLDAYS_KEY);
-    destnTableName = config.getString(MONTHLY_TABLE_KEY);
-    srcTableName = config.getString(DAILY_TABLE_KEY);
+    rollUpHourOfDay = config.getInteger(AuditDBConstants.ROLLUP_HOUR_KEY, 0);
+    intervalLength = config.getLong(AuditDBConstants.INTERVAL_LENGTH_KEY,
+        3600000l);
+    checkPointDir = config.getString(AuditDBConstants.CHECKPOINT_DIR_KEY);
+    checkpointKey = config.getString(AuditDBConstants.CHECKPOINT_KEY,
+        AuditDBConstants.DEFAULT_CHECKPOINT_KEY);
+    tilldays = config.getInteger(AuditDBConstants.TILLDAYS_KEY);
+    LOG.info("Initialized AuditRollupService with configs rollup hour " +
+        "as:"+rollUpHourOfDay+", interval length as:"+intervalLength+", " +
+        "checkpoint directory as "+checkPointDir+" and till days as:"+tilldays);
   }
 
   @Override
   public void stop() {
     // since DB handles transactions and all operations are done in 1 single
     // transaction so no need to implement stop
-
-  }
-
-  private Long getToTime() {
-    Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.DAY_OF_MONTH, -tilldays);
-    cal.set(Calendar.HOUR_OF_DAY, 23);
-    cal.set(Calendar.MINUTE, 59);
-    cal.set(Calendar.SECOND, 59);
-    cal.set(Calendar.MILLISECOND, 59);
-    return cal.getTimeInMillis();
   }
 
   private long getTimeToSleep() {
@@ -81,165 +73,78 @@ public class AuditRollUpService extends AuditDBService {
   }
 
   private String getRollUpQuery() {
-    String query = "select rollup(?,?,?,?,?)";
+    String query = "{call rollup(?,?,?,?,?,?)}";
     return query;
-  }
-
-  private String formatDate(Date date) {
-    SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-    return formatter.format(date);
-  }
-
-  private String getDailyTableName(Date date) {
-    return srcTableName + formatDate(date);
-  }
-
-  private String getMonthlyTableName(Date date) {
-    return destnTableName + formatDate(date);
   }
 
   /*
    * Queries the daily table and finds the first entry ordered by timeinterval
    * Return the corresponding timeinterval
    */
-  private Long getFirstTimeIntervalDailyTable(Connection connection)
+  public Date getFirstTimeIntervalDailyTable(Connection connection)
       throws SQLException {
-    String statement = "select timeinterval from " + srcTableName
-        + " order by timeinterval limit 1";
-    PreparedStatement preparedStatement = connection
-        .prepareStatement(statement);
+    String statement = "select " + AuditDBConstants.TIMESTAMP + " from " +
+        config.getString(AuditDBConstants.MASTER_TABLE_NAME) + " order by " +
+        "timeinterval limit 1;";
+    LOG.debug("Statement to get first timeinterval in table : "+statement);
+    PreparedStatement preparedStatement = connection.prepareStatement(statement);
     preparedStatement.execute();
     Long result = 0l;
     ResultSet rs = preparedStatement.getResultSet();
     if (rs.next())
-      result = rs.getLong("timeinterval");
-    return result;
+      result = rs.getLong(AuditDBConstants.TIMESTAMP);
+    return new Date(result);
   }
 
-  private Long getFromTime(Connection connection) throws SQLException {
+  public Date getFromTime(Connection connection) throws SQLException {
     FSCheckpointProvider provider = new FSCheckpointProvider(checkPointDir);
-    byte[] value = provider.read(CHECKPOINT_KEY);
-    if (value == null)
+    byte[] value = provider.read(checkpointKey);
+    if (value == null) {
+      LOG.debug("Get fromTime from Table");
       return getFirstTimeIntervalDailyTable(connection);
-    return Long.parseLong(new String(value));
-  }
-
-  private void modifyContraints(Map<String, Long> tableConstraints,
-      Connection connection) throws SQLException {
-    PreparedStatement preparedstatement = null;
-    String statement = "select modifyconstraint(?,?)";
-    preparedstatement = connection.prepareStatement(statement);
-    for (Entry<String, Long> tableConstraint : tableConstraints.entrySet()) {
-      int index = 1;
-      preparedstatement.setString(index++, tableConstraint.getKey());
-      preparedstatement.setLong(index++, tableConstraint.getValue());
-      preparedstatement.addBatch();
     }
-    preparedstatement.executeBatch();
+    LOG.debug("Get fromTime from checkpoint");
+    return new Date(Long.parseLong(new String(value)));
   }
 
   /*
-   * Return date corresponding to first millisecond of month to which time
+   * Return long corresponding to first millisecond of day to which date
    * belongs
    */
-  private Date getFirstMilliOfMonth(Long time) {
+  private Long getFirstMilliOfDay(Date date) {
     Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(time);
-    cal.set(Calendar.DATE, 1);
+    cal.setTime(date);
     cal.set(Calendar.HOUR_OF_DAY, 0);
     cal.set(Calendar.MINUTE, 0);
     cal.set(Calendar.SECOND, 0);
     cal.set(Calendar.MILLISECOND, 0);
-    return cal.getTime();
+    return cal.getTime().getTime();
   }
 
-  private Date getLastMilliOfMonth(Long time) {
-    Calendar cal = Calendar.getInstance();
-    cal.setTimeInMillis(time);
-    cal.set(Calendar.DATE, cal.getActualMaximum(Calendar.DATE));
-    cal.set(Calendar.HOUR_OF_DAY, 23);
-    cal.set(Calendar.MINUTE, 59);
-    cal.set(Calendar.SECOND, 59);
-    cal.set(Calendar.MILLISECOND, 59);
-    return cal.getTime();
-  }
-
-  /**
-   * Return the updated upper constraint for monthly table In case fromTime and
-   * toTime belongs to different months there would be multiple monthly tables
-   * which needs updation
-   * 
-   * @param fromTime
-   * @param toTime
-   * @return
-   */
-  private Map<String, Long> getTableConstraint(Long fromTime, Long toTime) {
-    Date fromDate = getFirstMilliOfMonth(fromTime);
-    Date toDate = getFirstMilliOfMonth(toTime);
-    Calendar cal = Calendar.getInstance();
-    Map<String, Long> tableConstraints = new HashMap<String, Long>();
-    while (!fromDate.after(toDate)) {
-      Date lastDate = getLastMilliOfMonth(fromDate.getTime());
-      if (toDate.after(lastDate)) {
-        // insertion was across monthly tables and this constraint is for
-        // older month's table
-        tableConstraints.put(getMonthlyTableName(fromDate), lastDate.getTime());
-      } else {
-        // constraint for the current month's table
-        tableConstraints.put(getMonthlyTableName(fromDate), toTime);
-      }
-      cal.setTime(fromDate);
-      cal.add(Calendar.MONTH, 1);
-      fromDate = cal.getTime();
-    }
-    return tableConstraints;
-  }
-
-  /**
-   * Just remove the inheritance of the daily partition from the parent master
-   * table Eventually same method would be extended to drop partition along with
-   * NO Inherit
-   * 
-   * @param time
-   * @throws SQLException
-   */
-  private void dropDailyTable(Date fromDate, Date toDate, Connection connection)
+  public void mark(Long toTime)
       throws SQLException {
-    String statement = "alter table ?  no inherit " + srcTableName;
-    PreparedStatement preparedstatement = connection
-        .prepareStatement(statement);
-    Calendar cal = Calendar.getInstance();
-    while (toDate.after(fromDate)) {
-      String tableName = getDailyTableName(fromDate);
-      preparedstatement.setString(1, tableName);
-      preparedstatement.addBatch();
-      cal.setTime(fromDate);
-      cal.add(Calendar.DATE, 1);
-      fromDate = cal.getTime();
-    }
-    preparedstatement.executeBatch();
-  }
-
-  private void mark(Long fromTime, Long toTime, Connection connection)
-      throws SQLException {
+    LOG.debug("Marking checkpoint to the date at which to start next run " +
+        "at:"+toTime);
     FSCheckpointProvider provider = new FSCheckpointProvider(checkPointDir);
-    provider.checkpoint(CHECKPOINT_KEY, toTime.toString().getBytes());
-    Map<String, Long> tableConstraints = getTableConstraint(fromTime, toTime);
-    modifyContraints(tableConstraints, connection);
-    dropDailyTable(new Date(fromTime), new Date(toTime), connection);
-    connection.commit();
+    provider.checkpoint(checkpointKey, toTime.toString().getBytes());
   }
 
   @Override
   public void execute() {
-    // wait till the roll up hour
-    long waitTime = getTimeToSleep();
-    try {
-      Thread.sleep(waitTime);
-    } catch (InterruptedException e) {
-      LOG.warn("RollUp Service interrupted", e);
+
+    if (startRun) {
+      //wait till rollup hour
+      long waitTime = getTimeToSleep();
+      LOG.debug("First run: sleeping for "+waitTime+"ms");
+      try {
+        Thread.sleep(waitTime);
+      } catch (InterruptedException e) {
+        LOG.warn("RollUp Service interrupted", e);
+      }
+      startRun = false;
     }
 
+    LOG.debug("Starting new run");
     LOG.info("Connecting to DB ...");
     Connection connection = AuditDBHelper.getConnection(
         config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
@@ -251,38 +156,91 @@ public class AuditRollUpService extends AuditDBService {
       return;
     }
     LOG.info("Connected to DB");
-    Long fromTime;
+
+    Date fromTime;
+    CallableStatement callableStatement = null;
     try {
       fromTime = getFromTime(connection);
-    } catch (SQLException e1) {
-      LOG.error("Cannot find the from time", e1);
-      return;
-    }
-    Long toTime = getToTime();
-    // TODO create new destination partition table if doesn't exist and also
-    // modify the corresponding trigger
-    String statement = getRollUpQuery();
-    PreparedStatement preparedstatement = null;
-    try {
-      preparedstatement = connection.prepareStatement(statement);
-      int index = 1;
-      preparedstatement.setString(index++, destnTableName);
-      preparedstatement.setString(index++, srcTableName);
-      preparedstatement.setLong(index++, fromTime);
-      preparedstatement.setLong(index++, toTime);
-      preparedstatement.setLong(index++, intervalLength);
-      LOG.info("Rollup query is " + preparedstatement.toString());
-      preparedstatement.executeQuery();
-      mark(fromTime, toTime, connection);
+      LOG.debug("Starting roll up of tables from:"+fromTime);
+      String statement = getRollUpQuery();
+      callableStatement = connection.prepareCall(statement);
+      Calendar calendar = Calendar.getInstance();
+      calendar.add(Calendar.DAY_OF_YEAR, -tilldays);
+      Date toDate = calendar.getTime();
+      calendar.setTime(fromTime);
+      Date currentDate = calendar.getTime();
+      LOG.debug("Start date:"+currentDate);
+      LOG.debug("End up till:"+toDate);
+      while (currentDate.before(toDate)) {
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        Date nextDay = calendar.getTime();
+        String srcTable = createTableName(currentDate, false);
+        String destTable = createTableName(currentDate, true);
+        Long firstMillisOfDay = getFirstMilliOfDay(currentDate);
+        Long firstMillisOfNextDay = getFirstMilliOfDay(nextDay);
+        int index = 1;
+        callableStatement.setString(index++, srcTable);
+        callableStatement.setString(index++, destTable);
+        callableStatement.setString(index++,
+            config.getString(AuditDBConstants.MASTER_TABLE_NAME));
+        callableStatement.setLong(index++, firstMillisOfDay);
+        callableStatement.setLong(index++, firstMillisOfNextDay);
+        callableStatement.setLong(index++, intervalLength);
+        LOG.debug("Rollup query is " + callableStatement.toString());
+        callableStatement.addBatch();
+        currentDate = nextDay;
+      }
+      callableStatement.executeBatch();
+      connection.commit();
+      mark(getFirstMilliOfDay(calendar.getTime()));
     } catch (SQLException e) {
-      LOG.error("Error while rollup", e);
+      while (e != null) {
+        LOG.error("SQLException while rolling up:"+ e.getMessage());
+        e = e.getNextException();
+      }
       return;
+    } finally {
+      try {
+        callableStatement.close();
+        connection.close();
+      } catch (SQLException e) {
+        LOG.error("SQLException while closing connection:"+ e.getMessage());
+      }
     }
+
+    // sleep till next roll up hour
+    long waitTime = getTimeToSleep();
+    LOG.debug("Sleeping for "+waitTime+"ms");
+    try {
+      Thread.sleep(waitTime);
+    } catch (InterruptedException e) {
+      LOG.warn("RollUp Service interrupted", e);
+    }
+
+    /*if (!stopAfterOneRun) {
+      // sleep till next roll up hour
+      long waitTime = getTimeToSleep();
+      LOG.debug("Sleeping for "+waitTime+"ms");
+      try {
+        Thread.sleep(waitTime);
+      } catch (InterruptedException e) {
+        LOG.warn("RollUp Service interrupted", e);
+      }
+    }*/
+  }
+
+  public String createTableName(Date currentDate, boolean isRollupTable) {
+    String tableName = "";
+    if (isRollupTable) {
+      tableName += "hourly_";
+    }
+    tableName += config.getString(AuditDBConstants.MASTER_TABLE_NAME) +
+        tableDateFormat.format(currentDate);
+    return tableName;
   }
 
   @Override
   public String getServiceName() {
     return "RollUpService";
   }
-
 }
