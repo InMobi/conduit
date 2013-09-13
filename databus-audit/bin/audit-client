@@ -165,6 +165,19 @@ if [ -n "$opt_conf" ]; then
   CLIENT_CLASSPATH="$opt_conf:$CLIENT_CLASSPATH"
 fi
 
+if [ -z $HADOOP_HOME ]; then
+  echo "Please define HADOOP_HOME to point to hadoop installation directory."
+  exit 1
+fi
+
+#set classpath
+for f in $HADOOP_HOME/hadoop-*.jar;do
+  if [[ "$f" != *tool* ]]; then
+    export CLIENT_CLASSPATH=$CLIENT_CLASSPATH:$f
+  fi
+done
+export CLIENT_CLASSPATH=$CLIENT_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+
 # finally, invoke the appropriate command
 if [ -n "$opt_audit" ] ; then
   run_client $CLIENT_AUDIT_QUERY_CLASS $args
