@@ -176,7 +176,11 @@ for f in $HADOOP_HOME/hadoop-*.jar;do
     export CLIENT_CLASSPATH=$CLIENT_CLASSPATH:$f
   fi
 done
-export CLIENT_CLASSPATH=$CLIENT_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+for f in $HADOOP_HOME/lib/*.jar;do
+  if [[ "$f" != *slf4j* ]]; then
+    export CLIENT_CLASSPATH=$CLIENT_CLASSPATH:$f
+  fi
+done
 
 # finally, invoke the appropriate command
 if [ -n "$opt_audit" ] ; then
