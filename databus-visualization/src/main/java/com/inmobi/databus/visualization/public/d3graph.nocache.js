@@ -9,7 +9,7 @@ var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A",
 var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, percentileForSla,
   percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
 var publisherLatency, agentLatency, collectorLatency, hdfsLatency;
-var qStream, qCluster;
+var qStream, qCluster, qstart, qend;
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -1236,6 +1236,15 @@ function clearPreviousGraph() {
 function saveHistory(streamName, clusterName, selectedTabID) {
   var History = window.History;
   if (History.enabled) {
+      var selectedTab = selectedTabID.toString();
+      History.pushState({
+          qstream: streamName,
+          qcluster: clusterName,
+          selectedTab: selectedTab
+        }, "Databus Visualization", "?qstart="+ qstart + "&qend=" + qend + "&qstream=" +
+        streamName + "&qcluster=" + clusterName + "&selectedTab=" +
+        selectedTabID);
+  /*
     if (streamName == undefined && clusterName == undefined) {
       var selectedTab = selectedTabID.toString();
       History.pushState({
@@ -1253,13 +1262,12 @@ function saveHistory(streamName, clusterName, selectedTabID) {
         }, "Databus Visualization", queryString + "&gstream=" +
         streamName + "&gcluster=" + clusterName + "&selectedTab=" +
         selectedTabID);
-    }
+    }*/
   } else {
     console.log("History not enabled");
   }
   History.Adapter.bind(window, 'statechange', function () {
-    loadGraph(History.getState().data.gstream, History.getState().data.gcluster,
-      History.getState().data.selectedTab);
+    loadGraph(History.getState().data.qstream, History.getState().data.qcluster, History.getState().data.selectedTab);
   });
 }
 
@@ -1562,10 +1570,9 @@ function loadGraph(streamName, clusterName, selectedTabID) {
   addSummaryBox(isCountView, treeList);
 }
 
-function drawGraph(result, cluster, stream, baseQueryString,
-  drillDownCluster, drillDownStream, selectedTab, publisher, agent, vip,
-  collector, hdfs, percentileFrSla, percentageFrLoss, percentageFrWarn,
-  lWThresholdDiff) {
+function drawGraph(result, cluster, stream, start, end,  selectedTab,
+publisher, agent, vip, collector, hdfs, percentileFrSla, percentageFrLoss,
+percentageFrWarn, lWThresholdDiff) {
 
   publisherSla = publisher;
   agentSla = agent;
@@ -1576,21 +1583,24 @@ function drawGraph(result, cluster, stream, baseQueryString,
   percentageForLoss = percentageFrLoss;
   percentageForWarn = percentageFrWarn;
   lossWarnThresholdDiff = lWThresholdDiff;
-  document.getElementById("tabs").style.display = "block";
-  queryString = baseQueryString;
+  document.getElementById("tabs").style.display = "block";/*
+  queryString = baseQueryString;*/
   qStream = stream;
   qCluster = cluster;
+  qstart = start;
+  qend = end;
   jsonresponse = JSON.parse(result);
   while (fullTreeList.length > 0) {
     fullTreeList.pop();
   }
   clearHistory();
   buildNodeList();
+  tabSelected(selectedTab, stream, cluster);/*
   if (drillDownCluster != null && drillDownStream != null) {
     tabSelected(selectedTab, drillDownStream, drillDownCluster);
   } else {
     tabSelected(selectedTab, stream, cluster);
-  }
+  }*/
 }
 
 function clearSvgAndAddLoadSymbol() {

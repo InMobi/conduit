@@ -1,8 +1,8 @@
 package com.inmobi.databus.visualization.client;
 
-public class ClientConstants {
+public class ClientConstants {/*
   public static final String GRAPH_CLUSTER = "gcluster";
-  public static final String GRAPH_STREAM = "gstream";
+  public static final String GRAPH_STREAM = "gstream";*/
   public static final String QUERY_CLUSTER = "qcluster";
   public static final String QUERY_STREAM = "qstream";
   public static final String QUERY_FROM_TIME = "qstart";
