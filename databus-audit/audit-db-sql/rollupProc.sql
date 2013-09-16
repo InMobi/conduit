@@ -31,3 +31,28 @@ EXECUTE inherit;
 END;
 $BODY$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION createDailyTable(masterTable text, dayTable text, currentTimeStamp text)
+RETURNS void AS
+$BODY$
+DECLARE
+ createTable text;
+ checkconstraint text;
+ index text;
+BEGIN
+checkconstraint = 'CHECK(timeinterval >= extract (epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint AND timeinterval < extract(epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint );';
+createTable = 'CREATE TABLE IF NOT EXISTS' || dayTable || '(' || checkconstraint || ') INHERITS (' || masterTable || ');';
+EXECUTE createTable;
+index = 'CREATE INDEX ' || dayTable || 'idx ON ' || dayTable || 'USING btree(timeinterval);';
+EXECUTE index;
+index = 'CREATE INDEX ' || dayTable || '_clusteridx ON ' || dayTable || 'USING btree(cluster);';
+EXECUTE index;
+index = 'CREATE INDEX ' || dayTable || '_topicidx ON ' || dayTable || 'USING btree(topic);';
+EXECUTE index;
+index = 'CREATE INDEX ' || dayTable || '_hostnameidx ON ' || dayTable || 'USING btree(hostname);';
+EXECUTE index;
+index = 'CREATE INDEX ' || dayTable || '_tieridx ON ' || dayTable || 'USING btree(tier);';
+EXECUTE index;
+END
+$BODY$
+LANGUAGE plpgsql;

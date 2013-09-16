@@ -1,20 +1,17 @@
 package com.inmobi.databus.audit.services;
 
-
-import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Date;
-import java.util.Map.Entry;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.audit.AuditDBService;
 import com.inmobi.databus.audit.util.AuditDBConstants;
 import com.inmobi.databus.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class AuditRollUpService extends AuditDBService {
 
@@ -22,18 +19,17 @@ public class AuditRollUpService extends AuditDBService {
   final private int rollUpHourOfDay, tilldays;
   final private long intervalLength;
   final private String checkPointDir, checkpointKey;
+  final private SimpleDateFormat dayChkFormat = new SimpleDateFormat
+      ("yyyy-MM-dd");
   final private SimpleDateFormat tableDateFormat = new SimpleDateFormat
       ("yyyyMMdd");
-  private boolean startRun = true;/*
-  private boolean stopAfterOneRun = false;*/
+  private boolean isFirstRun = true;
   private static final Log LOG = LogFactory.getLog(AuditRollUpService.class);
 
   //this constructor is used for UTs
-  public AuditRollUpService(ClientConfig config, boolean startRun) {
+  public AuditRollUpService(ClientConfig config, boolean isFirstRun) {
     this(config);
-    this.startRun = startRun;/*
-    if (!startRun)
-      stopAfterOneRun = true;*/
+    this.isFirstRun = isFirstRun;
   }
 
   public AuditRollUpService(ClientConfig config) {
@@ -121,8 +117,7 @@ public class AuditRollUpService extends AuditDBService {
     return cal.getTime().getTime();
   }
 
-  public void mark(Long toTime)
-      throws SQLException {
+  public void mark(Long toTime) throws SQLException {
     LOG.debug("Marking checkpoint to the date at which to start next run " +
         "at:"+toTime);
     FSCheckpointProvider provider = new FSCheckpointProvider(checkPointDir);
@@ -132,82 +127,80 @@ public class AuditRollUpService extends AuditDBService {
   @Override
   public void execute() {
 
-    if (startRun) {
-      //wait till rollup hour
-      long waitTime = getTimeToSleep();
-      LOG.debug("First run: sleeping for "+waitTime+"ms");
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        LOG.warn("RollUp Service interrupted", e);
-      }
-      startRun = false;
+    if (isFirstRun) {
+      sleepTillNextRun();
     }
 
     LOG.debug("Starting new run");
-    LOG.info("Connecting to DB ...");
-    Connection connection = AuditDBHelper.getConnection(
-        config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
-        config.getString(AuditDBConstants.DB_URL),
-        config.getString(AuditDBConstants.DB_USERNAME),
-        config.getString(AuditDBConstants.DB_PASSWORD));
+    Connection connection = getConnection();
     if (connection == null) {
       LOG.error("Connection not initialized returning ...");
       return;
     }
-    LOG.info("Connected to DB");
-
-    Date fromTime;
-    CallableStatement callableStatement = null;
     try {
-      fromTime = getFromTime(connection);
-      LOG.debug("Starting roll up of tables from:"+fromTime);
-      String statement = getRollUpQuery();
-      callableStatement = connection.prepareCall(statement);
-      Calendar calendar = Calendar.getInstance();
-      calendar.add(Calendar.DAY_OF_YEAR, -tilldays);
-      Date toDate = calendar.getTime();
-      calendar.setTime(fromTime);
-      Date currentDate = calendar.getTime();
-      LOG.debug("Start date:"+currentDate);
-      LOG.debug("End up till:"+toDate);
-      while (currentDate.before(toDate)) {
-        calendar.add(Calendar.DAY_OF_YEAR, 1);
-        Date nextDay = calendar.getTime();
-        String srcTable = createTableName(currentDate, false);
-        String destTable = createTableName(currentDate, true);
-        Long firstMillisOfDay = getFirstMilliOfDay(currentDate);
-        Long firstMillisOfNextDay = getFirstMilliOfDay(nextDay);
-        int index = 1;
-        callableStatement.setString(index++, srcTable);
-        callableStatement.setString(index++, destTable);
-        callableStatement.setString(index++,
-            config.getString(AuditDBConstants.MASTER_TABLE_NAME));
-        callableStatement.setLong(index++, firstMillisOfDay);
-        callableStatement.setLong(index++, firstMillisOfNextDay);
-        callableStatement.setLong(index++, intervalLength);
-        LOG.debug("Rollup query is " + callableStatement.toString());
-        callableStatement.addBatch();
-        currentDate = nextDay;
-      }
-      callableStatement.executeBatch();
-      connection.commit();
-      mark(getFirstMilliOfDay(calendar.getTime()));
-    } catch (SQLException e) {
-      while (e != null) {
-        LOG.error("SQLException while rolling up:"+ e.getMessage());
-        e = e.getNextException();
-      }
-      return;
+      rollupTables(connection);
+      createDailyTable(connection);
     } finally {
       try {
-        callableStatement.close();
         connection.close();
       } catch (SQLException e) {
         LOG.error("SQLException while closing connection:"+ e.getMessage());
       }
     }
+    sleepTillNextRun();
+  }
 
+  private void createDailyTable(Connection connection) {
+    CallableStatement createDailyTableStmt = null;
+    try {
+      LOG.info("Creating next day's minute table");
+      Date date = addToCurrentDate(config.getInteger(AuditDBConstants
+          .NUM_DAYS_AHEAD_TABLE_CREATION));
+      String statement = getCreateTableQuery();
+      createDailyTableStmt = connection.prepareCall(statement);
+      String currentDateString = dayChkFormat.format(date);
+      String masterTable = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
+      String dayTable = createTableName(date, false);
+      int index = 1;
+      createDailyTableStmt.setString(index++, masterTable);
+      createDailyTableStmt.setString(index++, dayTable);
+      createDailyTableStmt.setString(index++, currentDateString);
+      createDailyTableStmt.execute();
+      LOG.info("Table created for day:"+currentDateString);
+    } catch (SQLException e) {
+      while (e != null) {
+        LOG.error("SQLException while creating daily table:"+ e.getMessage());
+        e = e.getNextException();
+      }
+    } finally {
+      try {
+        createDailyTableStmt.close();
+      } catch (SQLException e) {
+        LOG.error("SQLException while closing call statement:"+ e.getMessage
+            ());
+      }
+    }
+  }
+
+  public Date addToDate(Date date, int increment) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    calendar.add(Calendar.DATE, increment);
+    return calendar.getTime();
+  }
+
+  private String getCreateTableQuery() {
+    String query = "{call createDailyTable(?,?,?)}";
+    return query;
+  }
+
+  public Date addToCurrentDate(Integer dayIncrement) {
+    Calendar calendar = Calendar.getInstance();
+    calendar.add(Calendar.DATE, dayIncrement);
+    return calendar.getTime();
+  }
+
+  private void sleepTillNextRun() {
     // sleep till next roll up hour
     long waitTime = getTimeToSleep();
     LOG.debug("Sleeping for "+waitTime+"ms");
@@ -216,17 +209,61 @@ public class AuditRollUpService extends AuditDBService {
     } catch (InterruptedException e) {
       LOG.warn("RollUp Service interrupted", e);
     }
+  }
 
-    /*if (!stopAfterOneRun) {
-      // sleep till next roll up hour
-      long waitTime = getTimeToSleep();
-      LOG.debug("Sleeping for "+waitTime+"ms");
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException e) {
-        LOG.warn("RollUp Service interrupted", e);
+  private void rollupTables(Connection connection) {
+    CallableStatement rollupStmt = null;
+    try {
+      Date fromTime = getFromTime(connection);
+      String statement = getRollUpQuery();
+      rollupStmt = connection.prepareCall(statement);
+      Date toDate = addToCurrentDate(-tilldays);
+      LOG.debug("Starting roll up of tables from:"+fromTime+" till:"+toDate);
+      while (fromTime.before(toDate)) {
+        Date nextDay = addToDate(fromTime, 1);
+        String srcTable = createTableName(fromTime, false);
+        String destTable = createTableName(fromTime, true);
+        Long firstMillisOfDay = getFirstMilliOfDay(fromTime);
+        Long firstMillisOfNextDay = getFirstMilliOfDay(nextDay);
+        int index = 1;
+        rollupStmt.setString(index++, srcTable);
+        rollupStmt.setString(index++, destTable);
+        rollupStmt.setString(index++,
+            config.getString(AuditDBConstants.MASTER_TABLE_NAME));
+        rollupStmt.setLong(index++, firstMillisOfDay);
+        rollupStmt.setLong(index++, firstMillisOfNextDay);
+        rollupStmt.setLong(index++, intervalLength);
+        LOG.debug("Rollup query is " + rollupStmt.toString());
+        rollupStmt.addBatch();
+        fromTime = nextDay;
       }
-    }*/
+      rollupStmt.executeBatch();
+      connection.commit();
+      mark(getFirstMilliOfDay(fromTime));
+    } catch (SQLException e) {
+      while (e != null) {
+        LOG.error("SQLException while rolling up:"+ e.getMessage());
+        e = e.getNextException();
+      }
+    } finally {
+      try {
+        rollupStmt.close();
+      } catch (SQLException e) {
+        LOG.error("SQLException while closing call statement:"+ e.getMessage
+            ());
+      }
+    }
+  }
+
+  private Connection getConnection() {
+    LOG.info("Connecting to DB ...");
+    Connection connection = AuditDBHelper.getConnection(
+        config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
+        config.getString(AuditDBConstants.DB_URL),
+        config.getString(AuditDBConstants.DB_USERNAME),
+        config.getString(AuditDBConstants.DB_PASSWORD));
+    LOG.info("Connected to DB");
+    return connection;
   }
 
   public String createTableName(Date currentDate, boolean isRollupTable) {

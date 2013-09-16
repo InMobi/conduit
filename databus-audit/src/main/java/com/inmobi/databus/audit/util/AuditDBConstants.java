@@ -24,6 +24,8 @@ public interface AuditDBConstants {
   public static final String CHECKPOINT_DIR_KEY = "rollup.checkpoint.dir";
   public static final String CHECKPOINT_KEY = "rollup.checkpoint.key";
   public static final String TILLDAYS_KEY = "rollup.tilldays";
+  public static final String NUM_DAYS_AHEAD_TABLE_CREATION =
+      "num.of.days.ahead.table.creation";
 
   public static final String DEFAULT_CHECKPOINT_KEY = "rollupChkPt";
 }
