@@ -202,6 +202,14 @@
                     <filemode>755</filemode>
                   </mapper>
                 </data>
+                 <data>
+                  <src>target/${artifactId}-${project.version}-audit/sql/</src>
+                  <type>directory</type>
+                  <mapper>
+                    <type>perm</type>
+                    <prefix>/usr/local/databus-audit-${version}/sql</prefix>
+                  </mapper>
+                </data>
               </dataSet>
             </configuration>
           </execution>
