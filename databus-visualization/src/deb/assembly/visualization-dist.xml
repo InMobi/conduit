@@ -39,7 +39,7 @@
             <directory>../databus-visualization/target/</directory>
             <outputDirectory>/var/lib/tomcat6/webapps</outputDirectory>
             <includes>
-                <include>**/databus-visualization-${project.version}.war</include>
+                <include>**/databus-visualization.war</include>
             </includes>
         </fileSet>
     </fileSets>

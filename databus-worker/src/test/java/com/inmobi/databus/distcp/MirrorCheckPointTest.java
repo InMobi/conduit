@@ -21,6 +21,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.testng.annotations.Test;
 
+import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
@@ -30,9 +31,9 @@ import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 
-public class MirrorTestCheckPoint {
+public class MirrorCheckPointTest {
 
-  private static final Log LOG = LogFactory.getLog(MirrorTestCheckPoint.class);
+  private static final Log LOG = LogFactory.getLog(MirrorCheckPointTest.class);
   private static final NumberFormat idFormat = NumberFormat.getInstance();
   static {
     idFormat.setGroupingUsed(false);
@@ -195,8 +196,8 @@ public class MirrorTestCheckPoint {
     Map<String, List<String>> srcToRemote = launchMirrorServices(config);
     assertAllPathsOnSrcPresentOnDest(srcPathList, srcToRemote, config);
 
-    String checkPointKey1 = TestMirrorStreamService.class.getSimpleName()
-        + "testcluster1" + "test1";
+    String checkPointKey1 = AbstractService.getCheckPointKey(
+        TestMirrorStreamService.class.getSimpleName(), "test1", "testcluster1");
 
     Cluster destnCluster1 = config.getClusters().get("testcluster2");
     List<Path> pathsCreated1 = srcPathList.get("testcluster1");
@@ -238,16 +239,16 @@ srcRootDir.length() + 1,
     remoteFs.create(finalPath);
 
     launchMirrorServices(config);
-    // Last directory on target should have only 4 files instead of 8
+    // Last directory on target should have all 8 files
 
     FileStatus pathToBeListed = remoteFs.getFileStatus(new Path(destnCluster
         .getFinalDestDirRoot(), "test1"));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
-    assert (results.size() == 5);// 1 file was created as part of setup
+    assert (results.size() == 8);// 1 file was created as part of setup
     Collections.sort(results, new DatePathComparator());
-    String checkPointKey1 = TestMirrorStreamService.class.getSimpleName()
-        + "testcluster1" + "test1";
+    String checkPointKey1 = AbstractService.getCheckPointKey(
+        TestMirrorStreamService.class.getSimpleName(), "test1", "testcluster1");
     FSCheckpointProvider provider = new FSCheckpointProvider(
         destnCluster.getCheckpointDir());
     String checkPointValue = new String(provider.read(checkPointKey1));
@@ -293,8 +294,8 @@ srcRootDir.length() + 1,
     List<Path> pathsCreated1 = srcPathList.get("testcluster1");
     FSCheckpointProvider provider = new FSCheckpointProvider(
         destnCluster.getCheckpointDir());
-    String checkPointKey1 = TestMirrorStreamService.class.getSimpleName()
-        + "testcluster1" + "test1";
+    String checkPointKey1 = AbstractService.getCheckPointKey(
+        TestMirrorStreamService.class.getSimpleName(), "test1", "testcluster1");
     List<FileStatus> fStatus1 = pathToFileStatusList(pathsCreated1);
     Path checkPointPath1 = fStatus1.get(0).getPath().getParent();
     provider.checkpoint(checkPointKey1, checkPointPath1.toString().getBytes());

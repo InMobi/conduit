@@ -65,5 +65,12 @@
         <include>**/audit-client</include>
       </includes>
     </fileSet>
+      <fileSet>
+      <directory>../databus-audit/audit-db-sql</directory>
+      <outputDirectory>/sql/</outputDirectory>
+      <includes>
+        <include>**</include>
+      </includes>
+    </fileSet>
   </fileSets>
 </assembly>

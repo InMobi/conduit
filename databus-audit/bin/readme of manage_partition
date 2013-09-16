@@ -1,0 +1,14 @@
+-- This script creates partitons of daily_databus_summary table for databus_audit project.
+
+-- Steps to create partitions
+
+Step 1: First create sql file contains schema creation commands for all partitoned tables 
+
+./manage_partition.sh daily_databus_summary timeinterval 2013-08-01 30 > dbaudit_schema.sql
+
+Note : Above command create 1 month partiton tables for August 2013
+
+Step 2 : Restore that sql in databus_audit DB
+
+psql -p5499 -Uadarsh databus_audit -f dbaudit_schema.sql
+
