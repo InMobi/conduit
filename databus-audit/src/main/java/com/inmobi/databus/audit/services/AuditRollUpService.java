@@ -166,7 +166,9 @@ public class AuditRollUpService extends AuditDBService {
       createDailyTableStmt.setString(index++, dayTable);
       createDailyTableStmt.setString(index++, currentDateString);
       createDailyTableStmt.execute();
-      LOG.info("Table created for day:"+currentDateString);
+      connection.commit();
+      LOG.info("Table created for day:"+currentDateString+" with table name " +
+          "as:"+dayTable+" and parent is :"+masterTable);
     } catch (SQLException e) {
       while (e != null) {
         LOG.error("SQLException while creating daily table:"+ e.getMessage());
