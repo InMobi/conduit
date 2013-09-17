@@ -62,7 +62,7 @@
       <directory>../databus-audit/bin</directory>
       <outputDirectory>/bin/</outputDirectory>
       <includes>
-        <include>**/audit-client</include>
+        <include>**</include>
       </includes>
     </fileSet>
       <fileSet>
