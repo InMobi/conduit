@@ -71,11 +71,18 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
     //find duplicates on merged cluster
     findDuplicates(mergeStreamFileStatuses, mergeStreamFileListing);
+    if (duplicateFiles.isEmpty()) {
+      System.out.println("No duplicate files found on cluster ["
+          + mergeCluster.getName() + "] for Merged stream " + streamName);
+    }
     // find holes on merge cluster
     holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
     if (!holesInMerge.isEmpty()) {
-      LOG.info("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
-    }  
+      System.out.println("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
+    } else {
+      System.out.println("No holes found on cluster [" + mergeCluster.getName()
+          + "] for Merged stream " + streamName);
+    }
 
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
     // perform recursive listing on each source cluster
@@ -98,12 +105,19 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           localStreamPath, localFs);
       if (!holesInLocalCluster.isEmpty()) {
         holesInLocal.addAll(holesInLocalCluster);
-        LOG.info("holes in [ " + srcCluster.getName() + " ] "
+        System.out.println("holes in [ " + srcCluster.getName() + " ] "
             + holesInLocalCluster);
+      } else {
+        System.out.println("No holes found on cluster [" + srcCluster.getName()
+            + "] for local stream " + streamName);
       }
       convertListToMap(localStreamFileStatuses, localStreamFileListing);
       //find missing paths on merge cluster
       findMissingPaths(localStreamFileListing, mergeStreamFileListing);
+      if (missingPaths.isEmpty()) {
+        System.out.println("No missing paths found on cluster [" +
+            mergeCluster.getName() + "] for Merged stream " + streamName);
+      }
 
       if (fix && !missingPaths.isEmpty()) {
         copyMissingPaths(srcCluster);
@@ -147,7 +161,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           streamListingMap.put(fileName, fileStatus);
         }
         duplicateFiles.add(duplicatePath);
-        LOG.info("Duplicate file " + duplicatePath);
+        System.out.println("Duplicate file " + duplicatePath);
       } else {
         streamListingMap.put(fileName, fileStatus);
       }
@@ -160,7 +174,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     for (Map.Entry<String, FileStatus> srcEntry : srcListingMap.entrySet()) {
       fileName = srcEntry.getKey();
       if (!destListingMap.containsKey(fileName)) {
-        LOG.info("Missing path " + srcEntry.getValue().getPath());
+        System.out.println("Missing path " + srcEntry.getValue().getPath());
         missingPaths.put(getFinalDestinationPath(srcEntry.getValue()),
             srcEntry.getValue());
       }
@@ -238,7 +252,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
     @Override
     protected void finalizeCheckPoints() {
-      LOG.info("Skipping update of checkpoints in Merge Stream Fix Service run");
+      System.out.println("Skipping update of checkpoints in Merge Stream Fix Service run");
     }
   }
 }

@@ -147,10 +147,11 @@ public class DatabusValidator {
     } else {
       Date startTime = getTime(absoluteStartTime, relStartTime);
       Date stopTime = getTime(absoluteStopTime, relStopTime);
-    StreamsValidator streamsValidator = new StreamsValidator(config,
-        streams, modes, clusters, startTime, stopTime, numThreads);
-    // perform streams verification
-    streamsValidator.validateStreams(fix);
+      StreamsValidator streamsValidator = new StreamsValidator(config,
+          streams, modes, clusters, startTime, stopTime, numThreads);
+      // perform streams verification
+      streamsValidator.validateStreams(fix);
+      System.out.println("Data Validation is completed");
     }
   }
 
