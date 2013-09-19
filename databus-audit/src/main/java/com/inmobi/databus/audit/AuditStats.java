@@ -33,8 +33,7 @@ public class AuditStats {
   private static final Log LOG = LogFactory.getLog(AuditStats.class);
   public final static MetricRegistry metrics = new MetricRegistry();
 
-  final List<AuditDBService> feeders = new ArrayList<AuditDBService>();
-  final AuditDBService rollupService;
+  final List<AuditDBService> dbServices = new ArrayList<AuditDBService>();
   private final ClientConfig config;
   private List<DatabusConfig> databusConfigList;
   private Map<String, Cluster> clusterMap;
@@ -51,9 +50,10 @@ public class AuditStats {
       String rootDir = cluster.getValue().getRootDir();
       AuditDBService feeder = new AuditFeederService(cluster.getKey(), rootDir,
           config);
-      feeders.add(feeder);
+      dbServices.add(feeder);
     }
-    rollupService = new AuditRollUpService(config);
+    AuditDBService rollup = new AuditRollUpService(config);
+    dbServices.add(rollup);
   }
 
   private void createClusterMap() {
@@ -89,20 +89,18 @@ public class AuditStats {
   }
 
   private synchronized void start() throws Exception {
-    // start all feeders
-    for (AuditDBService feeder : feeders) {
-      LOG.info("starting feeder for cluster " + feeder.getServiceName());
-      feeder.start();
+    // start all dbServices
+    for (AuditDBService service : dbServices) {
+      LOG.info("Starting service: " + service.getServiceName());
+      service.start();
     }
-    rollupService.start();
     startMetricsReporter(config);
   }
 
   private void join() {
-    for (AuditDBService feeder : feeders) {
-      feeder.join();
+    for (AuditDBService service : dbServices) {
+      service.join();
     }
-    rollupService.join();
   }
 
   private void startMetricsReporter(ClientConfig config) {
@@ -131,17 +129,14 @@ public class AuditStats {
   public synchronized void stop() {
 
     try {
-      LOG.info("Stopping Feeder...");
-      for (AuditDBService feeder : feeders) {
-        LOG.info("Stopping feeder  " + feeder.getServiceName());
-        feeder.stop();
+      LOG.info("Stopping all services...");
+      for (AuditDBService service : dbServices) {
+        LOG.info("Stopping service :" + service.getServiceName());
+        service.stop();
       }
-      LOG.info("All feeders signalled to  stop");
-      LOG.info("Stopping Rollup Service...");
-      rollupService.stop();
-      LOG.info("Stopped Rollup Service...");
+      LOG.info("All services signalled to stop");
     } catch (Exception e) {
-      LOG.warn("Error in shutting down feeder", e);
+      LOG.warn("Error in shutting down feeder and rollup services", e);
     }
 
   }
@@ -161,7 +156,7 @@ public class AuditStats {
 
     try {
       stats.start();
-      // wait for all feeders to finish
+      // wait for all dbServices to finish
       stats.join();
     } finally {
       stats.stop();
