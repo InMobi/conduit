@@ -146,16 +146,6 @@ fi
 
 [ -n "${JAVA_HOME}" ] || error "Unable to find a suitable JAVA_HOME" 1
 
-# find hadoop home
-if [ -z $HADOOP_HOME ]; then
-  echo "Please define HADOOP_HOME to point to hadoop installation directory."
-  exit 1
-fi
-
-#append HADOOP_HOME to CLIENT_CLASSPATH
-export CLIENT_CLASSPATH=$CLIENT_CLASSPATH:`ls $HADOOP_HOME/*jar | tr "\n" :`;
-export CLIENT_CLASSPATH=$CLIENT_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
-
 # figure out where the client distribution is
 if [ -z "${CLIENT_HOME}" ] ; then
   CLIENT_HOME=$(cd $(dirname $0)/..; pwd)
