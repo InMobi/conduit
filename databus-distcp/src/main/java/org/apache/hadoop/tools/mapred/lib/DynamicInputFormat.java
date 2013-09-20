@@ -30,6 +30,7 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.tools.util.HadoopCompat;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class DynamicInputFormat<K, V> extends InputFormat<K, V> {
   public List<InputSplit> getSplits(JobContext jobContext)
       throws IOException, InterruptedException {
     LOG.info("DynamicInputFormat: Getting splits for job:"
-             + jobContext.getJobID());
+             + HadoopCompat.getJobId(jobContext));
     return createSplits(jobContext,
                         splitCopyListingIntoChunksWithShuffle(jobContext));
   }
@@ -79,17 +80,17 @@ public class DynamicInputFormat<K, V> extends InputFormat<K, V> {
   private List<InputSplit> createSplits(JobContext jobContext,
                                         List<DynamicInputChunk> chunks)
           throws IOException {
-    int numMaps = getNumMapTasks(jobContext.getConfiguration());
+    int numMaps = getNumMapTasks(HadoopCompat.getConfiguration(jobContext));
 
     final int nSplits = Math.min(numMaps, chunks.size());
     List<InputSplit> splits = new ArrayList<InputSplit>(nSplits);
     
     for (int i=0; i< nSplits; ++i) {
-      TaskID taskId = new TaskID(jobContext.getJobID(), true, i);
+      TaskID taskId = new TaskID(HadoopCompat.getJobId(jobContext), true, i);
       chunks.get(i).assignTo(taskId);
       splits.add(new FileSplit(chunks.get(i).getPath(), 0, 0, null));
     }
-    DistCpUtils.publish(jobContext.getConfiguration(),
+    DistCpUtils.publish(HadoopCompat.getConfiguration(jobContext),
                         CONF_LABEL_NUM_SPLITS, splits.size());
     return splits;
   }
@@ -99,7 +100,7 @@ public class DynamicInputFormat<K, V> extends InputFormat<K, V> {
   private List<DynamicInputChunk> splitCopyListingIntoChunksWithShuffle
                                     (JobContext context) throws IOException {
 
-    final Configuration configuration = context.getConfiguration();
+    final Configuration configuration = HadoopCompat.getConfiguration(context);
     int numRecords = getNumberOfRecords(configuration);
     int numMaps = getNumMapTasks(configuration);
     // Number of chunks each map will process, on average.
@@ -108,7 +109,7 @@ public class DynamicInputFormat<K, V> extends InputFormat<K, V> {
 
     int numEntriesPerChunk = (int)Math.ceil((float)numRecords
                                           /(splitRatio * numMaps));
-    DistCpUtils.publish(context.getConfiguration(),
+    DistCpUtils.publish(HadoopCompat.getConfiguration(context),
                         CONF_LABEL_NUM_ENTRIES_PER_CHUNK,
                         numEntriesPerChunk);
 
@@ -284,6 +285,6 @@ public class DynamicInputFormat<K, V> extends InputFormat<K, V> {
           TaskAttemptContext taskAttemptContext)
           throws IOException, InterruptedException {
     return new DynamicRecordReader<K, V>(
-        getNumEntriesPerChunk(taskAttemptContext.getConfiguration()));
+        getNumEntriesPerChunk(HadoopCompat.getTaskConfiguration(taskAttemptContext)));
   }
 }

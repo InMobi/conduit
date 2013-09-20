@@ -24,6 +24,7 @@ import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.tools.util.HadoopCompat;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -70,9 +71,9 @@ public class DynamicRecordReader<K, V> extends RecordReader<K, V> {
                          TaskAttemptContext taskAttemptContext)
                          throws IOException, InterruptedException {
     this.taskAttemptContext = taskAttemptContext;
-    configuration = taskAttemptContext.getConfiguration();
-    taskId = taskAttemptContext.getTaskAttemptID().getTaskID();
-    chunkSet = new DynamicInputChunkSet(taskAttemptContext.getConfiguration());
+    configuration = HadoopCompat.getTaskConfiguration(taskAttemptContext);
+    taskId = HadoopCompat.getTaskAttemptID(taskAttemptContext).getTaskID();
+    chunkSet = new DynamicInputChunkSet(HadoopCompat.getTaskConfiguration(taskAttemptContext));
     chunk = chunkSet.acquire(this.taskAttemptContext);
     timeOfLastChunkDirScan = System.currentTimeMillis();
     isChunkDirAlreadyScanned = false;

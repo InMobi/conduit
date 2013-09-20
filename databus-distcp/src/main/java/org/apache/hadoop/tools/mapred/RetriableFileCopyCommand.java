@@ -43,6 +43,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.util.DistCpUtils;
+import org.apache.hadoop.tools.util.HadoopCompat;
 import org.apache.hadoop.tools.util.RetriableCommand;
 import org.apache.hadoop.tools.util.ThrottledInputStream;
 
@@ -96,7 +97,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
           throws IOException {
 
     Path tmpTargetPath = getTmpFile(target, context);
-    final Configuration configuration = context.getConfiguration();
+    final Configuration configuration = HadoopCompat.getTaskConfiguration(context);
     FileSystem targetFS = target.getFileSystem(configuration);
     compressionCodecs = new CompressionCodecFactory(context.getConfiguration());
     try {
@@ -167,7 +168,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private Path getTmpFile(Path target, Mapper.Context context) {
-    Path targetWorkPath = new Path(context.getConfiguration().
+    Path targetWorkPath = new Path(HadoopCompat.getTaskConfiguration(context).
         get(DistCpConstants.CONF_LABEL_TARGET_WORK_PATH));
 
     Path root = target.equals(targetWorkPath)? targetWorkPath.getParent() : targetWorkPath;
@@ -195,7 +196,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     BufferedReader reader = null;
 
     try {
-      inStream = getInputStream(source, context.getConfiguration());
+      inStream = getInputStream(source, HadoopCompat.getTaskConfiguration(context));
       compressedIn = codec.createInputStream(inStream);
       commpressedOut = codec.createOutputStream(outStream);
       // LineReader reader = new LineReader(compressedIn,
@@ -211,8 +212,8 @@ public class RetriableFileCopyCommand extends RetriableCommand {
         }
         bytesRead = readLine(reader);
       }
-      context.getCounter(CopyMapper.Counter.SLEEP_TIME_MS).
-          increment(inStream.getTotalSleepTime());
+      HadoopCompat.incrementCounter(HadoopCompat.getCounter(context,
+          CopyMapper.Counter.SLEEP_TIME_MS), inStream.getTotalSleepTime()); 
       LOG.info("STATS: " + inStream);
     } finally {
       if (mustCloseStream) {
@@ -253,16 +254,15 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     }
   }
   private void updateContextStatus(long totalBytesRead, Mapper.Context context,
-                                   FileStatus sourceFileStatus) {
+      FileStatus sourceFileStatus) {
     StringBuilder message = new StringBuilder(DistCpUtils.getFormatter()
-                .format(totalBytesRead * 100.0f / sourceFileStatus.getLen()));
-    message.append("% ")
-            .append(description).append(" [")
-            .append(DistCpUtils.getStringDescriptionFor(totalBytesRead))
-            .append('/')
+        .format(totalBytesRead * 100.0f / sourceFileStatus.getLen()));
+    message.append("% ").append(description).append(" [")
+        .append(DistCpUtils.getStringDescriptionFor(totalBytesRead))
+        .append('/')
         .append(DistCpUtils.getStringDescriptionFor(sourceFileStatus.getLen()))
-            .append(']');
-    context.setStatus(message.toString());
+        .append(']');
+    HadoopCompat.setStatus(context, message.toString());
   }
 
   private static int readBytes(InputStream inStream, byte buf[])

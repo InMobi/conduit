@@ -39,6 +39,7 @@ import org.apache.hadoop.tools.DistCpOptions;
 import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.GlobbedCopyListing;
 import org.apache.hadoop.tools.util.DistCpUtils;
+import org.apache.hadoop.tools.util.HadoopCompat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,7 +66,7 @@ public class CopyCommitter extends FileOutputCommitter {
   /** @inheritDoc */
   @Override
   public void commitJob(JobContext jobContext) throws IOException {
-    Configuration conf = jobContext.getConfiguration();
+    Configuration conf = HadoopCompat.getConfiguration(jobContext);
     super.commitJob(jobContext);
 
     cleanupTempFiles(jobContext);
@@ -80,7 +81,7 @@ public class CopyCommitter extends FileOutputCommitter {
     } else if (conf.getBoolean(DistCpConstants.CONF_LABEL_ATOMIC_COPY, false)) {
       commitData(conf);
     }
-    taskAttemptContext.setStatus("Commit Successful");
+    HadoopCompat.setStatus(taskAttemptContext, "Commit Successful");
     cleanup(conf);
   }
 
@@ -92,18 +93,18 @@ public class CopyCommitter extends FileOutputCommitter {
       super.abortJob(jobContext, state);
     } finally {
       cleanupTempFiles(jobContext);
-      cleanup(jobContext.getConfiguration());
+      cleanup(HadoopCompat.getConfiguration(jobContext));
     }
   }
 
   private void cleanupTempFiles(JobContext context) {
     try {
-      Configuration conf = context.getConfiguration();
+      Configuration conf = HadoopCompat.getConfiguration(context);
 
       Path targetWorkPath = new Path(conf.get(DistCpConstants.CONF_LABEL_TARGET_WORK_PATH));
       FileSystem targetFS = targetWorkPath.getFileSystem(conf);
 
-      String jobId = context.getJobID().toString();
+      String jobId = HadoopCompat.getJobId(context).toString();
       deleteAttemptTempFiles(targetWorkPath, targetFS, jobId);
       deleteAttemptTempFiles(targetWorkPath.getParent(), targetFS, jobId);
     } catch (Throwable t) {
@@ -172,9 +173,9 @@ public class CopyCommitter extends FileOutputCommitter {
         FileSystem targetFS = targetFile.getFileSystem(conf);
         DistCpUtils.preserve(targetFS, targetFile, srcFileStatus,  attributes);
 
-        taskAttemptContext.progress();
-        taskAttemptContext.setStatus("Preserving status on directory entries. [" +
-            sourceReader.getPosition() * 100 / totalLen + "%]");
+        HadoopCompat.progress(taskAttemptContext);
+        HadoopCompat.setStatus(taskAttemptContext, "Preserving status on directory entries. [" +
+          sourceReader.getPosition() * 100 / totalLen + "%]");
       }
     } finally {
       IOUtils.closeStream(sourceReader);
@@ -229,9 +230,9 @@ public class CopyCommitter extends FileOutputCommitter {
         } else {
           throw new IOException("Unable to delete " + trgtFileStatus.getPath());
         }
-        taskAttemptContext.progress();
-        taskAttemptContext.setStatus("Deleting missing files from target. [" +
-            targetReader.getPosition() * 100 / totalLen + "%]");
+        HadoopCompat.progress(taskAttemptContext);
+        HadoopCompat.setStatus(taskAttemptContext, "Deleting missing files from target. [" +
+          targetReader.getPosition() * 100 / totalLen + "%]");
       }
     } finally {
       IOUtils.closeStream(sourceReader);
@@ -261,7 +262,7 @@ public class CopyCommitter extends FileOutputCommitter {
     }
     if (result) {
       LOG.info("Data committed successfully to " + finalDir);
-      taskAttemptContext.setStatus("Data committed successfully to " + finalDir);
+      HadoopCompat.setStatus(taskAttemptContext,"Data committed successfully to " + finalDir );
     } else {
       LOG.error("Unable to commit data to " + finalDir);
       throw new IOException("Atomic commit failed. Temporary data in " + workDir +

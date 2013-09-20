@@ -32,6 +32,7 @@ import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileRecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.tools.util.HadoopCompat;
 
 import java.io.IOException;
 import java.util.List;
@@ -60,7 +61,7 @@ public class UniformSizeInputFormat extends InputFormat<Text, FileStatus> {
   @Override
   public List<InputSplit> getSplits(JobContext context)
                       throws IOException, InterruptedException {
-    Configuration configuration = context.getConfiguration();
+    Configuration configuration = HadoopCompat.getConfiguration(context);
     int numSplits = DistCpUtils.getInt(configuration,
                                        DistCpConstants.CONF_LABEL_NUM_MAPS);
 

@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.tools.mapred;
 
+import org.apache.hadoop.tools.util.HadoopCompat;
 import org.apache.hadoop.tools.util.RetriableCommand;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FileSystem;
@@ -50,7 +51,8 @@ public class RetriableDirectoryCreateCommand extends RetriableCommand {
     Path target = (Path)arguments[0];
     Mapper.Context context = (Mapper.Context)arguments[1];
 
-    FileSystem targetFS = target.getFileSystem(context.getConfiguration());
+    FileSystem targetFS = target.getFileSystem(HadoopCompat
+      .getTaskConfiguration(context));
     return targetFS.mkdirs(target);
   }
 }

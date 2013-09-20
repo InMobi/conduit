@@ -29,6 +29,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileRecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.tools.util.HadoopCompat;
 
 import java.io.IOException;
 
@@ -106,7 +107,8 @@ class DynamicInputChunk<K, V> {
   DynamicInputChunk(Path chunkFilePath,
                             TaskAttemptContext taskAttemptContext)
                                    throws IOException, InterruptedException {
-    this.chunkSet = new DynamicInputChunkSet(taskAttemptContext.getConfiguration());
+    this.chunkSet = new DynamicInputChunkSet(HadoopCompat
+      .getTaskConfiguration(taskAttemptContext));
     this.chunkFilePath = chunkFilePath;
     openForRead(taskAttemptContext);
   }

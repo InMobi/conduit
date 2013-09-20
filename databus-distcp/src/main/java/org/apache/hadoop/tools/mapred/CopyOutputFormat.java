@@ -24,6 +24,7 @@ import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.tools.DistCpConstants;
+import org.apache.hadoop.tools.util.HadoopCompat;
 
 import java.io.IOException;
 
@@ -72,7 +73,7 @@ public class CopyOutputFormat<K, V> extends TextOutputFormat<K, V> {
 
   @Override
   public void checkOutputSpecs(JobContext context) throws IOException {
-    Configuration conf = context.getConfiguration();
+    Configuration conf = HadoopCompat.getConfiguration(context);
 
     if (getCommitDirectory(conf) == null) {
       throw new IllegalStateException("Commit directory not configured");
@@ -84,7 +85,7 @@ public class CopyOutputFormat<K, V> extends TextOutputFormat<K, V> {
     }
 
     // get delegation token for outDir's file system
-    TokenCache.obtainTokensForNamenodes(context.getCredentials(),
+    TokenCache.obtainTokensForNamenodes(HadoopCompat.getCredentials(context),
                                         new Path[] {workingPath}, conf);
   }
 }

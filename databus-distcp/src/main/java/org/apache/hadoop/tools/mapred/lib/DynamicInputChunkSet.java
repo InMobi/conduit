@@ -26,6 +26,7 @@ import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.tools.util.HadoopCompat;
 
 import java.io.IOException;
 
@@ -136,7 +137,7 @@ public class DynamicInputChunkSet {
                                       throws IOException, InterruptedException {
 
     String taskId
-            = taskAttemptContext.getTaskAttemptID().getTaskID().toString();
+            = HadoopCompat.getTaskAttemptID(taskAttemptContext).getTaskID().toString();
     Path acquiredFilePath = new Path(chunkRootPath, taskId);
 
     if (fs.exists(acquiredFilePath)) {
