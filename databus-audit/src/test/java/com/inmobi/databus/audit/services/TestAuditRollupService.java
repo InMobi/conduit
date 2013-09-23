@@ -43,27 +43,23 @@ public class TestAuditRollupService extends AuditRollupTestUtil {
     calendar.setTime(currentDate);
     calendar.set(Calendar.HOUR_OF_DAY, 1);
     calendar.set(Calendar.MINUTE, 5);
-    try {
-      Date fromTime = rollUpService.getFromTime(connection);
-      Assert.assertEquals(calendar.getTime(), fromTime);
+    Date fromTime = rollUpService.getFromTime(connection);
+    Assert.assertEquals(calendar.getTime(), fromTime);
 
-      calendar.add(Calendar.HOUR_OF_DAY, 1);
-      rollUpService.mark(calendar.getTime().getTime());
-      fromTime = rollUpService.getFromTime(connection);
-      Assert.assertEquals(calendar.getTime(), fromTime);
+    calendar.add(Calendar.HOUR_OF_DAY, 1);
+    rollUpService.mark(calendar.getTime().getTime());
+    fromTime = rollUpService.getFromTime(connection);
+    Assert.assertEquals(calendar.getTime(), fromTime);
 
-      calendar.add(Calendar.HOUR_OF_DAY, -1);
-      calendar.add(Calendar.MINUTE, 5);
-      rollUpService.mark(calendar.getTime().getTime());
-      fromTime = rollUpService.getFromTime(connection);
-      Assert.assertEquals(calendar.getTime(), fromTime);
+    calendar.add(Calendar.HOUR_OF_DAY, -1);
+    calendar.add(Calendar.MINUTE, 5);
+    rollUpService.mark(calendar.getTime().getTime());
+    fromTime = rollUpService.getFromTime(connection);
+    Assert.assertEquals(calendar.getTime(), fromTime);
 
-      calendar.add(Calendar.MINUTE, -5);
-      fromTime = rollUpService.getFirstTimeIntervalDailyTable(connection);
-      Assert.assertEquals(calendar.getTime(), fromTime);
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
+    calendar.add(Calendar.MINUTE, -5);
+    fromTime = rollUpService.getFirstTimeIntervalDailyTable(connection);
+    Assert.assertEquals(calendar.getTime(), fromTime);
   }
 
   @Test
