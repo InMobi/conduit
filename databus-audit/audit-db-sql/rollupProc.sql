@@ -32,6 +32,17 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION createConstraintIfNotExists(tName text, iName text, columnName text)
+RETURNS void AS
+$BODY$
+BEGIN
+	IF NOT EXISTS (SELECT indexname FROM pg_indexes WHERE tablename = tName  and indexname = iName) THEN
+        EXECUTE 'CREATE INDEX ' || iName || ' ON ' || tName || ' USING btree(' || columnName || ')';
+  END IF;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION createDailyTable(masterTable text, dayTable text, currentTimeStamp text)
 RETURNS void AS
 $BODY$
@@ -39,20 +50,34 @@ DECLARE
  createTable text;
  checkconstraint text;
  index text;
+ createIndex text;
+ constraintName text;
+ columnName text;
 BEGIN
 checkconstraint = 'CHECK(timeinterval >= extract (epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint AND timeinterval < extract(epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint )';
 createTable = 'CREATE TABLE IF NOT EXISTS ' || dayTable || '(' || checkconstraint || ') INHERITS (' || masterTable || ')';
 EXECUTE createTable;
-index = 'CREATE INDEX ' || dayTable || '_idx ON ' || dayTable || ' USING btree(timeinterval)';
-EXECUTE index;
-index = 'CREATE INDEX ' || dayTable || '_clusteridx ON ' || dayTable || ' USING btree(cluster)';
-EXECUTE index;
+constraintName = dayTable || '_idx';
+columnName = 'timeinterval';
+createIndex = 'SELECT createConstraintIfNotExists(' || quote_literal(dayTable) || ', ' || quote_literal(constraintName) || ', ' || quote_literal(columnName) || ')';
+EXECUTE createIndex;
+constraintName = dayTable || '_clusteridx';
+columnName = 'cluster';
+createIndex = 'SELECT createConstraintIfNotExists(' || quote_literal(dayTable) || ', ' || quote_literal(constraintName) || ', ' || quote_literal(columnName) || ')';
+EXECUTE createIndex;
+constraintName = dayTable || '_topicidx';
+columnName = 'topic';
 index = 'CREATE INDEX ' || dayTable || '_topicidx ON ' || dayTable || ' USING  btree(topic)';
-EXECUTE index;
-index = 'CREATE INDEX ' || dayTable || '_hostnameidx ON ' || dayTable || ' USING btree(hostname)';
-EXECUTE index;
-index = 'CREATE INDEX ' || dayTable || '_tieridx ON ' || dayTable || ' USING btree(tier)';
-EXECUTE index;
+createIndex = 'SELECT createConstraintIfNotExists(' || quote_literal(dayTable) || ', ' || quote_literal(constraintName) || ', ' || quote_literal(columnName) || ')';
+EXECUTE createIndex;
+constraintName = dayTable || '_hostnameidx';
+columnName = 'hostname';
+createIndex = 'SELECT createConstraintIfNotExists(' || quote_literal(dayTable) || ', ' || quote_literal(constraintName) || ', ' || quote_literal(columnName) || ')';
+EXECUTE createIndex;
+constraintName = dayTable || '_tieridx';
+columnName = 'tier';
+createIndex = 'SELECT createConstraintIfNotExists(' || quote_literal(dayTable) || ', ' || quote_literal(constraintName) || ', ' || quote_literal(columnName) || ')';
+EXECUTE createIndex;
 END
 $BODY$
 LANGUAGE plpgsql;

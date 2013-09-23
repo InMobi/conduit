@@ -58,7 +58,7 @@ public class AuditRollUpService extends AuditDBService {
     // setting calendar to rollup hour
     if (cal.get(Calendar.HOUR_OF_DAY) >= rollUpHourOfDay) {
       // rollup will happen the next day
-      cal.add(Calendar.DAY_OF_MONTH, 1);
+      cal.add(Calendar.DATE, 1);
     }
     cal.set(Calendar.HOUR_OF_DAY, rollUpHourOfDay);
     cal.set(Calendar.MINUTE, 0);
@@ -154,7 +154,6 @@ public class AuditRollUpService extends AuditDBService {
 
   @Override
   public void execute() {
-
     if (isFirstRun) {
       sleepTillNextRun();
     }
@@ -185,22 +184,28 @@ public class AuditRollUpService extends AuditDBService {
     CallableStatement createDailyTableStmt = null;
     try {
       if (!isStop) {
-        Date date = addDaysToCurrentDate(config.getInteger(AuditDBConstants
+        Date fromDate = new Date();
+        Date todate = addDaysToCurrentDate(config.getInteger(AuditDBConstants
             .NUM_DAYS_AHEAD_TABLE_CREATION));
-        LOG.info("Creating day table of date:"+date);
         String statement = getCreateTableQuery();
         createDailyTableStmt = connection.prepareCall(statement);
-        String currentDateString = dayChkFormat.format(date);
         String masterTable = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
-        String dayTable = createTableName(date, false);
-        int index = 1;
-        createDailyTableStmt.setString(index++, masterTable);
-        createDailyTableStmt.setString(index++, dayTable);
-        createDailyTableStmt.setString(index++, currentDateString);
-        createDailyTableStmt.execute();
+        while ((fromDate.before(todate) || fromDate.equals(todate)) &&
+            !isStop) {
+          LOG.info("Creating day table of date:"+fromDate);
+          String currentDateString = dayChkFormat.format(fromDate);
+          String dayTable = createTableName(fromDate, false);
+          int index = 1;
+          createDailyTableStmt.setString(index++, masterTable);
+          createDailyTableStmt.setString(index++, dayTable);
+          createDailyTableStmt.setString(index++, currentDateString);
+          createDailyTableStmt.addBatch();
+          fromDate = addDaysToGivenDate(fromDate, 1);
+          LOG.info("Table created for day:"+currentDateString+" with table name " +
+              "as:"+dayTable+" and parent is :"+masterTable);
+        }
+        createDailyTableStmt.executeBatch();
         connection.commit();
-        LOG.info("Table created for day:"+currentDateString+" with table name " +
-            "as:"+dayTable+" and parent is :"+masterTable);
       }
     } catch (SQLException e) {
       while (e != null) {
@@ -220,6 +225,10 @@ public class AuditRollUpService extends AuditDBService {
   Date addDaysToGivenDate(Date date, int increment) {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(date);
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
     calendar.add(Calendar.DATE, increment);
     return calendar.getTime();
   }
@@ -231,6 +240,10 @@ public class AuditRollUpService extends AuditDBService {
 
   Date addDaysToCurrentDate(Integer dayIncrement) {
     Calendar calendar = Calendar.getInstance();
+    calendar.set(Calendar.HOUR_OF_DAY, 0);
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
     calendar.add(Calendar.DATE, dayIncrement);
     return calendar.getTime();
   }
@@ -250,30 +263,32 @@ public class AuditRollUpService extends AuditDBService {
     CallableStatement rollupStmt = null;
     Date fromTime = getFromTime(connection);
     try {
-      String statement = getRollUpQuery();
-      rollupStmt = connection.prepareCall(statement);
-      Date toDate = addDaysToCurrentDate(-tilldays);
-      LOG.debug("Starting roll up of tables from:"+fromTime+" till:"+toDate);
-      while (fromTime.before(toDate) && !isStop) {
-        Date nextDay = addDaysToGivenDate(fromTime, 1);
-        String srcTable = createTableName(fromTime, false);
-        String destTable = createTableName(fromTime, true);
-        Long firstMillisOfDay = getFirstMilliOfDay(fromTime);
-        Long firstMillisOfNextDay = getFirstMilliOfDay(nextDay);
-        int index = 1;
-        rollupStmt.setString(index++, srcTable);
-        rollupStmt.setString(index++, destTable);
-        rollupStmt.setString(index++,
-            config.getString(AuditDBConstants.MASTER_TABLE_NAME));
-        rollupStmt.setLong(index++, firstMillisOfDay);
-        rollupStmt.setLong(index++, firstMillisOfNextDay);
-        rollupStmt.setLong(index++, intervalLength);
-        LOG.debug("Rollup query is " + rollupStmt.toString());
-        rollupStmt.addBatch();
-        fromTime = nextDay;
+      if (!isStop) {
+        String statement = getRollUpQuery();
+        rollupStmt = connection.prepareCall(statement);
+        Date toDate = addDaysToCurrentDate(-tilldays);
+        LOG.debug("Starting roll up of tables from:"+fromTime+" till:"+toDate);
+        while (fromTime.before(toDate) && !isStop) {
+          Date nextDay = addDaysToGivenDate(fromTime, 1);
+          String srcTable = createTableName(fromTime, false);
+          String destTable = createTableName(fromTime, true);
+          Long firstMillisOfDay = getFirstMilliOfDay(fromTime);
+          Long firstMillisOfNextDay = getFirstMilliOfDay(nextDay);
+          int index = 1;
+          rollupStmt.setString(index++, srcTable);
+          rollupStmt.setString(index++, destTable);
+          rollupStmt.setString(index++,
+              config.getString(AuditDBConstants.MASTER_TABLE_NAME));
+          rollupStmt.setLong(index++, firstMillisOfDay);
+          rollupStmt.setLong(index++, firstMillisOfNextDay);
+          rollupStmt.setLong(index++, intervalLength);
+          LOG.debug("Rollup query is " + rollupStmt.toString());
+          rollupStmt.addBatch();
+          fromTime = nextDay;
+        }
+        rollupStmt.executeBatch();
+        connection.commit();
       }
-      rollupStmt.executeBatch();
-      connection.commit();
     } catch (SQLException e) {
       while (e != null) {
         LOG.error("SQLException while rolling up:"+ e.getMessage());
