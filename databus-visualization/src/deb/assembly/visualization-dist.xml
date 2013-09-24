@@ -28,7 +28,7 @@
     <fileSets>
            <fileSet>
             <directory>../databus-visualization/conf</directory>
-            <outputDirectory>/usr/local/databus-visualization/conf/</outputDirectory>
+            <outputDirectory>/usr/local/databus-visualization-${project.version}/conf/</outputDirectory>
             <includes>
                 <include>**/audit-feeder.properties</include>
                 <include>**/visualization.properties</include>
