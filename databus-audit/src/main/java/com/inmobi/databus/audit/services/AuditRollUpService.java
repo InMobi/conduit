@@ -50,6 +50,9 @@ public class AuditRollUpService extends AuditDBService {
   @Override
   public void stop() {
     isStop = true;
+    //RollupService sleeps for a day between runs so have to interrupt the
+    // thread on calling stop()
+    thread.interrupt();
   }
 
   private long getTimeToSleep() {
@@ -158,7 +161,7 @@ public class AuditRollUpService extends AuditDBService {
       sleepTillNextRun();
     }
 
-    while (!isStop) {
+    while (!isStop && !thread.isInterrupted()) {
       LOG.debug("Starting new run");
       Connection connection = getConnection();
       while (connection == null && !isStop) {
