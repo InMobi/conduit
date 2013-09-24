@@ -375,6 +375,11 @@ public class Visualization implements EntryPoint, ClickHandler {
                           final String selectedCluster,
                           final String selectedStream,
                           final String selectedTab) {
+    Integer defaultTabId = 1;
+    if(selectedTab != null)
+      defaultTabId =  Integer.parseInt(selectedTab);
+    final Integer selectedTabId = defaultTabId;
+    saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTab);
     System.out.println("Sending request to load graph");
     System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
         ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab selected:"+selectedTab);
@@ -407,9 +412,6 @@ public class Visualization implements EntryPoint, ClickHandler {
             hLatency = -1;
           setTierLatencyValues(pLatency, aLatency, cLatency,hLatency);
         }
-        Integer selectedTabId = 1;
-        if(selectedTab != null)
-          selectedTabId =  Integer.parseInt(selectedTab);
         drawGraph(nodesJson, selectedCluster, selectedStream, stTime, edTime,
             selectedTabId, Integer.parseInt(clientConfig
             .get(ClientConstants.PUBLISHER)), Integer.parseInt(clientConfig
@@ -425,6 +427,13 @@ public class Visualization implements EntryPoint, ClickHandler {
       }
     });
   }
+
+  private native void saveHistory(String stTime, String edTime,
+                            String selectedCluster, String selectedStream,
+                            String selectedTab)/*-{
+    $wnd.saveHistory(selectedStream, selectedCluster, selectedTab, stTime,
+    edTime);
+  }-*/;
 
   private native void setTierLatencyValues(int publisherLatency,
                                            int agentLatency,

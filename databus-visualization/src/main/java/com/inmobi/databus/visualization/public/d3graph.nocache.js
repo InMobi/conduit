@@ -1233,7 +1233,12 @@ function clearPreviousGraph() {
   d3.select("#graphsvg").remove();
 }
 
-function saveHistory(streamName, clusterName, selectedTabID) {
+function saveHistory(streamName, clusterName, selectedTabID, start, end) {
+	console.log('Saving history with steam:'+streamName+', cluster:'+clusterName+', selected tab:'+selectedTabID+', start time:'+start+' and end time:'+end);
+	if (start == undefined || end == undefined) {
+		start = qstart;
+		end = qend;
+	}
   var History = window.History;
   if (History.enabled) {
       var selectedTab = selectedTabID.toString();
@@ -1241,28 +1246,9 @@ function saveHistory(streamName, clusterName, selectedTabID) {
           qstream: streamName,
           qcluster: clusterName,
           selectedTab: selectedTab
-        }, "Databus Visualization", "?qstart="+ qstart + "&qend=" + qend + "&qstream=" +
+        }, "Databus Visualization", "?qstart="+ start + "&qend=" + end + "&qstream=" +
         streamName + "&qcluster=" + clusterName + "&selectedTab=" +
         selectedTabID);
-  /*
-    if (streamName == undefined && clusterName == undefined) {
-      var selectedTab = selectedTabID.toString();
-      History.pushState({
-          gstream: streamName,
-          gcluster: clusterName,
-          selectedTab: selectedTab
-        }, "Databus Visualization", queryString +
-        "&gstream=all&gcluster=all&selectedTab=" + selectedTabID);
-    } else {
-      var selectedTab = selectedTabID.toString();
-      History.pushState({
-          gstream: streamName,
-          gcluster: clusterName,
-          selectedTab: selectedTab
-        }, "Databus Visualization", queryString + "&gstream=" +
-        streamName + "&gcluster=" + clusterName + "&selectedTab=" +
-        selectedTabID);
-    }*/
   } else {
     console.log("History not enabled");
   }
@@ -1595,7 +1581,8 @@ percentageFrWarn, lWThresholdDiff) {
   }
   clearHistory();
   buildNodeList();
-  tabSelected(selectedTab, stream, cluster);/*
+  loadGraph(stream, cluster, selectedTab);/*
+  tabSelected(selectedTab, stream, cluster);
   if (drillDownCluster != null && drillDownStream != null) {
     tabSelected(selectedTab, drillDownStream, drillDownCluster);
   } else {
