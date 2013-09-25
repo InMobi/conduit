@@ -2,7 +2,7 @@ CREATE TABLE audit
 (
   TIMEINTERVAL bigint,
   HOSTNAME varchar(50),
-  TIER varchar(15),
+  TIER varchar(30),
   TOPIC varchar(25),
   CLUSTER varchar(50),
   SENT bigint,

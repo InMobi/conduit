@@ -1,8 +1,9 @@
 package com.inmobi.databus.local;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -22,7 +23,7 @@ public class TestLocalStreamCommit {
   static Path rootDir = new Path("/tmp/test-databus/databus/");
 
   static FileSystem localFs;
-  private List<String> streamsToProcess = new ArrayList<String>();
+  private Set<String> streamsToProcess = new HashSet<String>();
    
   private void createData(Cluster cluster) throws IOException {
     Path tmpPath = new Path(cluster.getTmpPath(),
@@ -65,7 +66,12 @@ public class TestLocalStreamCommit {
     Path tmpPath = new Path(cluster1.getTmpPath(),
         LocalStreamService.class.getName());
     Path tmpConsumerPath = new Path(tmpPath, "testcluster2");
-    FileStatus[] status = localFs.listStatus(tmpConsumerPath);
+    FileStatus[] status = null;
+    try {
+      status = localFs.listStatus(tmpConsumerPath);
+    } catch (FileNotFoundException e) {
+      status = new FileStatus[0];
+    }
     for (FileStatus tmpStatus : status) {
       // opening the consumer file written for testcluster2
       // it should not have any entry for stream 1 as testcluster2 is primary

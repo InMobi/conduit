@@ -18,9 +18,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -50,10 +52,16 @@ public class Databus implements Service, DatabusConstants {
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
   private MessagePublisher publisher;
+  private static int numStreamsMergeService = 5;
+  private static int numStreamsMirrorService = 1;
+  private static boolean isPurgerEnabled = true;
+  private final Set<String> clustersToProcess;
+  private final List<AbstractService> services = new ArrayList<AbstractService>();
+  private volatile boolean stopRequested = false;
+  private CuratorLeaderManager curatorLeaderManager = null;
+  private volatile boolean databusStarted = false;
 
-  public void setPublisher(MessagePublisher publisher) {
-    this.publisher = publisher;
-  }
+
 
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -65,10 +73,6 @@ public class Databus implements Service, DatabusConstants {
     return clustersToProcess;
   }
 
-  private final Set<String> clustersToProcess;
-  private final List<AbstractService> services = new ArrayList<AbstractService>();
-
-
   public Databus(DatabusConfig config, Set<String> clustersToProcess) {
     this.config = config;
     this.clustersToProcess = clustersToProcess;
@@ -77,11 +81,11 @@ public class Databus implements Service, DatabusConstants {
   public DatabusConfig getConfig() {
     return config;
   }
+  
+  public void setPublisher(MessagePublisher publisher) {
+    this.publisher = publisher;
+  }
 
-  /*
-   * The visiblity of method is set to protected and returns list of services 
-   * to enable unit testing
-   */
   protected List<AbstractService> init() throws Exception {
     Cluster currentCluster = null;
     if (currentClusterName != null) {
@@ -103,7 +107,7 @@ public class Databus implements Service, DatabusConstants {
         copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
 
         Iterator<String> iterator = cluster.getSourceStreams().iterator();
-        List<String> streamsToProcess = new ArrayList<String>();
+        Set<String> streamsToProcess = new HashSet<String>();
         while (iterator.hasNext()) {
           for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
             streamsToProcess.add(iterator.next());
@@ -111,49 +115,95 @@ public class Databus implements Service, DatabusConstants {
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
                 streamsToProcess, publisher));
-            streamsToProcess = new ArrayList<String>();
+            streamsToProcess = new HashSet<String>();
           }
         }
       }
 
-			Set<String> mergedStreamRemoteClusters = new HashSet<String>();
-			Set<String> mirroredRemoteClusters = new HashSet<String>();
+Set<String> mergedStreamRemoteClusters = new HashSet<String>();
+Set<String> mirroredRemoteClusters = new HashSet<String>();
+      Map<String, Set<String>> mergedSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
+      Map<String, Set<String>> mirrorSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
       for (DestinationStream cStream : cluster.getDestinationStreams().values()) {
         //Start MergedStreamConsumerService instances for this cluster for each cluster
         //from where it has to fetch a partial stream and is hosting a primary stream
         //Start MirroredStreamConsumerService instances for this cluster for each cluster
         //from where it has to mirror mergedStreams
 
+        if (cStream.isPrimary()) {
         for (String cName : config.getSourceStreams().get(cStream.getName())
         .getSourceClusters()) {
-          if (cStream.isPrimary())
-						mergedStreamRemoteClusters.add(cName);
+mergedStreamRemoteClusters.add(cName);
+            if (mergedSrcClusterToStreamsMap.get(cName) == null) {
+              Set<String> tmp = new HashSet<String>();
+              tmp.add(cStream.getName());
+              mergedSrcClusterToStreamsMap.put(cName, tmp);
+            } else {
+              mergedSrcClusterToStreamsMap.get(cName).add(cStream.getName());
+            }
+          }
         }
-        if (!cStream.isPrimary())  {
+        if (!cStream.isPrimary()) {
           Cluster primaryCluster = config.getPrimaryClusterForDestinationStream(cStream.getName());
-          if (primaryCluster != null)
-						mirroredRemoteClusters.add(primaryCluster.getName());
+          if (primaryCluster != null) {
+mirroredRemoteClusters.add(primaryCluster.getName());
+            String clusterName = primaryCluster.getName();
+            if (mirrorSrcClusterToStreamsMap.get(clusterName) == null) {
+              Set<String> tmp = new HashSet<String>();
+              tmp.add(cStream.getName());
+              mirrorSrcClusterToStreamsMap.put(clusterName, tmp);
+            } else {
+              mirrorSrcClusterToStreamsMap.get(clusterName).add(
+                  cStream.getName());
+            }
+          }
         }
       }
 
 
-			for (String remote : mergedStreamRemoteClusters) {
-        services.add(getMergedStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster,
-            publisher));
+for (String remote : mergedStreamRemoteClusters) {
+
+        Iterator<String> iterator = mergedSrcClusterToStreamsMap.get(remote)
+            .iterator();
+        Set<String> streamsToProcess = new HashSet<String>();
+        while (iterator.hasNext()) {
+          for (int i = 0; i < numStreamsMergeService && iterator.hasNext(); i++) {
+            streamsToProcess.add(iterator.next());
+          }
+          if (streamsToProcess.size() > 0) {
+            services.add(getMergedStreamService(config, config.getClusters()
+                .get(remote), cluster, currentCluster, streamsToProcess,
+                publisher));
+            streamsToProcess = new HashSet<String>();
+          }
+        }
+
       }
-			for (String remote : mirroredRemoteClusters) {
-        services.add(getMirrorStreamService(config,
-            config.getClusters().get(remote), cluster, currentCluster,
-            publisher));
+for (String remote : mirroredRemoteClusters) {
+
+        Iterator<String> iterator = mirrorSrcClusterToStreamsMap.get(remote)
+            .iterator();
+        Set<String> streamsToProcess = new HashSet<String>();
+        while (iterator.hasNext()) {
+          for (int i = 0; i < numStreamsMirrorService && iterator.hasNext(); i++) {
+            streamsToProcess.add(iterator.next());
+          }
+          if (streamsToProcess.size() > 0) {
+            services.add(getMirrorStreamService(config, config.getClusters()
+                .get(remote), cluster, currentCluster, streamsToProcess,
+                publisher));
+            streamsToProcess = new HashSet<String>();
+          }
+        }
+
       }
     }
 
     //Start a DataPurgerService for this Cluster/Clusters to process
     Iterator<String> it = clustersToProcess.iterator();
-    while(it.hasNext()) {
-      String  clusterName = it.next();
-      Cluster cluster =  config.getClusters().get(clusterName);
+    while (isPurgerEnabled && it.hasNext()) {
+      String clusterName = it.next();
+      Cluster cluster = config.getClusters().get(clusterName);
       LOG.info("Starting Purger for Cluster [" + clusterName + "]");
       //Start a purger per cluster
       services.add(new DataPurgerService(config, cluster));
@@ -177,37 +227,47 @@ public class Databus implements Service, DatabusConstants {
   }
   
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster, List<String> streamsToProcess,
-      MessagePublisher publisher)
-      throws IOException {
+      Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess,
+      MessagePublisher publisher) throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
         new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
         publisher);
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      MessagePublisher publisher) throws
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,Set<String>  streamsToProcess, MessagePublisher publisher) throws
       Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
-        currentCluster, publisher);
+        currentCluster,
+        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
+        streamsToProcess,publisher);
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,Set<String> streamsToProcess,
       MessagePublisher publisher) throws
       Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
-        currentCluster, publisher);
+        currentCluster,
+        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
+        streamsToProcess, publisher);
+      
   }
 
   @Override
   public void stop() throws Exception {
-    for (AbstractService service : services) {
-      LOG.info("Stopping [" + service.getName() + "]");
-      service.stop();
+    stopRequested = true;
+    if (databusStarted) {
+      synchronized (services) {
+        for (AbstractService service : services) {
+          LOG.info("Stopping [" + service.getName() + "]");
+          service.stop();
+        }
+      }
     }
-    LOG.info("Databus Shutdown complete..");
+    if (curatorLeaderManager != null) {
+      curatorLeaderManager.close();
+    }
   }
 
   @Override
@@ -216,6 +276,7 @@ public class Databus implements Service, DatabusConstants {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
+    LOG.info("Databus Shutdown complete..");
   }
 
   @Override
@@ -227,12 +288,23 @@ public class Databus implements Service, DatabusConstants {
   
   public void startDatabus() throws Exception {
     try {
-      init();
-      for (AbstractService service : services) {
-        service.start();
+      synchronized (services) {
+        if (stopRequested) {
+          return;
+        }
+        init();
+        for (AbstractService service : services) {
+          service.start();
+        }
       }
+      databusStarted = true;
     } catch (Exception e) {
-      LOG.warn("Error is starting service", e);
+      LOG.warn("Error in initializing databus", e);
+    }
+
+    // if there is any outstanding stop request meanwhile, handle it here
+    if (stopRequested) {
+      stop();
     }
     // Block this method to avoid losing leadership of current work
     join();
@@ -268,12 +340,27 @@ public class Databus implements Service, DatabusConstants {
       String cfgFile = args[0].trim();
       Properties prop = new Properties();
       prop.load(new FileReader(cfgFile));
-      
-      
+      String purgerEnabled = prop.getProperty(PERGER_ENABLED);
+      if (purgerEnabled != null)
+        isPurgerEnabled = Boolean.parseBoolean(purgerEnabled);
+
       String streamperLocal = prop.getProperty(STREAMS_PER_LOCALSERVICE);
       if (streamperLocal != null) {
         numStreamsLocalService = Integer.parseInt(streamperLocal);
       }
+      String streamperMerge = prop.getProperty(STREAMS_PER_MERGE);
+      if (streamperMerge != null) {
+        numStreamsMergeService = Integer.parseInt(streamperMerge);
+      }
+      String streamperMirror = prop.getProperty(STREAMS_PER_MIRROR);
+      if (streamperMirror != null) {
+        numStreamsMirrorService = Integer.parseInt(streamperMirror);
+      }
+      String numOfDirPerDistcpService = prop.getProperty(DIR_PER_DISTCP_PER_STREAM);
+      if (numOfDirPerDistcpService != null) {
+        System.setProperty(DIR_PER_DISTCP_PER_STREAM, numOfDirPerDistcpService);
+      }
+
       String log4jFile = getProperty(prop, LOG4J_FILE);
       if (log4jFile == null) {
         LOG.error("log4j.properties incorrectly defined");
@@ -316,6 +403,10 @@ public class Databus implements Service, DatabusConstants {
       if (mbPerMapper != null) {
         System.setProperty(MB_PER_MAPPER, mbPerMapper);
       }
+      String numRetries = prop.getProperty(NUM_RETRIES);
+      if (numRetries != null) {
+        System.setProperty(NUM_RETRIES, numRetries);
+      }
       prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {
@@ -356,14 +447,8 @@ public class Databus implements Service, DatabusConstants {
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
       databus.setPublisher(getMessagePublisher(prop));
-      if (enableZookeeper) {
-        LOG.info("Starting CuratorLeaderManager for eleader election ");
-        CuratorLeaderManager curatorLeaderManager = new CuratorLeaderManager(
-            databus, databusClusterId.toString(), zkConnectString);
-        curatorLeaderManager.start();
-      } else
-        databus.start();
-      Signal.handle(new Signal("INT"), new SignalHandler() {
+      Signal.handle(new Signal("TERM"), new SignalHandler() {
+
         @Override
         public void handle(Signal signal) {
           try {
@@ -375,11 +460,25 @@ public class Databus implements Service, DatabusConstants {
           }
         }
       });
+           if (enableZookeeper) {
+        LOG.info("Starting CuratorLeaderManager for leader election ");
+        databus.startCuratorLeaderManager(zkConnectString, databusClusterId, databus);
+      } else {
+        databus.start();
+      }
     }
     catch (Exception e) {
       LOG.warn("Error in starting Databus daemon", e);
       throw new Exception(e);
     }
+  }
+
+  private void startCuratorLeaderManager(
+      String zkConnectString, StringBuffer databusClusterId,
+      final Databus databus) throws Exception {
+    curatorLeaderManager = new CuratorLeaderManager(
+        databus, databusClusterId.toString(), zkConnectString);
+    curatorLeaderManager.start();
   }
 
 }

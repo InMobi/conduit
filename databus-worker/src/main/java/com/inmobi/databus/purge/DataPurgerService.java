@@ -13,11 +13,13 @@
  */
 package com.inmobi.databus.purge;
 
+import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +58,8 @@ public class DataPurgerService extends AbstractService {
 
   public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
       throws Exception {
-    super(DataPurgerService.class.getName(), databusConfig, 60000 * 60, null);
+    super(DataPurgerService.class.getName(), databusConfig, 60000 * 60, null,
+        new HashSet<String>(), null);
     this.cluster = cluster;
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
@@ -352,7 +355,13 @@ public class DataPurgerService extends AbstractService {
 
   private FileStatus[] getAllFilesInDir(Path dir, FileSystem fs)
       throws Exception {
-    return fs.listStatus(dir);
+    FileStatus[] files = null;
+    try {
+      files = fs.listStatus(dir);
+    } catch (FileNotFoundException e) {
+
+    }
+    return files;
   }
 
   @Override

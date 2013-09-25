@@ -1,6 +1,7 @@
 package com.inmobi.databus.local;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -102,8 +103,14 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public void doRecursiveListing(Path dir, Set<Path> listing,
   		FileSystem fs) throws IOException {
-  	FileStatus[] fileStatuses = fs.listStatus(dir);
-  	if (fileStatuses == null || fileStatuses.length == 0) {
+
+    FileStatus[] fileStatuses = null;
+    try {
+      fileStatuses = fs.listStatus(dir);
+    } catch (FileNotFoundException e) {
+
+    }
+    if (fileStatuses == null || fileStatuses.length == 0) {
   		LOG.debug("No files in directory:" + dir);
   	} else {
   		for (FileStatus file : fileStatuses) {
@@ -130,9 +137,14 @@ public class TestLocalStreamService extends LocalStreamService implements
         String pathName = srcCluster.getDataDir() + File.separator
             + sstream.getValue().getName() + File.separator
             + srcCluster.getName() + File.separator;
-        
-        FileStatus[] fStats = fs.listStatus(new Path(pathName));
-        
+
+        FileStatus[] fStats = null;
+        try {
+          fStats = fs.listStatus(new Path(pathName));
+        } catch (FileNotFoundException e) {
+          fStats = new FileStatus[0];
+        }
+
         LOG.debug("Adding Previous Run Files in Path: " + pathName);
         for (FileStatus fStat : fStats) {
           LOG.debug("Previous File: " + fStat.getPath().getName());
@@ -140,7 +152,7 @@ public class TestLocalStreamService extends LocalStreamService implements
         }
         
         List<String> filesList = createScribeData(fs, sstream.getValue()
-            .getName(), pathName, NUM_OF_FILES);
+          .getName(), pathName, NUM_OF_FILES);
         
         files.put(sstream.getValue().getName(), filesList);
         prevfiles.put(sstream.getValue().getName(), prevfilesList);
@@ -251,8 +263,9 @@ public class TestLocalStreamService extends LocalStreamService implements
           
           CheckpointProvider provider = this.getCheckpointProvider();
           
-          String checkpoint = new String(provider.read(sstream.getValue()
-              .getName() + srcCluster.getName()));
+          String checkpoint = new String(provider.read(
+              getCheckPointKey(getClass().getSimpleName(),
+                  sstream.getValue().getName(), srcCluster.getName())));
           
           LOG.debug("Checkpoint for " + sstream.getValue().getName()
               + srcCluster.getName() + " is " + checkpoint);
@@ -300,8 +313,18 @@ public class TestLocalStreamService extends LocalStreamService implements
         } catch (NumberFormatException e) {
           
         }
+        // Since merge will only pick the data if next minute directory is
+        // present hence creating an empty next minute directory
+        LOG.debug("Last path created in local stream is [" + latestPath + "]");
+        Date lastPathDate = CalendarHelper.getDateFromStreamDir(new Path(
+            streamPrefix), latestPath);
+        Path nextPath = CalendarHelper.getNextMinutePathFromDate(lastPathDate,
+            new Path(streamPrefix));
+        LOG.debug("Creating empty path in local stream " + nextPath);
+        fs.mkdirs(nextPath);
       }
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
+
       // verfying audit is generated for all the messages
       MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
       BlockingQueue<Message> auditQueue = mPublisher.source
@@ -332,7 +355,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   public TestLocalStreamService(DatabusConfig config,
                                 Cluster srcCluster, Cluster currentCluster,
  CheckpointProvider provider,
-      List<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess, MessagePublisher publisher)
       throws IOException {
     super(config, srcCluster, currentCluster, provider, streamsToProcess,
         publisher);
@@ -343,15 +366,6 @@ public class TestLocalStreamService extends LocalStreamService implements
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-    }
-  }
-  
-  public void publishMissingPaths(FileSystem fs,
-      Map<String, Set<Path>> missingDirCommittedPaths, long commitTime) 
-          throws Exception {
-    if (missingDirCommittedPaths != null) {
-      missingDirCommittedPaths.putAll(super.publishMissingPaths(fs,
-          srcCluster.getLocalFinalDestDirRoot(), commitTime));
     }
   }
   
@@ -379,11 +393,6 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public FileSystem getFileSystem() {
     return fs;
-  }
-
-  @Override
-  public void publishMissingPaths(long commitTime) throws Exception {
-    super.publishMissingPaths(fs, srcCluster.getLocalFinalDestDirRoot(), commitTime);
   }
 }
 

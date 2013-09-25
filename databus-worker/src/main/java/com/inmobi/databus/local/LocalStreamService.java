@@ -15,10 +15,10 @@ package com.inmobi.databus.local;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -33,7 +33,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -55,6 +54,8 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
 import com.inmobi.messaging.publisher.MessagePublisher;
 
+
+
 /*
  * Handles Local Streams for a Cluster
  * Assumptions
@@ -62,7 +63,7 @@ import com.inmobi.messaging.publisher.MessagePublisher;
  */
 
 public class LocalStreamService extends AbstractService implements
-    ConfigConstants {
+ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
 
@@ -72,9 +73,6 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
-  private Map<String, Set<Path>> missingDirsCommittedPaths = new HashMap<String, Set<Path>>();
-  private final List<String> streamsToProcess;
-  private final String streamsToProcessName;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -85,21 +83,21 @@ public class LocalStreamService extends AbstractService implements
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
+  private final String streamsToProcessName;
 
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      List<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess, MessagePublisher publisher)
       throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider, publisher);
+        provider,streamsToProcess, publisher);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
     else
       this.currentCluster = currentCluster;
-    this.streamsToProcess = streamsToProcess;
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
@@ -140,15 +138,8 @@ public class LocalStreamService extends AbstractService implements
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
       counterGrp=null;
-      for (String stream : streamsToProcess) {
-        Set<Path> missingPaths = publishMissingPaths(fs,
-            srcCluster.getLocalFinalDestDirRoot(), commitTime, stream);
-        if (null != missingPaths && missingPaths.size() > 0) {
-          missingDirsCommittedPaths.put(stream, missingPaths);
-        }
-      }
-      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
-
+      publishMissingPaths(fs,
+          srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
       // checkpointKey, CheckPointPath
@@ -181,15 +172,14 @@ public class LocalStreamService extends AbstractService implements
     }
   }
 
-
-
-  private void checkPoint(Map<String, FileStatus> checkPointPaths) {
+  private void checkPoint(Map<String, FileStatus> checkPointPaths)
+      throws Exception {
     Set<Entry<String, FileStatus>> entries = checkPointPaths.entrySet();
     for (Entry<String, FileStatus> entry : entries) {
       String value = entry.getValue().getPath().getName();
       LOG.debug("Check Pointing Key [" + entry.getKey() + "] with value ["
           + value + "]");
-      checkpointProvider.checkpoint(entry.getKey(), value.getBytes());
+      retriableCheckPoint(checkpointProvider, entry.getKey(), value.getBytes());
     }
   }
 
@@ -198,84 +188,31 @@ public class LocalStreamService extends AbstractService implements
 
     // find final destination paths
     Map<Path, Path> mvPaths = new LinkedHashMap<Path, Path>();
-    FileStatus[] categories = fs.listStatus(tmpJobOutputPath);
+    FileStatus[] categories;
+    try {
+      categories = fs.listStatus(tmpJobOutputPath);
+    } catch (FileNotFoundException e) {
+      categories = new FileStatus[0];
+    }
     for (FileStatus categoryDir : categories) {
       String categoryName = categoryDir.getPath().getName();
       Path destDir = new Path(srcCluster.getLocalDestDir(categoryName,
           commitTime));
-      FileStatus[] files = fs.listStatus(categoryDir.getPath());
+      FileStatus[] files;
+      try {
+        files = fs.listStatus(categoryDir.getPath());
+      } catch (FileNotFoundException e) {
+        files = new FileStatus[0];
+      }
       for (FileStatus file : files) {
         Path destPath = new Path(destDir, file.getPath().getName());
         LOG.debug("Moving [" + file.getPath() + "] to [" + destPath + "]");
         mvPaths.put(file.getPath(), destPath);
       }
-      Set<Path> missingdirectories = missingDirsCommittedPaths
-          .get(categoryName);
-      Set<Path> publishMissingDirs = publishMissingPaths(fs,
+      publishMissingPaths(fs,
           srcCluster.getLocalFinalDestDirRoot(), commitTime, categoryName);
-      if (missingdirectories != null) {
-        missingdirectories.addAll(publishMissingDirs);
-      } else {
-        missingDirsCommittedPaths.put(categoryName, publishMissingDirs);
-      }
-      commitPublishMissingPaths(fs, missingDirsCommittedPaths, commitTime);
     }
-
-    // find input files for consumer
-    Map<Path, Path> consumerCommitPaths = new HashMap<Path, Path>();
-    for (Cluster clusterEntry : getConfig().getClusters().values()) {
-      Set<String> destStreams = clusterEntry.getDestinationStreams().keySet();
-      boolean consumeCluster = false;
-      for (String destStream : destStreams) {
-        if (clusterEntry.getPrimaryDestinationStreams().contains(destStream)
-            && srcCluster.getSourceStreams().contains(destStream)) {
-          consumeCluster = true;
-        }
-      }
-
-      if (consumeCluster) {
-        Path tmpConsumerPath = new Path(tmpPath, clusterEntry.getName());
-        boolean isFileOpened = false;
-        FSDataOutputStream out = null;
-        try {
-          for (Path destPath : mvPaths.values()) {
-            String category = getCategoryFromDestPath(destPath);
-            if (clusterEntry.getPrimaryDestinationStreams().contains(category)) {
-              if (!isFileOpened) {
-                out = fs.create(tmpConsumerPath);
-                isFileOpened = true;
-              }
-              out.writeBytes(destPath.toString());
-              LOG.debug("Adding [" + destPath + "]  for consumer ["
-                  + clusterEntry.getName() + "] to commit Paths in ["
-                  + tmpConsumerPath + "]");
-
-              out.writeBytes("\n");
-            }
-          }
-        } finally {
-          if (isFileOpened) {
-            out.close();
-            // Multiple localstream threads can merge different streams to the
-            // same destination cluster. To avoid conflict of filename in
-            // /databus/system/consumers/{clusterName}/
-            // suffix it with streams contained in the file
-            Path finalConsumerPath = new Path(
-                srcCluster.getConsumePath(clusterEntry), Long.toString(System
-                    .currentTimeMillis()) + "_" + streamsToProcessName);
-            LOG.debug("Moving [" + tmpConsumerPath + "] to [ "
-                + finalConsumerPath + "]");
-            consumerCommitPaths.put(tmpConsumerPath, finalConsumerPath);
-          }
-        }
-      }
-    }
-
-    Map<Path, Path> commitPaths = new LinkedHashMap<Path, Path>();
-    commitPaths.putAll(mvPaths);
-    commitPaths.putAll(consumerCommitPaths);
-
-    return commitPaths;
+    return mvPaths;
   }
 
   Map<Path, Path> populateTrashCommitPaths(Set<FileStatus> trashSet) {
@@ -303,8 +240,8 @@ public class LocalStreamService extends AbstractService implements
 
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      fs.mkdirs(entry.getValue().getParent());
-      if (fs.rename(entry.getKey(), entry.getValue()) == false) {
+      retriableMkDirs(fs, entry.getValue().getParent());
+      if (retriableRename(fs, entry.getKey(), entry.getValue()) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
             + "dataloss. Partial data replay could happen in next run");
         throw new Exception("Abort transaction Commit. Rename failed from ["
@@ -322,6 +259,7 @@ public class LocalStreamService extends AbstractService implements
     }
 
   }
+
 
   /*
    * file name ending with .gz and starting with name of collector
@@ -353,14 +291,16 @@ public class LocalStreamService extends AbstractService implements
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
         trashSet, checkpointPaths);
-
     // the total size of data present in all files
     long totalSize = 0;
-    SequenceFile.Writer out = SequenceFile.createWriter(fs,
-        srcCluster.getHadoopConf(), inputPath, Text.class, FileStatus.class);
+    // if file listing is empty, simply return
+    if (fileListing.isEmpty()) {
+      return 0;
+    }
+    SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
+        inputPath, Text.class, FileStatus.class);
     try {
-      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
-          .iterator();
+      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
         if (out == null) {
@@ -368,11 +308,9 @@ public class LocalStreamService extends AbstractService implements
               inputPath, Text.class, entry.getKey().getClass());
         }
         out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
+        // Create a sync point after each entry. This will ensure that SequenceFile
+        // Reader can work at file entry level granularity, given that SequenceFile
 
-        // Create a sync point after each entry. This will ensure that
-        // SequenceFile
-        // Reader can work at file entry level granularity, given that
-        // SequenceFile
         // Reader reads from the starting of sync point.
         out.sync();
 
@@ -427,21 +365,37 @@ public class LocalStreamService extends AbstractService implements
     for (FileStatus stream : streamsFileStatus) {
       String streamName = stream.getPath().getName();
       LOG.debug("createListing working on Stream [" + streamName + "]");
-      FileStatus[] collectors = fs.listStatus(stream.getPath());
+      FileStatus[] collectors;
+      try {
+        collectors = fs.listStatus(stream.getPath());
+      } catch (FileNotFoundException ex) {
+        collectors = new FileStatus[0];
+      }
       for (FileStatus collector : collectors) {
         TreeMap<String, FileStatus> collectorPaths = new TreeMap<String, FileStatus>();
         // check point for this collector
         String collectorName = collector.getPath().getName();
-        String checkPointKey = streamName + collectorName;
+        String checkPointKey = getCheckPointKey(
+            this.getClass().getSimpleName(), streamName, collectorName);
+
         String checkPointValue = null;
         byte[] value = checkpointProvider.read(checkPointKey);
+        if (value == null) {
+          // In case checkpointKey with newer name format is absent,read old
+          // checkpoint key
+          String oldCheckPointKey = streamName + collectorName;
+          value = checkpointProvider.read(oldCheckPointKey);
+        }
         if (value != null)
           checkPointValue = new String(value);
         LOG.debug("CheckPoint Key [" + checkPointKey + "] value [ "
             + checkPointValue + "]");
-
-        FileStatus[] files = fs.listStatus(collector.getPath(),
+        FileStatus[] files = null;
+        try {
+          files = fs.listStatus(collector.getPath(),
             new CollectorPathFilter());
+        } catch (FileNotFoundException e) {
+        }
 
         if (files == null) {
           LOG.warn("No Files Found in the Collector " + collector.getPath()
@@ -655,6 +609,10 @@ public class LocalStreamService extends AbstractService implements
       BYTES_PER_MAPPER = Long.parseLong(mbPerMapper) * 1024 * 1024;
     }
     int numMaps = (int) Math.ceil(totalSize * 1.0 / BYTES_PER_MAPPER);
+    if (numMaps == 0) {
+      LOG.warn("number of maps were evaluated to zero. Making it as one ");
+      numMaps = 1;
+    }
     return numMaps;
   }
 

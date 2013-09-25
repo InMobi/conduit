@@ -815,79 +815,16 @@ public final class RequestResponse {
     public boolean hasJsonString() { return hasJsonString; }
     public java.lang.String getJsonString() { return jsonString_; }
     
-    // optional int32 agentSla = 2;
-    public static final int AGENTSLA_FIELD_NUMBER = 2;
-    private boolean hasAgentSla;
+    // optional .TierLatencyResponse tierLatencyResponse = 2;
+    public static final int TIERLATENCYRESPONSE_FIELD_NUMBER = 2;
+    private boolean hasTierLatencyResponse;
     @com.google.protobuf.gwt.shared.FieldNumber(2)
-    private int agentSla_ = 0;
-    public boolean hasAgentSla() { return hasAgentSla; }
-    public int getAgentSla() { return agentSla_; }
-    
-    // optional int32 vipSla = 3;
-    public static final int VIPSLA_FIELD_NUMBER = 3;
-    private boolean hasVipSla;
-    @com.google.protobuf.gwt.shared.FieldNumber(3)
-    private int vipSla_ = 0;
-    public boolean hasVipSla() { return hasVipSla; }
-    public int getVipSla() { return vipSla_; }
-    
-    // optional int32 collectorSla = 4;
-    public static final int COLLECTORSLA_FIELD_NUMBER = 4;
-    private boolean hasCollectorSla;
-    @com.google.protobuf.gwt.shared.FieldNumber(4)
-    private int collectorSla_ = 0;
-    public boolean hasCollectorSla() { return hasCollectorSla; }
-    public int getCollectorSla() { return collectorSla_; }
-    
-    // optional int32 hdfsSla = 5;
-    public static final int HDFSSLA_FIELD_NUMBER = 5;
-    private boolean hasHdfsSla;
-    @com.google.protobuf.gwt.shared.FieldNumber(5)
-    private int hdfsSla_ = 0;
-    public boolean hasHdfsSla() { return hasHdfsSla; }
-    public int getHdfsSla() { return hdfsSla_; }
-    
-    // optional int32 localSla = 6;
-    public static final int LOCALSLA_FIELD_NUMBER = 6;
-    private boolean hasLocalSla;
-    @com.google.protobuf.gwt.shared.FieldNumber(6)
-    private int localSla_ = 0;
-    public boolean hasLocalSla() { return hasLocalSla; }
-    public int getLocalSla() { return localSla_; }
-    
-    // optional int32 mergeSla = 7;
-    public static final int MERGESLA_FIELD_NUMBER = 7;
-    private boolean hasMergeSla;
-    @com.google.protobuf.gwt.shared.FieldNumber(7)
-    private int mergeSla_ = 0;
-    public boolean hasMergeSla() { return hasMergeSla; }
-    public int getMergeSla() { return mergeSla_; }
-    
-    // optional int32 mirrorSla = 8;
-    public static final int MIRRORSLA_FIELD_NUMBER = 8;
-    private boolean hasMirrorSla;
-    @com.google.protobuf.gwt.shared.FieldNumber(8)
-    private int mirrorSla_ = 0;
-    public boolean hasMirrorSla() { return hasMirrorSla; }
-    public int getMirrorSla() { return mirrorSla_; }
-    
-    // optional float percentileForSla = 9;
-    public static final int PERCENTILEFORSLA_FIELD_NUMBER = 9;
-    private boolean hasPercentileForSla;
-    @com.google.protobuf.gwt.shared.FieldNumber(9)
-    private float percentileForSla_ = 0F;
-    public boolean hasPercentileForSla() { return hasPercentileForSla; }
-    public float getPercentileForSla() { return percentileForSla_; }
-    
-    // optional float percentageForLoss = 10;
-    public static final int PERCENTAGEFORLOSS_FIELD_NUMBER = 10;
-    private boolean hasPercentageForLoss;
-    @com.google.protobuf.gwt.shared.FieldNumber(10)
-    private float percentageForLoss_ = 0F;
-    public boolean hasPercentageForLoss() { return hasPercentageForLoss; }
-    public float getPercentageForLoss() { return percentageForLoss_; }
+    private com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse tierLatencyResponse_;
+    public boolean hasTierLatencyResponse() { return hasTierLatencyResponse; }
+    public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() { return tierLatencyResponse_; }
     
     private void initFields() {
+      tierLatencyResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -901,40 +838,8 @@ public final class RequestResponse {
         output.writeString(1, "jsonString", getJsonString());
       }
       
-      if (hasAgentSla()) {
-        output.writeInteger(2, "agentSla", getAgentSla());
-      }
-      
-      if (hasVipSla()) {
-        output.writeInteger(3, "vipSla", getVipSla());
-      }
-      
-      if (hasCollectorSla()) {
-        output.writeInteger(4, "collectorSla", getCollectorSla());
-      }
-      
-      if (hasHdfsSla()) {
-        output.writeInteger(5, "hdfsSla", getHdfsSla());
-      }
-      
-      if (hasLocalSla()) {
-        output.writeInteger(6, "localSla", getLocalSla());
-      }
-      
-      if (hasMergeSla()) {
-        output.writeInteger(7, "mergeSla", getMergeSla());
-      }
-      
-      if (hasMirrorSla()) {
-        output.writeInteger(8, "mirrorSla", getMirrorSla());
-      }
-      
-      if (hasPercentileForSla()) {
-        output.writeFloat(9, "percentileForSla", getPercentileForSla());
-      }
-      
-      if (hasPercentageForLoss()) {
-        output.writeFloat(10, "percentageForLoss", getPercentageForLoss());
+      if (hasTierLatencyResponse()) {
+        output.writeMessage(2, "tierLatencyResponse", getTierLatencyResponse());
       }
     }
     
@@ -1025,40 +930,8 @@ public final class RequestResponse {
           setJsonString(other.getJsonString());
         }
         
-        if (other.hasAgentSla()) {
-          setAgentSla(other.getAgentSla());
-        }
-        
-        if (other.hasVipSla()) {
-          setVipSla(other.getVipSla());
-        }
-        
-        if (other.hasCollectorSla()) {
-          setCollectorSla(other.getCollectorSla());
-        }
-        
-        if (other.hasHdfsSla()) {
-          setHdfsSla(other.getHdfsSla());
-        }
-        
-        if (other.hasLocalSla()) {
-          setLocalSla(other.getLocalSla());
-        }
-        
-        if (other.hasMergeSla()) {
-          setMergeSla(other.getMergeSla());
-        }
-        
-        if (other.hasMirrorSla()) {
-          setMirrorSla(other.getMirrorSla());
-        }
-        
-        if (other.hasPercentileForSla()) {
-          setPercentileForSla(other.getPercentileForSla());
-        }
-        
-        if (other.hasPercentageForLoss()) {
-          setPercentageForLoss(other.getPercentageForLoss());
+        if (other.hasTierLatencyResponse()) {
+          mergeTierLatencyResponse(other.getTierLatencyResponse());
         }
       
         return this;
@@ -1072,49 +945,14 @@ public final class RequestResponse {
           setJsonString(jsonString);
         }
         
-        java.lang.Integer agentSla = input.readInteger(2);
-        if (agentSla != null) {
-          setAgentSla(agentSla);
-        }
-        
-        java.lang.Integer vipSla = input.readInteger(3);
-        if (vipSla != null) {
-          setVipSla(vipSla);
-        }
-        
-        java.lang.Integer collectorSla = input.readInteger(4);
-        if (collectorSla != null) {
-          setCollectorSla(collectorSla);
-        }
-        
-        java.lang.Integer hdfsSla = input.readInteger(5);
-        if (hdfsSla != null) {
-          setHdfsSla(hdfsSla);
-        }
-        
-        java.lang.Integer localSla = input.readInteger(6);
-        if (localSla != null) {
-          setLocalSla(localSla);
-        }
-        
-        java.lang.Integer mergeSla = input.readInteger(7);
-        if (mergeSla != null) {
-          setMergeSla(mergeSla);
-        }
-        
-        java.lang.Integer mirrorSla = input.readInteger(8);
-        if (mirrorSla != null) {
-          setMirrorSla(mirrorSla);
-        }
-        
-        java.lang.Float percentileForSla = input.readFloat(9);
-        if (percentileForSla != null) {
-          setPercentileForSla(percentileForSla);
-        }
-        
-        java.lang.Float percentageForLoss = input.readFloat(10);
-        if (percentageForLoss != null) {
-          setPercentageForLoss(percentageForLoss);
+        com.google.protobuf.gwt.shared.JsonStream tierLatencyResponseJson = input.readStream(2);
+        if (tierLatencyResponseJson != null) {
+          com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.Builder tierLatencyResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder();
+          if (hasTierLatencyResponse()) {
+            tierLatencyResponseBuilder.mergeFrom(getTierLatencyResponse());
+          }
+          tierLatencyResponseBuilder.readFrom(tierLatencyResponseJson);
+          setTierLatencyResponse(tierLatencyResponseBuilder.buildParsed());
         }
         
         return this;
@@ -1147,219 +985,40 @@ public final class RequestResponse {
         return this;
       }
       
-      // optional int32 agentSla = 2;
-      public boolean hasAgentSla() {
-        return result.hasAgentSla();
+      // optional .TierLatencyResponse tierLatencyResponse = 2;
+      public boolean hasTierLatencyResponse() {
+        return result.hasTierLatencyResponse();
       }
-      public int getAgentSla() {
-        return result.getAgentSla();
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() {
+        return result.getTierLatencyResponse();
       }
-      public Builder setAgentSlaIgnoreIfNull(java.lang.Integer value) {
-        if (value != null) {
-          setAgentSla(value);
+      public Builder setTierLatencyResponse(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
         }
+        result.hasTierLatencyResponse = true;
+        result.tierLatencyResponse_ = value;
         return this;
       }
-      public Builder setAgentSla(int value) {
-        result.hasAgentSla = true;
-        result.agentSla_ = value;
+      public Builder setTierLatencyResponse(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.Builder builderForValue) {
+        result.hasTierLatencyResponse = true;
+        result.tierLatencyResponse_ = builderForValue.build();
         return this;
       }
-      public Builder clearAgentSla() {
-        result.hasAgentSla = false;
-        result.agentSla_ = 0;
-        return this;
-      }
-      
-      // optional int32 vipSla = 3;
-      public boolean hasVipSla() {
-        return result.hasVipSla();
-      }
-      public int getVipSla() {
-        return result.getVipSla();
-      }
-      public Builder setVipSlaIgnoreIfNull(java.lang.Integer value) {
-        if (value != null) {
-          setVipSla(value);
+      public Builder mergeTierLatencyResponse(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse value) {
+        if (result.hasTierLatencyResponse() &&
+            result.tierLatencyResponse_ != com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance()) {
+          result.tierLatencyResponse_ =
+            com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder(result.tierLatencyResponse_).mergeFrom(value).buildPartial();
+        } else {
+          result.tierLatencyResponse_ = value;
         }
+        result.hasTierLatencyResponse = true;
         return this;
       }
-      public Builder setVipSla(int value) {
-        result.hasVipSla = true;
-        result.vipSla_ = value;
-        return this;
-      }
-      public Builder clearVipSla() {
-        result.hasVipSla = false;
-        result.vipSla_ = 0;
-        return this;
-      }
-      
-      // optional int32 collectorSla = 4;
-      public boolean hasCollectorSla() {
-        return result.hasCollectorSla();
-      }
-      public int getCollectorSla() {
-        return result.getCollectorSla();
-      }
-      public Builder setCollectorSlaIgnoreIfNull(java.lang.Integer value) {
-        if (value != null) {
-          setCollectorSla(value);
-        }
-        return this;
-      }
-      public Builder setCollectorSla(int value) {
-        result.hasCollectorSla = true;
-        result.collectorSla_ = value;
-        return this;
-      }
-      public Builder clearCollectorSla() {
-        result.hasCollectorSla = false;
-        result.collectorSla_ = 0;
-        return this;
-      }
-      
-      // optional int32 hdfsSla = 5;
-      public boolean hasHdfsSla() {
-        return result.hasHdfsSla();
-      }
-      public int getHdfsSla() {
-        return result.getHdfsSla();
-      }
-      public Builder setHdfsSlaIgnoreIfNull(java.lang.Integer value) {
-        if (value != null) {
-          setHdfsSla(value);
-        }
-        return this;
-      }
-      public Builder setHdfsSla(int value) {
-        result.hasHdfsSla = true;
-        result.hdfsSla_ = value;
-        return this;
-      }
-      public Builder clearHdfsSla() {
-        result.hasHdfsSla = false;
-        result.hdfsSla_ = 0;
-        return this;
-      }
-      
-      // optional int32 localSla = 6;
-      public boolean hasLocalSla() {
-        return result.hasLocalSla();
-      }
-      public int getLocalSla() {
-        return result.getLocalSla();
-      }
-      public Builder setLocalSlaIgnoreIfNull(java.lang.Integer value) {
-        if (value != null) {
-          setLocalSla(value);
-        }
-        return this;
-      }
-      public Builder setLocalSla(int value) {
-        result.hasLocalSla = true;
-        result.localSla_ = value;
-        return this;
-      }
-      public Builder clearLocalSla() {
-        result.hasLocalSla = false;
-        result.localSla_ = 0;
-        return this;
-      }
-      
-      // optional int32 mergeSla = 7;
-      public boolean hasMergeSla() {
-        return result.hasMergeSla();
-      }
-      public int getMergeSla() {
-        return result.getMergeSla();
-      }
-      public Builder setMergeSlaIgnoreIfNull(java.lang.Integer value) {
-        if (value != null) {
-          setMergeSla(value);
-        }
-        return this;
-      }
-      public Builder setMergeSla(int value) {
-        result.hasMergeSla = true;
-        result.mergeSla_ = value;
-        return this;
-      }
-      public Builder clearMergeSla() {
-        result.hasMergeSla = false;
-        result.mergeSla_ = 0;
-        return this;
-      }
-      
-      // optional int32 mirrorSla = 8;
-      public boolean hasMirrorSla() {
-        return result.hasMirrorSla();
-      }
-      public int getMirrorSla() {
-        return result.getMirrorSla();
-      }
-      public Builder setMirrorSlaIgnoreIfNull(java.lang.Integer value) {
-        if (value != null) {
-          setMirrorSla(value);
-        }
-        return this;
-      }
-      public Builder setMirrorSla(int value) {
-        result.hasMirrorSla = true;
-        result.mirrorSla_ = value;
-        return this;
-      }
-      public Builder clearMirrorSla() {
-        result.hasMirrorSla = false;
-        result.mirrorSla_ = 0;
-        return this;
-      }
-      
-      // optional float percentileForSla = 9;
-      public boolean hasPercentileForSla() {
-        return result.hasPercentileForSla();
-      }
-      public float getPercentileForSla() {
-        return result.getPercentileForSla();
-      }
-      public Builder setPercentileForSlaIgnoreIfNull(java.lang.Float value) {
-        if (value != null) {
-          setPercentileForSla(value);
-        }
-        return this;
-      }
-      public Builder setPercentileForSla(float value) {
-        result.hasPercentileForSla = true;
-        result.percentileForSla_ = value;
-        return this;
-      }
-      public Builder clearPercentileForSla() {
-        result.hasPercentileForSla = false;
-        result.percentileForSla_ = 0F;
-        return this;
-      }
-      
-      // optional float percentageForLoss = 10;
-      public boolean hasPercentageForLoss() {
-        return result.hasPercentageForLoss();
-      }
-      public float getPercentageForLoss() {
-        return result.getPercentageForLoss();
-      }
-      public Builder setPercentageForLossIgnoreIfNull(java.lang.Float value) {
-        if (value != null) {
-          setPercentageForLoss(value);
-        }
-        return this;
-      }
-      public Builder setPercentageForLoss(float value) {
-        result.hasPercentageForLoss = true;
-        result.percentageForLoss_ = value;
-        return this;
-      }
-      public Builder clearPercentageForLoss() {
-        result.hasPercentageForLoss = false;
-        result.percentageForLoss_ = 0F;
+      public Builder clearTierLatencyResponse() {
+        result.hasTierLatencyResponse = false;
+        result.tierLatencyResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
         return this;
       }
       
@@ -1373,6 +1032,452 @@ public final class RequestResponse {
     }
     
     // @@protoc_insertion_point(class_scope:GraphDataResponse)
+  }
+  
+  public static final class TierLatencyResponse extends
+      com.google.protobuf.gwt.shared.GeneratedMessage {
+    // Use TierLatencyResponse.newBuilder() to construct.
+    private TierLatencyResponse() {
+      initFields();
+    }
+    
+    private TierLatencyResponse(boolean noInit) {}
+    
+    private static final TierLatencyResponse defaultInstance;
+    public static TierLatencyResponse getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public TierLatencyResponse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    // repeated .TierLatencyObj tierLatencyObjList = 1;
+    public static final int TIERLATENCYOBJLIST_FIELD_NUMBER = 1;
+    private java.util.List<com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj> tierLatencyObjList_ =
+      java.util.Collections.emptyList();
+    public java.util.List<com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj> getTierLatencyObjListList() {
+      return tierLatencyObjList_;
+    }
+    public int getTierLatencyObjListCount() { return tierLatencyObjList_.size(); }
+    public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj getTierLatencyObjList(int index) {
+      return tierLatencyObjList_.get(index);
+    }
+    
+    private void initFields() {
+    }
+    
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
+      throws java.io.IOException {
+      
+      if (getTierLatencyObjListList().size() > 0) {
+        output.writeMessageRepeated(1, "tierLatencyObjList list", getTierLatencyObjListList());
+      }
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
+          com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse, Builder> {
+      
+      private com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse result;
+      
+      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse();
+        return builder;
+      }
+      
+      protected com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse getDefaultInstanceForType() {
+        return com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse buildParsed()
+          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse buildPartial() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        if (result.tierLatencyObjList_ != java.util.Collections.EMPTY_LIST) {
+          result.tierLatencyObjList_ =
+            java.util.Collections.unmodifiableList(result.tierLatencyObjList_);
+        }
+        com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
+        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse) {
+          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse)other);
+        }
+        return this;
+      }
+      
+      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse other) {
+        if (other == com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance()) return this;
+        
+        if (!other.tierLatencyObjList_.isEmpty()) {
+          if (result.tierLatencyObjList_.isEmpty()) {
+            result.tierLatencyObjList_ = new java.util.ArrayList<com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj>();
+          }
+          result.tierLatencyObjList_.addAll(other.tierLatencyObjList_);
+        }
+      
+        return this;
+      }
+      
+      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
+        throws java.io.IOException {
+        
+        java.util.List<com.google.protobuf.gwt.shared.JsonStream> tierLatencyObjListList = input.readStreamRepeated(1);
+        if (tierLatencyObjListList != null) {
+          for (com.google.protobuf.gwt.shared.JsonStream tierLatencyObjList : tierLatencyObjListList) {
+            com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.Builder tierLatencyObjListBuilder = com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.newBuilder();
+            tierLatencyObjListBuilder.readFrom(tierLatencyObjList);
+            addTierLatencyObjList(tierLatencyObjListBuilder.buildParsed());
+          }
+        }
+        
+        return this;
+      }
+      
+      // repeated .TierLatencyObj tierLatencyObjList = 1;
+      public java.util.List<com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj> getTierLatencyObjListList() {
+        return java.util.Collections.unmodifiableList(result.tierLatencyObjList_);
+      }
+      public int getTierLatencyObjListCount() {
+        return result.getTierLatencyObjListCount();
+      }
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj getTierLatencyObjList(int index) {
+        return result.getTierLatencyObjList(index);
+      }
+      public Builder setTierLatencyObjList(int index, com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
+        }
+        result.tierLatencyObjList_.set(index, value);
+        return this;
+      }
+      public Builder setTierLatencyObjList(int index, com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.Builder builderForValue) {
+        result.tierLatencyObjList_.set(index, builderForValue.build());
+        return this;
+      }
+      public Builder addTierLatencyObjList(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
+        }
+        if (result.tierLatencyObjList_.isEmpty()) {
+          result.tierLatencyObjList_ = new java.util.ArrayList<com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj>();
+        }
+        result.tierLatencyObjList_.add(value);
+        return this;
+      }
+      public Builder addTierLatencyObjList(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.Builder builderForValue) {
+        if (result.tierLatencyObjList_.isEmpty()) {
+          result.tierLatencyObjList_ = new java.util.ArrayList<com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj>();
+        }
+        result.tierLatencyObjList_.add(builderForValue.build());
+        return this;
+      }
+      public Builder addAllTierLatencyObjList(
+          java.lang.Iterable<? extends com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj> values) {
+        if (result.tierLatencyObjList_.isEmpty()) {
+          result.tierLatencyObjList_ = new java.util.ArrayList<com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj>();
+        }
+        super.addAll(values, result.tierLatencyObjList_);
+        return this;
+      }
+      public Builder clearTierLatencyObjList() {
+        result.tierLatencyObjList_ = java.util.Collections.emptyList();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:TierLatencyResponse)
+    }
+    
+    static {
+      defaultInstance = new TierLatencyResponse(true);
+      com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:TierLatencyResponse)
+  }
+  
+  public static final class TierLatencyObj extends
+      com.google.protobuf.gwt.shared.GeneratedMessage {
+    // Use TierLatencyObj.newBuilder() to construct.
+    private TierLatencyObj() {
+      initFields();
+    }
+    
+    private TierLatencyObj(boolean noInit) {}
+    
+    private static final TierLatencyObj defaultInstance;
+    public static TierLatencyObj getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public TierLatencyObj getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    // optional string tier = 1;
+    public static final int TIER_FIELD_NUMBER = 1;
+    private boolean hasTier;
+    @com.google.protobuf.gwt.shared.FieldNumber(1)
+    private java.lang.String tier_ = "";
+    public boolean hasTier() { return hasTier; }
+    public java.lang.String getTier() { return tier_; }
+    
+    // optional int32 latency = 2;
+    public static final int LATENCY_FIELD_NUMBER = 2;
+    private boolean hasLatency;
+    @com.google.protobuf.gwt.shared.FieldNumber(2)
+    private int latency_ = 0;
+    public boolean hasLatency() { return hasLatency; }
+    public int getLatency() { return latency_; }
+    
+    private void initFields() {
+    }
+    
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
+      throws java.io.IOException {
+      
+      if (hasTier()) {
+        output.writeString(1, "tier", getTier());
+      }
+      
+      if (hasLatency()) {
+        output.writeInteger(2, "latency", getLatency());
+      }
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
+          com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj, Builder> {
+      
+      private com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj result;
+      
+      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj();
+        return builder;
+      }
+      
+      protected com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj getDefaultInstanceForType() {
+        return com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj buildParsed()
+          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj buildPartial() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
+        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj) {
+          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj)other);
+        }
+        return this;
+      }
+      
+      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj other) {
+        if (other == com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.getDefaultInstance()) return this;
+        
+        if (other.hasTier()) {
+          setTier(other.getTier());
+        }
+        
+        if (other.hasLatency()) {
+          setLatency(other.getLatency());
+        }
+      
+        return this;
+      }
+      
+      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
+        throws java.io.IOException {
+        
+        java.lang.String tier = input.readString(1);
+        if (tier != null) {
+          setTier(tier);
+        }
+        
+        java.lang.Integer latency = input.readInteger(2);
+        if (latency != null) {
+          setLatency(latency);
+        }
+        
+        return this;
+      }
+      
+      // optional string tier = 1;
+      public boolean hasTier() {
+        return result.hasTier();
+      }
+      public java.lang.String getTier() {
+        return result.getTier();
+      }
+      public Builder setTierIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setTier(value);
+        }
+        return this;
+      }
+      public Builder setTier(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasTier = true;
+        result.tier_ = value;
+        return this;
+      }
+      public Builder clearTier() {
+        result.hasTier = false;
+        result.tier_ = getDefaultInstance().getTier();
+        return this;
+      }
+      
+      // optional int32 latency = 2;
+      public boolean hasLatency() {
+        return result.hasLatency();
+      }
+      public int getLatency() {
+        return result.getLatency();
+      }
+      public Builder setLatencyIgnoreIfNull(java.lang.Integer value) {
+        if (value != null) {
+          setLatency(value);
+        }
+        return this;
+      }
+      public Builder setLatency(int value) {
+        result.hasLatency = true;
+        result.latency_ = value;
+        return this;
+      }
+      public Builder clearLatency() {
+        result.hasLatency = false;
+        result.latency_ = 0;
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:TierLatencyObj)
+    }
+    
+    static {
+      defaultInstance = new TierLatencyObj(true);
+      com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:TierLatencyObj)
   }
   
   public static final class LoadMainPanelResponse extends
@@ -1417,7 +1522,16 @@ public final class RequestResponse {
       return cluster_.get(index);
     }
     
+    // optional .ClientConfiguration clientConfig = 3;
+    public static final int CLIENTCONFIG_FIELD_NUMBER = 3;
+    private boolean hasClientConfig;
+    @com.google.protobuf.gwt.shared.FieldNumber(3)
+    private com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration clientConfig_;
+    public boolean hasClientConfig() { return hasClientConfig; }
+    public com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration getClientConfig() { return clientConfig_; }
+    
     private void initFields() {
+      clientConfig_ = com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -1433,6 +1547,10 @@ public final class RequestResponse {
       
       if (getClusterList().size() > 0) {
         output.writeStringRepeated(2, "cluster list", getClusterList());
+      }
+      
+      if (hasClientConfig()) {
+        output.writeMessage(3, "clientConfig", getClientConfig());
       }
     }
     
@@ -1542,6 +1660,10 @@ public final class RequestResponse {
           }
           result.cluster_.addAll(other.cluster_);
         }
+        
+        if (other.hasClientConfig()) {
+          mergeClientConfig(other.getClientConfig());
+        }
       
         return this;
       }
@@ -1557,6 +1679,16 @@ public final class RequestResponse {
         java.util.List<java.lang.String> clusterList = input.readStringRepeated(2);
         if (clusterList != null) {
           addAllCluster(clusterList);
+        }
+        
+        com.google.protobuf.gwt.shared.JsonStream clientConfigJson = input.readStream(3);
+        if (clientConfigJson != null) {
+          com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.Builder clientConfigBuilder = com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.newBuilder();
+          if (hasClientConfig()) {
+            clientConfigBuilder.mergeFrom(getClientConfig());
+          }
+          clientConfigBuilder.readFrom(clientConfigJson);
+          setClientConfig(clientConfigBuilder.buildParsed());
         }
         
         return this;
@@ -1678,6 +1810,43 @@ public final class RequestResponse {
         return this;
       }
       
+      // optional .ClientConfiguration clientConfig = 3;
+      public boolean hasClientConfig() {
+        return result.hasClientConfig();
+      }
+      public com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration getClientConfig() {
+        return result.getClientConfig();
+      }
+      public Builder setClientConfig(com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
+        }
+        result.hasClientConfig = true;
+        result.clientConfig_ = value;
+        return this;
+      }
+      public Builder setClientConfig(com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.Builder builderForValue) {
+        result.hasClientConfig = true;
+        result.clientConfig_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeClientConfig(com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration value) {
+        if (result.hasClientConfig() &&
+            result.clientConfig_ != com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.getDefaultInstance()) {
+          result.clientConfig_ =
+            com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.newBuilder(result.clientConfig_).mergeFrom(value).buildPartial();
+        } else {
+          result.clientConfig_ = value;
+        }
+        result.hasClientConfig = true;
+        return this;
+      }
+      public Builder clearClientConfig() {
+        result.hasClientConfig = false;
+        result.clientConfig_ = com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.getDefaultInstance();
+        return this;
+      }
+      
       // @@protoc_insertion_point(builder_scope:LoadMainPanelResponse)
     }
     
@@ -1688,6 +1857,667 @@ public final class RequestResponse {
     }
     
     // @@protoc_insertion_point(class_scope:LoadMainPanelResponse)
+  }
+  
+  public static final class ClientConfiguration extends
+      com.google.protobuf.gwt.shared.GeneratedMessage {
+    // Use ClientConfiguration.newBuilder() to construct.
+    private ClientConfiguration() {
+      initFields();
+    }
+    
+    private ClientConfiguration(boolean noInit) {}
+    
+    private static final ClientConfiguration defaultInstance;
+    public static ClientConfiguration getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public ClientConfiguration getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    // optional string publisherSla = 1;
+    public static final int PUBLISHERSLA_FIELD_NUMBER = 1;
+    private boolean hasPublisherSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(1)
+    private java.lang.String publisherSla_ = "";
+    public boolean hasPublisherSla() { return hasPublisherSla; }
+    public java.lang.String getPublisherSla() { return publisherSla_; }
+    
+    // optional string agentSla = 2;
+    public static final int AGENTSLA_FIELD_NUMBER = 2;
+    private boolean hasAgentSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(2)
+    private java.lang.String agentSla_ = "";
+    public boolean hasAgentSla() { return hasAgentSla; }
+    public java.lang.String getAgentSla() { return agentSla_; }
+    
+    // optional string vipSla = 3;
+    public static final int VIPSLA_FIELD_NUMBER = 3;
+    private boolean hasVipSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(3)
+    private java.lang.String vipSla_ = "";
+    public boolean hasVipSla() { return hasVipSla; }
+    public java.lang.String getVipSla() { return vipSla_; }
+    
+    // optional string collectorSla = 4;
+    public static final int COLLECTORSLA_FIELD_NUMBER = 4;
+    private boolean hasCollectorSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(4)
+    private java.lang.String collectorSla_ = "";
+    public boolean hasCollectorSla() { return hasCollectorSla; }
+    public java.lang.String getCollectorSla() { return collectorSla_; }
+    
+    // optional string hdfsSla = 5;
+    public static final int HDFSSLA_FIELD_NUMBER = 5;
+    private boolean hasHdfsSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(5)
+    private java.lang.String hdfsSla_ = "";
+    public boolean hasHdfsSla() { return hasHdfsSla; }
+    public java.lang.String getHdfsSla() { return hdfsSla_; }
+    
+    // optional string percentileForSla = 6;
+    public static final int PERCENTILEFORSLA_FIELD_NUMBER = 6;
+    private boolean hasPercentileForSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(6)
+    private java.lang.String percentileForSla_ = "";
+    public boolean hasPercentileForSla() { return hasPercentileForSla; }
+    public java.lang.String getPercentileForSla() { return percentileForSla_; }
+    
+    // optional string percentageForLoss = 7;
+    public static final int PERCENTAGEFORLOSS_FIELD_NUMBER = 7;
+    private boolean hasPercentageForLoss;
+    @com.google.protobuf.gwt.shared.FieldNumber(7)
+    private java.lang.String percentageForLoss_ = "";
+    public boolean hasPercentageForLoss() { return hasPercentageForLoss; }
+    public java.lang.String getPercentageForLoss() { return percentageForLoss_; }
+    
+    // optional string percentageForWarn = 8;
+    public static final int PERCENTAGEFORWARN_FIELD_NUMBER = 8;
+    private boolean hasPercentageForWarn;
+    @com.google.protobuf.gwt.shared.FieldNumber(8)
+    private java.lang.String percentageForWarn_ = "";
+    public boolean hasPercentageForWarn() { return hasPercentageForWarn; }
+    public java.lang.String getPercentageForWarn() { return percentageForWarn_; }
+    
+    // optional string maxStartTime = 9;
+    public static final int MAXSTARTTIME_FIELD_NUMBER = 9;
+    private boolean hasMaxStartTime;
+    @com.google.protobuf.gwt.shared.FieldNumber(9)
+    private java.lang.String maxStartTime_ = "";
+    public boolean hasMaxStartTime() { return hasMaxStartTime; }
+    public java.lang.String getMaxStartTime() { return maxStartTime_; }
+    
+    // optional string maxTimeRangeInt = 10;
+    public static final int MAXTIMERANGEINT_FIELD_NUMBER = 10;
+    private boolean hasMaxTimeRangeInt;
+    @com.google.protobuf.gwt.shared.FieldNumber(10)
+    private java.lang.String maxTimeRangeInt_ = "";
+    public boolean hasMaxTimeRangeInt() { return hasMaxTimeRangeInt; }
+    public java.lang.String getMaxTimeRangeInt() { return maxTimeRangeInt_; }
+    
+    // optional string warnLossThresholdDiff = 11;
+    public static final int WARNLOSSTHRESHOLDDIFF_FIELD_NUMBER = 11;
+    private boolean hasWarnLossThresholdDiff;
+    @com.google.protobuf.gwt.shared.FieldNumber(11)
+    private java.lang.String warnLossThresholdDiff_ = "";
+    public boolean hasWarnLossThresholdDiff() { return hasWarnLossThresholdDiff; }
+    public java.lang.String getWarnLossThresholdDiff() { return warnLossThresholdDiff_; }
+    
+    private void initFields() {
+    }
+    
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
+      throws java.io.IOException {
+      
+      if (hasPublisherSla()) {
+        output.writeString(1, "publisherSla", getPublisherSla());
+      }
+      
+      if (hasAgentSla()) {
+        output.writeString(2, "agentSla", getAgentSla());
+      }
+      
+      if (hasVipSla()) {
+        output.writeString(3, "vipSla", getVipSla());
+      }
+      
+      if (hasCollectorSla()) {
+        output.writeString(4, "collectorSla", getCollectorSla());
+      }
+      
+      if (hasHdfsSla()) {
+        output.writeString(5, "hdfsSla", getHdfsSla());
+      }
+      
+      if (hasPercentileForSla()) {
+        output.writeString(6, "percentileForSla", getPercentileForSla());
+      }
+      
+      if (hasPercentageForLoss()) {
+        output.writeString(7, "percentageForLoss", getPercentageForLoss());
+      }
+      
+      if (hasPercentageForWarn()) {
+        output.writeString(8, "percentageForWarn", getPercentageForWarn());
+      }
+      
+      if (hasMaxStartTime()) {
+        output.writeString(9, "maxStartTime", getMaxStartTime());
+      }
+      
+      if (hasMaxTimeRangeInt()) {
+        output.writeString(10, "maxTimeRangeInt", getMaxTimeRangeInt());
+      }
+      
+      if (hasWarnLossThresholdDiff()) {
+        output.writeString(11, "warnLossThresholdDiff", getWarnLossThresholdDiff());
+      }
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
+          com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration, Builder> {
+      
+      private com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration result;
+      
+      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration();
+        return builder;
+      }
+      
+      protected com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration getDefaultInstanceForType() {
+        return com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration buildParsed()
+          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration buildPartial() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
+        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration) {
+          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration)other);
+        }
+        return this;
+      }
+      
+      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration other) {
+        if (other == com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.getDefaultInstance()) return this;
+        
+        if (other.hasPublisherSla()) {
+          setPublisherSla(other.getPublisherSla());
+        }
+        
+        if (other.hasAgentSla()) {
+          setAgentSla(other.getAgentSla());
+        }
+        
+        if (other.hasVipSla()) {
+          setVipSla(other.getVipSla());
+        }
+        
+        if (other.hasCollectorSla()) {
+          setCollectorSla(other.getCollectorSla());
+        }
+        
+        if (other.hasHdfsSla()) {
+          setHdfsSla(other.getHdfsSla());
+        }
+        
+        if (other.hasPercentileForSla()) {
+          setPercentileForSla(other.getPercentileForSla());
+        }
+        
+        if (other.hasPercentageForLoss()) {
+          setPercentageForLoss(other.getPercentageForLoss());
+        }
+        
+        if (other.hasPercentageForWarn()) {
+          setPercentageForWarn(other.getPercentageForWarn());
+        }
+        
+        if (other.hasMaxStartTime()) {
+          setMaxStartTime(other.getMaxStartTime());
+        }
+        
+        if (other.hasMaxTimeRangeInt()) {
+          setMaxTimeRangeInt(other.getMaxTimeRangeInt());
+        }
+        
+        if (other.hasWarnLossThresholdDiff()) {
+          setWarnLossThresholdDiff(other.getWarnLossThresholdDiff());
+        }
+      
+        return this;
+      }
+      
+      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
+        throws java.io.IOException {
+        
+        java.lang.String publisherSla = input.readString(1);
+        if (publisherSla != null) {
+          setPublisherSla(publisherSla);
+        }
+        
+        java.lang.String agentSla = input.readString(2);
+        if (agentSla != null) {
+          setAgentSla(agentSla);
+        }
+        
+        java.lang.String vipSla = input.readString(3);
+        if (vipSla != null) {
+          setVipSla(vipSla);
+        }
+        
+        java.lang.String collectorSla = input.readString(4);
+        if (collectorSla != null) {
+          setCollectorSla(collectorSla);
+        }
+        
+        java.lang.String hdfsSla = input.readString(5);
+        if (hdfsSla != null) {
+          setHdfsSla(hdfsSla);
+        }
+        
+        java.lang.String percentileForSla = input.readString(6);
+        if (percentileForSla != null) {
+          setPercentileForSla(percentileForSla);
+        }
+        
+        java.lang.String percentageForLoss = input.readString(7);
+        if (percentageForLoss != null) {
+          setPercentageForLoss(percentageForLoss);
+        }
+        
+        java.lang.String percentageForWarn = input.readString(8);
+        if (percentageForWarn != null) {
+          setPercentageForWarn(percentageForWarn);
+        }
+        
+        java.lang.String maxStartTime = input.readString(9);
+        if (maxStartTime != null) {
+          setMaxStartTime(maxStartTime);
+        }
+        
+        java.lang.String maxTimeRangeInt = input.readString(10);
+        if (maxTimeRangeInt != null) {
+          setMaxTimeRangeInt(maxTimeRangeInt);
+        }
+        
+        java.lang.String warnLossThresholdDiff = input.readString(11);
+        if (warnLossThresholdDiff != null) {
+          setWarnLossThresholdDiff(warnLossThresholdDiff);
+        }
+        
+        return this;
+      }
+      
+      // optional string publisherSla = 1;
+      public boolean hasPublisherSla() {
+        return result.hasPublisherSla();
+      }
+      public java.lang.String getPublisherSla() {
+        return result.getPublisherSla();
+      }
+      public Builder setPublisherSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setPublisherSla(value);
+        }
+        return this;
+      }
+      public Builder setPublisherSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasPublisherSla = true;
+        result.publisherSla_ = value;
+        return this;
+      }
+      public Builder clearPublisherSla() {
+        result.hasPublisherSla = false;
+        result.publisherSla_ = getDefaultInstance().getPublisherSla();
+        return this;
+      }
+      
+      // optional string agentSla = 2;
+      public boolean hasAgentSla() {
+        return result.hasAgentSla();
+      }
+      public java.lang.String getAgentSla() {
+        return result.getAgentSla();
+      }
+      public Builder setAgentSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setAgentSla(value);
+        }
+        return this;
+      }
+      public Builder setAgentSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasAgentSla = true;
+        result.agentSla_ = value;
+        return this;
+      }
+      public Builder clearAgentSla() {
+        result.hasAgentSla = false;
+        result.agentSla_ = getDefaultInstance().getAgentSla();
+        return this;
+      }
+      
+      // optional string vipSla = 3;
+      public boolean hasVipSla() {
+        return result.hasVipSla();
+      }
+      public java.lang.String getVipSla() {
+        return result.getVipSla();
+      }
+      public Builder setVipSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setVipSla(value);
+        }
+        return this;
+      }
+      public Builder setVipSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasVipSla = true;
+        result.vipSla_ = value;
+        return this;
+      }
+      public Builder clearVipSla() {
+        result.hasVipSla = false;
+        result.vipSla_ = getDefaultInstance().getVipSla();
+        return this;
+      }
+      
+      // optional string collectorSla = 4;
+      public boolean hasCollectorSla() {
+        return result.hasCollectorSla();
+      }
+      public java.lang.String getCollectorSla() {
+        return result.getCollectorSla();
+      }
+      public Builder setCollectorSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setCollectorSla(value);
+        }
+        return this;
+      }
+      public Builder setCollectorSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasCollectorSla = true;
+        result.collectorSla_ = value;
+        return this;
+      }
+      public Builder clearCollectorSla() {
+        result.hasCollectorSla = false;
+        result.collectorSla_ = getDefaultInstance().getCollectorSla();
+        return this;
+      }
+      
+      // optional string hdfsSla = 5;
+      public boolean hasHdfsSla() {
+        return result.hasHdfsSla();
+      }
+      public java.lang.String getHdfsSla() {
+        return result.getHdfsSla();
+      }
+      public Builder setHdfsSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setHdfsSla(value);
+        }
+        return this;
+      }
+      public Builder setHdfsSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasHdfsSla = true;
+        result.hdfsSla_ = value;
+        return this;
+      }
+      public Builder clearHdfsSla() {
+        result.hasHdfsSla = false;
+        result.hdfsSla_ = getDefaultInstance().getHdfsSla();
+        return this;
+      }
+      
+      // optional string percentileForSla = 6;
+      public boolean hasPercentileForSla() {
+        return result.hasPercentileForSla();
+      }
+      public java.lang.String getPercentileForSla() {
+        return result.getPercentileForSla();
+      }
+      public Builder setPercentileForSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setPercentileForSla(value);
+        }
+        return this;
+      }
+      public Builder setPercentileForSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasPercentileForSla = true;
+        result.percentileForSla_ = value;
+        return this;
+      }
+      public Builder clearPercentileForSla() {
+        result.hasPercentileForSla = false;
+        result.percentileForSla_ = getDefaultInstance().getPercentileForSla();
+        return this;
+      }
+      
+      // optional string percentageForLoss = 7;
+      public boolean hasPercentageForLoss() {
+        return result.hasPercentageForLoss();
+      }
+      public java.lang.String getPercentageForLoss() {
+        return result.getPercentageForLoss();
+      }
+      public Builder setPercentageForLossIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setPercentageForLoss(value);
+        }
+        return this;
+      }
+      public Builder setPercentageForLoss(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasPercentageForLoss = true;
+        result.percentageForLoss_ = value;
+        return this;
+      }
+      public Builder clearPercentageForLoss() {
+        result.hasPercentageForLoss = false;
+        result.percentageForLoss_ = getDefaultInstance().getPercentageForLoss();
+        return this;
+      }
+      
+      // optional string percentageForWarn = 8;
+      public boolean hasPercentageForWarn() {
+        return result.hasPercentageForWarn();
+      }
+      public java.lang.String getPercentageForWarn() {
+        return result.getPercentageForWarn();
+      }
+      public Builder setPercentageForWarnIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setPercentageForWarn(value);
+        }
+        return this;
+      }
+      public Builder setPercentageForWarn(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasPercentageForWarn = true;
+        result.percentageForWarn_ = value;
+        return this;
+      }
+      public Builder clearPercentageForWarn() {
+        result.hasPercentageForWarn = false;
+        result.percentageForWarn_ = getDefaultInstance().getPercentageForWarn();
+        return this;
+      }
+      
+      // optional string maxStartTime = 9;
+      public boolean hasMaxStartTime() {
+        return result.hasMaxStartTime();
+      }
+      public java.lang.String getMaxStartTime() {
+        return result.getMaxStartTime();
+      }
+      public Builder setMaxStartTimeIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setMaxStartTime(value);
+        }
+        return this;
+      }
+      public Builder setMaxStartTime(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasMaxStartTime = true;
+        result.maxStartTime_ = value;
+        return this;
+      }
+      public Builder clearMaxStartTime() {
+        result.hasMaxStartTime = false;
+        result.maxStartTime_ = getDefaultInstance().getMaxStartTime();
+        return this;
+      }
+      
+      // optional string maxTimeRangeInt = 10;
+      public boolean hasMaxTimeRangeInt() {
+        return result.hasMaxTimeRangeInt();
+      }
+      public java.lang.String getMaxTimeRangeInt() {
+        return result.getMaxTimeRangeInt();
+      }
+      public Builder setMaxTimeRangeIntIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setMaxTimeRangeInt(value);
+        }
+        return this;
+      }
+      public Builder setMaxTimeRangeInt(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasMaxTimeRangeInt = true;
+        result.maxTimeRangeInt_ = value;
+        return this;
+      }
+      public Builder clearMaxTimeRangeInt() {
+        result.hasMaxTimeRangeInt = false;
+        result.maxTimeRangeInt_ = getDefaultInstance().getMaxTimeRangeInt();
+        return this;
+      }
+      
+      // optional string warnLossThresholdDiff = 11;
+      public boolean hasWarnLossThresholdDiff() {
+        return result.hasWarnLossThresholdDiff();
+      }
+      public java.lang.String getWarnLossThresholdDiff() {
+        return result.getWarnLossThresholdDiff();
+      }
+      public Builder setWarnLossThresholdDiffIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setWarnLossThresholdDiff(value);
+        }
+        return this;
+      }
+      public Builder setWarnLossThresholdDiff(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasWarnLossThresholdDiff = true;
+        result.warnLossThresholdDiff_ = value;
+        return this;
+      }
+      public Builder clearWarnLossThresholdDiff() {
+        result.hasWarnLossThresholdDiff = false;
+        result.warnLossThresholdDiff_ = getDefaultInstance().getWarnLossThresholdDiff();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:ClientConfiguration)
+    }
+    
+    static {
+      defaultInstance = new ClientConfiguration(true);
+      com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:ClientConfiguration)
   }
   
   public static void internalForceInit() {}

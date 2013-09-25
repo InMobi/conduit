@@ -1,12 +1,17 @@
 package com.inmobi.databus.utils;
 
+
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
@@ -15,8 +20,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
@@ -32,7 +39,7 @@ public class FileUtil {
       Map<Long, Long> received) throws IOException {
     FileSystem fs = FileSystem.get(conf);
     FSDataOutputStream out = fs.create(target);
-    GzipCodec gzipCodec = (GzipCodec) ReflectionUtils.newInstance(
+    GzipCodec gzipCodec = ReflectionUtils.newInstance(
         GzipCodec.class, conf);
     Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
     OutputStream compressedOut = gzipCodec.createOutputStream(out,
@@ -108,5 +115,64 @@ public class FileUtil {
       throw new RuntimeException(e);
     }
     return null;
+  }
+  
+  // This method is taken from DistCp SimpleCopyListing class.
+  public static FileStatus getFileStatus(FileStatus fileStatus,
+      ByteArrayOutputStream buffer, DataInputBuffer in) throws IOException {
+    // if the file is not an instance of RawLocaleFileStatus, simply return it
+    if (fileStatus.getClass() == FileStatus.class) {
+      return fileStatus;
+    }
+    
+    // Else if it is a local file, we need to convert it to an instance of 
+    // FileStatus class. The reason is that SequenceFile.Writer/Reader does 
+    // an exact match for FileStatus class.
+    FileStatus status = new FileStatus();
+    
+    buffer.reset();
+    DataOutputStream out = new DataOutputStream(buffer);
+    fileStatus.write(out);
+    
+    in.reset(buffer.toByteArray(), 0, buffer.size());
+    status.readFields(in);
+    return status;
+  }
+  
+  /*
+   * FileSystem.listStatus behaves differently for different filesystems.
+   * Different behaviors by different filesystem are:
+   * 
+   *                      HDFS          S3N       Local Dir
+   * With Data            Array         Array     Array 
+   * Empty Directory      Empty Array   null      Empty Array 
+   * Non Existent Path    null          null      Empty Array
+   * 
+   * This helper method would ensure that the output is consistent with HDFS behavior, i.e.
+   * 1) If the path is a dir and has data return list of filestatus, 2) If the path is a dir
+   * but is empty return empty list, 3) If the path doesn't exist return null.
+   */
+  public static FileStatus[] listStatusAsPerHDFS(FileSystem fs, Path p)
+      throws IOException {
+    FileStatus[] fStatus;
+    try {
+      fStatus = fs.listStatus(p);
+    } catch (FileNotFoundException ignore) {
+      return null;
+    }
+    if (fStatus != null && fStatus.length > 0)
+      return fStatus;
+    if (fs.exists(p))
+      return new FileStatus[0];
+    return null;
+
+  }
+
+  public static String toStringOfFileStatus(List<FileStatus> list) {
+    StringBuffer str = new StringBuffer();
+    for (FileStatus f : list) {
+      str.append(f.getPath().toString()).append(",");
+    }
+    return str.toString();
   }
 }

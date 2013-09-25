@@ -66,14 +66,32 @@ export _DATABUS_DAEMON_PIDFILE=$DATABUS_PID_DIR/databus.pid
 
 fi
 
+if [ -z $HADOOP_HOME ]; then
+  echo "Please define HADOOP_HOME to point to hadoop installation directory."
+  exit 1
+fi
+
 if [ -z $HADOOP_CONF_DIR ]; then
   echo "Please define HADOOP_CONF_DIR to point to hadoop configuration. eg:: /etc/hadoop/conf"
   exit 1
 fi
 
+if [ -z $HADOOP_DISTCP_HOME ]; then
+  echo "Please define HADOOP_DISCTP_HOME to point to distcp install folder.EG:: /usr/local/inmobi-distcp-0.8-cdh3"
+  exit 1
+fi
+
 #set classpath
-export CLASSPATH=`ls $DATABUS_DIR/lib/*jar | tr "\n" :`;
+for f in $HADOOP_HOME/hadoop-*.jar;do
+  if [[ "$f" != *tool* ]]; then
+    export CLASSPATH=$CLASSPATH:$f
+  fi
+done
+export CLASSPATH=$CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+export CLASSPATH=$CLASSPATH:`ls $DATABUS_DIR/lib/*jar | tr "\n" :`;
+export CLASSPATH=$CLASSPATH:`ls $HADOOP_DISTCP_HOME/*jar | tr "\n" :`;
 export CLASSPATH=$DATABUS_DIR/conf:$CLASSPATH:$HADOOP_CONF_DIR:$DATABUS_DIR/bin
+export DATABUS_OPTS="-Dcom.sun.management.jmxremote.port=9089 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
 #echo setting classPath to $CLASSPATH
 
 case $startStop in
@@ -91,7 +109,7 @@ case $startStop in
 
     echo starting DATABUS
 
-   nohup java -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
+   nohup java $DATABUS_OPTS -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
    if [ $? -eq 0 ]
     then
       if /bin/echo -n $! > "$_DATABUS_DAEMON_PIDFILE"
@@ -113,7 +131,7 @@ case $startStop in
     if [ -f $_DATABUS_DAEMON_PIDFILE ]; then
       if kill -0 `cat $_DATABUS_DAEMON_PIDFILE` > /dev/null 2>&1; then
         echo -n Please be patient. It may take upto 1 min or more in stopping DATABUS..
-        kill -s SIGINT `cat $_DATABUS_DAEMON_PIDFILE`
+        kill -s SIGTERM `cat $_DATABUS_DAEMON_PIDFILE`
       while :
         do 
           if kill -0 `cat $_DATABUS_DAEMON_PIDFILE` > /dev/null 2>&1; then
@@ -134,8 +152,8 @@ case $startStop in
     ;;
 
   (restart)
-    $0 start $configFile
     $0 stop $configFile
+    $0 start $configFile
     ;;
 
   (collapse)
