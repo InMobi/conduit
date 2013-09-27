@@ -39,7 +39,8 @@ shift
 
 startStop=$var1
 configFile=$var2
-envfile=$DATABUS_DIR/conf/databus.env
+configDir=$(dirname $configFile)
+envfile=$configDir/databus.env
 
 if [ "$var1" == "start" ] || [ "$var1" == "stop" ] || [ "$var1" == "restart" ]
 then
