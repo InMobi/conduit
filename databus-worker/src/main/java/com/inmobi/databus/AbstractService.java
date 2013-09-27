@@ -89,7 +89,13 @@ public abstract class AbstractService implements Service, Runnable {
       hostname = "";
     }
     this.publisher = publisher;
+    String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
+    if (retries == null) {
+      numOfRetries = Integer.MAX_VALUE;
+    } else {
+      numOfRetries = Integer.parseInt(retries);
+    }
   }
 
   public AbstractService(String name, DatabusConfig config,

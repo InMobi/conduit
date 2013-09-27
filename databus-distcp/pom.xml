@@ -318,7 +318,6 @@
           </execution>
         </executions>
         <configuration>
-          <classifier>${hadoop.env.version}</classifier>
           <archive>
             <manifest>
               <mainClass>org.apache.hadoop.tools.DistCp</mainClass>
@@ -385,7 +384,7 @@
               <deb>${project.build.directory}/${artifactId}_${version}_${deb.tag}.deb</deb>
               <dataSet>
                 <data>
-                  <src>target/${artifactId}-${version}-${hadoop.env.version}.jar</src>
+                  <src>target/${artifactId}-${version}.jar</src>
                   <type>file</type>
                   <mapper>
                     <type>perm</type>

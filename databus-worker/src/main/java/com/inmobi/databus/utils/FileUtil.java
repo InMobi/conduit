@@ -55,7 +55,7 @@ public class FileUtil {
           incrementReceived(decodedMsg, received);
         }
         compressedOut.write(msg);
-        // compressedOut.flush();
+        compressedOut.flush();
         
       }
       // IOUtils.copyBytes(in, compressedOut, conf);
