@@ -379,10 +379,11 @@ public class Visualization implements EntryPoint, ClickHandler {
     if(selectedTab != null)
       defaultTabId =  Integer.parseInt(selectedTab);
     final Integer selectedTabId = defaultTabId;
-    saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTab);
+    saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTabId);
     System.out.println("Sending request to load graph");
     System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
-        ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab selected:"+selectedTab);
+        ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab " +
+        "selected:"+selectedTabId);
     clearAndShowLoadingSymbol();
     String clientJson = ClientDataHelper.getInstance()
         .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
@@ -430,7 +431,7 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   private native void saveHistory(String stTime, String edTime,
                             String selectedCluster, String selectedStream,
-                            String selectedTab)/*-{
+                            int selectedTab)/*-{
     $wnd.saveHistory(selectedStream, selectedCluster, selectedTab, stTime,
     edTime);
   }-*/;
