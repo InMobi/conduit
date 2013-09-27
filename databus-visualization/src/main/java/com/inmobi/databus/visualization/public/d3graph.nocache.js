@@ -1527,9 +1527,6 @@ function loadGraph(streamName, clusterName, selectedTabID) {
             div.transition()
               .duration(200)
               .style("opacity", .9);
-            /*
-
-                  div.html(n.name + "<br/>" + n.aggregatemessagesreceived)*/
             div.html(n.name)
               .style("left", (
                 d3.event.pageX) + "px")
@@ -1569,8 +1566,7 @@ percentageFrWarn, lWThresholdDiff) {
   percentageForLoss = percentageFrLoss;
   percentageForWarn = percentageFrWarn;
   lossWarnThresholdDiff = lWThresholdDiff;
-  document.getElementById("tabs").style.display = "block";/*
-  queryString = baseQueryString;*/
+  document.getElementById("tabs").style.display = "block";
   qStream = stream;
   qCluster = cluster;
   qstart = start;
@@ -1581,13 +1577,7 @@ percentageFrWarn, lWThresholdDiff) {
   }
   clearHistory();
   buildNodeList();
-  loadGraph(stream, cluster, selectedTab);/*
-  tabSelected(selectedTab, stream, cluster);
-  if (drillDownCluster != null && drillDownStream != null) {
-    tabSelected(selectedTab, drillDownStream, drillDownCluster);
-  } else {
-    tabSelected(selectedTab, stream, cluster);
-  }*/
+  loadGraph(stream, cluster, selectedTab);
 }
 
 function clearSvgAndAddLoadSymbol() {

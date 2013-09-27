@@ -40,17 +40,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private Map<String, String> clientConfig;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
-  public void onModuleLoad() {/*
-    if (checkParametersNull()) {
-      System.out.println("Loading default settings");
-      String stream = "All";
-      String cluster = "All";
-      String startTime = DateUtils.getPreviousDayString();
-      String endTime = DateUtils.incrementAndGetTimeAsAuditDateFormatString(startTime, 60);
-      replaceUrl(startTime, endTime, stream, cluster);
-    } else {
-      buildStreamsAndClustersList();
-    }*/
+  public void onModuleLoad() {
     buildStreamsAndClustersList();
   }
 
@@ -334,42 +324,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     sendRequest(stTime, edTime, clusterList.getItemText(clusterList
         .getSelectedIndex()), streamsList.getItemText(streamsList
         .getSelectedIndex()), null);
-    /*
-    replaceUrl(stTime, edTime, streamsList.getItemText(streamsList
-        .getSelectedIndex()), clusterList.getItemText(clusterList.getSelectedIndex()));*/
   }
-
-  /*private void replaceUrl(String startTime, String endTime, String stream,
-                          String cluster) {
-    String url = Window.Location.getHref();
-    url = clearPreviousParameter(url);
-    *//*
-      For running in GWT developement mode,
-      url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
-      cluster + "&qstream=" + stream;
-     *//**//*
-    url = url + "?qstart=" + startTime + "&qend=" + endTime +
-        "&qcluster=" + cluster + "&qstream=" + stream;*//*
-    url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
-        cluster + "&qstream=" + stream;
-    System.out.println("Replacing URL after adding selected parameters");
-    Window.Location.replace(url);
-  }
-
-  private String clearPreviousParameter(String url) {
-    String newUrl;
-    *//*
-    If running in GWT development mode;
-    int index = url.indexOf("&");
-     *//**//*
-    int index = url.indexOf("?");*//*
-    int index = url.indexOf("&");
-    if(index != -1)
-      newUrl = url.substring(0, index);
-    else
-      newUrl = url;
-    return newUrl;
-  }*/
 
   public void sendRequest(final String stTime, final String edTime,
                           final String selectedCluster,
@@ -474,38 +429,6 @@ public class Visualization implements EntryPoint, ClickHandler {
     }
     return true;
   }
-
-  /*private String getQueryString() {*//*
-    String gstream = Window.Location.getParameter(ClientConstants.GRAPH_STREAM);
-    String gcluster = Window.Location.getParameter(ClientConstants.GRAPH_CLUSTER);
-    if (gstream == null && gcluster == null) {
-      return Window.Location.getQueryString();
-    } else {
-      return removeGraphParametersFromUrlQueryString();
-    }*//*
-    return removeStreamAndClusterParametersFromUrlQueryString();
-  }
-
-  private String removeStreamAndClusterParametersFromUrlQueryString() {
-    String queryString = Window.Location.getQueryString();
-    String[] parameters = queryString.split("&");
-    String finalQueryString = "?";
-    for (String parameter : parameters) {
-      if (parameter.charAt(0) == '?') {
-        parameter = parameter.substring(1);
-      }
-      String[] val = parameter.split("=");
-      if (!val[0].equals(ClientConstants.QUERY_CLUSTER) && !val[0].equals(ClientConstants
-          .QUERY_STREAM)) {
-        if (finalQueryString.length() == 1) {
-          finalQueryString += parameter;
-        } else {
-          finalQueryString += "&" + parameter;
-        }
-      }
-    }
-    return finalQueryString;
-  }*/
 
   private native void clearAndShowLoadingSymbol()/*-{
     $wnd.clearSvgAndAddLoadSymbol();
