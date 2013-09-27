@@ -1234,12 +1234,12 @@ function clearPreviousGraph() {
 }
 
 function saveHistory(streamName, clusterName, selectedTabID, start, end) {
-	console.log('Saving history with steam:'+streamName+', cluster:'+clusterName+', selected tab:'+selectedTabID+', start time:'+start+' and end time:'+end);
 	if (start == undefined || end == undefined) {
 		start = qstart;
 		end = qend;
 	}
-  var History = window.History;
+	/*console.log('Saving history with steam:'+streamName+', cluster:'+clusterName+', selected tab:'+selectedTabID+', start time:'+start+' and end time:'+end);
+  */var History = window.History;
   if (History.enabled) {
       var selectedTab = selectedTabID.toString();
       History.pushState({
