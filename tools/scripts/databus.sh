@@ -39,7 +39,8 @@ shift
 
 startStop=$var1
 configFile=$var2
-envfile=$DATABUS_DIR/conf/databus.env
+configDir=$(dirname $configFile)
+envfile=$configDir/databus.env
 
 if [ "$var1" == "start" ] || [ "$var1" == "stop" ] || [ "$var1" == "restart" ]
 then
@@ -77,7 +78,7 @@ if [ -z $HADOOP_CONF_DIR ]; then
 fi
 
 if [ -z $HADOOP_DISTCP_HOME ]; then
-  echo "Please define $HADOOP_DISCTP_HOME to point to distcp install folder.EG:: /usr/local/inmobi-distcp-0.8-cdh3"
+  echo "Please define HADOOP_DISCTP_HOME to point to distcp install folder.EG:: /usr/local/inmobi-distcp-0.8-cdh3"
   exit 1
 fi
 
