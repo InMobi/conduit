@@ -55,12 +55,6 @@
             <artifactId>hadoop-core</artifactId>
             <version>${hadoop.version}</version>
             <scope>provided</scope>
-            <exclusions>
-              <exclusion>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-              </exclusion>
-            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -112,12 +106,6 @@
             <artifactId>hadoop-core</artifactId>
             <version>${hadoop2mr1.version}</version>
             <scope>provided</scope>
-            <exclusions>
-              <exclusion>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-              </exclusion>
-            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
