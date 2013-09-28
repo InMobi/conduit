@@ -2,6 +2,7 @@ package com.inmobi.databus.distcp;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -18,9 +19,14 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.CodecPool;
+import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.testng.annotations.Test;
 
 import com.inmobi.databus.AbstractService;
@@ -60,12 +66,25 @@ public class MergeCheckpointTest {
     Path file2 = new Path(path, filenameStr2 + ".gz");
     paths.add(file1);
     paths.add(file2);
+    Compressor gzipCompressor = null;
     try {
-      fs.create(file1);
-      fs.create(file2);
+      GzipCodec gzipCodec = ReflectionUtils.newInstance(GzipCodec.class,
+          new Configuration());
+      gzipCompressor = CodecPool.getCompressor(gzipCodec);
+      FSDataOutputStream out = fs.create(file1);
+      OutputStream compressedOut = gzipCodec.createOutputStream(out,
+          gzipCompressor);
+      compressedOut.close();
+
+      out = fs.create(file2);
+      compressedOut = gzipCodec.createOutputStream(out, gzipCompressor);
+      compressedOut.close();
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+    } finally {
+      if (gzipCompressor != null)
+      CodecPool.returnCompressor(gzipCompressor);
     }
     return paths;
   }
@@ -374,8 +393,22 @@ public class MergeCheckpointTest {
     String filenameStr1 = new String("testcluster2" + "-" + "test1" + "-"
         + getDateAsYYYYMMDDHHmm(date) + "_" + idFormat.format(1));
     Path file1 = new Path(path, filenameStr1 + ".gz");
-    // created a file on testcluster 2
-    remoteFs2.create(file1);
+    Compressor gzipCompressor=null;
+    try{
+    GzipCodec gzipCodec = ReflectionUtils.newInstance(GzipCodec.class,
+        new Configuration());
+    gzipCompressor = CodecPool.getCompressor(gzipCodec);
+      // created a file on testcluster 2
+      FSDataOutputStream out = remoteFs2.create(file1);
+    OutputStream compressedOut = gzipCodec.createOutputStream(out,
+        gzipCompressor);
+    compressedOut.close();
+    }finally{
+      if(gzipCompressor!=null)
+        CodecPool.returnCompressor(gzipCompressor);
+    }
+    
+
     Date nextDate = CalendarHelper.addAMinute(date);
     Path path1 = CalendarHelper.getPathFromDate(nextDate, new Path(
         destnCluster2.getLocalFinalDestDirRoot() + "test1"));
