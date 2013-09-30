@@ -1,4 +1,4 @@
-Package: visualization
+Package: databus-visualization
 Version: [[project.version]]
 Section:  misc
 Priority: high
