@@ -185,8 +185,8 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
 
   /*
    * Return a map of destination path,source path file status Since the map uses
-   * destination path as the key,no conflicting duplicates paths would be passed
-   * on to distcp
+   * destination path as the key,no conflicting duplicates paths would not be
+   * passed on to distcp
    * 
    * @return
    */
@@ -256,7 +256,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
           FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
-          String destnPath= getFinalDestinationPath(srcFileStatus);
+          String destnPath = getFinalDestinationPath(srcFileStatus);
           if(destnPath!=null){
             LOG.info("Adding to input of Distcp.Move ["+nextPath+"] to "+destnPath);
             result.put(destnPath,srcFileStatus);
