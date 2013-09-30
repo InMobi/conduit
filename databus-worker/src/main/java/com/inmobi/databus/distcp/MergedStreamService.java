@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -141,44 +142,25 @@ public class MergedStreamService extends DistcpBaseService {
   private Map<String, List<Path>> prepareForCommit(Path tmpOut)
       throws Exception {
     Map<String, List<Path>> categoriesToCommit = new HashMap<String, List<Path>>();
-    FileStatus[] allFiles = null;
-    try {
-      allFiles = FileUtil.listStatusAsPerHDFS(getDestFs(), tmpOut);
-    } catch (FileNotFoundException ignored) {
-    }
-    if (allFiles != null) {
-      for (int i = 0; i < allFiles.length; i++) {
-        String fileName = allFiles[i].getPath().getName();
-        if (fileName != null) {
-          String category = getCategoryFromFileName(fileName, streamsToProcess);
-          if (category != null) {
-            Path intermediatePath = new Path(tmpOut, category);
-            if (!getDestFs().exists(intermediatePath))
-              getDestFs().mkdirs(intermediatePath);
-            Path source = allFiles[i].getPath().makeQualified(getDestFs());
+    FileStatus[] allFilesPerStream = null;
+    Path tmpPathPerStream = null;
+    for(String stream:streamsToProcess){
+      tmpPathPerStream = new Path(tmpOut,stream);
+      try {
+        allFilesPerStream = FileUtil.listStatusAsPerHDFS(getDestFs(),
+            tmpPathPerStream);
+      } catch (FileNotFoundException ignored) {
+      }
 
-            Path intermediateFilePath = new Path(intermediatePath
-                .makeQualified(getDestFs()).toString()
-                + File.separator
-                + fileName);
-            if (getDestFs().rename(source, intermediateFilePath) == false) {
-              LOG.warn("Failed to Rename [" + source + "] to ["
-                  + intermediateFilePath + "]");
-              LOG.warn("Aborting Tranasction prepareForCommit to avoid data "
-                  + "LOSS. Retry would happen in next run");
-              throw new Exception("Rename [" + source + "] to ["
-                  + intermediateFilePath + "]");
-            }
-            LOG.debug("Moving [" + source + "] to intermediateFilePath ["
-                + intermediateFilePath + "]");
-            List<Path> fileList = categoriesToCommit.get(category);
-            if (fileList == null) {
-              fileList = new ArrayList<Path>();
-              fileList.add(intermediateFilePath.makeQualified(getDestFs()));
-              categoriesToCommit.put(category, fileList);
-            } else {
-              fileList.add(intermediateFilePath);
-            }
+      if (allFilesPerStream != null) {
+        for (FileStatus fileStatus : allFilesPerStream) {
+          List<Path> fileList = categoriesToCommit.get(stream);
+          if (fileList == null) {
+            fileList = new ArrayList<Path>();
+            fileList.add(fileStatus.getPath());
+            categoriesToCommit.put(stream, fileList);
+          } else {
+            fileList.add(fileStatus.getPath());
           }
         }
       }
@@ -193,13 +175,12 @@ public class MergedStreamService extends DistcpBaseService {
    */
   public Map<Path, Path> createLocalCommitPaths(Path tmpOut, long commitTime,
       Map<String, List<Path>> categoriesToCommit) throws Exception {
-    FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
 
     // find final destination paths
     Map<Path, Path> mvPaths = new LinkedHashMap<Path, Path>();
     Set<Map.Entry<String, List<Path>>> commitEntries = categoriesToCommit
         .entrySet();
-    Iterator it = commitEntries.iterator();
+    Iterator<Entry<String, List<Path>>> it = commitEntries.iterator();
     while (it.hasNext()) {
       Map.Entry<String, List<Path>> entry = (Map.Entry<String, List<Path>>) it
           .next();
@@ -401,12 +382,20 @@ public class MergedStreamService extends DistcpBaseService {
 
   }
 
+  /*
+   * srcPath is the FileStatus of minute directory in streams_local directory
+   * eg: /databus/streams_local/adroit_report_obj_ua2/2013/09/28/15/04
+   */
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
     if (srcPath.isDir())
       return null;
-    else
-      return File.separator + srcPath.getPath().getName();
+    else {
+      String streamName = srcPath.getPath().getParent().getParent().getParent()
+          .getParent().getParent().getParent().getName();
+      return File.separator + streamName + File.separator
+          + srcPath.getPath().getName();
+    }
 
   }
 
