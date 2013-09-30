@@ -59,7 +59,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected Path getInputPath() throws IOException {
-    String finalDestDir = getSrcCluster().getFinalDestDirRoot();
+    String finalDestDir = getSrcCluster().getReadFinalDestDirRoot();
 
     return new Path(finalDestDir);
   }
@@ -88,14 +88,14 @@ public class MirrorStreamService extends DistcpBaseService {
       Map<String, FileStatus> fileListingMap = getDistCPInputFile();
       if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
-            + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+            + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
         finalizeCheckPoints();
         return;
       }
 
       LOG.info("Starting a Mirrored distcp pull from Cluster ["
-          + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+          + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
           + getDestCluster().getHdfsUrl() + "] " + " Path ["
           + tmpOut.toString() + "]");
 
@@ -164,7 +164,7 @@ public class MirrorStreamService extends DistcpBaseService {
      */
 
     Path tmpStreamRoot = new Path(tmpOut.makeQualified(getDestFs()).toString()
-        + File.separator + getSrcCluster().getUnqaulifiedFinalDestDirRoot());
+        + File.separator + getSrcCluster().getUnqaulifiedReadUrlFinalDestDirRoot());
     LOG.debug("tmpStreamRoot [" + tmpStreamRoot + "]");
 
      /* tmpStreamRoot eg -
@@ -264,8 +264,8 @@ public class MirrorStreamService extends DistcpBaseService {
       List<FileStatus> filesToBeCopied) throws IOException {
     Path finalDestDir = new Path(destCluster.getFinalDestDirRoot());
     Path streamFinalDestDir = new Path(finalDestDir, stream);
-    Path finalSrcDir = new Path(srcCluster.getFinalDestDirRoot());
-    Path streamFinalSrctDir = new Path(finalSrcDir, stream);
+    Path finalSrcDir = new Path(srcCluster.getReadFinalDestDirRoot());
+    Path streamFinalSrcDir = new Path(finalSrcDir, stream);
 
     Path lastMirroredPath = getFirstOrLastPath(getDestFs(), streamFinalDestDir,
         true);
@@ -273,7 +273,7 @@ public class MirrorStreamService extends DistcpBaseService {
     Path result;
     if (lastMirroredPath == null) {
       LOG.info("Cannot compute the starting directory from the destination data");
-      lastMergedPathOnSrc = getFirstOrLastPath(getSrcFs(), streamFinalSrctDir,
+      lastMergedPathOnSrc = getFirstOrLastPath(getSrcFs(), streamFinalSrcDir,
           false);
       if (lastMergedPathOnSrc == null) {
         LOG.info("Cannot compute starting directory  from either destination or source data for stream "
@@ -289,14 +289,14 @@ public class MirrorStreamService extends DistcpBaseService {
       Date date = CalendarHelper.getDateFromStreamDir(streamFinalDestDir,
           lastMirroredPath);
       Path correspondingMergePath = CalendarHelper.getPathFromDate(date,
-          streamFinalSrctDir);
+          streamFinalSrcDir);
       List<FileStatus> files = findDifferentFiles(
           FileUtil.listStatusAsPerHDFS(getSrcFs(), correspondingMergePath),
           FileUtil.listStatusAsPerHDFS(getDestFs(), lastMirroredPath));
       if (files != null)
         filesToBeCopied.addAll(files);
       result = CalendarHelper.getNextMinutePathFromDate(date,
-          streamFinalSrctDir);
+          streamFinalSrcDir);
     }
     return result;
   }
