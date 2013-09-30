@@ -83,7 +83,7 @@ public class MergeCheckpointTest {
       Cluster srcCluster = config.getClusters().get(cluster);
       List<Path> paths = new ArrayList<Path>();
     FileSystem fs = FileSystem.getLocal(new Configuration());
-        Path streamLevelDir = new Path(srcCluster.getLocalFinalDestDirRoot()
+        Path streamLevelDir = new Path(srcCluster.getReadLocalFinalDestDirRoot()
             + stream);
         paths.addAll(createData(fs, streamLevelDir, date, stream, cluster));
     Date nextDate = CalendarHelper.addAMinute(date);

@@ -12,6 +12,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -76,7 +77,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
           + mergeCluster.getName() + "] for Merged stream " + streamName);
     }
     // find holes on merge cluster
-    holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath, mergedFs));
+    holesInMerge.addAll(findHoles(mergeStreamFileStatuses, mergePath));
     if (!holesInMerge.isEmpty()) {
       System.out.println("holes in [ " + mergeCluster.getName() + " ] " + holesInMerge);
     } else {
@@ -87,9 +88,9 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     Map<String, FileStatus> localStreamFileListing = new TreeMap<String, FileStatus>();
     // perform recursive listing on each source cluster
     for (Cluster srcCluster : srcClusterList) {
-      Path localStreamPath = new Path(srcCluster.getLocalFinalDestDirRoot(),
+      Path localStreamPath = new Path(srcCluster.getReadLocalFinalDestDirRoot(),
           streamName);
-      FileSystem localFs = FileSystem.get(srcCluster.getHadoopConf());
+      FileSystem localFs = localStreamPath.getFileSystem(new Configuration());
       Path startPath = new Path(localStreamPath,
           Cluster.getDateAsYYYYMMDDHHMNPath(startTime));
       Path endPath = new Path(localStreamPath,
@@ -102,7 +103,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
       //find holes on source cluster
       List<Path> holesInLocalCluster = findHoles(localStreamFileStatuses,
-          localStreamPath, localFs);
+          localStreamPath);
       if (!holesInLocalCluster.isEmpty()) {
         holesInLocal.addAll(holesInLocalCluster);
         System.out.println("holes in [ " + srcCluster.getName() + " ] "
