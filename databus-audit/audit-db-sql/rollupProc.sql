@@ -53,10 +53,13 @@ DECLARE
  createIndex text;
  constraintName text;
  columnName text;
+ createPkey text;
 BEGIN
 checkconstraint = 'CHECK(timeinterval >= extract (epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint AND timeinterval < extract(epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint )';
 createTable = 'CREATE TABLE IF NOT EXISTS ' || dayTable || '(' || checkconstraint || ') INHERITS (' || masterTable || ')';
 EXECUTE createTable;
+createPkey = 'ALTER TABLE ' || dayTable || ' ADD PRIMARY KEY (timeinterval, cluster, topic, hostname, tier)';
+EXECUTE createPkey;
 constraintName = dayTable || '_idx';
 columnName = 'timeinterval';
 createIndex = 'SELECT createConstraintIfNotExists(' || quote_literal(dayTable) || ', ' || quote_literal(constraintName) || ', ' || quote_literal(columnName) || ')';
