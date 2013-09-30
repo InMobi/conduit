@@ -194,8 +194,7 @@ public class AuditRollUpService extends AuditDBService {
         String statement = getCreateTableQuery();
         createDailyTableStmt = connection.prepareCall(statement);
         String masterTable = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
-        while ((fromDate.before(todate) || fromDate.equals(todate)) &&
-            !isStop) {
+        while (!fromDate.after(todate) && !isStop) {
           LOG.info("Creating day table of date:"+fromDate);
           String currentDateString = dayChkFormat.format(fromDate);
           String dayTable = createTableName(fromDate, false);
@@ -299,11 +298,13 @@ public class AuditRollUpService extends AuditDBService {
         e = e.getNextException();
       }
     } finally {
-      try {
-        rollupStmt.close();
-      } catch (SQLException e) {
-        LOG.error("SQLException while closing call statement:"+ e.getMessage
-            ());
+      if (rollupStmt != null) {
+        try {
+          rollupStmt.close();
+        } catch (SQLException e) {
+          LOG.error("SQLException while closing call statement:"+ e.getMessage
+              ());
+        }
       }
     }
     return fromTime;
