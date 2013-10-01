@@ -144,48 +144,43 @@ public class TestDistCPBaseService  {
     assert fileCopyListMap.size() == 0;
 
   }
-  
-  @Test
-  public void testSplitFileName() throws Exception {
-    Set<String> streamsSet = new HashSet<String>();
-    streamsSet.add("test-stream");
-    streamsSet.add("test_stream");
-    streamsSet.add("test_streams");
-    streamsSet.add("test_stream_2");
-    // file name in which collector name has hyphen
-    String fileName1 = "databus-test-test_stream-2012-11-27-21-20_00000.gz";
-    // file name in which stream name has hyphen
-    String fileName2 = "databus_test-test-stream-2012-11-27-21-20_00000.gz";
-    // file name in which stream name is subset of another stream name in the
-    // streamsSet
-    String fileName3 = "databus_test-test_streams-2012-11-27-21-20_00000.gz";
-    String fileName4 = "databus_test-test_stream_2-2012-11-27-21-20_00000.gz";
-    // file name in which stream name is not in streamsSet passed
-    String fileName5 = "databus_test-test_stream-2-2012-11-27-21-20_00000.gz";
-    // timestamp part of the filename has wrong format
-    String fileName6 = "databus_test-test_stream-2-2012-11-27-21-20-00000.gz";
-    String fileName7 = "databus_test-test_stream-2-2012-11_27-21-20_00000.gz";
-    // get stream names from file name
-    String expectedStreamName1 = MergedStreamService.getCategoryFromFileName(
-        fileName1, streamsSet);
-    String expectedStreamName2 = MergedStreamService.getCategoryFromFileName(
-        fileName2, streamsSet);
-    String expectedStreamName3 = MergedStreamService.getCategoryFromFileName(
-        fileName3, streamsSet);
-    String expectedStreamName4 = MergedStreamService.getCategoryFromFileName(
-        fileName4, streamsSet);
-    String expectedStreamName5 = MergedStreamService.getCategoryFromFileName(
-        fileName5, streamsSet);
-    String expectedStreamName6 = MergedStreamService.getCategoryFromFileName(
-        fileName6, streamsSet);
-    String expectedStreamName7 = MergedStreamService.getCategoryFromFileName(
-        fileName7, streamsSet);
-    assert expectedStreamName1.compareTo("test_stream") == 0;
-    assert expectedStreamName2.compareTo("test-stream") == 0;
-    assert expectedStreamName3.compareTo("test_streams") == 0;
-    assert expectedStreamName4.compareTo("test_stream_2") == 0;
-    assert expectedStreamName5 == null;
-    assert expectedStreamName6 == null;
-    assert expectedStreamName7 == null;
+
+   private void createDataWithDuplicateFileNames(DistcpBaseService service)
+       throws IOException {
+     Path dataRoot = new Path(testRoot, service.getInputPath());
+     localFs.mkdirs(dataRoot);
+     Path dataRoot1 = new Path(testRoot1, service.getInputPath());
+     localFs.mkdirs(dataRoot1);
+     // one valid & invalid data file
+     Path data_file = new Path(testRoot, "data-file1");
+     localFs.create(data_file);
+
+     Path data_file1 = new Path(testRoot1, "data-file1");
+     localFs.create(data_file1);
+
+     // one file with data and one valid path and one invalid path
+     Path p = new Path(dataRoot, "file-with-valid-data");
+     FSDataOutputStream out = localFs.create(p);
+     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
+     writer.write(data_file.toString() + "\n");
+     writer.write("some-junk-path\n");
+     writer.write(data_file1.toString() + "\n");
+     writer.close();
+   }
+
+  public void testDuplicateFileNamesForMirrorService() throws Exception {
+
+    cleanUP();
+    createDataWithDuplicateFileNames(mirrorService);
+
+    Map<String, FileStatus> fileCopyList = mirrorService.getDistCPInputFile();
+    // assert that both the paths are present
+    assert (fileCopyList.size() == 2);
+    assert fileCopyList.values().contains(
+        localFs.getFileStatus(new Path(expectedFileName1)));
+    assert fileCopyList.values().contains(
+        localFs.getFileStatus(new Path(expectedFileName3)));
   }
+
+
 }

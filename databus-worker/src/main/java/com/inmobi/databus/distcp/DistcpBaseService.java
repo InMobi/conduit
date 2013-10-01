@@ -142,33 +142,6 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
    */
   protected abstract Path getDistCpTargetPath();
 
-  /*
-   * @param filename should be of the format
-   * collectorname-streamname-yyyy-mm-dd-hh-mn_xxxxx.gz where xxxxx is the index
-   * of the file
-   * 
-   * @param streamSet set of all the destination streams of the corresponding
-   * cluster
-   * 
-   * @return null if the filename is not of correct format or no categories in
-   * the streamset matches with the category in the filename
-   */
-  protected static String getCategoryFromFileName(String fileName,
-      Set<String> streamsSet) {
-    for (String streamName : streamsSet) {
-      String strs[] = fileName.split(streamName);
-      if (strs.length == 2) {
-        if (checkCorrectDateFormat(strs[1]))
-          return streamName;
-      }
-    }
-    return null;
-  }
-
-  protected static boolean checkCorrectDateFormat(String timestamp) {
-    return timestamp
-        .matches("^-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}_[0-9]{5}.gz$");
-  }
 
   @Override
   public long getMSecondsTillNextRun(long currentTime) {
