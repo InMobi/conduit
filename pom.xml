@@ -270,6 +270,7 @@
     <module>databus-dist</module>
     <module>databus-audit</module>
     <module>databus-visualization</module>
+    <module>databus-metrics</module>
   </modules>
 
 </project>
