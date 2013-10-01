@@ -18,7 +18,8 @@ public class TestDataServiceManager {
   @Test
   public void testAuditStreamNotAdded() {
     serviceManager = DataServiceManagerTest.get("" +
-        "./src/test/resources/xmlfolder2", null, null);
+        "./src/test/resources/xmlfolder2",
+        "./src/test/resources/visualization2.properties", null);
     String response = serviceManager.getStreamAndClusterList();
     List<String> streamList = TestUtil.getStreamsListFromResponse(response);
     Assert.assertFalse(streamList.contains(ServerConstants.AUDIT_STREAM));
@@ -27,7 +28,8 @@ public class TestDataServiceManager {
   @Test
   public void testMultipleXmls() {
     serviceManager = DataServiceManagerTest.get("" +
-        "./src/test/resources/xmlfolder1", null, null);
+        "./src/test/resources/xmlfolder1",
+        "./src/test/resources/visualization2.properties", null);
     assert serviceManager.getDataBusConfig().size() == 2;
     String response = serviceManager.getStreamAndClusterList();
     List<String> streamList = TestUtil.getStreamsListFromResponse(response);
