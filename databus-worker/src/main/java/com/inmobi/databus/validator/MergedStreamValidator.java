@@ -207,11 +207,14 @@ public class MergedStreamValidator extends AbstractStreamValidator {
 
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
-    if (srcPath.isDir())
+    if (srcPath.isDir()) {
       return null;
-    else
-      return File.separator + srcPath.getPath().getName();
-
+    } else {
+      String streamName = srcPath.getPath().getParent().getParent().getParent()
+          .getParent().getParent().getParent().getName();
+      return File.separator + streamName + File.separator
+          + srcPath.getPath().getName();
+    }
   }
 
   public List<Path> getDuplicateFiles() {
