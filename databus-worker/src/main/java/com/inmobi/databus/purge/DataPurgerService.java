@@ -364,14 +364,15 @@ public class DataPurgerService extends AbstractService {
     return files;
   }
 
+
   @Override
-  protected String getTopicNameFromFileName(String fileName) {
+  protected String getTier() {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  protected String getTier() {
+  protected String getTopicNameFromDestnPath(Path destnPath) {
     // TODO Auto-generated method stub
     return null;
   }

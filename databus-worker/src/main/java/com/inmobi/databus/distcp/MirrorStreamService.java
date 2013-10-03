@@ -141,7 +141,8 @@ public class MirrorStreamService extends DistcpBaseService {
           throw new Exception("Rename failed from [" + entry.getKey() + "] to "
           + "[" + entry.getValue() + "]");
         }
-        generateAndPublishAudit(entry.getKey().getPath().getName(),
+        String streamName = getTopicNameFromDestnPath(entry.getValue());
+        generateAndPublishAudit(streamName, entry.getKey().getPath().getName(),
             parsedCounters);
       }
     }

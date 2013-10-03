@@ -284,20 +284,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
     return currentCluster;
   }
 
-  /*
-   * FileName is of format
-   * <collectorName>-<topicName>-<yy-mm-dd-hh-mm_number>.gz
-   * eg:rbgs4101.grid.ua2.
-   * inmobi.com-adroit_report_obj_uj1-2013-08-19-07-58_00000.gz
-   */
-  @Override
-  protected String getTopicNameFromFileName(String fileName) {
-    String tmp[] = fileName.split("" + TOPIC_SEPARATOR_FILENAME);
 
-    if (tmp.length < 7)
-      return null;
-    return tmp[1];
-}
   public static void createListing(FileSystem fs, FileStatus fileStatus,
       List<FileStatus> results) throws IOException {
     if (fileStatus.isDir()) {
@@ -319,4 +306,21 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
       results.add(fileStatus);
     }
 }
+
+  /*
+   * Find the topic name from path of format
+   * /databus/streams/ifc_ir/2013/10/01/09/17 or
+   * /databus/streams/ifc_ir/2013/10/
+   * 01/09/17/erdc4002.grid.lhr1.inmobi.com-ifc_ir-2013-10-01-09-13_00000.gz
+   */
+  protected String getTopicNameFromDestnPath(Path destnPath) {
+    String destnPathAsString =destnPath.toString();
+    String destnDirAsString =new Path(destCluster.getFinalDestDirRoot()).toString();
+    String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
+        .length());
+    Path tmpPath = new Path(pathWithoutRoot);
+    while (tmpPath.depth() != 1)
+      tmpPath=tmpPath.getParent();
+    return tmpPath.getName();
+  }
 }

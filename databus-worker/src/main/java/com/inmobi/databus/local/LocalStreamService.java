@@ -83,7 +83,7 @@ ConfigConstants {
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
-  private final String streamsToProcessName;
+
 
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
@@ -103,16 +103,7 @@ ConfigConstants {
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
-    streamsToProcessName = getServiceName(streamsToProcess);
 
-  }
-
-  private static final String getServiceName(List<String> streamsToProcess) {
-    String servicename = "";
-    for (String stream : streamsToProcess) {
-      servicename += stream + "@";
-    }
-    return servicename;
   }
 
   private void cleanUpTmp(FileSystem fs) throws Exception {
@@ -248,13 +239,13 @@ ConfigConstants {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
       if (generateAudit) {
-
-        String filename = removeCollectorNameAndExt(entry.getKey().getName());
+        String filename = entry.getKey().getName();
         if (filename == null) {
           LOG.error("Malformed filename: " + entry.getKey().getName());
           continue;
         }
-        generateAndPublishAudit(filename, parsedCounters);
+        String streamName = getTopicNameFromDestnPath(entry.getValue());
+        generateAndPublishAudit(streamName, filename, parsedCounters);
       }
     }
 
@@ -275,14 +266,6 @@ ConfigConstants {
 
   }
 
-
-  @Override
-  protected String getTopicNameFromFileName(String fileName) {
-    int index = fileName.indexOf(TOPIC_SEPARATOR_FILENAME);
-    if (index == -1)
-      return null;
-    return fileName.substring(0, index);
-  }
 
   private long createMRInput(Path inputPath,
       Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
@@ -639,5 +622,23 @@ ConfigConstants {
 
   protected String getTier() {
     return "local";
+  }
+
+  /*
+   * Find the topic name from path of format
+   * /databus/streams_local/ifc_ir/2013/10/01/09/17 or
+   * /databus/streams_local/ifc_ir/2013/10/
+   * 01/09/17/erdc4002.grid.lhr1.inmobi.com-ifc_ir-2013-10-01-09-13_00000.gz
+   */
+  protected String getTopicNameFromDestnPath(Path destnPath) {
+    String destnPathAsString = destnPath.toString();
+    String destnDirAsString = new Path(srcCluster.getLocalFinalDestDirRoot())
+        .toString();
+    String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
+        .length());
+    Path tmpPath = new Path(pathWithoutRoot);
+    while (tmpPath.depth() != 1)
+      tmpPath = tmpPath.getParent();
+    return tmpPath.getName();
   }
 }

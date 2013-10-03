@@ -36,7 +36,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -190,7 +189,6 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     // Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
 
     final CompressionCodec codec = compressionCodecs.getCodec(source);
-    Text txt = new Text();
     InputStream compressedIn = null;
     OutputStream commpressedOut = null;
     BufferedReader reader = null;

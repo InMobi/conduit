@@ -46,7 +46,6 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
   public void map(Text key, FileStatus value, Context context) throws IOException,
       InterruptedException {
     Path src = value.getPath();
-    String filename = src.getName();
     String dest = key.toString();
     String collector = src.getParent().getName();
     String category = src.getParent().getParent().getName();
@@ -62,14 +61,14 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
     FileUtil.gzip(src, target, srcConf, received);
     // move to final destination
     fs.mkdirs(new Path(dest).makeQualified(fs));
-    Path destPath = new Path(dest + File.separator + collector + "-"
-        + src.getName() + ".gz");
+    String destnFilename = collector + "-" + src.getName() + ".gz";
+    Path destPath = new Path(dest + File.separator + destnFilename);
     LOG.info("Renaming file " + target + " to " + destPath);
     fs.rename(target, destPath);
     if (received != null) {
 
       for (Entry<Long, Long> entry : received.entrySet()) {
-        String counterName = getCounterName(filename,
+        String counterName = getCounterName(category, destnFilename,
             entry.getKey());
         context.getCounter(COUNTER_GROUP, counterName).increment(
             entry.getValue());
@@ -78,8 +77,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
 
   }
 
-  private String getCounterName(String filename, Long timeWindow) {
-    return filename + DELIMITER + timeWindow;
+  private String getCounterName(String streamName, String filename,
+      Long timeWindow) {
+    return streamName + DELIMITER + filename + DELIMITER + timeWindow;
   }
   private Path getTempPath(Context context, Path src, String category,
       String collector) {

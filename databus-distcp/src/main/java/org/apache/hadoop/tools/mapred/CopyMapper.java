@@ -233,13 +233,29 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
         context.write(null, new Text("SKIP: " + sourceCurrStatus.getPath()));
       }
       else {
+        String streamName = null;
+        Path relativePath = new Path(relPath.toString());
+
+        if (relativePath.depth() > 2) {
+          // path is for mirror service and is of format
+          // /databus/streams/rr/2013/09/12
+          Path tmpPath = relativePath;
+          while (tmpPath.depth() != 3) {
+            tmpPath = tmpPath.getParent();
+          }
+          streamName = tmpPath.getName();
+        } else {
+          // path is for merge service and of form /<stream name>/filename.gz
+          streamName = relativePath.getParent().getName();
+        }
         copyFileWithRetry(description, sourceCurrStatus, target, context,
             fileAttributes, received);
         // generate audit counters
         if (received != null) {
 
           for (Entry<Long, Long> entry : received.entrySet()) {
-            String counterName = getCounterName(sourcePath.getName(),
+            String counterName = getCounterName(streamName,
+                sourcePath.getName(),
                 entry.getKey());
             context.getCounter(COUNTER_GROUP, counterName).increment(
                 entry.getValue());
@@ -256,8 +272,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
   }
 
 
-  private String getCounterName(String filename, Long timeWindow) {
-    return filename + DELIMITER + timeWindow;
+  private String getCounterName(String streamName, String filename,
+      Long timeWindow) {
+    return streamName + DELIMITER + filename + DELIMITER + timeWindow;
   }
   private String getFileType(FileStatus fileStatus) {
     return fileStatus == null ? "N/A" : (fileStatus.isDir() ? "dir" : "file");

@@ -212,7 +212,8 @@ public class MergedStreamService extends DistcpBaseService {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
       String filename = entry.getKey().getName();
-      generateAndPublishAudit(filename, parsedCounters);
+      String streamName = getTopicNameFromDestnPath(entry.getValue());
+      generateAndPublishAudit(streamName, filename, parsedCounters);
     }
   }
 

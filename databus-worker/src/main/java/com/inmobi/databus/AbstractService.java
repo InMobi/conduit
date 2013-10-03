@@ -471,51 +471,52 @@ public abstract class AbstractService implements Service, Runnable {
     for (Counter counter : counterGrp) {
       String counterName = counter.getName();
       String tmp[] = counterName.split(CopyMapper.DELIMITER);
-      if (tmp.length < 2) {
+      if (tmp.length < 3) {
         LOG.error("Malformed counter name,skipping " + counterName);
         continue;
       }
-      String filename = tmp[0];
-      Long publishTimeWindow = Long.parseLong(tmp[1]);
+      String streamFileNameCombo = tmp[0] + CopyMapper.DELIMITER + tmp[1];
+      Long publishTimeWindow = Long.parseLong(tmp[2]);
       Long numOfMsgs = counter.getValue();
-      result.put(filename, publishTimeWindow, numOfMsgs);
+      result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
     }
     return result;
 
   }
 
-  protected AuditMessage createAuditMessage(String fileName,
+  protected AuditMessage createAuditMessage(String streamName,
       Map<Long, Long> received) {
-    String topic = getTopicNameFromFileName(fileName);
-    if (topic == null) {
-      LOG.error("Topic name can't be found from filename " + fileName
-          + " skipping generation of audit message");
-      return null;
-    }
-    AuditMessage auditMsg = new AuditMessage(new Date().getTime(), topic,
+
+    AuditMessage auditMsg = new AuditMessage(new Date().getTime(), streamName,
         getTier(),
         hostname, DEFAULT_WINDOW_SIZE, received, null, null, null);
     return auditMsg;
   }
 
-  abstract protected String getTopicNameFromFileName(String fileName);
+  abstract protected String getTopicNameFromDestnPath(Path destnPath);
+
 
   abstract protected String getTier();
 
-  protected void generateAndPublishAudit(String filename,
+  protected void generateAndPublishAudit(String streamName, String fileName,
       Table<String, Long, Long> parsedCounters) {
     if (publisher == null) {
       LOG.info("Not generating audit messages as publisher is null");
       return;
     }
     if (parsedCounters == null) {
-      LOG.equals("Not generating audit message as parsed counters are null");
+      LOG.error("Not generating audit message as parsed counters are null");
       return;
     }
-    Map<Long, Long> received = parsedCounters.row(filename);
+    if (streamName.equals(AuditUtil.AUDIT_STREAM_TOPIC_NAME)) {
+      LOG.debug("Not generation audit for audit stream");
+      return;
+    }
+    String streamFileNameCombo = streamName + CopyMapper.DELIMITER + fileName;
+    Map<Long, Long> received = parsedCounters.row(streamFileNameCombo);
     if (!received.isEmpty()) {
       // create audit message
-      AuditMessage auditMsg = createAuditMessage(filename, received);
+      AuditMessage auditMsg = createAuditMessage(streamName, received);
       if (auditMsg == null)
         return;
       publishAuditMessage(auditMsg);
