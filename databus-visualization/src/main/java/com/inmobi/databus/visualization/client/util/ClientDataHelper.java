@@ -31,7 +31,7 @@ public class ClientDataHelper {
     return ClientJsonStreamFactory.getInstance().serializeMessage(request);
   }
 
-  public String getJsonStrongFromGraphDataResponse(String serverJson) {
+  public String getJsonStringFromGraphDataResponse(String serverJson) {
     RequestResponse.Response response = null;
     try {
       response = RequestResponse.Response.newBuilder().readFrom(

@@ -28,12 +28,19 @@
     <fileSets>
            <fileSet>
             <directory>../databus-visualization/conf</directory>
-            <outputDirectory>/usr/local/databus-visualization/conf/</outputDirectory>
+            <outputDirectory>/usr/local/databus-visualization-${project.version}/conf/</outputDirectory>
             <includes>
                 <include>**/audit-feeder.properties</include>
                 <include>**/visualization.properties</include>
             </includes>
         </fileSet>
+      <fileSet>
+        <directory>../databus-visualization/conf</directory>
+        <outputDirectory>/var/lib/tomcat6/bin</outputDirectory>
+        <includes>
+          <include>**/setenv.sh</include>
+        </includes>
+      </fileSet>
 
         <fileSet>
             <directory>../databus-visualization/target/</directory>

@@ -350,7 +350,7 @@ public class Visualization implements EntryPoint, ClickHandler {
 
       public void onSuccess(String result) {
         String nodesJson = ClientDataHelper.getInstance()
-            .getJsonStrongFromGraphDataResponse(result);
+            .getJsonStringFromGraphDataResponse(result);
         Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
             .getTierLatencyObjListFromResponse(result);
         if (tierLatencyMap != null) {

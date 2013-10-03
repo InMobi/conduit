@@ -40,7 +40,7 @@ public abstract class AbstractStreamValidator {
   }
 
   protected List<Path> findHoles(List<FileStatus> listOfFileStatuses,
-      Path streamDir, FileSystem fs) throws IOException {
+      Path streamDir) throws IOException {
     List<Path> holes = new ArrayList<Path>();
     List<Path> listOfDirs = new ArrayList<Path>();
     // prepare a list of dirs from list of all files

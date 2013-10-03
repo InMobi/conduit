@@ -30,6 +30,7 @@ public class TestDatabusConfigParser {
           "local");
       Assert.assertEquals(cluster.getJobQueueName(), "default");
       Assert.assertEquals(cluster.getRootDir(), "file://///tmp/databustest1/");
+      Assert.assertEquals(cluster.getReadUrl(), cluster.getHdfsUrl());
     }
 
     Map<String, SourceStream> streamMap = config.getSourceStreams();
@@ -67,6 +68,7 @@ public class TestDatabusConfigParser {
           "local");
       Assert.assertEquals(cluster.getJobQueueName(), "default");
       Assert.assertEquals(cluster.getRootDir(), "file://///tmp/databustest2/");
+      Assert.assertEquals(cluster.getReadUrl(), "webhdfs://");
     }
 
     Map<String, SourceStream> streamMap = config.getSourceStreams();

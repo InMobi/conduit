@@ -1,10 +1,7 @@
 package com.inmobi.databus.visualization.client.util;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.TimeZone;
-import com.google.gwt.i18n.client.TimeZoneInfo;
-import com.google.gwt.i18n.client.constants.TimeZoneConstants;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 
 import java.util.Date;

@@ -1,10 +1,9 @@
-Package: visualization
+Package: databus-visualization
 Version: [[project.version]]
 Section:  misc
 Priority: high
 Architecture: all
 Pre-Depends: sun-java6-jre | java2-runtime
-Depends: tomcat6
 Maintainer: Inmobi
 Description: Visualization project is helpful in viewing of data in Conduit
 Distribution: alpha

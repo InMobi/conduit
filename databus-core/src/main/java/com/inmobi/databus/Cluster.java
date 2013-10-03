@@ -44,6 +44,7 @@ public class Cluster {
   private final Set<String> sourceStreams;
   private final Configuration hadoopConf;
   private final String copyMapperImpl;
+  private final String readUrl;
 
   public Cluster(Map<String, String> clusterElementsMap, String rootDir,
       Map<String, DestinationStream> consumeStreams, Set<String> sourceStreams)
@@ -78,6 +79,15 @@ public class Cluster {
     		clusterjobqueuename);
     this.copyMapperImpl = clusterElementsMap.get(DatabusConfigParser
       .COPYMAPPER_IMPL);
+
+    //Sets the readurl which is used in the Mirror amd Merge Stream.
+    String tempreadUrl = clusterElementsMap.get(DatabusConfigParser
+      .CLUSTER_READ_URL);
+    if (tempreadUrl == null) {
+      this.readUrl = this.hdfsUrl;
+    } else {
+      this.readUrl = tempreadUrl;
+    }
   }
 
   public String getRootDir() {
@@ -161,6 +171,13 @@ public class Cluster {
     return dest;
   }
 
+
+  public String getReadFinalDestDirRoot() {
+    String dest = readUrl + File.separator + rootDir + File.separator
+      + "streams" + File.separator;
+    return dest;
+  }
+
   public String getDateTimeDestDir(String category, long commitTime) {
     String dest = category + File.separator
         + getDateAsYYYYMMDDHHMNPath(commitTime);
@@ -229,16 +246,6 @@ public class Cluster {
         + "data");
   }
 
-  public Path getConsumePath(Cluster consumeCluster) {
-    return new Path(getSystemDir() + File.separator + "consumers"
-        + File.separator + consumeCluster.getName());
-  }
-
-  public Path getMirrorConsumePath(Cluster consumeCluster) {
-    return new Path(getSystemDir() + File.separator + "mirrors"
-        + File.separator + consumeCluster.getName());
-  }
-
   public Path getTmpPath() {
     return new Path(getSystemDir() + File.separator + "tmp");
   }
@@ -257,5 +264,22 @@ public class Cluster {
 
   public String getCopyMapperImpl() {
     return this.copyMapperImpl;
+  }
+
+  public String getReadLocalFinalDestDirRoot() {
+    String dest = readUrl + File.separator + rootDir + File.separator
+      + "streams_local" + File.separator;
+    return dest;
+  }
+
+  public String getReadUrl() {
+    return this.readUrl;
+  }
+
+  public String getUnqaulifiedReadUrlFinalDestDirRoot() {
+    Path absolutePath = new Path(readUrl);
+    String dest = File.separator + absolutePath.toUri().getPath() + rootDir
+      + File.separator + "streams" + File.separator;
+    return dest;
   }
 }
