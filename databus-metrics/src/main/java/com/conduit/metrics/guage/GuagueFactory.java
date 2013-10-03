@@ -1,6 +1,5 @@
 package com.conduit.metrics.guage;
 
-
 import org.apache.commons.configuration.Configuration;
 
 import com.codahale.metrics.Counter;
@@ -12,34 +11,31 @@ import com.conduit.metrics.guage.met.impl.MetricsGuage;
 
 public class GuagueFactory {
 
-	public static Guage<Long> createLongGuage(MetricsType type, String name, Configuration config, final Long guageValue) {
+	public static Guage createLongGuage(MetricsType type, String name, Configuration config, final Number guageValue) {
 		switch (type) {
-		case Metrics:
+		case CODAHALE:
 			MetricRegistry metrics = (MetricRegistry) config.getProperty("registry");
-
-			metrics.register(MetricRegistry.name("name"), new Gauge<Long>() {
-
-				public Long getValue() {
+			metrics.register(MetricRegistry.name("name"), new Gauge<Number>() {
+				public Number getValue() {
 					return guageValue;
 				}
 
 			});
+			return new MetricsGuage(guageValue);
 
-			return new MetricsGuage<Long>(guageValue);
+		default:
 
+			return new MetricsGuage(guageValue);
 		}
-
-		return new MetricsGuage<Long>(guageValue);
 
 	}
 
 	public static com.conduit.metrics.guage.Counter createCounter(MetricsType type, String name, Configuration config) {
 		switch (type) {
-		case Metrics:
+		case CODAHALE:
 			MetricRegistry metrics = (MetricRegistry) config.getProperty("registry");
 			Counter pendingJobs = metrics.counter(name);
 			return new MetricsCounter(pendingJobs);
-
 		}
 
 		return null;

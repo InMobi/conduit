@@ -6,4 +6,7 @@ public interface Counter {
 	
 	void inc(long inc);
 	void dec(long dec);
+	
+	
+	long getValue();
 }

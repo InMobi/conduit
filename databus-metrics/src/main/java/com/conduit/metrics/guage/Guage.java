@@ -1,7 +1,8 @@
 package com.conduit.metrics.guage;
 
-public interface Guage<T> {
+public interface Guage {
 
-	void setValue(T value);
+	void setValue(Number value);
+	Number getValue();
 
 }

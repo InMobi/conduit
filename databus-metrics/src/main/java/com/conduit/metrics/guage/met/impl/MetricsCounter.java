@@ -2,7 +2,6 @@ package com.conduit.metrics.guage.met.impl;
 
 import com.conduit.metrics.guage.Counter;
 
-
 public class MetricsCounter implements Counter {
 
 	com.codahale.metrics.Counter counter;
@@ -27,6 +26,12 @@ public class MetricsCounter implements Counter {
 
 	public void dec(long dec) {
 		this.counter.dec(dec);
+
+	}
+
+	@Override
+	public long getValue() {
+		return this.counter.getCount();
 
 	}
 

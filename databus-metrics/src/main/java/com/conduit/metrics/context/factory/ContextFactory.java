@@ -15,7 +15,7 @@ public class ContextFactory {
 
 	public static CompositeContext getCompositeContext(MetricsType type,  Configuration config) throws Exception {
 		switch (type) {
-		case Metrics:
+		case CODAHALE:
 			CompositeContext compositeContext = new MetricsCompositeContext(config);
 			return compositeContext;
 		default:
@@ -25,7 +25,7 @@ public class ContextFactory {
 
 	public static ConsoleContext getConsoleContext(MetricsType type,  Configuration config) throws Exception {
 		switch (type) {
-		case Metrics:
+		case CODAHALE:
 			ConsoleContext compositeContext = new MetricsConsoleContext(config);
 			return compositeContext;
 		default:
@@ -35,7 +35,7 @@ public class ContextFactory {
 
 	public static GangliaContext getGangliaContext(MetricsType type,  Configuration config) throws Exception {
 		switch (type) {
-		case Metrics:
+		case CODAHALE:
 			GangliaContext compositeContext = new MetricsGangliaContext(config);
 			return compositeContext;
 		default:

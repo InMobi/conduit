@@ -11,7 +11,7 @@ public class InitializationUtil {
 		MetricsType type = MetricsType.valueOf(metricsImplType);
 		config.setProperty("private.metricsType.impl", type);
 		switch (type) {
-		case Metrics:
+		case CODAHALE:
 			//set and check specific to metrics framework
 			return config;
 		default:
