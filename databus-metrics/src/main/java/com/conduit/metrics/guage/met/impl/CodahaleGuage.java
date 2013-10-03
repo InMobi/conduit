@@ -2,11 +2,11 @@ package com.conduit.metrics.guage.met.impl;
 
 import com.conduit.metrics.guage.Guage;
 
-public class MetricsGuage implements Guage {
+public class CodahaleGuage implements Guage {
 
 	Number value;
 
-	public MetricsGuage(Number value) {
+	public CodahaleGuage(Number value) {
 		this.value = value;
 
 	}

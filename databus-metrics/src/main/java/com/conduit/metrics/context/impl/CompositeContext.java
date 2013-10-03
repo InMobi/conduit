@@ -9,7 +9,13 @@ import com.conduit.metrics.MetricsType;
 import com.conduit.metrics.context.Context;
 import com.conduit.metrics.context.ContextType;
 import com.conduit.metrics.context.factory.ContextFactory;
+import com.conduit.metrics.util.ConfigNames;
 
+/**
+ * Should be able to output to multiple outlets eg Console/Ganglia 
+ * @author samar.kumar
+ *
+ */
 public abstract class CompositeContext implements Context {
 
 	List<Context> listOfContext = new ArrayList<Context>();
@@ -21,15 +27,14 @@ public abstract class CompositeContext implements Context {
 		this.config = config;
 
 		@SuppressWarnings("unchecked")
-		List<ContextType> contextTypeList = (List<ContextType>) this.config.getProperty("contexts.type");
-		MetricsType metricsType = (MetricsType) this.config.getProperty("metricsimpl.type");
+		List<ContextType> contextTypeList = (List<ContextType>) this.config.getProperty(ConfigNames.CONTEXTS_TYPE);
+		MetricsType metricsType = (MetricsType) this.config.getProperty(ConfigNames.METRICS_IMPLTYPE);
 		for (ContextType eachContextType : contextTypeList) {
 			switch (eachContextType) {
 			case CONSOLE:
 				ContextFactory.getConsoleContext(metricsType, config);
 			case GANGLIA:
 				ContextFactory.getGangliaContext(metricsType, config);
-
 			default:
 				throw new RuntimeException("Unknow Context Type found");
 			}

@@ -9,7 +9,9 @@ import com.conduit.metrics.context.factory.ContextFactory;
 import com.conduit.metrics.context.impl.CompositeContext;
 import com.conduit.metrics.guage.Counter;
 import com.conduit.metrics.guage.Guage;
-import com.conduit.metrics.guage.GuagueFactory;
+import com.conduit.metrics.guage.MeasureFactory;
+import com.conduit.metrics.util.ConfigNames;
+import com.conduit.metrics.util.InitializationUtil;
 
 public class MetricsService {
 
@@ -25,7 +27,7 @@ public class MetricsService {
 		this.config = config;
 		counterMap = new HashMap<String, Counter>();
 		guageMap = new HashMap<String, Guage>();
-		
+
 		init(config);
 
 	}
@@ -49,7 +51,7 @@ public class MetricsService {
 	}
 
 	public void addCounter(String name) {
-		Counter memoryCounter = GuagueFactory.createCounter(getType(), name, this.getConfig());
+		Counter memoryCounter = MeasureFactory.createCounter(getType(), name, this.getConfig());
 		if (counterMap.get(name) == null) {
 			counterMap.put(name, memoryCounter);
 		} else {
@@ -58,17 +60,13 @@ public class MetricsService {
 	}
 
 	public void addGuage(String name, Number value) {
-		Guage guage = GuagueFactory.createLongGuage(getType(), name, this.getConfig(), value);
+		Guage guage = MeasureFactory.createLongGuage(getType(), name, this.getConfig(), value);
 		if (guageMap.get(name) == null) {
 			guageMap.put(name, guage);
 		} else {
-			throw new RuntimeException("Counter " + name + " already exisits");
+			throw new RuntimeException("Guage " + name + " already exisits");
 		}
 	}
-	
-	
-	
-	
 
 	public void updateGuage(String name, Number value) {
 		Guage guage = guageMap.get(name);

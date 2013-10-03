@@ -1,22 +1,22 @@
 package com.conduit.metrics.context.met.impl;
 
-
 import org.apache.commons.configuration.Configuration;
 
 import com.codahale.metrics.MetricRegistry;
 import com.conduit.metrics.context.Context;
 import com.conduit.metrics.context.impl.CompositeContext;
+import com.conduit.metrics.util.ConfigNames;
 
-public class MetricsCompositeContext extends CompositeContext {
+public class CodahaleCompositeContext extends CompositeContext {
 
-	public MetricsCompositeContext( Configuration config) throws Exception {
+	public CodahaleCompositeContext(Configuration config) throws Exception {
 		super(config);
 	}
 
 	public void register() throws Exception {
 		MetricRegistry metrics = new MetricRegistry();
-		getConfigMap().addProperty("registry", metrics);
-		
+		getConfigMap().addProperty(ConfigNames.CODAHALE_REGISTRY, metrics);
+
 		for (Context eachContext : this.getListOfContext()) {
 			eachContext.register();
 		}

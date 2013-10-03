@@ -2,11 +2,11 @@ package com.conduit.metrics.guage.met.impl;
 
 import com.conduit.metrics.guage.Counter;
 
-public class MetricsCounter implements Counter {
+public class CodahaleCounter implements Counter {
 
 	com.codahale.metrics.Counter counter;
 
-	public MetricsCounter(com.codahale.metrics.Counter counter) {
+	public CodahaleCounter(com.codahale.metrics.Counter counter) {
 		this.counter = counter;
 	}
 

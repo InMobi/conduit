@@ -1,6 +1,5 @@
 package com.conduit.metrics.context.impl;
 
-
 import org.apache.commons.configuration.Configuration;
 
 import com.conduit.metrics.context.Context;
