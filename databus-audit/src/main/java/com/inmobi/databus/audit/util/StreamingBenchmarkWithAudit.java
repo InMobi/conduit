@@ -4,6 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 
+import org.json.JSONException;
+
 import com.inmobi.databus.audit.query.AuditDbQuery;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.consumer.MessageConsumerFactory;
@@ -185,7 +187,11 @@ public class StreamingBenchmarkWithAudit {
 
       System.out.println("Displaying results for Audit Query: " + auditQuery);
       // display audit query results
-      auditQuery.displayResults();
+      try {
+        auditQuery.displayResults();
+      } catch (JSONException e) {
+        e.printStackTrace();
+      }
 
       // validate that all tiers have received same number of messages equal to
       // maxMessages

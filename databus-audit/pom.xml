@@ -101,7 +101,11 @@
 			<artifactId>metrics-ganglia</artifactId>
 			<version>3.0.0-RC1</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20070829</version>
+                </dependency>
 		<dependency>
 			<groupId>org.hsqldb</groupId>
 			<artifactId>hsqldb</artifactId>
