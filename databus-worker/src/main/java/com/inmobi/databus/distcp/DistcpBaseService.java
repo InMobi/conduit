@@ -70,7 +70,7 @@ public abstract class DistcpBaseService extends AbstractService {
       this.currentCluster = currentCluster;
     else
       this.currentCluster = destCluster;
-    srcFs = FileSystem.get(new URI(srcCluster.getHdfsUrl()),
+    srcFs = FileSystem.get(new URI(srcCluster.getReadUrl()),
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());

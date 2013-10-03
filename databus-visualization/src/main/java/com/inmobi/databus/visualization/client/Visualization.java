@@ -37,22 +37,11 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
-  private String stTime;
-  private String edTime;
   private Map<String, String> clientConfig;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
   public void onModuleLoad() {
-    if (checkParametersNull()) {
-      System.out.println("Loading default settings");
-      String stream = "All";
-      String cluster = "All";
-      String startTime = DateUtils.getPreviousDayString();
-      String endTime = DateUtils.incrementAndGetTimeAsAuditDateFormatString(startTime, 60);
-      replaceUrl(startTime, endTime, stream, cluster);
-    } else {
-      buildStreamsAndClustersList();
-    }
+    buildStreamsAndClustersList();
   }
 
   private boolean checkParametersNull() {
@@ -98,20 +87,24 @@ public class Visualization implements EntryPoint, ClickHandler {
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
-    String startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
-    String endTime = Window.Location.getParameter(ClientConstants.QUERY_TO_TIME);
-    String cluster = Window.Location.getParameter(ClientConstants.QUERY_CLUSTER);
-    String stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
-    String drillDownCluster = Window.Location.getParameter(ClientConstants.GRAPH_CLUSTER);
-    String drillDownStream = Window.Location.getParameter(ClientConstants.GRAPH_STREAM);
-    String selectedTab = Window.Location.getParameter(ClientConstants.SELECTED_TAB);
-    if (startTime != null && endTime != null && cluster != null &&
-        stream != null) {
+    String stream, cluster, startTime, endTime, selectedTab;
+    if (checkParametersNull()) {
+      System.out.println("Loading default settings");
+      stream = "All";
+      cluster = "All";
+      startTime = DateUtils.getPreviousDayString();
+      endTime = DateUtils.incrementAndGetTimeAsAuditDateFormatString(startTime, 60);
+      selectedTab = "1";
+    } else {
       System.out.println("Retrieving parameters from URL");
-      setSelectedParameterValues(startTime, endTime, cluster, stream);
-      sendRequest(startTime, endTime, cluster, stream, drillDownCluster,
-          drillDownStream, selectedTab);
+      startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
+      endTime = Window.Location.getParameter(ClientConstants.QUERY_TO_TIME);
+      cluster = Window.Location.getParameter(ClientConstants.QUERY_CLUSTER);
+      stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
+      selectedTab = Window.Location.getParameter(ClientConstants.SELECTED_TAB);
     }
+    setSelectedParameterValues(startTime, endTime, cluster, stream);
+    sendRequest(startTime, endTime, cluster, stream, selectedTab);
   }
 
   private void setSelectedParameterValues(String stTime, String endTime,
@@ -319,55 +312,33 @@ public class Visualization implements EntryPoint, ClickHandler {
   }
 
   public void onClick(ClickEvent event) {
-    stTime = DateUtils.constructDateString(startTime.getText(),
+    String stTime = DateUtils.constructDateString(startTime.getText(),
         stTimeHour.getItemText(stTimeHour.getSelectedIndex()),
         stTimeMinute.getItemText(stTimeMinute.getSelectedIndex()));
-    edTime = DateUtils.constructDateString(endtime.getText(),
+    String edTime = DateUtils.constructDateString(endtime.getText(),
         edTimeHour.getItemText(edTimeHour.getSelectedIndex()),
         edTimeMinute.getItemText(edTimeMinute.getSelectedIndex()));
-    if (!validateParameters()) {
+    if (!validateParameters(stTime, edTime)) {
       return;
     }
-    replaceUrl(stTime, edTime, streamsList.getItemText(streamsList
-        .getSelectedIndex()), clusterList.getItemText(clusterList.getSelectedIndex()));
+    sendRequest(stTime, edTime, clusterList.getItemText(clusterList
+        .getSelectedIndex()), streamsList.getItemText(streamsList
+        .getSelectedIndex()), null);
   }
 
-  private void replaceUrl(String startTime, String endTime, String stream,
-                          String cluster) {
-    String url = Window.Location.getHref();
-    url = clearPreviousParameter(url);
-    /*
-      For running in GWT developement mode,
-      url = url + "&qstart=" + startTime + "&qend=" + endTime + "&qcluster=" +
-      cluster + "&qstream=" + stream;
-     */
-    url = url + "?qstart=" + startTime + "&qend=" + endTime +
-        "&qcluster=" + cluster + "&qstream=" + stream;
-    System.out.println("Replacing URL after adding selected parameters");
-    Window.Location.replace(url);
-  }
-
-  private String clearPreviousParameter(String url) {
-    String newUrl;
-    /*
-    If running in GWT development mode;
-    int index = url.indexOf("&");
-     */
-    int index = url.indexOf("?");
-    if(index != -1)
-      newUrl = url.substring(0, index);
-    else
-      newUrl = url;
-    return newUrl;
-  }
-
-  public void sendRequest(String stTime, String edTime,
+  public void sendRequest(final String stTime, final String edTime,
                           final String selectedCluster,
                           final String selectedStream,
-                          final String drillDownCluster,
-                          final String drillDownStream,
                           final String selectedTab) {
+    Integer defaultTabId = 1;
+    if(selectedTab != null)
+      defaultTabId =  Integer.parseInt(selectedTab);
+    final Integer selectedTabId = defaultTabId;
+    saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTabId);
     System.out.println("Sending request to load graph");
+    System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
+        ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab " +
+        "selected:"+selectedTabId);
     clearAndShowLoadingSymbol();
     String clientJson = ClientDataHelper.getInstance()
         .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
@@ -379,7 +350,7 @@ public class Visualization implements EntryPoint, ClickHandler {
 
       public void onSuccess(String result) {
         String nodesJson = ClientDataHelper.getInstance()
-            .getJsonStrongFromGraphDataResponse(result);
+            .getJsonStringFromGraphDataResponse(result);
         Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
             .getTierLatencyObjListFromResponse(result);
         if (tierLatencyMap != null) {
@@ -397,26 +368,28 @@ public class Visualization implements EntryPoint, ClickHandler {
             hLatency = -1;
           setTierLatencyValues(pLatency, aLatency, cLatency,hLatency);
         }
-        Integer selectedTabId = 1;
-        if(selectedTab != null)
-          selectedTabId =  Integer.parseInt(selectedTab);
-        drawGraph(nodesJson, selectedCluster, selectedStream,
-            getQueryString(), drillDownCluster, drillDownStream, selectedTabId,
-            Integer.parseInt(clientConfig.get(ClientConstants.PUBLISHER)),
-            Integer.parseInt(clientConfig.get(ClientConstants.AGENT)),
-            Integer.parseInt(clientConfig.get(ClientConstants.VIP)),
-            Integer.parseInt(clientConfig.get(ClientConstants.COLLECTOR)),
-            Integer.parseInt(clientConfig.get(ClientConstants.HDFS)),
-            Float.parseFloat(
-                clientConfig.get(ClientConstants.PERCENTILE_FOR_SLA)),
-            Float.parseFloat(
-                clientConfig.get(ClientConstants.PERCENTAGE_FOR_LOSS)),
-            Float.parseFloat(
-                clientConfig.get(ClientConstants.PERCENTAGE_FOR_WARN)),
+        drawGraph(nodesJson, selectedCluster, selectedStream, stTime, edTime,
+            selectedTabId, Integer.parseInt(clientConfig
+            .get(ClientConstants.PUBLISHER)), Integer.parseInt(clientConfig
+            .get(ClientConstants.AGENT)), Integer.parseInt(clientConfig.get
+            (ClientConstants.VIP)), Integer.parseInt(clientConfig.get
+            (ClientConstants.COLLECTOR)), Integer.parseInt(clientConfig.get
+            (ClientConstants.HDFS)), Float.parseFloat(clientConfig.get
+            (ClientConstants.PERCENTILE_FOR_SLA)),
+            Float.parseFloat(clientConfig.get(ClientConstants
+                .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
+            (ClientConstants.PERCENTAGE_FOR_WARN)),
             Integer.parseInt(clientConfig.get(ClientConstants.LOSS_WARN_THRESHOLD_DIFF)));
       }
     });
   }
+
+  private native void saveHistory(String stTime, String edTime,
+                            String selectedCluster, String selectedStream,
+                            int selectedTab)/*-{
+    $wnd.saveHistory(selectedStream, selectedCluster, selectedTab, stTime,
+    edTime);
+  }-*/;
 
   private native void setTierLatencyValues(int publisherLatency,
                                            int agentLatency,
@@ -426,7 +399,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     collectorLatency, hdfsLatency);
   }-*/;
 
-  private boolean validateParameters() {
+  private boolean validateParameters(String stTime, String edTime) {
     if (!DateUtils.checkTimeStringFormat(stTime)) {
       Window.alert("Incorrect format of startTime");
       return false;
@@ -457,52 +430,21 @@ public class Visualization implements EntryPoint, ClickHandler {
     return true;
   }
 
-  private String getQueryString() {
-    String gstream = Window.Location.getParameter(ClientConstants.GRAPH_STREAM);
-    String gcluster = Window.Location.getParameter(ClientConstants.GRAPH_CLUSTER);
-    if (gstream == null && gcluster == null) {
-      return Window.Location.getQueryString();
-    } else {
-      return removeGraphParametersFromUrlQueryString();
-    }
-  }
-
-  private String removeGraphParametersFromUrlQueryString() {
-    String queryString = Window.Location.getQueryString();
-    String[] parameters = queryString.split("&");
-    String finalQueryString = "?";
-    for (String parameter : parameters) {
-      if (parameter.charAt(0) == '?') {
-        parameter = parameter.substring(1);
-      }
-      String[] val = parameter.split("=");
-      if (!val[0].equals(ClientConstants.GRAPH_CLUSTER) && !val[0].equals(ClientConstants.GRAPH_STREAM)) {
-        if (finalQueryString.length() == 1) {
-          finalQueryString += parameter;
-        } else {
-          finalQueryString += "&" + parameter;
-        }
-      }
-    }
-    return finalQueryString;
-  }
-
   private native void clearAndShowLoadingSymbol()/*-{
     $wnd.clearSvgAndAddLoadSymbol();
   }-*/;
 
   private native void drawGraph(String result, String cluster, String stream,
-                                String queryString, String drillDownCluster,
-                                String drillDownStream,
-                                Integer selectedTabID, Integer publisherSla,
-                                Integer agentSla,
+                                String start, String end,
+                                Integer selectedTabID,
+                                Integer publisherSla, Integer agentSla,
                                 Integer vipSla, Integer collectorSla,
                                 Integer hdfsSla, Float percentileForSla,
                                 Float percentageForLoss,
                                 Float percentageForWarn,
                                 Integer lossWarnThresholdDiff)/*-{
-    $wnd.drawGraph(result, cluster, stream, queryString, drillDownCluster,
-    drillDownStream, selectedTabID, publisherSla, agentSla, vipSla,
+    $wnd.drawGraph(result, cluster, stream, start, end, selectedTabID,
+    publisherSla, agentSla, vipSla,
     collectorSla, hdfsSla, percentileForSla, percentageForLoss,
     percentageForWarn, lossWarnThresholdDiff);
   }-*/;

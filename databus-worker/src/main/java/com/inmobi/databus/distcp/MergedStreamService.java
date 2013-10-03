@@ -74,6 +74,9 @@ public class MergedStreamService extends DistcpBaseService {
 
       Path tmpOut = getDistCpTargetPath();
       // CleanuptmpOut before every run
+      // the dest is a misnomer here. The service runs on the destination, so
+      //all the meaning of dest is actually local cluster.
+
       if (getDestFs().exists(tmpOut))
         getDestFs().delete(tmpOut, true);
       if (!getDestFs().mkdirs(tmpOut)) {
@@ -89,13 +92,13 @@ public class MergedStreamService extends DistcpBaseService {
       Map<String, FileStatus> fileListingMap = getDistCPInputFile();
       if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
-            + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+            + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
         finalizeCheckPoints();
         return;
       }
       LOG.info("Starting a distcp pull from Cluster ["
-          + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+          + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
           + getDestCluster().getHdfsUrl() + "] " + " Path ["
           + tmpOut.toString() + "]");
 
@@ -212,7 +215,7 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   protected Path getInputPath() throws IOException {
-    String finalDestDir = getSrcCluster().getLocalFinalDestDirRoot();
+    String finalDestDir = getSrcCluster().getReadLocalFinalDestDirRoot();
     return new Path(finalDestDir);
 
   }
@@ -328,7 +331,7 @@ public class MergedStreamService extends DistcpBaseService {
       }
       // adding one minute to the found path to get the starting directory
       Path streamLevelLocalDir = new Path(getSrcCluster()
-          .getLocalFinalDestDirRoot() + stream);
+          .getReadLocalFinalDestDirRoot() + stream);
       Date date = CalendarHelper.getDateFromStreamDir(streamLevelLocalDir,
           lastLocalPathOnSrc);
       lastLocalPathOnSrc = CalendarHelper.getNextMinutePathFromDate(date,

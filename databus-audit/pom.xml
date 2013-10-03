@@ -76,6 +76,11 @@
 	<packaging>jar</packaging>
 
 	<dependencies>
+    <dependency>
+      <groupId>com.inmobi.databus</groupId>
+      <artifactId>databus-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
@@ -219,6 +224,6 @@
   </build>
 
 	<properties>
-		<messaging-client-version>3.2.2</messaging-client-version>
+		<messaging-client-version>4.0.1</messaging-client-version>
 	</properties>
 </project>

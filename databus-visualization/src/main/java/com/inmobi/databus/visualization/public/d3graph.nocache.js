@@ -9,7 +9,7 @@ var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A",
 var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, percentileForSla,
   percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
 var publisherLatency, agentLatency, collectorLatency, hdfsLatency;
-var qStream, qCluster;
+var qStream, qCluster, qstart, qend;
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -1233,33 +1233,27 @@ function clearPreviousGraph() {
   d3.select("#graphsvg").remove();
 }
 
-function saveHistory(streamName, clusterName, selectedTabID) {
-  var History = window.History;
+function saveHistory(streamName, clusterName, selectedTabID, start, end) {
+	if (start == undefined || end == undefined) {
+		start = qstart;
+		end = qend;
+	}
+	/*console.log('Saving history with steam:'+streamName+', cluster:'+clusterName+', selected tab:'+selectedTabID+', start time:'+start+' and end time:'+end);
+  */var History = window.History;
   if (History.enabled) {
-    if (streamName == undefined && clusterName == undefined) {
       var selectedTab = selectedTabID.toString();
       History.pushState({
-          gstream: streamName,
-          gcluster: clusterName,
+          qstream: streamName,
+          qcluster: clusterName,
           selectedTab: selectedTab
-        }, "Databus Visualization", queryString +
-        "&gstream=all&gcluster=all&selectedTab=" + selectedTabID);
-    } else {
-      var selectedTab = selectedTabID.toString();
-      History.pushState({
-          gstream: streamName,
-          gcluster: clusterName,
-          selectedTab: selectedTab
-        }, "Databus Visualization", queryString + "&gstream=" +
-        streamName + "&gcluster=" + clusterName + "&selectedTab=" +
+        }, "Databus Visualization", "?qstart="+ start + "&qend=" + end + "&qstream=" +
+        streamName + "&qcluster=" + clusterName + "&selectedTab=" +
         selectedTabID);
-    }
   } else {
     console.log("History not enabled");
   }
   History.Adapter.bind(window, 'statechange', function () {
-    loadGraph(History.getState().data.gstream, History.getState().data.gcluster,
-      History.getState().data.selectedTab);
+    loadGraph(History.getState().data.qstream, History.getState().data.qcluster, History.getState().data.selectedTab);
   });
 }
 
@@ -1533,9 +1527,6 @@ function loadGraph(streamName, clusterName, selectedTabID) {
             div.transition()
               .duration(200)
               .style("opacity", .9);
-            /*
-
-                  div.html(n.name + "<br/>" + n.aggregatemessagesreceived)*/
             div.html(n.name)
               .style("left", (
                 d3.event.pageX) + "px")
@@ -1562,10 +1553,9 @@ function loadGraph(streamName, clusterName, selectedTabID) {
   addSummaryBox(isCountView, treeList);
 }
 
-function drawGraph(result, cluster, stream, baseQueryString,
-  drillDownCluster, drillDownStream, selectedTab, publisher, agent, vip,
-  collector, hdfs, percentileFrSla, percentageFrLoss, percentageFrWarn,
-  lWThresholdDiff) {
+function drawGraph(result, cluster, stream, start, end,  selectedTab,
+publisher, agent, vip, collector, hdfs, percentileFrSla, percentageFrLoss,
+percentageFrWarn, lWThresholdDiff) {
 
   publisherSla = publisher;
   agentSla = agent;
@@ -1577,20 +1567,17 @@ function drawGraph(result, cluster, stream, baseQueryString,
   percentageForWarn = percentageFrWarn;
   lossWarnThresholdDiff = lWThresholdDiff;
   document.getElementById("tabs").style.display = "block";
-  queryString = baseQueryString;
   qStream = stream;
   qCluster = cluster;
+  qstart = start;
+  qend = end;
   jsonresponse = JSON.parse(result);
   while (fullTreeList.length > 0) {
     fullTreeList.pop();
   }
   clearHistory();
   buildNodeList();
-  if (drillDownCluster != null && drillDownStream != null) {
-    tabSelected(selectedTab, drillDownStream, drillDownCluster);
-  } else {
-    tabSelected(selectedTab, stream, cluster);
-  }
+  loadGraph(stream, cluster, selectedTab);
 }
 
 function clearSvgAndAddLoadSymbol() {

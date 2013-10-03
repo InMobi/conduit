@@ -213,6 +213,21 @@ public class TestAuditDBQuery extends AuditDBUtil {
           formatter.format(fromDate), filterString, groupByString, null);
       query.execute();
       Assert.assertEquals(3, query.getTupleSet().size());
+
+      // filter on more than one option for a column
+      filterString = Column.HOSTNAME + "=" + tuple3.getHostname() + "|"
+          + tuple4.getHostname();
+      query = new AuditDbQuery(formatter.format(toDate),
+          formatter.format(fromDate), filterString, groupByString, null);
+      query.execute();
+      Assert.assertEquals(3, query.getTupleSet().size());
+
+      filterString = Column.HOSTNAME + "=" + tuple3.getHostname() + "|"
+          + tuple4.getHostname() + "," + "" + Column.TOPIC + "=" + tuple4.getTopic();
+      query = new AuditDbQuery(formatter.format(toDate),
+          formatter.format(fromDate), filterString, groupByString, null);
+      query.execute();
+      Assert.assertEquals(2, query.getTupleSet().size());
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -262,9 +263,11 @@ public class AuditDBHelper {
       preparedstatement.setLong(index++, toDate.getTime());
       if (filter.getFilters() != null) {
         for (Column column : Column.values()) {
-          String value = filter.getFilters().get(column);
-          if (value != null && !value.isEmpty()) {
-            preparedstatement.setString(index++, value);
+          List<String> values = filter.getFilters().get(column);
+          if (values != null && !values.isEmpty()) {
+            for (String value : values) {
+              preparedstatement.setString(index++, value);
+            }
           }
         }
       }
@@ -328,9 +331,13 @@ public class AuditDBHelper {
     }
     if (filter.getFilters() != null) {
       for (Column column : Column.values()) {
-        String value = filter.getFilters().get(column);
-        if (value != null && !value.isEmpty()) {
-          whereString += " and " + column.toString() + " = ?";
+        List<String> values = filter.getFilters().get(column);
+        if (values != null && !values.isEmpty()) {
+          whereString += " and (" + column.toString() + " = ?";
+          for (int i = 1; i < values.size(); i++) {
+            whereString += " or " + column.toString() + " = ?";
+          }
+          whereString += ")";
         }
       }
     }

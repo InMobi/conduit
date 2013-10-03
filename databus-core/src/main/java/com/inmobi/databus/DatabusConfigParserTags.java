@@ -18,4 +18,5 @@ public interface DatabusConfigParserTags {
   public static final String HDFS_URL = "hdfsurl";
   public static final String JT_URL = "jturl";
   public static final String COPYMAPPER_IMPL="copyMapperClass";
+  String CLUSTER_READ_URL="readUrl";
 }
