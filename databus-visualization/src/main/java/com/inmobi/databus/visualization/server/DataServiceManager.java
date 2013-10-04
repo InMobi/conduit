@@ -60,7 +60,7 @@ public class DataServiceManager {
         DatabusConfigParser parser = new DatabusConfigParser(fullPath);
         dataBusConfig.add(parser.getConfig());
       } catch (Exception e) {
-        e.printStackTrace();
+        LOG.error("Exception while intializing DatabusConfigParser: ", e);
       }
     }
   }
@@ -105,10 +105,14 @@ public class DataServiceManager {
     try {
       dbQuery.execute();
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Exception while executing query: ", e);
     }
     LOG.info("Audit query: " + dbQuery.toString());
-    dbQuery.displayResults();
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
     Set<Tuple> tupleSet = dbQuery.getTupleSet();
     Set<Float> percentileSet = dbQuery.getPercentileSet();
     Map<Tuple, Map<Float, Integer>> tuplesPercentileMap =
@@ -204,10 +208,14 @@ public class DataServiceManager {
     try {
       dbQuery.execute();
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Exception while executing query: ", e);
     }
     LOG.info("Audit query: " + dbQuery.toString());
-    dbQuery.displayResults();
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
     return dbQuery.getPercentile();
   }
 
