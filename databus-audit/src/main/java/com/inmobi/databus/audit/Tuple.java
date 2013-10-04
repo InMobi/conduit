@@ -132,12 +132,17 @@ public class Tuple {
     setReceived();
   }
 
-  public void setGroupBy(GroupBy groupBy) {
+  public Map<Column, String> getTupleKey() {
     Map<Column, String> values = new HashMap<Column, String>();
     values.put(Column.HOSTNAME, hostname);
     values.put(Column.TIER, tier);
     values.put(Column.TOPIC, topic);
     values.put(Column.CLUSTER, cluster);
+    return values;
+  }
+
+  public void setGroupBy(GroupBy groupBy) {
+    Map<Column, String> values = getTupleKey();
     this.group = groupBy.getGroup(values);
     isGroupBySet = true;
   }

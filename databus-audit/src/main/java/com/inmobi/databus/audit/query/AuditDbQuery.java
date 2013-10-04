@@ -17,6 +17,10 @@ import java.util.TreeSet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 import com.inmobi.databus.audit.AuditStats;
 import com.inmobi.databus.audit.Column;
@@ -237,21 +241,16 @@ public class AuditDbQuery {
         + "percentiles=" + percentileString + "]";
   }
 
-  public void displayResults() {
-    StringBuffer results = new StringBuffer();
-    results.append("Group \t\t\tReceived\t\t\t<Percentile, Latency>\n");
+  public void displayResults() throws JSONException {
+    JSONArray results = new JSONArray();
     for (Tuple tuple : tupleSet) {
-      results.append(tuple.getGroup() + "\t\t");
-      results.append(received.get(tuple.getGroup()) + "\t\t");
+      JSONObject tupleObj = new JSONObject(tuple.getTupleKey());
+      tupleObj.put("Received", received.get(tuple.getGroup()));
       Map<Float, Integer> percentileMap = percentile.get(tuple);
       if (percentileMap != null) {
-        for (Map.Entry<Float, Integer> percentileEntry : percentileMap
-            .entrySet()) {
-          results.append("<" + percentileEntry.getKey() + ", ");
-          results.append(percentileEntry.getValue() + ">\t");
-        }
+        tupleObj.put("Latencies", percentileMap);
       }
-      results.append("\n");
+      results.put(tupleObj);
     }
     System.out.println(results);
   }
