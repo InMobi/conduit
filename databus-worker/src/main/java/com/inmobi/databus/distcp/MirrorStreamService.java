@@ -122,8 +122,8 @@ public class MirrorStreamService extends DistcpBaseService {
   void doLocalCommit(Map<FileStatus, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
-      LOG.info("Renaming [" + entry.getKey() + "] to [" + entry.getValue()
-          + "]");
+      LOG.info("Renaming [" + entry.getKey().getPath() + "] to ["
+          + entry.getValue() + "]");
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue());
       } else {
@@ -136,9 +136,9 @@ public class MirrorStreamService extends DistcpBaseService {
         if (retriableRename(getDestFs(), entry.getKey().getPath(),
             entry.getValue()) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
-          + "data loss. Partial data replay could happen in next run");
-          throw new Exception("Rename failed from [" + entry.getKey() + "] to "
-          + "[" + entry.getValue() + "]");
+              + "data loss. Partial data replay could happen in next run");
+          throw new Exception("Rename failed from [" + entry.getKey().getPath()
+              + "] to [" + entry.getValue() + "]");
         }
       }
     }
