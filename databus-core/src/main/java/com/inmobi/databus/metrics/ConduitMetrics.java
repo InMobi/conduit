@@ -19,7 +19,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.ganglia.GangliaReporter;
 /**
- * Metrics manager class. Will use codahale metrics as the implementation. Contains functions to register Gauges/Counters start/stop reporters
+ * Metrics manager class. Will use codahale metrics as the implementation. Contains functions to register Gauges/Counters and start/stop reporters
  * @author samar.kumar
  *
  */
@@ -41,6 +41,11 @@ public class ConduitMetrics {
 		registry = new MetricRegistry();
 	}
 
+	/**
+	 * Will create reporters based on config
+	 * @param config
+	 * @throws IOException
+	 */
 	public static void init(Configuration config) throws IOException {
 
 		if (config.getBoolean(GANGLIA, false)) {
@@ -61,6 +66,9 @@ public class ConduitMetrics {
 
 	}
 
+	/**
+	 * Will start all reporters
+	 */
 	public static void startAll() {
 		if (reporterMap.size() == 0) {
 			LOG.error("No reporter registered , nothing to start");
@@ -70,6 +78,9 @@ public class ConduitMetrics {
 		}
 	}
 
+	/**
+	 * Will stop all reporters
+	 */
 	public static void stopAll() {
 
 		if (reporterMap.size() == 0) {
@@ -82,13 +93,19 @@ public class ConduitMetrics {
 
 	}
 
-	public static AbsoluteGuage registerAbsoluteGuage(String name, Number initalValue) {
+	/**
+	 * Create a Gauge where a value can be set by using the AbsoluteGauge methods
+	 * @param name
+	 * @param initalValue
+	 * @return
+	 */
+	public static AbsoluteGauge registerAbsoluteGauge(String name, Number initalValue) {
 		if (registry.getGauges().get(name) != null) {
 			LOG.error("Guange with name " + name + " already exsits");
 			return null;
 		}
 
-		final AbsoluteGuage codahaleguageInst = new AbsoluteGuage(initalValue);
+		final AbsoluteGauge codahaleguageInst = new AbsoluteGauge(initalValue);
 		Gauge<Number> guage = new Gauge<Number>() {
 			public Number getValue() {
 				return codahaleguageInst.getValue();
@@ -101,8 +118,11 @@ public class ConduitMetrics {
 
 	}
 
+	/*
+	 * Register a codahale.metrics type Gauge. 
+	 */
 	@SuppressWarnings("rawtypes")
-	public static Gauge registerGuage(String name, Gauge gaugeInst) {
+	public static Gauge registerGauge(String name, Gauge gaugeInst) {
 		if (registry.getGauges().get(name) != null) {
 			LOG.error("Guange with name " + name + " already exsits");
 			return null;
@@ -113,6 +133,11 @@ public class ConduitMetrics {
 
 	}
 
+	/**
+	 * Register a counter 
+	 * @param name
+	 * @return
+	 */
 	public static Counter registerCounter(String name) {
 		if (registry.getCounters().get(name) != null) {
 			LOG.error("Counter with name " + name + " already exsits");

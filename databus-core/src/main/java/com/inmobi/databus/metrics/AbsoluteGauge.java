@@ -1,10 +1,13 @@
 package com.inmobi.databus.metrics;
 
-public class AbsoluteGuage {
+/*
+ * A Gauge which can set absolute values of a metric. 
+ */
+public class AbsoluteGauge {
 
 	Number value;
 
-	public AbsoluteGuage(Number value) {
+	public AbsoluteGauge(Number value) {
 		this.value = value;
 
 	}
