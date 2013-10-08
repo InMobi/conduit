@@ -244,7 +244,7 @@ public class MergeCheckpointTest {
         .getFinalDestDirRoot(), "test1"));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
-    assert (results.size() == 8);
+    assert (results.size() == (8 + getNumOfPublishMissingPaths(results)));
     Collections.sort(results, new DatePathComparator());
     assert (results.get(0).getPath().equals(fileToBeCreated));
     assert (!results.get(0).getPath().getParent()
@@ -299,12 +299,11 @@ public class MergeCheckpointTest {
 
     launchMergeServices(config);
 
-
     FileStatus pathToBeListed = remoteFs.getFileStatus(new Path(destnCluster1
         .getFinalDestDirRoot()));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
-    assert (results.size() == 8);
+    assert (results.size() == (8 + getNumOfPublishMissingPaths(results)));
     Collections.sort(results, new DatePathComparator());
     assert (!results.get(1).getPath().getParent()
         .equals(results.get(2).getPath().getParent()));// second path and other
@@ -345,8 +344,7 @@ public class MergeCheckpointTest {
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs,
         remoteFs.getFileStatus(pathToBeListed), results);
-
-    assert (results.size() == 4);
+    assert (results.size() == (4 + getNumOfPublishMissingPaths(results)));
 
     byte[] value = provider.read(checkPointKey1);
     String checkPointString = new String(value);
@@ -390,7 +388,17 @@ public class MergeCheckpointTest {
         + "test1");
     FileStatus fToBeListed = remoteFs1.getFileStatus(pathToBeListed);
     DistcpBaseService.createListing(remoteFs1, fToBeListed, results);
-    assert (results.size() == 1);
+    assert (results.size() == (1 + getNumOfPublishMissingPaths(results)));
 
+  }
+
+  private int getNumOfPublishMissingPaths(List<FileStatus> results) {
+    int numOfPublishMissingPtahs = 0;
+    for (FileStatus fileSt : results) {
+      if (fileSt.isDir()) {
+        numOfPublishMissingPtahs++;
+      }
+    }
+    return numOfPublishMissingPtahs;
   }
 }
