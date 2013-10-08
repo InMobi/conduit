@@ -1,7 +1,6 @@
 package com.inmobi.databus.metrics;
 
-
-public class AbsoluteGuage  {
+public class AbsoluteGuage {
 
 	Number value;
 
@@ -11,12 +10,10 @@ public class AbsoluteGuage  {
 	}
 
 	public void setValue(Number value) {
-
 		this.value = value;
 	};
 
 	public Number getValue() {
-
 		return this.value;
 	}
 }

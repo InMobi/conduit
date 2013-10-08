@@ -15,17 +15,18 @@ public class ConduitMetrics {
 	}
 
 	public static void init(Configuration config) throws IOException {
-		ReporterManager.register(registry, config);
-		ReporterManager.start();
+		ReporterManager.create(registry, config);
+		ReporterManager.startAll();
 
 	}
 
 	public static void stop() {
+		ReporterManager.stopAll();
 
 	}
 
-	public static AbsoluteGuage createAbsoluteGuage(String name, Number initalValue) {
-		if (registry.getGauges().get("name") != null) {
+	public static AbsoluteGuage registerAbsoluteGuage(String name, Number initalValue) {
+		if (registry.getGauges().get(name) != null) {
 			throw new RuntimeException("Guange with name " + name + " already exsits");
 		}
 
@@ -43,17 +44,17 @@ public class ConduitMetrics {
 
 	}
 
-	public static void createGuage(String name, Gauge guageInst) {
-		if (registry.getGauges().get("name") != null) {
+	public static void registerGuage(String name, @SuppressWarnings("rawtypes") Gauge gaugeInst) {
+		if (registry.getGauges().get(name) != null) {
 			throw new RuntimeException("Guange with name " + name + " already exsits");
 		}
 
-		registry.register(name, guageInst);
+		registry.register(name, gaugeInst);
 
 	}
 
-	public static Counter createCounter(String name) {
-		if (registry.getCounters().get("name") != null) {
+	public static Counter registerCounter(String name) {
+		if (registry.getCounters().get(name) != null) {
 			throw new RuntimeException("Counter with name " + name + " already exsits");
 		}
 		return registry.counter(name);
