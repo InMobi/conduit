@@ -13,15 +13,9 @@
     <name>Databus Visualization</name>
 
     <properties>
-        <!-- Convenience property to set the GWT version -->
         <gwtVersion>2.5.1</gwtVersion>
-        <!-- GWT needs at least java 1.5 -->
         <webappDirectory>${project.build.directory}/${project.build.finalName}
         </webappDirectory>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <messaging.client.project.version>3.0.1-SNAPSHOT
-        </messaging.client.project.version>
-        <databus.version>${project.version}</databus.version>
     </properties>
 
     <repositories>
@@ -83,11 +77,6 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-core</artifactId>
             <scope>provided</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <scope>provided</scope>
             <exclusions>
               <exclusion>
                 <groupId>org.hsqldb</groupId>
@@ -102,6 +91,26 @@
                 <groupId>org.eclipse.jdt</groupId>
               </exclusion>
             </exclusions>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <scope>provided</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <scope>provided</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-test</artifactId>
+            <scope>provided</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-minicluster</artifactId>
+            <scope>provided</scope>
           </dependency>
         </dependencies>
       </profile>
