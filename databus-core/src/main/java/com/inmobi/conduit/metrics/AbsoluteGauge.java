@@ -1,4 +1,4 @@
-package com.inmobi.databus.metrics;
+package com.inmobi.conduit.metrics;
 
 /*
  * A Gauge which can set absolute values of a metric. 

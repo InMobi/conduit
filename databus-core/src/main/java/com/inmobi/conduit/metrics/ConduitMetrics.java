@@ -1,4 +1,4 @@
-package com.inmobi.databus.metrics;
+package com.inmobi.conduit.metrics;
 
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
@@ -101,20 +101,20 @@ public class ConduitMetrics {
 	 */
 	public static AbsoluteGauge registerAbsoluteGauge(String name, Number initalValue) {
 		if (registry.getGauges().get(name) != null) {
-			LOG.error("Guange with name " + name + " already exsits");
+			LOG.error("Gauge with name " + name + " already exsits");
 			return null;
 		}
 
-		final AbsoluteGauge codahaleguageInst = new AbsoluteGauge(initalValue);
-		Gauge<Number> guage = new Gauge<Number>() {
+		final AbsoluteGauge codahalegaugeInst = new AbsoluteGauge(initalValue);
+		Gauge<Number> gauge = new Gauge<Number>() {
 			public Number getValue() {
-				return codahaleguageInst.getValue();
+				return codahalegaugeInst.getValue();
 			}
 		};
 
-		registry.register(name, guage);
+		registry.register(name, gauge);
 
-		return codahaleguageInst;
+		return codahalegaugeInst;
 
 	}
 
@@ -124,7 +124,7 @@ public class ConduitMetrics {
 	@SuppressWarnings("rawtypes")
 	public static Gauge registerGauge(String name, Gauge gaugeInst) {
 		if (registry.getGauges().get(name) != null) {
-			LOG.error("Guange with name " + name + " already exsits");
+			LOG.error("Gauge with name " + name + " already exsits");
 			return null;
 
 		}
