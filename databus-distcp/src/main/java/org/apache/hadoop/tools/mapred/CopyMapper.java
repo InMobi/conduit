@@ -238,9 +238,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
 
         if (relativePath.depth() > 2) {
           // path is for mirror service and is of format
-          // /databus/streams/rr/2013/09/12
+          // /databus/streams/<streamName>/2013/09/12
           Path tmpPath = relativePath;
-          while (tmpPath.depth() != 3) {
+          while (!tmpPath.getParent().getName().equals("streams")) {
             tmpPath = tmpPath.getParent();
           }
           streamName = tmpPath.getName();

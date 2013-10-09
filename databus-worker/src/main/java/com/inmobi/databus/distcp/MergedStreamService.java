@@ -393,7 +393,7 @@ public class MergedStreamService extends DistcpBaseService {
 
   /*
    * srcPath is the FileStatus of minute directory in streams_local directory
-   * eg: /databus/streams_local/adroit_report_obj_ua2/2013/09/28/15/04
+   * eg: /databus/streams_local/<streamName>/2013/09/28/15/04
    */
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {

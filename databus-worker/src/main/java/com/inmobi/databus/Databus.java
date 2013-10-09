@@ -235,8 +235,9 @@ for (String remote : mirroredRemoteClusters) {
   }
   
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,Set<String>  streamsToProcess, MessagePublisher publisher) throws
-      Exception {
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+      Set<String>  streamsToProcess, MessagePublisher publisher)
+          throws Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
@@ -244,9 +245,9 @@ for (String remote : mirroredRemoteClusters) {
   }
   
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
-      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,Set<String> streamsToProcess,
-      MessagePublisher publisher) throws
-      Exception {
+      Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
+      Set<String> streamsToProcess, MessagePublisher publisher)
+          throws Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
@@ -276,6 +277,7 @@ for (String remote : mirroredRemoteClusters) {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
+    publisher.close();
     LOG.info("Databus Shutdown complete..");
   }
 

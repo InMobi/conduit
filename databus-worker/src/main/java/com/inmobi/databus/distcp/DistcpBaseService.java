@@ -309,9 +309,9 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
 
   /*
    * Find the topic name from path of format
-   * /databus/streams/ifc_ir/2013/10/01/09/17 or
-   * /databus/streams/ifc_ir/2013/10/
-   * 01/09/17/erdc4002.grid.lhr1.inmobi.com-ifc_ir-2013-10-01-09-13_00000.gz
+   * /databus/streams/<streamName>/2013/10/01/09/17 or
+   * /databus/streams/<streamName>/2013/10/
+   * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
    */
   protected String getTopicNameFromDestnPath(Path destnPath) {
     String destnPathAsString =destnPath.toString();

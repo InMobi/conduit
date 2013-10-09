@@ -159,7 +159,7 @@ public class MirrorStreamService extends DistcpBaseService {
      * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/ After
      * distcp paths inside tmpOut would be eg:
      *
-     * /databus/system/distcp_mirror_ua1_uj1
+     * /databus/system/distcp_mirror_<srcCluster>_<destCluster>
      * /databus/streams/<streamName>/2012/1/13/15/7/
      * <hostname>-<streamName>-2012-01-16-07-21_00000.gz
      *

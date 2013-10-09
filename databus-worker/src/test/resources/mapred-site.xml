@@ -10,4 +10,8 @@
   <name>mapred.child.java.opts</name>
   <value>-Xmx200m -Djava.security.krb5.realm= -Djava.security.krb5.kdc=</value>
 </property>
+<property>
+    <name>mapreduce.job.counters.counter.name.max</name>
+    <value>128</value>
+</property>
 </configuration>

@@ -254,7 +254,7 @@ ConfigConstants {
 
   /*
    * file name ending with .gz and starting with name of collector
-   * eg:gsdc3001.red.ua2.inmobi.com-rr-2013-08-03-15-58_00000.gz
+   * eg:<collectorName>-<streamName>-2013-08-03-15-58_00000.gz
    */
 
   private String removeCollectorNameAndExt(String fileName) {
@@ -626,11 +626,10 @@ ConfigConstants {
 
   /*
    * Find the topic name from path of format
-   * /databus/streams_local/ifc_ir/2013/10/01/09/17 or
-   * /databus/streams_local/ifc_ir/2013/10/
-   * 01/09/17/erdc4002.grid.lhr1.inmobi.com-ifc_ir-2013-10-01-09-13_00000.gz
+   * /databus/streams_local/<streamName>/2013/10/
+   * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
    */
-  protected String getTopicNameFromDestnPath(Path destnPath) {
+  public String getTopicNameFromDestnPath(Path destnPath) {
     String destnPathAsString = destnPath.toString();
     String destnDirAsString = new Path(srcCluster.getLocalFinalDestDirRoot())
         .toString();
