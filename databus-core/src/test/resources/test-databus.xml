@@ -23,6 +23,7 @@
     <cluster name="testcluster2" hdfsurl="file:///"
              jturl="local"
              jobqueuename="default"
+             readUrl="webhdfs://"
              >
     </cluster>
 

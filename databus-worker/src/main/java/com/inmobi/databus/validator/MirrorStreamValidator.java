@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -62,8 +63,8 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     validateStartTime(mirrorCluster);
 
     // perform parallel recursive listing of paths in source cluster
-    Path mergedPath = new Path(mergedCluster.getFinalDestDirRoot(), streamName);
-    FileSystem mergedFs = FileSystem.get(mergedCluster.getHadoopConf());
+    Path mergedPath = new Path(mergedCluster.getReadFinalDestDirRoot(), streamName);
+    FileSystem mergedFs = mergedPath.getFileSystem(new Configuration());
     Path startPath = getstartPath(mergedPath);
     Path endPath = getEndPath(mergedPath);
     ParallelRecursiveListing mergeParallelListing = 
@@ -72,7 +73,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
         mergedPath, mergedFs, true);
     
     //find holes in source cluster
-    holesInMerge.addAll(findHoles(mergedStreamFiles, mergedPath, mergedFs));
+    holesInMerge.addAll(findHoles(mergedStreamFiles, mergedPath));
     if (!holesInMerge.isEmpty()) {
       System.out.println("holes in [ " + mergedCluster.getName() + " ] " + holesInMerge);
     } else {
@@ -91,7 +92,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
         mirrorPath, mirrorFs, true);
     
     // find holes in destination cluster
-    holesInMirror.addAll(findHoles(mirrorStreamFiles, mirrorPath, mirrorFs));
+    holesInMirror.addAll(findHoles(mirrorStreamFiles, mirrorPath));
     if (!holesInMirror.isEmpty()) {
       System.out.println("holes in [ " + mirrorCluster.getName() + " ] " + holesInMirror);
     } else {

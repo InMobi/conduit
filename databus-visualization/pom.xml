@@ -13,15 +13,9 @@
     <name>Databus Visualization</name>
 
     <properties>
-        <!-- Convenience property to set the GWT version -->
-        <gwtVersion>2.5.0-rc1</gwtVersion>
-        <!-- GWT needs at least java 1.5 -->
+        <gwtVersion>2.5.1</gwtVersion>
         <webappDirectory>${project.build.directory}/${project.build.finalName}
         </webappDirectory>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <messaging.client.project.version>3.0.1-SNAPSHOT
-        </messaging.client.project.version>
-        <databus.version>${project.version}</databus.version>
     </properties>
 
     <repositories>
@@ -34,6 +28,93 @@
         </repository>
     </repositories>
 
+    <profiles>
+      <!-- added for cdh4 update -->
+      <profile>
+        <id>hadoop-1.0</id>
+        <activation>
+          <property>
+            <name>hadoop.profile</name>
+            <value>1</value>
+          </property>
+          <activeByDefault>true</activeByDefault>
+        </activation>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+              <exclusion>
+                <groupId>org.hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+              </exclusion>
+              <exclusion>
+                <artifactId>core</artifactId>
+                <groupId>org.eclipse.jdt</groupId>
+              </exclusion>
+            </exclusions>
+          </dependency>
+        </dependencies>
+      </profile>
+
+      <profile>
+        <id>hadoop-2.0</id>
+        <activation>
+          <property>
+            <name>hadoop.profile</name>
+            <value>2</value>
+          </property>
+          <activeByDefault>false</activeByDefault>
+        </activation>
+
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <scope>provided</scope>
+            <exclusions>
+              <exclusion>
+                <groupId>org.hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>hsqldb</groupId>
+                <artifactId>hsqldb</artifactId>
+              </exclusion>
+              <exclusion>
+                <artifactId>core</artifactId>
+                <groupId>org.eclipse.jdt</groupId>
+              </exclusion>
+            </exclusions>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <scope>provided</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <scope>provided</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-test</artifactId>
+            <scope>provided</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-minicluster</artifactId>
+            <scope>provided</scope>
+          </dependency>
+        </dependencies>
+      </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
@@ -48,12 +129,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>net.sf.json-lib</groupId>
-            <artifactId>json-lib</artifactId>
-            <version>2.4</version>
-            <classifier>jdk15</classifier>
-        </dependency>
-        <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-servlet</artifactId>
             <version>${gwtVersion}</version>
@@ -66,20 +141,32 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>2.5.0-rc1</version>
-        </dependency>
-        <dependency>
         	<groupId>com.inmobi.databus</groupId>
         	<artifactId>databus-audit</artifactId>
         	<version>${project.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>org.hsqldb</groupId>
+              <artifactId>hsqldb</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>9.1-901.jdbc4</version>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.hsqldb</groupId>
+          <artifactId>hsqldb</artifactId>
+          <version>2.2.9</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.10</version>
         </dependency>
     </dependencies>
 
@@ -93,7 +180,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.5.0-rc1</version>
+                <version>2.5.1</version>
                 <executions>
                     <execution>
                         <goals>

@@ -74,7 +74,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
       this.currentCluster = currentCluster;
     else
       this.currentCluster = destCluster;
-    srcFs = FileSystem.get(new URI(srcCluster.getHdfsUrl()),
+    srcFs = FileSystem.get(new URI(srcCluster.getReadUrl()),
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
