@@ -261,7 +261,7 @@ public class MergedStreamService extends DistcpBaseService {
       if (getDestFs().exists(pathToBeListed)) {
         // TODO decide between removing invalid paths after recursive ls or
         // while ls
-        destnFiles = recursiveListingOfDir(destCluster, pathToBeListed);
+        destnFiles = recursiveListingOfDir(getDestFs(), pathToBeListed);
         filterInvalidPaths(destnFiles, pathToBeListed);
         Collections.sort(destnFiles, new DatePathComparator());
         LOG.debug("File found on destination after sorting for stream" + stream
@@ -272,11 +272,11 @@ public class MergedStreamService extends DistcpBaseService {
           + " on destination Fs");
     }
     Path lastLocalPathOnSrc = null;
-    pathToBeListed = new Path(srcCluster.getLocalFinalDestDirRoot(), stream);
+    pathToBeListed = new Path(srcCluster.getReadLocalFinalDestDirRoot(), stream);
     List<FileStatus> sourceFiles = null;
     try {
       if (getSrcFs().exists(pathToBeListed)) {
-        sourceFiles = recursiveListingOfDir(srcCluster, pathToBeListed);
+        sourceFiles = recursiveListingOfDir(getSrcFs(), pathToBeListed);
         filterInvalidPaths(sourceFiles, pathToBeListed);
         Collections.sort(sourceFiles, new DatePathComparator());
         LOG.debug("File found on source after sorting for stream" + stream
@@ -368,18 +368,17 @@ public class MergedStreamService extends DistcpBaseService {
 
   }
 
-  private List<FileStatus> recursiveListingOfDir(Cluster cluster, Path path) {
+  private List<FileStatus> recursiveListingOfDir(FileSystem currentFs, Path path) {
 
     try {
-      FileSystem currentFs = FileSystem.get(cluster.getHadoopConf());
       FileStatus streamDir = currentFs.getFileStatus(path);
       List<FileStatus> filestatus = new ArrayList<FileStatus>();
       createListing(currentFs, streamDir, filestatus);
       return filestatus;
     } catch (IOException ie) {
       LOG.error(
-          "IOException while doing recursive listing to create checkpoint on cluster "
-              + cluster, ie);
+          "IOException while doing recursive listing to create checkpoint on " +
+            "cluster filesystem" + currentFs.getUri(), ie);
     }
     return null;
 
