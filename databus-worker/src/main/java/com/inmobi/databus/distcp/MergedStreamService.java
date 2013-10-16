@@ -33,6 +33,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -56,6 +57,13 @@ public class MergedStreamService extends DistcpBaseService {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
+    
+    for (String eachStream : streamsToProcess) {
+  		ConduitMetrics.registerCounter("MergedStreamService.retry.checkPoint."+eachStream);
+  		ConduitMetrics.registerCounter("MergedStreamService.retry.mkDir."+eachStream);
+  		ConduitMetrics.registerCounter("MergedStreamService.retry.rename."+eachStream);
+  		ConduitMetrics.registerCounter("MergedStreamService.retry.exist."+eachStream);
+  	}
   }
 
   @Override

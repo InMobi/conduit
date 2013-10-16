@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
@@ -27,6 +28,10 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.codahale.metrics.Counter;
+import com.inmobi.conduit.metrics.AbsoluteGauge;
+import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.utils.CalendarHelper;
 
 public abstract class AbstractService implements Service, Runnable {
@@ -108,6 +113,8 @@ public abstract class AbstractService implements Service, Runnable {
   @Override
   public void run() {
     LOG.info("Starting Service [" + Thread.currentThread().getName() + "]");
+    Counter runtimeCounter = ConduitMetrics.registerCounter(getServiceName()+".runtime."+Thread.currentThread().getName());
+    Counter failureJobCounter = ConduitMetrics.registerCounter(getServiceName()+".failures."+Thread.currentThread().getName());
     while (!stopped && !thread.isInterrupted()) {
       long startTime = System.currentTimeMillis();
       try {
@@ -120,10 +127,16 @@ public abstract class AbstractService implements Service, Runnable {
         if (stopped || thread.isInterrupted())
           return;
       } catch (Exception e) {
+    	if(failureJobCounter!=null){
+    	failureJobCounter.inc();
+    	}
         LOG.warn("Error in run", e);
       }
       long finishTime = System.currentTimeMillis();
       long elapsedTime = finishTime - startTime;
+      if(runtimeCounter!=null){
+      runtimeCounter.inc(elapsedTime);
+      }
       if (elapsedTime >= runIntervalInMsec)
         continue;
       else {
@@ -261,6 +274,8 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception exception = null;
+    String streamName = MetricsUtil.getStreamNameFromTmpPath(src.toString());
+    Counter retriableRenameCounter = ConduitMetrics.getCounter(getServiceName()+".retry.rename."+streamName);
     while (count < numOfRetries) {
       try {
         result = fs.rename(src, dst);
@@ -273,6 +288,9 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
+      if(retriableRenameCounter!=null){
+      retriableRenameCounter.inc();
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -327,6 +345,8 @@ public abstract class AbstractService implements Service, Runnable {
   protected void retriableCheckPoint(CheckpointProvider provider, String key,
       byte[] checkpoint) throws Exception {
     int count = 0;
+    String streamName = MetricsUtil.getSteamNameFromCheckPointKey(key);
+    Counter retriableCheckCounter =ConduitMetrics.getCounter(getServiceName()+".retry.checkPoint."+streamName);
     Exception ex = null;
     while (count < numOfRetries) {
       try {
@@ -340,6 +360,9 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
+      if(retriableCheckCounter!=null){
+		retriableCheckCounter.inc();
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -357,6 +380,8 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception ex = null;
+    String streamName = MetricsUtil.getStreamNameFromMkDirTmpPath(p.toString());
+    Counter retriableMkDirsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.mkDir."+streamName);
     while (count < numOfRetries) {
       try {
         result = fs.mkdirs(p);
@@ -370,6 +395,9 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
+      if(retriableMkDirsCounter!=null){
+      retriableMkDirsCounter.inc();
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -389,6 +417,8 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception ex = null;
+    String streamName = MetricsUtil.getStreamNameFromExistsPath(p.toString());
+    Counter retriableExistsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.exist."+streamName);
     while (count < numOfRetries) {
       try {
         result = fs.exists(p);
@@ -402,6 +432,9 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
+      if(retriableExistsCounter!=null){
+      retriableExistsCounter.inc();
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -428,6 +461,13 @@ public abstract class AbstractService implements Service, Runnable {
         publishMissingPaths(fs, destDir, commitTime, category);
       }
     }
+  }
+  /**
+   * Get the service name from the name
+   */
+  private String getServiceName(){
+	  StringTokenizer st = new StringTokenizer(name, "_");
+	  return st.nextToken();
   }
 
 }

@@ -31,15 +31,20 @@ public class ConduitMetrics {
 
 	private final static MetricRegistry registry= new MetricRegistry();;
 
-	private final static String GANGLIA = "ganglia";
-	private final static String CONSOLE = "console";
-
-	private final static String GANGLIA_SERVERNAME = "ganglia.serverName";
-	private final static String GANGLIA_PORT = "ganglia.port";
+	private final static String GANGLIA = "com.inmobi.databus.metrics.ganglia";
+	private final static String CONSOLE = "com.inmobi.databus.metrics.console";
+	private final static String GANGLIA_SERVERNAME = "com.inmobi.databus.metrics.ganglia.serverName";
+	private final static String GANGLIA_PORT = "com.inmobi.databus.metrics.ganglia.port";
+	private final static String REPORTING_PERIOD = "com.inmobi.databus.metrics.period";
+	private final static String IS_ENABLED_PROPERTY="com.inmobi.databus.metrics.enabled";
+	
 
 	private final static Map<String, ScheduledReporter> reporterMap = new HashMap<String, ScheduledReporter>();
-
-
+	private final static Map<String, Counter> counterCache = new HashMap<String, Counter>();
+	
+	private static boolean isEnabled =false;
+	private static int timeBetweenPolls = 10;
+	
 	/**
 	 * Will create reporters based on config
 	 * 
@@ -47,6 +52,13 @@ public class ConduitMetrics {
 	 * @throws IOException
 	 */
 	public static void init(Properties config) throws IOException {
+		
+		if(config.getProperty(IS_ENABLED_PROPERTY,"false").equalsIgnoreCase("true")){
+			isEnabled=true;
+		}else{
+			return;
+		}
+		timeBetweenPolls = Integer.parseInt(config.getProperty(REPORTING_PERIOD , "10"));
 
 		if (config.getProperty(GANGLIA, "false").equalsIgnoreCase("true")) {
 			final GMetric ganglia = new GMetric(config.getProperty(GANGLIA_SERVERNAME),
@@ -76,23 +88,31 @@ public class ConduitMetrics {
 	 * Will start all reporters
 	 */
 	public static void startAll() {
+		if(!isEnabled){
+			LOG.warn("metrics not enabled");
+			return ;
+		}
 		if (reporterMap.size() == 0) {
-			LOG.error("No reporter registered , nothing to start");
+			LOG.warn("No reporter registered , nothing to start");
+			return;
 		}
 		for (String eachReporterName : reporterMap.keySet()) {
-			reporterMap.get(eachReporterName).start(1, TimeUnit.SECONDS);
+			reporterMap.get(eachReporterName).start(timeBetweenPolls, TimeUnit.SECONDS);
 		}
+		LOG.info("started all reporters");
 	}
 
 	/**
 	 * Will stop all reporters
 	 */
 	public static void stopAll() {
-
+		if(!isEnabled){
+			LOG.warn("metrics not enabled");
+			return ;
+		}
 		if (reporterMap.size() == 0) {
 			LOG.error("No reporter registered , nothing to stop");
 		}
-
 		for (String eachReporterName : reporterMap.keySet()) {
 			reporterMap.get(eachReporterName).stop();
 		}
@@ -108,6 +128,10 @@ public class ConduitMetrics {
 	 * @return
 	 */
 	public static AbsoluteGauge registerAbsoluteGauge(String name, Number initalValue) {
+		if(!isEnabled){
+			LOG.warn("metrics not enabled");
+			return null;
+		}
 		if (registry.getGauges().get(name) != null) {
 			LOG.error("Gauge with name " + name + " already exsits");
 			return null;
@@ -131,6 +155,10 @@ public class ConduitMetrics {
 	 */
 	@SuppressWarnings("rawtypes")
 	public static Gauge registerGauge(String name, Gauge gaugeInst) {
+		if(!isEnabled){
+			LOG.warn("metrics not enabled");
+			return null;
+		}
 		if (registry.getGauges().get(name) != null) {
 			LOG.error("Gauge with name " + name + " already exsits");
 			return null;
@@ -148,11 +176,28 @@ public class ConduitMetrics {
 	 * @return
 	 */
 	public static Counter registerCounter(String name) {
+		if(!isEnabled){
+			LOG.warn("metrics not enabled");
+			return null;
+		}
 		if (registry.getCounters().get(name) != null) {
 			LOG.error("Counter with name " + name + " already exsits");
 			return null;
 		}
-		return registry.counter(name);
+		Counter counterInst = registry.counter(name);
+		counterCache.put(name, counterInst);
+		return counterInst;
+	}
+
+	/**
+	 * Get a counter from the cache
+	 */
+	public static Counter getCounter(String name) {
+		if(!isEnabled){
+			LOG.warn("metrics not enabled");
+			return null;
+		}
+		return counterCache.get(name);
 	}
 
 }

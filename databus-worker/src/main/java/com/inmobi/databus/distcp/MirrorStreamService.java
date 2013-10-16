@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -55,6 +56,13 @@ public class MirrorStreamService extends DistcpBaseService {
     super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
+    
+    for (String eachStream : streamsToProcess) {
+		ConduitMetrics.registerCounter("MirrorStreamService.retry.checkPoint."+eachStream);
+		ConduitMetrics.registerCounter("MirrorStreamService.retry.mkDir."+eachStream);
+		ConduitMetrics.registerCounter("MirrorStreamService.retry.rename."+eachStream);
+		ConduitMetrics.registerCounter("MirrorStreamService.retry.exist."+eachStream);
+	}
   }
 
   @Override

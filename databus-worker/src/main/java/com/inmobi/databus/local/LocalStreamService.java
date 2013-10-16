@@ -45,6 +45,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -99,6 +100,14 @@ ConfigConstants {
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+	
+    //register metrics
+    for (String eachStream : streamsToProcess) {
+		ConduitMetrics.registerCounter("LocalStreamService.retry.checkPoint."+eachStream);
+		ConduitMetrics.registerCounter("LocalStreamService.retry.mkDir."+eachStream);
+		ConduitMetrics.registerCounter("LocalStreamService.retry.rename."+eachStream);
+	}
+
   }
 
 

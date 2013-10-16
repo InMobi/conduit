@@ -35,6 +35,7 @@ import org.apache.log4j.PropertyConfigurator;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.distcp.MirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
@@ -390,6 +391,14 @@ public class Databus implements Service, DatabusConstants {
       if (numRetries != null) {
         System.setProperty(NUM_RETRIES, numRetries);
       }
+      //Init Conduit metrics
+      try {
+		ConduitMetrics.init(prop);
+		ConduitMetrics.startAll();
+      } catch (IOException e) {
+		LOG.error("Exception during initialization of metrics" + e.getMessage());
+	  }
+      
       prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {
@@ -435,6 +444,7 @@ public class Databus implements Service, DatabusConstants {
           try {
             LOG.info("Starting to stop databus...");
             databus.stop();
+            ConduitMetrics.stopAll();
           }
           catch (Exception e) {
             LOG.warn("Error in shutting down databus", e);
