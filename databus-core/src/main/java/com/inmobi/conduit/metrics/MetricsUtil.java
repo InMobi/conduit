@@ -38,12 +38,16 @@ public class MetricsUtil {
 	 * @param path
 	 * @return
 	 */
-	public static String getStreamNameFromMkDirTmpPath(String path) {
+	public static String getStreamNameFromPath(String path) {
 		try {
 			StringTokenizer st = new StringTokenizer(path, "/");
 			List<String> arrayListInst = new LinkedList<String>();
-			while(st.hasMoreTokens()){
-				arrayListInst.add(0, st.nextToken());
+			while (st.hasMoreTokens()) {
+				String token = st.nextToken();
+				//ignore files
+				if (!token.contains(".")) {
+					arrayListInst.add(0, token);
+				}
 			}
 			return arrayListInst.get(5);
 		} catch (Exception ex) {
@@ -80,5 +84,20 @@ public class MetricsUtil {
 			return null;
 		}
 	}
-
+	
+	/**
+	*Get the stream name from the purge path
+	*/
+	public static String getStreamNameFromPurgeDir(String path) {
+		try {
+			StringTokenizer st = new StringTokenizer(path, "/");
+			List<String> arrayListInst = new LinkedList<String>();
+			while (st.hasMoreTokens()) {
+				arrayListInst.add(0, st.nextToken());
+			}
+			return arrayListInst.get(4);
+		} catch (Exception ex) {
+			return null;
+		}
+	}
 }

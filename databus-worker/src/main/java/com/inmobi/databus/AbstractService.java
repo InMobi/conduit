@@ -115,6 +115,9 @@ public abstract class AbstractService implements Service, Runnable {
     LOG.info("Starting Service [" + Thread.currentThread().getName() + "]");
     Counter runtimeCounter = ConduitMetrics.registerCounter(getServiceName()+".runtime."+Thread.currentThread().getName());
     Counter failureJobCounter = ConduitMetrics.registerCounter(getServiceName()+".failures."+Thread.currentThread().getName());
+    if(!"DataPurgerService".equalsIgnoreCase(getServiceName())){
+    	ConduitMetrics.registerCounter(getServiceName()+".commit.time."+Thread.currentThread().getName());
+    }
     while (!stopped && !thread.isInterrupted()) {
       long startTime = System.currentTimeMillis();
       try {
@@ -236,7 +239,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected void publishMissingPaths(FileSystem fs, String destDir,
 	    long commitTime, String categoryName) throws Exception {
-    Set<Path> missingDirectories = new TreeSet<Path>();
+    	Counter missingDirectoryCounter = ConduitMetrics.getCounter(getServiceName()+".emptyDir.create."+categoryName);
 		Long prevRuntime = new Long(-1);
 		if (!prevRuntimeForCategory.containsKey(categoryName)) {
 			LOG.debug("Calculating Previous Runtime from Directory Listing");
@@ -256,6 +259,9 @@ public abstract class AbstractService implements Service, Runnable {
           if (!fs.exists(missingDir)) {
             LOG.debug("Creating Missing Directory [" + missingDir + "]");
             fs.mkdirs(missingDir);
+            if(missingDirectoryCounter != null){
+            	missingDirectoryCounter.inc();
+            }
           }
 					prevRuntime += MILLISECONDS_IN_MINUTE;
 				}
@@ -380,7 +386,7 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception ex = null;
-    String streamName = MetricsUtil.getStreamNameFromMkDirTmpPath(p.toString());
+    String streamName = MetricsUtil.getStreamNameFromPath(p.toString());
     Counter retriableMkDirsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.mkDir."+streamName);
     while (count < numOfRetries) {
       try {

@@ -45,7 +45,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 
+import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -106,6 +108,8 @@ ConfigConstants {
 		ConduitMetrics.registerCounter("LocalStreamService.retry.checkPoint."+eachStream);
 		ConduitMetrics.registerCounter("LocalStreamService.retry.mkDir."+eachStream);
 		ConduitMetrics.registerCounter("LocalStreamService.retry.rename."+eachStream);
+		ConduitMetrics.registerCounter("LocalStreamService.emptyDir.create."+eachStream);
+		ConduitMetrics.registerCounter("LocalStreamService.commitPaths.count."+eachStream);
 	}
 
   }
@@ -228,6 +232,7 @@ ConfigConstants {
 
   private void commit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    long startTime = System.currentTimeMillis();
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
@@ -238,6 +243,15 @@ ConfigConstants {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
+      Counter commitCounter = ConduitMetrics.getCounter("LocalStreamService.commitPaths.count."+MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
+      if(commitCounter!=null){
+    	  commitCounter.inc();
+      }
+    }
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    Counter commitTime = ConduitMetrics.getCounter("LocalStreamService.commit.time." + Thread.currentThread().getName());
+    if(commitTime!=null){
+    	commitTime.inc(elapsedTime);
     }
 
   }

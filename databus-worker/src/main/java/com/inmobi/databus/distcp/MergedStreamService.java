@@ -33,7 +33,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -63,6 +65,8 @@ public class MergedStreamService extends DistcpBaseService {
   		ConduitMetrics.registerCounter("MergedStreamService.retry.mkDir."+eachStream);
   		ConduitMetrics.registerCounter("MergedStreamService.retry.rename."+eachStream);
   		ConduitMetrics.registerCounter("MergedStreamService.retry.exist."+eachStream);
+  		ConduitMetrics.registerCounter("MergedStreamService.emptyDir.create."+eachStream);
+  		ConduitMetrics.registerCounter("MergedStreamService.commitPaths.count."+eachStream);
   	}
   }
 
@@ -209,6 +213,7 @@ public class MergedStreamService extends DistcpBaseService {
 
   private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    long startTime = System.currentTimeMillis();
     FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
@@ -219,6 +224,15 @@ public class MergedStreamService extends DistcpBaseService {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
+      Counter commitCounter = ConduitMetrics.getCounter("MergedStreamService.commitPaths.count."+MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
+      if(commitCounter!=null){
+    	  commitCounter.inc();
+      }
+    }
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    Counter commitTime = ConduitMetrics.getCounter("MergedStreamService.commit.time." + Thread.currentThread().getName());
+    if(commitTime!=null){
+    	commitTime.inc(elapsedTime);
     }
   }
 

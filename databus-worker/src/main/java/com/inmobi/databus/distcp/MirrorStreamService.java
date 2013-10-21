@@ -31,7 +31,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -62,6 +64,7 @@ public class MirrorStreamService extends DistcpBaseService {
 		ConduitMetrics.registerCounter("MirrorStreamService.retry.mkDir."+eachStream);
 		ConduitMetrics.registerCounter("MirrorStreamService.retry.rename."+eachStream);
 		ConduitMetrics.registerCounter("MirrorStreamService.retry.exist."+eachStream);
+		ConduitMetrics.registerCounter("MirrorStreamService.commitPaths.count."+eachStream);
 	}
   }
 
@@ -129,6 +132,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   void doLocalCommit(Map<FileStatus, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    long startTime = System.currentTimeMillis();
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey().getPath() + "] to ["
           + entry.getValue() + "]");
@@ -149,6 +153,15 @@ public class MirrorStreamService extends DistcpBaseService {
               + "] to [" + entry.getValue() + "]");
         }
       }
+      Counter commitCounter = ConduitMetrics.getCounter("MirrorStreamService.commitPaths.count."+MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
+      if(commitCounter!=null){
+    	  commitCounter.inc();
+      }
+    }
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    Counter commitTime = ConduitMetrics.getCounter("MirrorStreamService.commit.time." + Thread.currentThread().getName());
+    if(commitTime!=null){
+    	commitTime.inc(elapsedTime);
     }
   }
 
