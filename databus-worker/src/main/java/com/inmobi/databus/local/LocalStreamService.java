@@ -227,7 +227,10 @@ ConfigConstants {
       throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
-    Table<String, Long, Long> parsedCounters= parseCounters(counterGrp);
+    Table<String, Long, Long> parsedCounters = null;
+    if (generateAudit) {
+      parsedCounters = parseCounters(counterGrp);
+    }
 
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
@@ -240,32 +243,12 @@ ConfigConstants {
       }
       if (generateAudit) {
         String filename = entry.getKey().getName();
-        if (filename == null) {
-          LOG.error("Malformed filename: " + entry.getKey().getName());
-          continue;
-        }
         String streamName = getTopicNameFromDestnPath(entry.getValue());
         generateAndPublishAudit(streamName, filename, parsedCounters);
       }
     }
 
   }
-
-
-  /*
-   * file name ending with .gz and starting with name of collector
-   * eg:<collectorName>-<streamName>-2013-08-03-15-58_00000.gz
-   */
-
-  private String removeCollectorNameAndExt(String fileName) {
-    String fileWithoutExt = fileName.substring(0, fileName.length() - 3);
-    int firstIndex = fileWithoutExt.indexOf(TOPIC_SEPARATOR_FILENAME);
-    if (firstIndex == -1)
-      return null;
-    return fileWithoutExt.substring(firstIndex + 1);
-
-  }
-
 
   private long createMRInput(Path inputPath,
       Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
@@ -528,11 +511,6 @@ ConfigConstants {
 
   private String getCategoryFromSrcPath(Path src) {
     return src.getParent().getParent().getName();
-  }
-
-  private String getCategoryFromDestPath(Path dest) {
-    return dest.getParent().getParent().getParent().getParent().getParent()
-        .getParent().getName();
   }
 
   private Path getCategoryJobOutTmpPath(String category) {
