@@ -48,4 +48,7 @@ message ClientConfiguration {
 	optional string maxStartTime = 9;
 	optional string maxTimeRangeInt = 10;
 	optional string warnLossThresholdDiff = 11;
+	optional string localSla = 12;
+	optional string mergeSla = 13;
+	optional string mirrorSla = 14;
 }

@@ -33,6 +33,9 @@ public class VisualizationProperties {
       propMap.put(ServerConstants.COLLECTOR_SLA, p.get("collector.sla")
           .toString());
       propMap.put(ServerConstants.HDFS_SLA, p.get("hdfs.sla").toString());
+      propMap.put(ServerConstants.LOCAL_SLA, p.get("local.sla").toString());
+      propMap.put(ServerConstants.MERGE_SLA, p.get("merge.sla").toString());
+      propMap.put(ServerConstants.MIRROR_SLA, p.get("mirror.sla").toString());
       propMap.put(ServerConstants.PERCENTILE_FOR_SLA,
           p.get("percentile.for.sla").toString());
       propMap.put(ServerConstants.PERCENTAGE_FOR_LOSS,
