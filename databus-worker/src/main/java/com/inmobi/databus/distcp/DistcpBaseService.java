@@ -54,7 +54,6 @@ public abstract class DistcpBaseService extends AbstractService {
   protected final Cluster currentCluster;
   private final FileSystem srcFs;
   private final FileSystem destFs;
-  protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
   protected final CheckpointProvider provider;
   protected Map<String, Path> checkPointPaths = new HashMap<String, Path>();
   private static final int DEFAULT_NUM_DIR_PER_DISTCP_STREAM = 30;
@@ -74,6 +73,7 @@ public abstract class DistcpBaseService extends AbstractService {
       this.currentCluster = currentCluster;
     else
       this.currentCluster = destCluster;
+    //always return the HDFS read for the src cluster
     srcFs = FileSystem.get(new URI(srcCluster.getReadUrl()),
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
@@ -112,7 +112,7 @@ public abstract class DistcpBaseService extends AbstractService {
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
     conf.set("mapred.job.name", serviceName);
-    
+
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
