@@ -52,6 +52,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.publisher.MessagePublisher;
 
 
@@ -269,14 +270,11 @@ ConfigConstants {
       Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
-        if (out == null) {
-          out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-              inputPath, Text.class, entry.getKey().getClass());
-        }
-        out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
+        FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
+        out.append(new Text(entry.getValue()), status);
+
         // Create a sync point after each entry. This will ensure that SequenceFile
         // Reader can work at file entry level granularity, given that SequenceFile
-
         // Reader reads from the starting of sync point.
         out.sync();
 
