@@ -49,7 +49,7 @@ public class DatabusTest extends TestMiniClusterUtil {
     @Override
     protected LocalStreamService getLocalStreamService(DatabusConfig config,
         Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess,
-        MessagePublisher publisher) throws IOException {
+        MessagePublisher publisher, String hostName) throws IOException {
       return new TestLocalStreamService(config, cluster, currentCluster,
           new FSCheckpointProvider(cluster.getCheckpointDir()),
           streamsToProcess, publisher);
@@ -58,7 +58,7 @@ public class DatabusTest extends TestMiniClusterUtil {
     @Override
     protected MergedStreamService getMergedStreamService(DatabusConfig config,
         Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-        Set<String> streamsToProcess, MessagePublisher publisher)
+        Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
         throws Exception {
 
       return new TestMergedStreamService(config, srcCluster, dstCluster,
@@ -68,7 +68,7 @@ public class DatabusTest extends TestMiniClusterUtil {
     @Override
     protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
         Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-        Set<String> streamsToProcess, MessagePublisher publisher)
+        Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
         throws Exception {
       return new TestMirrorStreamService(config, srcCluster, dstCluster,
           currentCluster, streamsToProcess, publisher);

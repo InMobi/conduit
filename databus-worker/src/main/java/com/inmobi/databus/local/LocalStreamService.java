@@ -89,11 +89,11 @@ ConfigConstants {
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
       throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider,streamsToProcess, publisher);
+        provider,streamsToProcess, publisher, hostName);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -148,7 +148,7 @@ ConfigConstants {
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
          counterGrp = job.getCounters().getGroup(
-            CopyMapper.COUNTER_GROUP);
+            DatabusConstants.COUNTER_GROUP);
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
         commit(prepareForCommit(commitTime), true);

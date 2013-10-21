@@ -15,8 +15,6 @@ package com.inmobi.databus;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,7 +36,6 @@ import org.apache.thrift.TSerializer;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.local.CopyMapper;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
@@ -72,22 +69,17 @@ public abstract class AbstractService implements Service, Runnable {
 
 
   public AbstractService(String name, DatabusConfig config,
-      Set<String> streamsToProcess,MessagePublisher publisher) {
-    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, publisher);
+      Set<String> streamsToProcess,MessagePublisher publisher, String hostName) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, publisher, hostName);
   }
 
   public AbstractService(String name, DatabusConfig config,
-      long runIntervalInMsec, Set<String> streamsToProcess,MessagePublisher publisher) {
+      long runIntervalInMsec, Set<String> streamsToProcess,
+      MessagePublisher publisher, String hostName) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
-    try {
-      hostname = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      LOG.error("Unable to find the hostanme of the worker box,audit packets"
-          + " won't contain hostname");
-      hostname = "";
-    }
+    this.hostname = hostName;
     this.publisher = publisher;
     String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
@@ -100,8 +92,8 @@ public abstract class AbstractService implements Service, Runnable {
 
   public AbstractService(String name, DatabusConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher) {
-    this(name, config, runIntervalInMsec, streamsToProcess,publisher);
+      Set<String> streamsToProcess, MessagePublisher publisher, String hostName) {
+    this(name, config, runIntervalInMsec, streamsToProcess, publisher, hostName);
     this.checkpointProvider = provider;
   }
 
@@ -517,8 +509,6 @@ public abstract class AbstractService implements Service, Runnable {
     if (!received.isEmpty()) {
       // create audit message
       AuditMessage auditMsg = createAuditMessage(streamName, received);
-      if (auditMsg == null)
-        return;
       publishAuditMessage(auditMsg);
     } else {
       LOG.info("Not publishing audit packet as counters are empty");

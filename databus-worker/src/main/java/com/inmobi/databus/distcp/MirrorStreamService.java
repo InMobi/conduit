@@ -52,9 +52,11 @@ public class MirrorStreamService extends DistcpBaseService {
 
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster,Cluster currentCluster,CheckpointProvider provider,
-      Set<String> streamsToProcess,MessagePublisher publisher) throws Exception {
+      Set<String> streamsToProcess,MessagePublisher publisher, String hostName)
+          throws Exception {
     super(config, MirrorStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster,provider,streamsToProcess, publisher);
+        destinationCluster, currentCluster,provider,streamsToProcess, publisher,
+        hostName);
   }
 
   @Override

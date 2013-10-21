@@ -64,10 +64,10 @@ public abstract class DistcpBaseService extends AbstractService {
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publisher)
-      throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess,
+      MessagePublisher publisher, String hostName) throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess,publisher);
+        config, streamsToProcess,publisher, hostName);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
