@@ -44,6 +44,7 @@ import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.tools.util.HadoopCompat;
 import org.apache.hadoop.util.StringUtils;
+import com.inmobi.databus.DatabusConstants;
 
 /**
  * Mapper class that executes the DistCp copy operation.
@@ -82,9 +83,6 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
   private Path targetWorkPath = null;
   private long startEpoch;
   private long totalBytesCopied = 0;
-  private static final String AUDIT_ENABLED_KEY = "audit.enabled";
-  public static final String COUNTER_GROUP = "audit";
-  public static final String DELIMITER = "#";
   protected final static char TOPIC_SEPARATOR_FILENAME = '-';
 
   @Override
@@ -185,8 +183,10 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
           throws IOException, InterruptedException {
     Path sourcePath = sourceFileStatus.getPath();
     Map<Long, Long> received = null;
-    if (context.getConfiguration().getBoolean(AUDIT_ENABLED_KEY, true))
+    if (context.getConfiguration().
+        getBoolean(DatabusConstants.AUDIT_ENABLED_KEY, true)) {
       received = new HashMap<Long, Long>();
+    }
     if (LOG.isDebugEnabled())
       LOG.debug("DistCpMapper::map(): Received " + sourcePath + ", " + relPath);
 
@@ -255,10 +255,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
 
           for (Entry<Long, Long> entry : received.entrySet()) {
             String counterName = getCounterName(streamName,
-                sourcePath.getName(),
-                entry.getKey());
-            context.getCounter(COUNTER_GROUP, counterName).increment(
-                entry.getValue());
+                sourcePath.getName(), entry.getKey());
+            context.getCounter(DatabusConstants.COUNTER_GROUP,
+                counterName).increment(entry.getValue());
           }
         }
       }
@@ -274,7 +273,8 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
 
   private String getCounterName(String streamName, String filename,
       Long timeWindow) {
-    return streamName + DELIMITER + filename + DELIMITER + timeWindow;
+    return streamName + DatabusConstants.DELIMITER + filename
+        + DatabusConstants.DELIMITER + timeWindow;
   }
   private String getFileType(FileStatus fileStatus) {
     return fileStatus == null ? "N/A" : (fileStatus.isDir() ? "dir" : "file");

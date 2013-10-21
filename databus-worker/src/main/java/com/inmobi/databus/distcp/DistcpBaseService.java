@@ -120,7 +120,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
       Job job = distCp.execute();
-      counterGrp = job.getCounters().getGroup(CopyMapper.COUNTER_GROUP);
+      counterGrp = job.getCounters().getGroup(DatabusConstants.COUNTER_GROUP);
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;
