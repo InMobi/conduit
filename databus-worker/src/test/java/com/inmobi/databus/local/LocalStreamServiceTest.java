@@ -30,6 +30,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
@@ -42,6 +44,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ClusterTest;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.DestinationStream;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
@@ -485,12 +488,28 @@ cluster.getCheckpointDir()),
     }
 
     for (TestLocalStreamService service : services) {
+      service.preExecute();
       if (currentClusterName != null)
         Assert.assertEquals(service.getCurrentCluster().getName(),
             currentClusterName);
       // creating a job with empty input path
       Path tmpJobInputPath = new Path("/tmp/job/input/path");
+      Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
+      Set<FileStatus> trashSet = new HashSet<FileStatus>();
+      // checkpointKey, CheckPointPath
+      Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
+      service.createMRInput(tmpJobInputPath, fileListing, trashSet,
+          checkpointPaths);
       Job testJobConf = service.createJob(tmpJobInputPath, 1000);
+      testJobConf.waitForCompletion(true);
+
+      CounterGroup counterGrp = testJobConf.getCounters().getGroup(
+          DatabusConstants.COUNTER_GROUP);
+      Assert.assertEquals(counterGrp.size(), number_files);
+      Assert.assertEquals(counterGrp.getName(), "audit");
+      for (Counter counter : counterGrp) {
+        Assert.assertEquals(counter.getValue(), 1);
+      }
       Assert.assertEquals(
           testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY), service
               .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
@@ -501,7 +520,10 @@ cluster.getCheckpointDir()),
         Assert.assertEquals(
             testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),
             testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
+      service.getFileSystem().delete(
+          new Path(service.getCluster().getRootDir()), true);
     }
+
   }
 
   private void testMapReduce(String fileName, int timesToRun) throws Exception {

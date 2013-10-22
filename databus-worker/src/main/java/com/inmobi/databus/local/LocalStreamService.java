@@ -251,7 +251,7 @@ ConfigConstants {
 
   }
 
-  private long createMRInput(Path inputPath,
+  protected long createMRInput(Path inputPath,
       Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
       Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
