@@ -278,8 +278,8 @@ public abstract class DistcpBaseService extends AbstractService {
     }
     String readUrl = srcCluster.getReadUrl();
     URI checkpointURI = lastCheckPointPath.toUri();
-    String fragementStr = checkpointURI.getPath();
-    Path newCheckPointPath = new Path(readUrl,fragementStr);
+    String unQualifiedPathStr = checkpointURI.getPath();
+    Path newCheckPointPath = new Path(readUrl,unQualifiedPathStr);
     return newCheckPointPath;
   }
 
