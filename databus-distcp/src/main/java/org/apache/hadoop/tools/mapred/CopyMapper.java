@@ -234,19 +234,21 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
       }
       else {
         String streamName = null;
-        Path relativePath = new Path(relPath.toString());
-
-        if (relativePath.depth() > 2) {
-          // path is for mirror service and is of format
-          // /databus/streams/<streamName>/2013/09/12
-          Path tmpPath = relativePath;
-          while (!tmpPath.getParent().getName().equals("streams")) {
-            tmpPath = tmpPath.getParent();
+        if (!relPath.toString().isEmpty()) {
+          Path relativePath = new Path(relPath.toString());
+          if (relativePath.depth() > 2) {
+            // path is for mirror service and is of format
+            // /databus/streams/<streamName>/2013/09/12
+            Path tmpPath = relativePath;
+            while (tmpPath.getParent() != null
+                && !tmpPath.getParent().getName().equals("streams")) {
+              tmpPath = tmpPath.getParent();
+            }
+            streamName = tmpPath.getName();
+          } else {
+            // path is for merge service and of form /<stream name>/filename.gz
+            streamName = relativePath.getParent().getName();
           }
-          streamName = tmpPath.getName();
-        } else {
-          // path is for merge service and of form /<stream name>/filename.gz
-          streamName = relativePath.getParent().getName();
         }
         copyFileWithRetry(description, sourceCurrStatus, target, context,
             fileAttributes, received);
@@ -270,12 +272,12 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
     }
   }
 
-
   private String getCounterName(String streamName, String filename,
       Long timeWindow) {
     return streamName + DatabusConstants.DELIMITER + filename
         + DatabusConstants.DELIMITER + timeWindow;
   }
+
   private String getFileType(FileStatus fileStatus) {
     return fileStatus == null ? "N/A" : (fileStatus.isDir() ? "dir" : "file");
   }

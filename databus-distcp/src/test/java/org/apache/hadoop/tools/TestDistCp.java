@@ -25,12 +25,16 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.io.compress.CodecPool;
+import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapred.MiniMRCluster;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobSubmissionFiles;
 import org.apache.hadoop.tools.mapred.CopyOutputFormat;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.junit.Test;
 import org.junit.BeforeClass;
 import org.junit.Assert;
@@ -88,13 +92,13 @@ public class TestDistCp {
   private static void createSourceData() throws Exception {
     mkdirs(SOURCE_PATH + "/1");
     mkdirs(SOURCE_PATH + "/2");
-    mkdirs(SOURCE_PATH + "/2/3/4");
+    mkdirs(SOURCE_PATH + "/2/3/4.gz");
     mkdirs(SOURCE_PATH + "/2/3");
     mkdirs(SOURCE_PATH + "/5");
-    touchFile(SOURCE_PATH + "/5/6");
+    touchFile(SOURCE_PATH + "/5/6.gz");
     mkdirs(SOURCE_PATH + "/7");
     mkdirs(SOURCE_PATH + "/7/8");
-    touchFile(SOURCE_PATH + "/7/8/9");
+    touchFile(SOURCE_PATH + "/7/8/9.gz");
   }
 
   private static void mkdirs(String path) throws Exception {
@@ -107,6 +111,10 @@ public class TestDistCp {
   private static void touchFile(String path) throws Exception {
     FileSystem fs;
     DataOutputStream outputStream = null;
+    GzipCodec gzipCodec = ReflectionUtils.newInstance(
+        GzipCodec.class, getConfigurationForCluster());
+    Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
+    OutputStream compressedOut =null;
     try {
       fs = cluster.getFileSystem();
       final Path qualifiedPath = new Path(path).makeQualified(fs);
@@ -114,11 +122,17 @@ public class TestDistCp {
       outputStream = fs.create(qualifiedPath, true, 0,
               (short)(fs.getDefaultReplication()*2),
               blockSize);
-      outputStream.write(new byte[FILE_SIZE]);
+      compressedOut = gzipCodec.createOutputStream(outputStream,
+          gzipCompressor);
+      compressedOut.write(new byte[FILE_SIZE]);
+      compressedOut.flush();
+      //outputStream.write(new byte[FILE_SIZE]);
       pathList.add(qualifiedPath);
     }
     finally {
+      compressedOut.close();
       IOUtils.cleanup(null, outputStream);
+      CodecPool.returnCompressor(gzipCompressor);
     }
   }
 
@@ -201,15 +215,15 @@ public class TestDistCp {
               .makeQualified(cluster.getFileSystem()));
       sources.add(new Path("/b")
               .makeQualified(cluster.getFileSystem()));
-      touchFile("/a/a.txt");
-      touchFile("/b/b.txt");
+      touchFile("/a/a.gz");
+      touchFile("/b/b.gz");
 
       Path targetPath = new Path("/c")
               .makeQualified(cluster.getFileSystem());
       DistCpOptions options = new DistCpOptions(sources, targetPath);
       new DistCp(configuration, options).execute();
-      Assert.assertTrue(cluster.getFileSystem().exists(new Path("/c/a/a.txt")));
-      Assert.assertTrue(cluster.getFileSystem().exists(new Path("/c/b/b.txt")));
+      Assert.assertTrue(cluster.getFileSystem().exists(new Path("/c/a/a.gz")));
+      Assert.assertTrue(cluster.getFileSystem().exists(new Path("/c/b/b.gz")));
     }
     catch (Exception e) {
       LOG.error("Exception encountered", e);
