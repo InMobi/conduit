@@ -204,7 +204,10 @@ public class ServerDataHelper {
             .setMaxTimeRangeInt(properties.get(ServerConstants
                 .MAX_TIME_RANGE_INTERVAL_IN_HOURS))
             .setWarnLossThresholdDiff(properties
-                .get(ServerConstants.LOSS_WARN_THRESHOLD_DIFF_IN_MINS)).build();
+                .get(ServerConstants.LOSS_WARN_THRESHOLD_DIFF_IN_MINS))
+            .setLocalSla(properties.get(ServerConstants.LOCAL_SLA))
+            .setMergeSla(properties.get(ServerConstants.MERGE_SLA))
+            .setMirrorSla(properties.get(ServerConstants.MIRROR_SLA)).build();
     RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
         RequestResponse.LoadMainPanelResponse.newBuilder()
             .addAllStream(streamList).addAllCluster(clusterList)

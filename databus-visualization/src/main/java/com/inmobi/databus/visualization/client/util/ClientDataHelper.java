@@ -90,15 +90,12 @@ public class ClientDataHelper {
         response.getLoadMainPanelResponse().getClientConfig().getCollectorSla());
     configMap.put(ClientConstants.HDFS, response.getLoadMainPanelResponse()
         .getClientConfig().getHdfsSla());
-    /*
-    TODO: change getHdfsSla() to getLocalSla()/getMergeSla()/getMirrorSla()
-     */
     configMap.put(ClientConstants.LOCAL, response.getLoadMainPanelResponse()
-        .getClientConfig().getHdfsSla());
+        .getClientConfig().getLocalSla());
     configMap.put(ClientConstants.MERGE, response.getLoadMainPanelResponse()
-        .getClientConfig().getHdfsSla());
+        .getClientConfig().getMergeSla());
     configMap.put(ClientConstants.MIRROR, response.getLoadMainPanelResponse()
-        .getClientConfig().getHdfsSla());
+        .getClientConfig().getMirrorSla());
     configMap.put(ClientConstants.PERCENTILE_FOR_SLA, response.getLoadMainPanelResponse()
         .getClientConfig().getPercentileForSla());
     configMap.put(ClientConstants.PERCENTAGE_FOR_LOSS, response.getLoadMainPanelResponse()

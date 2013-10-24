@@ -1965,6 +1965,30 @@ public final class RequestResponse {
     public boolean hasWarnLossThresholdDiff() { return hasWarnLossThresholdDiff; }
     public java.lang.String getWarnLossThresholdDiff() { return warnLossThresholdDiff_; }
     
+    // optional string localSla = 12;
+    public static final int LOCALSLA_FIELD_NUMBER = 12;
+    private boolean hasLocalSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(12)
+    private java.lang.String localSla_ = "";
+    public boolean hasLocalSla() { return hasLocalSla; }
+    public java.lang.String getLocalSla() { return localSla_; }
+    
+    // optional string mergeSla = 13;
+    public static final int MERGESLA_FIELD_NUMBER = 13;
+    private boolean hasMergeSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(13)
+    private java.lang.String mergeSla_ = "";
+    public boolean hasMergeSla() { return hasMergeSla; }
+    public java.lang.String getMergeSla() { return mergeSla_; }
+    
+    // optional string mirrorSla = 14;
+    public static final int MIRRORSLA_FIELD_NUMBER = 14;
+    private boolean hasMirrorSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(14)
+    private java.lang.String mirrorSla_ = "";
+    public boolean hasMirrorSla() { return hasMirrorSla; }
+    public java.lang.String getMirrorSla() { return mirrorSla_; }
+    
     private void initFields() {
     }
     
@@ -2017,6 +2041,18 @@ public final class RequestResponse {
       
       if (hasWarnLossThresholdDiff()) {
         output.writeString(11, "warnLossThresholdDiff", getWarnLossThresholdDiff());
+      }
+      
+      if (hasLocalSla()) {
+        output.writeString(12, "localSla", getLocalSla());
+      }
+      
+      if (hasMergeSla()) {
+        output.writeString(13, "mergeSla", getMergeSla());
+      }
+      
+      if (hasMirrorSla()) {
+        output.writeString(14, "mirrorSla", getMirrorSla());
       }
     }
     
@@ -2146,6 +2182,18 @@ public final class RequestResponse {
         if (other.hasWarnLossThresholdDiff()) {
           setWarnLossThresholdDiff(other.getWarnLossThresholdDiff());
         }
+        
+        if (other.hasLocalSla()) {
+          setLocalSla(other.getLocalSla());
+        }
+        
+        if (other.hasMergeSla()) {
+          setMergeSla(other.getMergeSla());
+        }
+        
+        if (other.hasMirrorSla()) {
+          setMirrorSla(other.getMirrorSla());
+        }
       
         return this;
       }
@@ -2206,6 +2254,21 @@ public final class RequestResponse {
         java.lang.String warnLossThresholdDiff = input.readString(11);
         if (warnLossThresholdDiff != null) {
           setWarnLossThresholdDiff(warnLossThresholdDiff);
+        }
+        
+        java.lang.String localSla = input.readString(12);
+        if (localSla != null) {
+          setLocalSla(localSla);
+        }
+        
+        java.lang.String mergeSla = input.readString(13);
+        if (mergeSla != null) {
+          setMergeSla(mergeSla);
+        }
+        
+        java.lang.String mirrorSla = input.readString(14);
+        if (mirrorSla != null) {
+          setMirrorSla(mirrorSla);
         }
         
         return this;
@@ -2505,6 +2568,87 @@ public final class RequestResponse {
       public Builder clearWarnLossThresholdDiff() {
         result.hasWarnLossThresholdDiff = false;
         result.warnLossThresholdDiff_ = getDefaultInstance().getWarnLossThresholdDiff();
+        return this;
+      }
+      
+      // optional string localSla = 12;
+      public boolean hasLocalSla() {
+        return result.hasLocalSla();
+      }
+      public java.lang.String getLocalSla() {
+        return result.getLocalSla();
+      }
+      public Builder setLocalSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setLocalSla(value);
+        }
+        return this;
+      }
+      public Builder setLocalSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasLocalSla = true;
+        result.localSla_ = value;
+        return this;
+      }
+      public Builder clearLocalSla() {
+        result.hasLocalSla = false;
+        result.localSla_ = getDefaultInstance().getLocalSla();
+        return this;
+      }
+      
+      // optional string mergeSla = 13;
+      public boolean hasMergeSla() {
+        return result.hasMergeSla();
+      }
+      public java.lang.String getMergeSla() {
+        return result.getMergeSla();
+      }
+      public Builder setMergeSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setMergeSla(value);
+        }
+        return this;
+      }
+      public Builder setMergeSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasMergeSla = true;
+        result.mergeSla_ = value;
+        return this;
+      }
+      public Builder clearMergeSla() {
+        result.hasMergeSla = false;
+        result.mergeSla_ = getDefaultInstance().getMergeSla();
+        return this;
+      }
+      
+      // optional string mirrorSla = 14;
+      public boolean hasMirrorSla() {
+        return result.hasMirrorSla();
+      }
+      public java.lang.String getMirrorSla() {
+        return result.getMirrorSla();
+      }
+      public Builder setMirrorSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setMirrorSla(value);
+        }
+        return this;
+      }
+      public Builder setMirrorSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasMirrorSla = true;
+        result.mirrorSla_ = value;
+        return this;
+      }
+      public Builder clearMirrorSla() {
+        result.hasMirrorSla = false;
+        result.mirrorSla_ = getDefaultInstance().getMirrorSla();
         return this;
       }
       
