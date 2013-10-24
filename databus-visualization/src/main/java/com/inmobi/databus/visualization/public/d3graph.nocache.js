@@ -6,6 +6,8 @@ var fullTreeList = []; // Full list of Node objects grouped by respective cluste
 var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A",
   "ae8886", "#fb6183", "#8e4804"
 ];
+var degToRadFactor = Math.PI / 180;
+var radToDegFactor = 180 / Math.PI;
 var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla, mergeSla, mirrorSla, percentileForSla,
   percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
 var publisherLatency, agentLatency, collectorLatency, hdfsLatency, localLatency, mergeLatency, mirrorLatency;
@@ -45,14 +47,9 @@ function Node(name, clusterName, tier, aggregatemessagesreceived, aggregatemessa
   this.ycoord = 0;
 }
 
-function StreamSourceList(stream) {
-  this.stream = stream;
+function StreamSourceList(topic) {
+  this.topic = topic;
   this.source = [];
-}
-
-function ClusterDestinationList(cluster) {
-  this.cluster = cluster;
-  this.destination = [];
 }
 
 function buildNodeList() {
@@ -81,31 +78,10 @@ function buildNodeList() {
           streamSource.push(source);
         });
         var obj = new StreamSourceList(s.topic);
-        obj.sourceList = streamSource;
+        obj.source = streamSource;
         node.streamSourceList.push(obj);
       });
       node.source = n.source;
-      var isClusterPresent = false;
-      n.source.forEach(function (s) {
-        allClusterDestnList.forEach(function (c) {
-          if (c.cluster === s) {
-            var skipAdding = false;
-            c.destination.forEach(function (d) {
-              if (d === n.cluster)
-                skipAdding = true;
-            });
-            if (!skipAdding) {
-              c.destination.push(n.cluster);
-            }
-            isClusterPresent = true;
-          }
-        });
-        if (!isClusterPresent) {
-          var newClusterDestnObj = new ClusterDestinationList(s);
-          newClusterDestnObj.destination.push(n.cluster);
-          allClusterDestnList.push(newClusterDestnObj)
-        }
-        isClusterPresent = false;
       });
     }
     n.overallLatency.forEach(function (l) {
@@ -1365,7 +1341,7 @@ function popAllTopicStatsNotBelongingToStream(streamName, treeList) {
         var topic = s.topic;
         if (topic == streamName) {
           var streamSource = new StreamSourceList(topic);
-          s.sourceList.forEach(function (sourceObj) {
+          s.source.forEach(function (sourceObj) {
             streamSource.source.push(sourceObj);
             overallLatency.push(sourceObj);
           });
@@ -1402,10 +1378,13 @@ function cloneNode(n, cloneCoords) {
     n.streamSourceList.forEach(function (s) {
       var obj = new StreamSourceList(s.topic);
       obj.source = s.source;
+      s.source.forEach(function(sourceObj) {
+        obj.source.push(sourceObj);
+        if (!newNode.source.contains(sourceObj)) {
+          newNode.source.push(sourceObj);
+        }
+      })
       newNode.streamSourceList.push(obj);
-    });
-    n.source.forEach(function (s) {
-      newNode.source.push(s);
     });
   }
   n.overallLatency.forEach(function (l) {
@@ -1670,8 +1649,6 @@ function checkCountView(selectedTabID) {
     isCountView = false;
   return isCountView;
 }
-var degToRadFactor = Math.PI / 180;
-var radToDegFactor = 180 / Math.PI;
 
 function Point(x, y) {
   this.x = x;
@@ -1844,7 +1821,7 @@ function clearSvgAndAddLoadSymbol() {
     .style("background", "#D8EAF3")
     .attr("id", "graphsvg")
     .append("svg:g")
-  var imgpath = "bar-ajax-loader.gif";
+  var imgpath = "Visualization/bar-ajax-loader.gif";
   var imgs = graphsvg.append("svg:image")
     .attr("xlink:href", imgpath)
     .attr("x",
