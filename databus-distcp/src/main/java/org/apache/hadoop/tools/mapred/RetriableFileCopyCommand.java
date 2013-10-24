@@ -245,12 +245,13 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     long window = getWindow(timestamp);
     if (timestamp != -1) {
       if (received.containsKey(window)) {
-        received.put(window, received.get(timestamp) + 1);
+        received.put(window, received.get(window) + 1);
       } else {
         received.put(window, new Long(1));
       }
     }
   }
+
   private void updateContextStatus(long totalBytesRead, Mapper.Context context,
       FileStatus sourceFileStatus) {
     StringBuilder message = new StringBuilder(DistCpUtils.getFormatter()
