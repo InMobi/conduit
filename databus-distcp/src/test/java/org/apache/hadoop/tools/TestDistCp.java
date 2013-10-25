@@ -125,6 +125,7 @@ public class TestDistCp {
       compressedOut = gzipCodec.createOutputStream(outputStream,
           gzipCompressor);
       compressedOut.write(new byte[FILE_SIZE]);
+      compressedOut.write("\n".getBytes());
       compressedOut.flush();
       //outputStream.write(new byte[FILE_SIZE]);
       pathList.add(qualifiedPath);
