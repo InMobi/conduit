@@ -500,7 +500,7 @@ public abstract class AbstractService implements Service, Runnable {
       return;
     }
     if (streamName.equals(AuditUtil.AUDIT_STREAM_TOPIC_NAME)) {
-      LOG.debug("Not generation audit for audit stream");
+      LOG.debug("Not generating audit for audit stream");
       return;
     }
     String streamFileNameCombo = streamName + DatabusConstants.DELIMITER
@@ -509,13 +509,17 @@ public abstract class AbstractService implements Service, Runnable {
     if (!received.isEmpty()) {
       // create audit message
       AuditMessage auditMsg = createAuditMessage(streamName, received);
-      publishAuditMessage(auditMsg);
+      try {
+        publishAuditMessage(auditMsg);
+      } catch (Throwable th) {
+        LOG.error("Not able to publsh audit message ", th);
+      }
     } else {
       LOG.info("Not publishing audit packet as counters are empty");
     }
   }
 
-  private void publishAuditMessage(AuditMessage auditMsg) {
+  private void publishAuditMessage(AuditMessage auditMsg) throws Exception {
     try {
       LOG.debug("Publishing audit message from local stream service "
           + auditMsg);

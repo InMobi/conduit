@@ -330,9 +330,15 @@ public class Databus implements Service, DatabusConstants {
   private static MessagePublisher getMessagePublisher(Properties prop)
       throws IOException {
     String configFile = prop.getProperty(AUDIT_PUBLISHER_CONFIG_FILE);
-    ClientConfig config = ClientConfig.load(configFile);
-    return MessagePublisherFactory.create(config);
-
+    if (configFile != null) {
+      try {
+        ClientConfig config = ClientConfig.load(configFile);
+        return MessagePublisherFactory.create(config);
+      } catch (Exception e) {
+        LOG.warn("Not able to create a publisher for a given configuration ", e);
+      }
+    }
+    return null;
   }
 
   public static void main(String[] args) throws Exception {
