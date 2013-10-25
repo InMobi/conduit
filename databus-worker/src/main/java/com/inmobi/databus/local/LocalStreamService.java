@@ -90,7 +90,7 @@ ConfigConstants {
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
       Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
-      throws IOException {
+          throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
         provider,streamsToProcess, publisher, hostName);
@@ -147,7 +147,7 @@ ConfigConstants {
       Job job = createJob(tmpJobInputPath, totalSize);
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
-         counterGrp = job.getCounters().getGroup(
+        counterGrp = job.getCounters().getGroup(
             DatabusConstants.COUNTER_GROUP);
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
@@ -357,7 +357,7 @@ ConfigConstants {
         FileStatus[] files = null;
         try {
           files = fs.listStatus(collector.getPath(),
-            new CollectorPathFilter());
+              new CollectorPathFilter());
         } catch (FileNotFoundException e) {
         }
 
@@ -421,9 +421,8 @@ ConfigConstants {
         retVal = true;
       }
     } catch (IOException e) {
-      LOG.error(
-          "Unable to find if file is empty or not [" + fileStatus.getPath()
-              + "]", e);
+      LOG.error("Unable to find if file is empty or not ["
+          + fileStatus.getPath() + "]", e);
     } finally {
       if (in != null) {
         try {
@@ -531,7 +530,7 @@ ConfigConstants {
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
     // job.getConfiguration());
     job.getConfiguration().set(
-"tmpjars", inputFormatJarDestPath.toString());
+        "tmpjars", inputFormatJarDestPath.toString());
     LOG.debug("Adding file [" + inputFormatJarDestPath
         + "] to distributed cache");
     job.setInputFormatClass(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
@@ -607,8 +606,8 @@ ConfigConstants {
    */
   public String getTopicNameFromDestnPath(Path destnPath) {
     String destnPathAsString = destnPath.toString();
-    String destnDirAsString = new Path(srcCluster.getLocalFinalDestDirRoot())
-        .toString();
+    String destnDirAsString = new Path(
+        srcCluster.getLocalFinalDestDirRoot()).toString();
     String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
         .length());
     Path tmpPath = new Path(pathWithoutRoot);
