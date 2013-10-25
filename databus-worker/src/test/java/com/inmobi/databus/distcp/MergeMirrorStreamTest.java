@@ -286,6 +286,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
     for (TestMergedStreamService service : mergedStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.testRequalification();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
@@ -296,6 +297,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
     for (TestMirrorStreamService service : mirrorStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.testRequalification();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();

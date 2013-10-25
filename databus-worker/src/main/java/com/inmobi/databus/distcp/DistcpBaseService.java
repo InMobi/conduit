@@ -33,7 +33,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
-import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
 import org.apache.hadoop.tools.mapred.CopyMapper;
 
@@ -54,7 +53,6 @@ public abstract class DistcpBaseService extends AbstractService {
   protected final Cluster currentCluster;
   private final FileSystem srcFs;
   private final FileSystem destFs;
-  protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
   protected final CheckpointProvider provider;
   protected Map<String, Path> checkPointPaths = new HashMap<String, Path>();
   private static final int DEFAULT_NUM_DIR_PER_DISTCP_STREAM = 30;
@@ -74,6 +72,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
       this.currentCluster = currentCluster;
     else
       this.currentCluster = destCluster;
+    //always return the HDFS read for the src cluster
     srcFs = FileSystem.get(new URI(srcCluster.getReadUrl()),
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
@@ -112,7 +111,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
     conf.set("mapred.job.name", serviceName);
-    
+
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
@@ -181,6 +180,8 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
         if (!checkPointValue.trim().equals("")) {
         lastCheckPointPath = new Path(checkPointValue);
         }
+        lastCheckPointPath = fullyQualifyCheckPointWithReadURL
+          (lastCheckPointPath, srcCluster);
         if (lastCheckPointPath == null
             || !getSrcFs().exists(lastCheckPointPath)) {
           LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
@@ -259,6 +260,32 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
 
     }
     return result;
+  }
+
+  /**
+   * Method to qualify the checkpoint path based on the readurl configured
+   * for the source cluster. The readurl of the cluster can change and the
+   * checkpoint paths should be re-qualified to the new source cluster read
+   * path.
+   *
+   * @param lastCheckPointPath path which can be null read from checkpoint
+   *                           file.
+   * @param srcCluster the cluster for which checkpoint file which should be
+   *                   re-qualified.
+   * @return path which is re-qualified.
+   */
+  protected Path fullyQualifyCheckPointWithReadURL(Path lastCheckPointPath,
+                                           Cluster srcCluster) {
+    //if checkpoint value was empty or null just fall thro' let the service
+    // determine the new path.
+    if(lastCheckPointPath == null) {
+      return null;
+    }
+    String readUrl = srcCluster.getReadUrl();
+    URI checkpointURI = lastCheckPointPath.toUri();
+    String unQualifiedPathStr = checkpointURI.getPath();
+    Path newCheckPointPath = new Path(readUrl,unQualifiedPathStr);
+    return newCheckPointPath;
   }
 
   protected abstract String getFinalDestinationPath(FileStatus srcPath);

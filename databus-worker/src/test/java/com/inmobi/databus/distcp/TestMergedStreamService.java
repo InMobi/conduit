@@ -219,6 +219,15 @@ public class TestMergedStreamService extends MergedStreamService
     postExecute();
   }
 
+  public void testRequalification() throws Exception {
+    Path p = new Path("hdfs://xxxx:1000/abc/abc");
+    String readUrl = srcCluster.getReadUrl();
+    Path expectedPath = new Path(readUrl, "/abc/abc");
+    Path path = this.fullyQualifyCheckPointWithReadURL(p, srcCluster);
+    LOG.info("Expected Requalified path is " + expectedPath);
+    Assert.assertEquals(expectedPath,path);
+  }
+
   @Override
   public Cluster getCluster() {
     return destinationCluster;
