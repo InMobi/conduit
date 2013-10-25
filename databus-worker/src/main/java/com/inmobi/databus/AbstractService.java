@@ -55,7 +55,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected String hostname;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   protected final MessagePublisher publisher;
-  protected final static char TOPIC_SEPARATOR_FILENAME = '-';
   protected CounterGroup counterGrp;
   private final TSerializer serializer = new TSerializer();
   private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
