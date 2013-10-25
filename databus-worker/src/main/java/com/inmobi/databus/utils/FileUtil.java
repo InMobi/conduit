@@ -55,6 +55,7 @@ public class FileUtil {
           incrementReceived(decodedMsg, received);
         }
         compressedOut.write(msg);
+        compressedOut.write("\n".getBytes());
         compressedOut.flush();
         
       }

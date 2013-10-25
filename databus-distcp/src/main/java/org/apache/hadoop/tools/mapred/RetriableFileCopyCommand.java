@@ -203,6 +203,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       byte[] bytesRead = readLine(reader);
       while (bytesRead != null) {
         commpressedOut.write(bytesRead);
+        commpressedOut.write("\n".getBytes());
         updateContextStatus(totalBytesRead, context, sourceFileStatus);
         byte[] decodedMsg = Base64.decodeBase64(bytesRead);
         if (received != null) {
