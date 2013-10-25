@@ -107,7 +107,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
-      throws Exception {
+          throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
@@ -136,7 +136,7 @@ public abstract class DistcpBaseService extends AbstractService {
    * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
-  
+
   /*
    * @return the target path where distcp will copy paths from source cluster 
    */
@@ -158,7 +158,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   /*
    * Return a map of destination path,source path file status Since the map uses
-   * destination path as the key,no conflicting duplicates paths would not be
+   * destination path as the key,no conflicting duplicates paths would be
    * passed on to distcp
    * 
    * @return
@@ -179,7 +179,7 @@ public abstract class DistcpBaseService extends AbstractService {
         // creating a path object from empty string throws exception;hence
         // checking for it
         if (!checkPointValue.trim().equals("")) {
-        lastCheckPointPath = new Path(checkPointValue);
+          lastCheckPointPath = new Path(checkPointValue);
         }
         if (lastCheckPointPath == null
             || !getSrcFs().exists(lastCheckPointPath)) {
@@ -268,7 +268,7 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getName());
   }
 
- 
+
 
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
@@ -294,18 +294,18 @@ public abstract class DistcpBaseService extends AbstractService {
       // method was called
       if (stats != null) {
         if (stats.length == 0) {
-        results.add(fileStatus);
-        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      }
-      for (FileStatus stat : stats) {
-        createListing(fs, stat, results);
-      }
+          results.add(fileStatus);
+          LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
+        }
+        for (FileStatus stat : stats) {
+          createListing(fs, stat, results);
+        }
       }
     } else {
       LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
       results.add(fileStatus);
     }
-}
+  }
 
   /*
    * Find the topic name from path of format
