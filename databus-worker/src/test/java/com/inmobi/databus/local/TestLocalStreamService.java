@@ -197,7 +197,7 @@ public class TestLocalStreamService extends LocalStreamService implements
     }
     todaysdate = new Date();
   }
- 
+
   @Override
   protected void postExecute() throws Exception {
     try {
@@ -352,9 +352,11 @@ public class TestLocalStreamService extends LocalStreamService implements
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
-      // audit won't be generated for last file as last file is not
-      // processed by local stream
-
+      /* audit won't be generated for last file as last file is not
+       * processed by local stream
+       * Number of counters for each file = 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file
+       */
       Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();

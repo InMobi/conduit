@@ -153,6 +153,11 @@ public class TestMirrorStreamService extends MirrorStreamService
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
+      /*
+       * Number of counters for each file is 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file.
+       * Counter name is func(streamname, filename, timestamp)
+       */
       Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
