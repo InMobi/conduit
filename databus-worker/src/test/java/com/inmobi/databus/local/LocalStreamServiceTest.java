@@ -507,9 +507,15 @@ cluster.getCheckpointDir()),
           DatabusConstants.COUNTER_GROUP);
       Assert.assertEquals(counterGrp.size(), number_files * 2);
       Assert.assertEquals(counterGrp.getName(), "audit");
+      int totalSize = 0;
       for (Counter counter : counterGrp) {
-        //Assert.assertEquals(counter.getValue(), 2);
+        totalSize += counter.getValue();
       }
+      /* sum of all the counter values must equal to total number of messages
+       * in all files. Here each file contains 3 messages.
+       * Total number of messages are (number_files * 3)
+       */
+      Assert.assertEquals(totalSize, number_files * 3);
       Assert.assertEquals(
           testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY), service
               .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));

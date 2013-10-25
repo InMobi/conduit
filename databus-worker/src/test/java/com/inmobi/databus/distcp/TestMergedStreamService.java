@@ -195,7 +195,7 @@ public class TestMergedStreamService extends MergedStreamService
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
-      Assert.assertEquals(auditReceived, totalFileProcessedInRun);
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(

@@ -153,7 +153,7 @@ public class TestMirrorStreamService extends MirrorStreamService
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
-      Assert.assertEquals(auditReceived, totalFileProcessedInRun);
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);
