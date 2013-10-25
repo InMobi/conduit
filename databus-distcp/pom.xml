@@ -6,6 +6,7 @@
     <version>2.0.4-SNAPSHOT</version>
   </parent>
   <artifactId>databus-distcp</artifactId>
+  <packaging>jar</packaging>
    <properties>
     <file.encoding>UTF-8</file.encoding>
     <downloadSources>true</downloadSources>
@@ -335,35 +336,6 @@
           </execution>
         </executions>
       </plugin> -->
-      <!-- Generate debian package-->
-      <plugin>
-        <artifactId>jdeb</artifactId>
-        <groupId>org.vafer</groupId>
-        <version>0.9</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>jdeb</goal>
-            </goals>
-            <configuration>
-              <installDir>/usr/local/inmobi-distcp-${version}-${deb.tag}</installDir>
-              <deb>${project.build.directory}/${artifactId}_${version}_${deb.tag}.deb</deb>
-              <dataSet>
-                <data>
-                  <src>target/${artifactId}-${version}.jar</src>
-                  <type>file</type>
-                  <mapper>
-                    <type>perm</type>
-                    <prefix>/usr/local/inmobi-distcp-${version}-${deb.tag}</prefix>
-                  </mapper>
-                </data>
-              </dataSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
     </plugins>
     <pluginManagement>
       <plugins>
