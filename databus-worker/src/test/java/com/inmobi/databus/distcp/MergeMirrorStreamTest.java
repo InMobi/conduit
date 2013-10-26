@@ -3,16 +3,20 @@ package com.inmobi.databus.distcp;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
@@ -26,6 +30,19 @@ import com.inmobi.databus.local.TestLocalStreamService;
 public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   private static final Log LOG = LogFactory.getLog(MergeMirrorStreamTest.class);
+  
+  @BeforeMethod
+  public void beforeTest() throws Exception{
+	Properties prop = new Properties();
+	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+	ConduitMetrics.init(prop);
+	ConduitMetrics.startAll();
+  }
+  
+  @AfterMethod
+  public void afterTest() throws Exception{
+	  ConduitMetrics.stopAll();;
+  }
 
   /*
    * Here is the basic idea, create two clusters of different rootdir paths run
@@ -39,17 +56,75 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   @Test
   public void testMergeMirrorStream() throws Exception {
     testMergeMirrorStream("test-mss-databus.xml", null, null);
+    
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 18);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.exist.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.rename.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.commitPaths.count.test1").getCount() , 138);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.test1").getCount() , 18);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.exist.test1").getCount() , 0);
+    
   }
 
   @Test
   public void testMergeMirrorStreamWithMultipleStreams() throws Exception {
     testMergeMirrorStream("test-mss-databus1.xml", null, null);
+    
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.mkDir.stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.exist.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.mkDir.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.rename.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.rename.stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.commitPaths.count.stream2").getCount() , 129);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.checkPoint.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.rename.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.checkPoint.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.checkPoint.stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.exist.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.mkDir.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.stream2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.stream1").getCount() , 18);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.exist.stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.stream2").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.stream1").getCount() , 18);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.stream2").getCount() , 18);
+    
   }
   
   @Test
   public void testMergeMirrorStreamWithMirror() throws Exception {
     // Test with 2 mirror sites
     testMergeMirrorStream("test-mss-databus_mirror.xml", null, null);
+    
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.exist.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.exist.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 18);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.rename.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.test1").getCount() , 18);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService.commitPaths.count.test1").getCount() , 
+    					ConduitMetrics.getCounter("MergedStreamService.emptyDir.create.test1").getCount() +
+    					ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.test1").getCount()+1);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.rename.test1").getCount() , 0);
+
   }
 
   @Test
@@ -61,6 +136,17 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     clustersToProcess.add("testcluster4");
     testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName,
         clustersToProcess);
+    
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.exist.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 36);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.test1").getCount() , 27);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.rename.test1").getCount() , 0);
+    
   }
 
   @Test
@@ -95,18 +181,46 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     clustersToProcess.add("testcluster4");
     testMergeMirrorStream("testDatabusWithClusterNameParallel.xml",
         currentClusterName, clustersToProcess, false);
+    
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.exist.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 36);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.rename.test1").getCount() , 0);
+
   }
 
   @Test(groups = { "integration" })
   public void testAllComboMergeMirrorStream() throws Exception {
     // Test with 1 merged stream only
     testMergeMirrorStream("test-mergedss-databus.xml", null, null);
+    
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.exist.test1").getCount() , 0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.checkPoint.test1").getCount() , 0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.mkDir.test1").getCount() , 0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.commitPaths.count.test1").getCount() , 18 );
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService.retry.rename.test1").getCount() , 0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount(), 18);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount(), 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount(), 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount(), 0);
+    
   }
 
   @Test(groups = { "integration" })
   public void testAllServices() throws Exception {
     // Test with 1 source and 1 merged stream only
     testMergeMirrorStream("test-mergedss-databus_2.xml", null, null);
+    
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 9);
+
   }
   
   @BeforeSuite

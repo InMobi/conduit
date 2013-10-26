@@ -29,7 +29,7 @@ public class ConduitMetrics {
 
 	private static final Log LOG = LogFactory.getLog(ConduitMetrics.class);
 
-	private final static MetricRegistry registry= new MetricRegistry();;
+	private static MetricRegistry registry;
 
 	private final static String GANGLIA = "com.inmobi.databus.metrics.ganglia";
 	private final static String CONSOLE = "com.inmobi.databus.metrics.console";
@@ -55,6 +55,7 @@ public class ConduitMetrics {
 		
 		if(config.getProperty(IS_ENABLED_PROPERTY,"false").equalsIgnoreCase("true")){
 			isEnabled=true;
+			registry= new MetricRegistry();
 		}else{
 			return;
 		}
@@ -79,7 +80,7 @@ public class ConduitMetrics {
 		}
 
 		if (reporterMap.size() == 0) {
-			LOG.error("No reporter registered");
+			LOG.warn("No reporter registered");
 		}
 
 	}
@@ -111,11 +112,15 @@ public class ConduitMetrics {
 			return ;
 		}
 		if (reporterMap.size() == 0) {
-			LOG.error("No reporter registered , nothing to stop");
+			LOG.warn("No reporter registered , nothing to stop");
 		}
 		for (String eachReporterName : reporterMap.keySet()) {
 			reporterMap.get(eachReporterName).stop();
 		}
+		registry = null;
+		isEnabled=false;
+		reporterMap.clear();
+		counterCache.clear();
 
 	}
 
@@ -133,7 +138,7 @@ public class ConduitMetrics {
 			return null;
 		}
 		if (registry.getGauges().get(name) != null) {
-			LOG.error("Gauge with name " + name + " already exsits");
+			LOG.warn("Gauge with name " + name + " already exsits");
 			return null;
 		}
 
@@ -160,7 +165,7 @@ public class ConduitMetrics {
 			return null;
 		}
 		if (registry.getGauges().get(name) != null) {
-			LOG.error("Gauge with name " + name + " already exsits");
+			LOG.warn("Gauge with name " + name + " already exsits");
 			return null;
 
 		}
@@ -181,7 +186,7 @@ public class ConduitMetrics {
 			return null;
 		}
 		if (registry.getCounters().get(name) != null) {
-			LOG.error("Counter with name " + name + " already exsits");
+			LOG.warn("Counter with name " + name + " already exsits");
 			return null;
 		}
 		Counter counterInst = registry.counter(name);
@@ -197,7 +202,10 @@ public class ConduitMetrics {
 			LOG.warn("metrics not enabled");
 			return null;
 		}
-		return counterCache.get(name);
+		Counter c = counterCache.get(name);
+		if(c == null){
+			LOG.info("counter does not exist:" + name);
+		}
+		return c;
 	}
-
 }

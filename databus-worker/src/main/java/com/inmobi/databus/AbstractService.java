@@ -386,8 +386,11 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception ex = null;
+    Counter retriableMkDirsCounter = null;
+    if(!p.toString().contains("trash")){
     String streamName = MetricsUtil.getStreamNameFromPath(p.toString());
-    Counter retriableMkDirsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.mkDir."+streamName);
+    retriableMkDirsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.mkDir."+streamName);
+    }
     while (count < numOfRetries) {
       try {
         result = fs.mkdirs(p);
@@ -423,7 +426,7 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception ex = null;
-    String streamName = MetricsUtil.getStreamNameFromExistsPath(p.toString());
+    String streamName = MetricsUtil.getStreamNameFromPath(p.toString());
     Counter retriableExistsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.exist."+streamName);
     while (count < numOfRetries) {
       try {
@@ -471,7 +474,7 @@ public abstract class AbstractService implements Service, Runnable {
   /**
    * Get the service name from the name
    */
-  private String getServiceName(){
+  public String getServiceName(){
 	  StringTokenizer st = new StringTokenizer(name, "_");
 	  return st.nextToken();
   }

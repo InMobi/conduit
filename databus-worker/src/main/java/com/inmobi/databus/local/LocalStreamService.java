@@ -243,10 +243,15 @@ ConfigConstants {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
-      Counter commitCounter = ConduitMetrics.getCounter("LocalStreamService.commitPaths.count."+MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
-      if(commitCounter!=null){
-    	  commitCounter.inc();
-      }
+	if (!entry.getValue().toString().contains("trash")) {
+		Counter commitCounter = ConduitMetrics
+				.getCounter("LocalStreamService.commitPaths.count."
+						+ MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
+		if (commitCounter != null) {
+			commitCounter.inc();
+		}
+	}
+      
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     Counter commitTime = ConduitMetrics.getCounter("LocalStreamService.commit.time." + Thread.currentThread().getName());

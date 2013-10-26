@@ -1,12 +1,17 @@
 package com.inmobi.conduit.metrics;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
+
 /**
  * Util class to get stream names from paths/keys
  */
 public class MetricsUtil {
+
+	private static Map<String, String> pathToStreamCache = new HashMap<String, String>();
 
 	/**
 	 * eg
@@ -18,38 +23,61 @@ public class MetricsUtil {
 	 */
 	public static String getStreamNameFromTmpPath(String path) {
 		try {
-			StringTokenizer st = new StringTokenizer(path, "/");
-			List<String> arrayListInst = new LinkedList<String>();
-			while(st.hasMoreTokens()){
-				arrayListInst.add(0, st.nextToken());
+			String streamName = pathToStreamCache.get(path);
+			if (streamName == null) {
+				if (path.contains("/system/tmp")) {
+					StringTokenizer st = new StringTokenizer(path, "/");
+					List<String> arrayListInst = new LinkedList<String>();
+					while (st.hasMoreTokens()) {
+						arrayListInst.add(0, st.nextToken());
+					}
+					String fileName = arrayListInst.get(0);
+					st = new StringTokenizer(fileName, "-");
+					st.nextToken();
+					streamName = st.nextToken();
+				} else if (path.contains("/data/")) {
+					StringTokenizer st = new StringTokenizer(path, "/");
+					List<String> arrayListInst = new LinkedList<String>();
+					while (st.hasMoreTokens()) {
+						arrayListInst.add(0, st.nextToken());
+					}
+					streamName = arrayListInst.get(2);
+
+				} else {
+					return getStreamNameFromPath(path);
+				}
+
+				pathToStreamCache.put(path, streamName);
 			}
-			return arrayListInst.get(1);
+			return streamName;
 		} catch (Exception ex) {
 			return null;
 		}
 	}
-	
-	
-	
+
 	/**
-	 * eg
-	 * /tmp/databustest1/streams_local/test1/2013/10/16/13/52
+	 * eg /tmp/databustest1/streams_local/test1/2013/10/16/13/52
 	 * 
 	 * @param path
 	 * @return
 	 */
 	public static String getStreamNameFromPath(String path) {
 		try {
-			StringTokenizer st = new StringTokenizer(path, "/");
-			List<String> arrayListInst = new LinkedList<String>();
-			while (st.hasMoreTokens()) {
-				String token = st.nextToken();
-				//ignore files
-				if (!token.contains(".")) {
-					arrayListInst.add(0, token);
+			String streamName = pathToStreamCache.get(path);
+			if (streamName == null) {
+				StringTokenizer st = new StringTokenizer(path, "/");
+				List<String> arrayListInst = new LinkedList<String>();
+				while (st.hasMoreTokens()) {
+					String token = st.nextToken();
+					// ignore files
+					if (!token.contains(".")) {
+						arrayListInst.add(0, token);
+					}
 				}
+				streamName = arrayListInst.get(5);
+				pathToStreamCache.put(path, streamName);
 			}
-			return arrayListInst.get(5);
+			return streamName;
 		} catch (Exception ex) {
 			return null;
 		}
@@ -63,41 +91,17 @@ public class MetricsUtil {
 	 */
 	public static String getSteamNameFromCheckPointKey(String key) {
 		try {
-			StringTokenizer st = new StringTokenizer(key, "_");
-			st.nextToken();
-			return st.nextToken();
-		} catch (Exception ex) {
-			return null;
-		}
-	}
-	
-	
-	public static String getStreamNameFromExistsPath(String path) {
-		try {
-			StringTokenizer st = new StringTokenizer(path, "/");
-			List<String> arrayListInst = new LinkedList<String>();
-			while(st.hasMoreTokens()){
-				arrayListInst.add(0, st.nextToken());
+			String streamName = pathToStreamCache.get(key);
+			if (streamName == null) {
+				StringTokenizer st = new StringTokenizer(key, "_");
+				st.nextToken();
+				streamName = st.nextToken();
+				pathToStreamCache.put(key, streamName);
 			}
-			return arrayListInst.get(6);
+			return streamName;
 		} catch (Exception ex) {
 			return null;
 		}
 	}
-	
-	/**
-	*Get the stream name from the purge path
-	*/
-	public static String getStreamNameFromPurgeDir(String path) {
-		try {
-			StringTokenizer st = new StringTokenizer(path, "/");
-			List<String> arrayListInst = new LinkedList<String>();
-			while (st.hasMoreTokens()) {
-				arrayListInst.add(0, st.nextToken());
-			}
-			return arrayListInst.get(4);
-		} catch (Exception ex) {
-			return null;
-		}
-	}
+
 }

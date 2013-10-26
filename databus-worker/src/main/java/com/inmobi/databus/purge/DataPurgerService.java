@@ -33,7 +33,6 @@ import org.apache.hadoop.fs.Path;
 
 import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -351,12 +350,12 @@ public class DataPurgerService extends AbstractService {
         purgePath = (Path) it.next();
         fs.delete(purgePath, true);
         LOG.info("Purging [" + purgePath + "]");
+        Counter purgeCounter = ConduitMetrics.getCounter("DataPurgerService.purgePaths.count");
+        if(purgeCounter!=null){
+      	  purgeCounter.inc();
+        }  
       } catch (Exception e) {
         LOG.warn("Cannot delete path " + purgePath, e);
-      }
-      Counter purgeCounter = ConduitMetrics.getCounter("DataPurgerService.purgePaths.count");
-      if(purgeCounter!=null){
-    	  purgeCounter.inc();
       }
     }
   }
@@ -370,5 +369,12 @@ public class DataPurgerService extends AbstractService {
 
     }
     return files;
+  }
+  
+  /**
+   * Get the service name 
+   */
+  public String getServiceName(){
+  	  return "DataPurgerService";
   }
 }

@@ -13,10 +13,10 @@
 */
 package com.inmobi.databus.purge;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.local.TestLocalStreamService;
 
 import java.text.NumberFormat;
-
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -32,6 +33,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.inmobi.databus.Cluster;
@@ -45,6 +48,19 @@ import com.inmobi.databus.utils.CalendarHelper;
 public class DataPurgerServiceTest {
   private static Logger LOG = Logger.getLogger(DataPurgerServiceTest.class);
   DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
+  
+  @BeforeMethod
+  public void beforeTest() throws Exception{
+	Properties prop = new Properties();
+	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+	ConduitMetrics.init(prop);
+	ConduitMetrics.startAll();
+  }
+  
+  @AfterMethod
+  public void afterTest() throws Exception{
+	  ConduitMetrics.stopAll();;
+  }
 
   public void isPurgeTest1() {
     DataPurgerService service = buildPurgerService();
@@ -184,6 +200,8 @@ public class DataPurgerServiceTest {
       LOG.info("Testing for dummydummyname " + Retention.intValue());
       Assert.assertEquals(Retention.intValue(), 48);
     }
+
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 0);
   }
 
   final static int NUM_OF_FILES = 35;
@@ -325,6 +343,8 @@ public class DataPurgerServiceTest {
     LOG.info("Working for file test-dps-databus_X_4.xml");
     testPurgerService("test-dps-databus_X_4.xml", -3, false, true);
     testPurgerService("test-dps-databus_X_4.xml", -1, true, true);
+
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 6);
   }
   
   public void testDataPurger() throws Exception {
@@ -375,6 +395,8 @@ public class DataPurgerServiceTest {
       fs.delete(new Path(cluster.getRootDir()), true);
       fs.close();
     }
+
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 9);
   }
 
   private Path[] getMergeCommitPath(FileSystem fs, Cluster cluster,
@@ -437,6 +459,8 @@ public class DataPurgerServiceTest {
       fs.delete(new Path(cluster.getRootDir()), true);
       fs.close();
     }
+
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 6);
   }
   
   private DataPurgerService buildPurgerService() {
