@@ -4,9 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -14,8 +13,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.local.TestLocalStreamService;
 
 public class PublishMissingPathsTest {
@@ -33,6 +35,18 @@ public class PublishMissingPathsTest {
       behinddate.add(Calendar.MINUTE, 1);
       diff = todaysdate - behinddate.getTimeInMillis();
     }
+  }
+  @BeforeMethod
+  public void beforeTest() throws Exception{
+	Properties prop = new Properties();
+	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+	ConduitMetrics.init(prop);
+	ConduitMetrics.startAll();
+  }
+  
+  @AfterMethod
+  public void afterTest() throws Exception{
+	  ConduitMetrics.stopAll();;
   }
   
   @Test
@@ -88,5 +102,6 @@ public class PublishMissingPathsTest {
     fs.delete(new Path(cluster.getRootDir()), true);
     
     fs.close();
+    Assert.assertTrue(ConduitMetrics.getCounter("LocalStreamService.emptyDir.create.test1").getCount() >0 );
   }
 }
