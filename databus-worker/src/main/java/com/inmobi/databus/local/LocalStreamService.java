@@ -85,15 +85,13 @@ ConfigConstants {
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
 
-
-
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
+      Set<String> streamsToProcess, MessagePublisher publisher)
           throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider,streamsToProcess, publisher, hostName);
+        provider,streamsToProcess, publisher);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;

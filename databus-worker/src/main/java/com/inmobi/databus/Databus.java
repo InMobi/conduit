@@ -17,8 +17,6 @@ package com.inmobi.databus;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,7 +87,6 @@ public class Databus implements Service, DatabusConstants {
   }
 
   protected List<AbstractService> init() throws Exception {
-    String hostName = getHostName();
     Cluster currentCluster = null;
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
@@ -117,7 +114,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
-                streamsToProcess, publisher, hostName));
+                streamsToProcess, publisher));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -176,7 +173,7 @@ public class Databus implements Service, DatabusConstants {
           if (streamsToProcess.size() > 0) {
             services.add(getMergedStreamService(config, config.getClusters()
                 .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher, hostName));
+                publisher));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -194,7 +191,7 @@ public class Databus implements Service, DatabusConstants {
           if (streamsToProcess.size() > 0) {
             services.add(getMirrorStreamService(config, config.getClusters()
                 .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher, hostName));
+                publisher));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -231,30 +228,30 @@ public class Databus implements Service, DatabusConstants {
 
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
       Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess,
-      MessagePublisher publisher, String hostName) throws IOException {
+      MessagePublisher publisher) throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
         new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
-        publisher, hostName);
+        publisher);
   }
 
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String>  streamsToProcess, MessagePublisher publisher, String hostName)
+      Set<String>  streamsToProcess, MessagePublisher publisher)
           throws Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess,publisher, hostName);
+        streamsToProcess,publisher);
   }
 
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
+      Set<String> streamsToProcess, MessagePublisher publisher)
           throws Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess, publisher, hostName);
+        streamsToProcess, publisher);
 
   }
 
@@ -483,18 +480,6 @@ public class Databus implements Service, DatabusConstants {
       LOG.warn("Error in starting Databus daemon", e);
       throw new Exception(e);
     }
-  }
-
-  private String getHostName() {
-    String hostName;
-    try {
-      hostName = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      LOG.error("Unable to find the hostanme of the worker box,audit packets"
-          + " won't contain hostname");
-      hostName = "";
-    }
-    return hostName;
   }
 
   private void startCuratorLeaderManager(
