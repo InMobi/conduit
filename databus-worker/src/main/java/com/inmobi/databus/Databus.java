@@ -60,7 +60,6 @@ public class Databus implements Service, DatabusConstants {
   private volatile boolean stopRequested = false;
   private CuratorLeaderManager curatorLeaderManager = null;
   private volatile boolean databusStarted = false;
-  public static String hostName;
   
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
       String currentCluster) {
@@ -456,6 +455,7 @@ public class Databus implements Service, DatabusConstants {
       String auditProperty = prop.getProperty(AUDIT_ENABLED_KEY);
       boolean auditEnable = true;
       if (auditProperty != null && auditProperty.length() != 0) {
+         System.setProperty(AUDIT_ENABLED_KEY, auditProperty);
          auditEnable = Boolean.parseBoolean(auditProperty);
       }
       if (auditEnable) {

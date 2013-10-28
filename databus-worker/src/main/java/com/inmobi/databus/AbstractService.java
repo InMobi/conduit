@@ -525,7 +525,7 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
-  protected void publishAuditMessages(List<AuditMessage> auditMsgList) throws Exception {
+  protected void publishAuditMessages(List<AuditMessage> auditMsgList){
     for (AuditMessage auditMsg : auditMsgList) {
       try {
         LOG.debug("Publishing audit message from local stream service "
@@ -533,8 +533,7 @@ public abstract class AbstractService implements Service, Runnable {
         publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
             ByteBuffer.wrap(serializer.serialize(auditMsg))));
       } catch (Exception e) {
-        LOG.error("Publishing of audit message failed ", e);
-        // LOG.warn("Might be a mismatch between actual committed paths and audit metrics " + auditMsg.getReceived());
+        LOG.error("Publishing of audit message" + auditMsg.toString() + "failed ", e);
       }
     }
   }
