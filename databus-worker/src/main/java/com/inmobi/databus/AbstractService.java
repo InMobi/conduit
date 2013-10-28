@@ -55,7 +55,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected Thread thread;
   protected volatile boolean stopped = false;
   protected CheckpointProvider checkpointProvider = null;
-  protected String hostname;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   protected final MessagePublisher publisher;
   protected CounterGroup counterGrp;
@@ -68,7 +67,16 @@ public abstract class AbstractService implements Service, Runnable {
   protected final Set<String> streamsToProcess;
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
-
+  protected static String hostname;
+  static {
+    try {
+      hostname = InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException e) {
+      LOG.error("Unable to find the hostanme of the worker box,audit packets"
+          + " won't contain hostname");
+      hostname = "";
+    }
+  }
 
   public AbstractService(String name, DatabusConfig config,
       Set<String> streamsToProcess,MessagePublisher publisher) {
@@ -80,13 +88,6 @@ public abstract class AbstractService implements Service, Runnable {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
-    try {
-      hostname = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      LOG.error("Unable to find the hostanme of the worker box,audit packets"
-          + " won't contain hostname");
-      hostname = "";
-    }
     this.publisher = publisher;
     String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;

@@ -60,9 +60,8 @@ public class Databus implements Service, DatabusConstants {
   private volatile boolean stopRequested = false;
   private CuratorLeaderManager curatorLeaderManager = null;
   private volatile boolean databusStarted = false;
-
-
-
+  public static String hostName;
+  
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
       String currentCluster) {
     this(config, clustersToProcess);
