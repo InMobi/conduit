@@ -52,7 +52,7 @@ public class TestMirrorStreamService extends MirrorStreamService
       MessagePublisher publisher) throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, publisher);
+        streamsToProcess, publisher, null);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -153,7 +153,12 @@ public class TestMirrorStreamService extends MirrorStreamService
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
-      Assert.assertEquals(auditReceived, totalFileProcessedInRun);
+      /*
+       * Number of counters for each file is 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file.
+       * Counter name is func(streamname, filename, timestamp)
+       */
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);

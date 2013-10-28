@@ -66,7 +66,7 @@ public class TestMirrorStreamPrepForCommit {
 
     service = new MirrorStreamService(null, cluster, cluster, null,
         new FSCheckpointProvider(cluster.getCheckpointDir()),
-        new HashSet<String>(), null);
+        new HashSet<String>(), null, null);
 
     //createFinalExpectedPath
     finalExpectedPaths.add(new Path

@@ -29,13 +29,18 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.compress.CodecPool;
+import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptionSwitch;
 import org.apache.hadoop.tools.DistCpOptions;
+import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.util.DistCpUtils;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,7 +54,9 @@ import java.io.OutputStream;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TestCopyMapper {
   private static final Log LOG = LogFactory.getLog(TestCopyMapper.class);
@@ -104,10 +111,10 @@ public class TestCopyMapper {
     mkdirs(SOURCE_PATH + "/2/3/4");
     mkdirs(SOURCE_PATH + "/2/3");
     mkdirs(SOURCE_PATH + "/5");
-    touchFile(SOURCE_PATH + "/5/6");
+    touchFile(SOURCE_PATH + "/streams/test1/6.gz");
     mkdirs(SOURCE_PATH + "/7");
     mkdirs(SOURCE_PATH + "/7/8");
-    touchFile(SOURCE_PATH + "/7/8/9");
+    touchFile(SOURCE_PATH + "/7/streams/test1/9.gz");
   }
 
   private static void mkdirs(String path) throws Exception {
@@ -120,6 +127,10 @@ public class TestCopyMapper {
   private static void touchFile(String path) throws Exception {
     FileSystem fs;
     DataOutputStream outputStream = null;
+    GzipCodec gzipCodec = ReflectionUtils.newInstance(
+        GzipCodec.class, getConfiguration());
+    Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
+    OutputStream compressedOut =null;
     try {
       fs = cluster.getFileSystem();
       final Path qualifiedPath = new Path(path).makeQualified(fs);
@@ -127,7 +138,12 @@ public class TestCopyMapper {
       outputStream = fs.create(qualifiedPath, true, 0,
               (short)(fs.getDefaultReplication()*2),
               blockSize);
-      outputStream.write(new byte[FILE_SIZE]);
+      compressedOut = gzipCodec.createOutputStream(outputStream,
+          gzipCompressor);
+      compressedOut.write(new byte[FILE_SIZE]);
+      compressedOut.write("\n".getBytes());
+      compressedOut.flush();
+      //outputStream.write(new byte[FILE_SIZE]);
       pathList.add(qualifiedPath);
       ++nFiles;
 
@@ -136,7 +152,9 @@ public class TestCopyMapper {
       System.out.println(fileStatus.getReplication());
     }
     finally {
+      compressedOut.close();
       IOUtils.cleanup(null, outputStream);
+      CodecPool.returnCompressor(gzipCompressor);
     }
   }
 
@@ -253,8 +271,16 @@ public class TestCopyMapper {
 
       Assert.assertEquals(pathList.size(),
               reporter.getCounter(CopyMapper.Counter.PATHS_COPIED).getValue());
-      Assert.assertEquals(nFiles * FILE_SIZE,
-              reporter.getCounter(CopyMapper.Counter.BYTES_COPIED).getValue());
+      /*Assert.assertEquals(nFiles * FILE_SIZE,
+              reporter.getCounter(CopyMapper.Counter.BYTES_COPIED).getValue());*/
+      // Here file is compressed file. So, we should compare the file length
+      // with the number of bytes read
+      long totalSize = 0;
+      for (Path path : pathList) {
+        totalSize += fs.getFileStatus(path).getLen();
+      }
+      Assert.assertEquals(totalSize,
+          reporter.getCounter(CopyMapper.Counter.BYTES_COPIED).getValue());
 
       testCopyingExistingFiles(fs, copyMapper, context);
       for (Text value : writer.values()) {
@@ -380,7 +406,7 @@ public class TestCopyMapper {
       context.getConfiguration().set(DistCpConstants.CONF_LABEL_PRESERVE_STATUS,
         DistCpUtils.packAttributes(preserveStatus));
 
-      touchFile(SOURCE_PATH + "/src/file");
+      touchFile(SOURCE_PATH + "/src/file.gz");
       mkdirs(TARGET_PATH);
       cluster.getFileSystem().setPermission(new Path(TARGET_PATH), new FsPermission((short)511));
 
@@ -402,8 +428,8 @@ public class TestCopyMapper {
         public Integer run() {
           try {
             copyMapper.setup(context);
-            copyMapper.map(new Text("/src/file"),
-                tmpFS.getFileStatus(new Path(SOURCE_PATH + "/src/file")),
+            copyMapper.map(new Text("/src/file.gz"),
+                tmpFS.getFileStatus(new Path(SOURCE_PATH + "/src/file.gz")),
                 context);
             Assert.fail("Expected copy to fail");
           } catch (AccessControlException e) {
@@ -445,9 +471,9 @@ public class TestCopyMapper {
         }
       });
 
-      touchFile(SOURCE_PATH + "/src/file");
+      touchFile(SOURCE_PATH + "/src/file.gz");
       mkdirs(TARGET_PATH);
-      cluster.getFileSystem().setPermission(new Path(SOURCE_PATH + "/src/file"),
+      cluster.getFileSystem().setPermission(new Path(SOURCE_PATH + "/src/file.gz"),
           new FsPermission(FsAction.READ, FsAction.READ, FsAction.READ));
       cluster.getFileSystem().setPermission(new Path(TARGET_PATH), new FsPermission((short)511));
 
@@ -469,8 +495,8 @@ public class TestCopyMapper {
         public Integer run() {
           try {
             copyMapper.setup(context);
-            copyMapper.map(new Text("/src/file"),
-                tmpFS.getFileStatus(new Path(SOURCE_PATH + "/src/file")),
+            copyMapper.map(new Text("/src/file.gz"),
+                tmpFS.getFileStatus(new Path(SOURCE_PATH + "/src/file.gz")),
                 context);
           } catch (Exception e) {
             throw new RuntimeException(e);
@@ -515,11 +541,11 @@ public class TestCopyMapper {
       context.getConfiguration().set(DistCpConstants.CONF_LABEL_PRESERVE_STATUS,
         DistCpUtils.packAttributes(preserveStatus));
 
-      touchFile(SOURCE_PATH + "/src/file");
-      touchFile(TARGET_PATH + "/src/file");
-      cluster.getFileSystem().setPermission(new Path(SOURCE_PATH + "/src/file"),
+      touchFile(SOURCE_PATH + "/src/file.gz");
+      touchFile(TARGET_PATH + "/src/file.gz");
+      cluster.getFileSystem().setPermission(new Path(SOURCE_PATH + "/src/file.gz"),
           new FsPermission(FsAction.READ, FsAction.READ, FsAction.READ));
-      cluster.getFileSystem().setPermission(new Path(TARGET_PATH + "/src/file"),
+      cluster.getFileSystem().setPermission(new Path(TARGET_PATH + "/src/file.gz"),
           new FsPermission(FsAction.READ, FsAction.READ, FsAction.READ));
 
       final FileSystem tmpFS = tmpUser.doAs(new PrivilegedAction<FileSystem>() {
@@ -540,13 +566,13 @@ public class TestCopyMapper {
         public Integer run() {
           try {
             copyMapper.setup(context);
-            copyMapper.map(new Text("/src/file"),
-                tmpFS.getFileStatus(new Path(SOURCE_PATH + "/src/file")),
+            copyMapper.map(new Text("/src/file.gz"),
+                tmpFS.getFileStatus(new Path(SOURCE_PATH + "/src/file.gz")),
                 context);
             Assert.assertEquals(writer.values().size(), 1);
             Assert.assertTrue(writer.values().get(0).toString().startsWith("SKIP"));
             Assert.assertTrue(writer.values().get(0).toString().
-                contains(SOURCE_PATH + "/src/file"));
+                contains(SOURCE_PATH + "/src/file.gz"));
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -797,7 +823,7 @@ public class TestCopyMapper {
   public void testSingleFileCopy() {
     try {
       deleteState();
-      touchFile(SOURCE_PATH + "/1");
+      touchFile(SOURCE_PATH + "/1.gz");
       Path sourceFilePath = pathList.get(0);
       Path targetFilePath = new Path(sourceFilePath.toString().replaceAll(
               SOURCE_PATH, TARGET_PATH));

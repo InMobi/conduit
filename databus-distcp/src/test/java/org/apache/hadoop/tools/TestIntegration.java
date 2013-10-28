@@ -18,18 +18,31 @@
 
 package org.apache.hadoop.tools;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.CodecPool;
+import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.util.TestDistCpUtils;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.inmobi.databus.DatabusConstants;
+import com.inmobi.messaging.Message;
+import com.inmobi.messaging.util.AuditUtil;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Date;
 
 public class TestIntegration {
   private static final Log LOG = LogFactory.getLog(TestIntegration.class);
@@ -62,6 +75,77 @@ public class TestIntegration {
   }
 
   @Test
+  public void testJobConters() {
+    try {
+      Path listFile = new Path("target/tmp1/listing").makeQualified(fs);
+      addEntries(listFile, "*");
+      createFileForAudit("/databus/streams/test1/2013/10/10/10/10/file1.gz");
+
+      Job job = runTest(listFile, target, true);
+      int numberOfCountersForFile = 0;
+      int sumOfCounterValues = 0;
+      for (CounterGroup counterGrp : job.getCounters()) {
+        if (counterGrp.getName().equals(DatabusConstants.COUNTER_GROUP)) {
+          for (org.apache.hadoop.mapreduce.Counter counter : counterGrp) {
+            numberOfCountersForFile++;
+            String counterName = counter.getName();
+            String tmp[] = counterName.split(DatabusConstants.DELIMITER);
+            Assert.assertEquals(3, tmp.length);
+            // stream name is test1
+            Assert.assertEquals("test1", tmp[0]);
+            Assert.assertEquals("file1.gz", tmp[1]);
+            sumOfCounterValues += counter.getValue();
+          }
+        }
+      }
+      // file should have 2 counters
+      Assert.assertEquals(2, numberOfCountersForFile);
+      // sum of all counter values should equal to total number of messages
+      Assert.assertEquals(3, sumOfCounterValues);
+      checkResult(target, 1);
+    } catch (IOException e) {
+      LOG.error("Exception encountered while testing distcp", e);
+      Assert.fail("distcp failure");
+    } finally {
+      TestDistCpUtils.delete(fs, root);
+    }
+  }
+
+  private void createFileForAudit(String... entries) throws IOException {
+    for (String entry : entries) {
+      OutputStream out = fs.create(new Path(root + "/" + entry));
+      GzipCodec gzipCodec = ReflectionUtils.newInstance(
+          GzipCodec.class, new Configuration());
+      Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
+      OutputStream compressedOut =null;
+      try {
+        compressedOut = gzipCodec.createOutputStream(out, gzipCompressor);
+        Message msg = new Message((root + "/" + entry).getBytes());
+        long currentTimestamp = new Date().getTime();
+        AuditUtil.attachHeaders(msg, currentTimestamp);
+        byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
+        compressedOut.write(encodeMsg);
+        compressedOut.write("\n".getBytes());
+        compressedOut.write(encodeMsg);
+        compressedOut.write("\n".getBytes());
+        /* add a different timestamp to the msg header.
+         * The generation time stamp falls in diff window
+         * Each file will be having two counters
+         */
+        AuditUtil.attachHeaders(msg, currentTimestamp + 60001);
+        encodeMsg = Base64.encodeBase64(msg.getData().array());
+        compressedOut.write(encodeMsg);
+        compressedOut.write("\n".getBytes());
+        compressedOut.flush();
+      } finally {
+        compressedOut.close();
+        out.close();
+        CodecPool.returnCompressor(gzipCompressor);
+      }
+    }
+  }
+
+  @Test
   public void testSingleFileMissingTarget() {
     caseSingleFileMissingTarget(false);
     caseSingleFileMissingTarget(true);
@@ -70,8 +154,8 @@ public class TestIntegration {
   private void caseSingleFileMissingTarget(boolean sync) {
 
     try {
-      addEntries(listFile, "singlefile1/file1");
-      createFiles("singlefile1/file1");
+      addEntries(listFile, "singlefile1/file1.gz");
+      createFiles("singlefile1/file1.gz");
 
       runTest(listFile, target, sync);
 
@@ -93,8 +177,8 @@ public class TestIntegration {
   private void caseSingleFileTargetFile(boolean sync) {
 
     try {
-      addEntries(listFile, "singlefile1/file1");
-      createFiles("singlefile1/file1", target.toString());
+      addEntries(listFile, "singlefile1/file1.gz");
+      createFiles("singlefile1/file1.gz", target.toString());
 
       runTest(listFile, target, sync);
 
@@ -116,13 +200,13 @@ public class TestIntegration {
   private void caseSingleFileTargetDir(boolean sync) {
 
     try {
-      addEntries(listFile, "singlefile2/file2");
-      createFiles("singlefile2/file2");
+      addEntries(listFile, "singlefile2/file2.gz");
+      createFiles("singlefile2/file2.gz");
       mkdirs(target.toString());
 
       runTest(listFile, target, sync);
 
-      checkResult(target, 1, "file2");
+      checkResult(target, 1, "file2.gz");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -201,13 +285,13 @@ public class TestIntegration {
   private void caseMultiFileTargetPresent(boolean sync) {
 
     try {
-      addEntries(listFile, "multifile/file3", "multifile/file4", "multifile/file5");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
+      addEntries(listFile, "multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
       mkdirs(target.toString());
 
       runTest(listFile, target, sync);
 
-      checkResult(target, 3, "file3", "file4", "file5");
+      checkResult(target, 3, "file3.gz", "file4.gz", "file5.gz");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -225,12 +309,12 @@ public class TestIntegration {
   private void caseMultiFileTargetMissing(boolean sync) {
 
     try {
-      addEntries(listFile, "multifile/file3", "multifile/file4", "multifile/file5");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
+      addEntries(listFile, "multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
 
       runTest(listFile, target, sync);
 
-      checkResult(target, 3, "file3", "file4", "file5");
+      checkResult(target, 3, "file3.gz", "file4.gz", "file5.gz");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -244,12 +328,12 @@ public class TestIntegration {
 
     try {
       addEntries(listFile, "multifile", "singledir");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
       mkdirs(target.toString(), root + "/singledir/dir1");
 
       runTest(listFile, target, false);
 
-      checkResult(target, 2, "multifile/file3", "multifile/file4", "multifile/file5", "singledir/dir1");
+      checkResult(target, 2, "multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz", "singledir/dir1");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -263,12 +347,12 @@ public class TestIntegration {
 
     try {
       addEntries(listFile, "Umultifile", "Usingledir");
-      createFiles("Umultifile/Ufile3", "Umultifile/Ufile4", "Umultifile/Ufile5");
+      createFiles("Umultifile/Ufile3.gz", "Umultifile/Ufile4.gz", "Umultifile/Ufile5.gz");
       mkdirs(target.toString(), root + "/Usingledir/Udir1");
 
       runTest(listFile, target, true);
 
-      checkResult(target, 4, "Ufile3", "Ufile4", "Ufile5", "Udir1");
+      checkResult(target, 4, "Ufile3.gz", "Ufile4.gz", "Ufile5.gz", "Udir1");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -282,13 +366,13 @@ public class TestIntegration {
 
     try {
       addEntries(listFile, "multifile", "singledir");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
       mkdirs(root + "/singledir/dir1");
 
       runTest(listFile, target, false);
 
-      checkResult(target, 2, "multifile/file3", "multifile/file4",
-          "multifile/file5", "singledir/dir1");
+      checkResult(target, 2, "multifile/file3.gz", "multifile/file4.gz",
+          "multifile/file5.gz", "singledir/dir1");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -302,12 +386,12 @@ public class TestIntegration {
 
     try {
       addEntries(listFile, "multifile", "singledir");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
       mkdirs(root + "/singledir/dir1");
 
       runTest(listFile, target, true);
 
-      checkResult(target, 4, "file3", "file4", "file5", "dir1");
+      checkResult(target, 4, "file3.gz", "file4.gz", "file5.gz", "dir1");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -322,13 +406,15 @@ public class TestIntegration {
     try {
       Path listFile = new Path("target/tmp1/listing").makeQualified(fs);
       addEntries(listFile, "*");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
-      createFiles("singledir/dir2/file6");
+      createFiles("multifile/streams/test1/file3.gz",
+          "multifile/streams/test1/file4.gz", "multifile/streams/test1/file5.gz");
+      createFiles("singledir/dir2/streams/test1/file6.gz");
 
       runTest(listFile, target, false);
 
-      checkResult(target, 2, "multifile/file3", "multifile/file4", "multifile/file5",
-          "singledir/dir2/file6");
+      checkResult(target, 2, "multifile/streams/test1/file3.gz",
+          "multifile/streams/test1/file4.gz", "multifile/streams/test1/file5.gz",
+          "singledir/dir2/streams/test1/file6.gz");
     } catch (IOException e) {
       LOG.error("Exception encountered while testing distcp", e);
       Assert.fail("distcp failure");
@@ -344,12 +430,12 @@ public class TestIntegration {
     try {
       Path listFile = new Path("target/tmp1/listing").makeQualified(fs);
       addEntries(listFile, "*");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
-      createFiles("singledir/dir2/file6");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
+      createFiles("singledir/dir2/file6.gz");
 
       runTest(listFile, target, true);
 
-      checkResult(target, 4, "file3", "file4", "file5", "dir2/file6");
+      checkResult(target, 4, "file3.gz", "file4.gz", "file5.gz", "dir2/file6.gz");
     } catch (IOException e) {
       LOG.error("Exception encountered while running distcp", e);
       Assert.fail("distcp failure");
@@ -365,14 +451,14 @@ public class TestIntegration {
     try {
       Path listFile = new Path("target/tmp1/listing").makeQualified(fs);
       addEntries(listFile, "*/*");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
-      createFiles("singledir1/dir3/file7", "singledir1/dir3/file8",
-          "singledir1/dir3/file9");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
+      createFiles("singledir1/dir3/file7.gz", "singledir1/dir3/file8.gz",
+          "singledir1/dir3/file9.gz");
 
       runTest(listFile, target, false);
 
-      checkResult(target, 4, "file3", "file4", "file5",
-          "dir3/file7", "dir3/file8", "dir3/file9");
+      checkResult(target, 4, "file3.gz", "file4.gz", "file5.gz",
+          "dir3/file7.gz", "dir3/file8.gz", "dir3/file9.gz");
     } catch (IOException e) {
       LOG.error("Exception encountered while running distcp", e);
       Assert.fail("distcp failure");
@@ -388,14 +474,14 @@ public class TestIntegration {
     try {
       Path listFile = new Path("target/tmp1/listing").makeQualified(fs);
       addEntries(listFile, "*/*");
-      createFiles("multifile/file3", "multifile/file4", "multifile/file5");
-      createFiles("singledir1/dir3/file7", "singledir1/dir3/file8",
-          "singledir1/dir3/file9");
+      createFiles("multifile/file3.gz", "multifile/file4.gz", "multifile/file5.gz");
+      createFiles("singledir1/dir3/file7.gz", "singledir1/dir3/file8.gz",
+          "singledir1/dir3/file9.gz");
 
       runTest(listFile, target, true);
 
-      checkResult(target, 6, "file3", "file4", "file5",
-          "file7", "file8", "file9");
+      checkResult(target, 6, "file3.gz", "file4.gz", "file5.gz",
+          "file7.gz", "file8.gz", "file9.gz");
     } catch (IOException e) {
       LOG.error("Exception encountered while running distcp", e);
       Assert.fail("distcp failure");
@@ -420,11 +506,18 @@ public class TestIntegration {
   private void createFiles(String... entries) throws IOException {
     for (String entry : entries){
       OutputStream out = fs.create(new Path(root + "/" + entry));
+      GzipCodec gzipCodec = ReflectionUtils.newInstance(
+          GzipCodec.class, new Configuration());
+      Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
+      OutputStream compressedOut =null;
       try {
-        out.write((root + "/" + entry).getBytes());
-        out.write("\n".getBytes());
+        compressedOut = gzipCodec.createOutputStream(out, gzipCompressor);
+        compressedOut.write((root + "/" + entry).getBytes());
+        compressedOut.write("\n".getBytes());
       } finally {
+        compressedOut.close();
         out.close();
+        CodecPool.returnCompressor(gzipCompressor);
       }
     }
   }
@@ -435,11 +528,12 @@ public class TestIntegration {
     }
   }
 
-  private void runTest(Path listFile, Path target, boolean sync) throws IOException {
+  private Job runTest(Path listFile, Path target, boolean sync) throws IOException {
     DistCpOptions options = new DistCpOptions(listFile, target);
     options.setSyncFolder(sync);
     try {
-      new DistCp(getConf(), options).execute();
+      Job job = new DistCp(getConf(), options).execute();
+      return job;
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw new IOException(e);

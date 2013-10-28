@@ -63,11 +63,11 @@ public class TestDistCPBaseService  {
     // create mirror service
     mirrorService = new MirrorStreamService(null, cluster, cluster, null,
         new FSCheckpointProvider(cluster.getCheckpointDir()),
-        new HashSet<String>(), null);
+        new HashSet<String>(), null, null);
     // create merged service
     mergeService = new MergedStreamService(null, cluster, cluster, null,
         new FSCheckpointProvider(cluster.getCheckpointDir()),
-        new HashSet<String>(), null);
+        new HashSet<String>(), null, null);
 
     // create data
     createValidData();

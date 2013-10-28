@@ -62,10 +62,10 @@ public abstract class DistcpBaseService extends AbstractService {
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publisher)
-      throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess,
+      MessagePublisher publisher, String hostName) throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess,publisher);
+        config, streamsToProcess,publisher, hostName);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
@@ -106,7 +106,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
 
   protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
-      throws Exception {
+          throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
@@ -119,7 +119,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
       Job job = distCp.execute();
-      counterGrp = job.getCounters().getGroup(CopyMapper.COUNTER_GROUP);
+      counterGrp = job.getCounters().getGroup(DatabusConstants.COUNTER_GROUP);
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;
@@ -135,7 +135,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
    * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
-  
+
   /*
    * @return the target path where distcp will copy paths from source cluster 
    */
@@ -157,7 +157,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
 
   /*
    * Return a map of destination path,source path file status Since the map uses
-   * destination path as the key,no conflicting duplicates paths would not be
+   * destination path as the key,no conflicting duplicates paths would be
    * passed on to distcp
    * 
    * @return
@@ -178,7 +178,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
         // creating a path object from empty string throws exception;hence
         // checking for it
         if (!checkPointValue.trim().equals("")) {
-        lastCheckPointPath = new Path(checkPointValue);
+          lastCheckPointPath = new Path(checkPointValue);
         }
         lastCheckPointPath = fullyQualifyCheckPointWithReadURL
           (lastCheckPointPath, srcCluster);
@@ -295,7 +295,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
         srcCluster.getName());
   }
 
- 
+
 
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
@@ -321,18 +321,18 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
       // method was called
       if (stats != null) {
         if (stats.length == 0) {
-        results.add(fileStatus);
-        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      }
-      for (FileStatus stat : stats) {
-        createListing(fs, stat, results);
-      }
+          results.add(fileStatus);
+          LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
+        }
+        for (FileStatus stat : stats) {
+          createListing(fs, stat, results);
+        }
       }
     } else {
       LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
       results.add(fileStatus);
     }
-}
+  }
 
   /*
    * Find the topic name from path of format

@@ -127,7 +127,6 @@
       <artifactId>messaging-client-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
-      <version>${messaging-client-version}</version>
     </dependency>
 		<dependency>
 			<groupId>postgresql</groupId>
@@ -227,7 +226,4 @@
     </plugins>
   </build>
 
-	<properties>
-		<messaging-client-version>4.0.1</messaging-client-version>
-	</properties>
 </project>

@@ -15,8 +15,6 @@ package com.inmobi.databus;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -38,7 +36,6 @@ import org.apache.thrift.TSerializer;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.local.CopyMapper;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
@@ -58,7 +55,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected String hostname;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   protected final MessagePublisher publisher;
-  protected final static char TOPIC_SEPARATOR_FILENAME = '-';
   protected CounterGroup counterGrp;
   private final TSerializer serializer = new TSerializer();
   private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
@@ -72,22 +68,17 @@ public abstract class AbstractService implements Service, Runnable {
 
 
   public AbstractService(String name, DatabusConfig config,
-      Set<String> streamsToProcess,MessagePublisher publisher) {
-    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, publisher);
+      Set<String> streamsToProcess,MessagePublisher publisher, String hostName) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, publisher, hostName);
   }
 
   public AbstractService(String name, DatabusConfig config,
-      long runIntervalInMsec, Set<String> streamsToProcess,MessagePublisher publisher) {
+      long runIntervalInMsec, Set<String> streamsToProcess,
+      MessagePublisher publisher, String hostName) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
-    try {
-      hostname = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      LOG.error("Unable to find the hostanme of the worker box,audit packets"
-          + " won't contain hostname");
-      hostname = "";
-    }
+    this.hostname = hostName;
     this.publisher = publisher;
     String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
@@ -100,8 +91,8 @@ public abstract class AbstractService implements Service, Runnable {
 
   public AbstractService(String name, DatabusConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher) {
-    this(name, config, runIntervalInMsec, streamsToProcess,publisher);
+      Set<String> streamsToProcess, MessagePublisher publisher, String hostName) {
+    this(name, config, runIntervalInMsec, streamsToProcess, publisher, hostName);
     this.checkpointProvider = provider;
   }
 
@@ -470,12 +461,12 @@ public abstract class AbstractService implements Service, Runnable {
 
     for (Counter counter : counterGrp) {
       String counterName = counter.getName();
-      String tmp[] = counterName.split(CopyMapper.DELIMITER);
+      String tmp[] = counterName.split(DatabusConstants.DELIMITER);
       if (tmp.length < 3) {
         LOG.error("Malformed counter name,skipping " + counterName);
         continue;
       }
-      String streamFileNameCombo = tmp[0] + CopyMapper.DELIMITER + tmp[1];
+      String streamFileNameCombo = tmp[0] + DatabusConstants.DELIMITER + tmp[1];
       Long publishTimeWindow = Long.parseLong(tmp[2]);
       Long numOfMsgs = counter.getValue();
       result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
@@ -495,7 +486,6 @@ public abstract class AbstractService implements Service, Runnable {
 
   abstract protected String getTopicNameFromDestnPath(Path destnPath);
 
-
   abstract protected String getTier();
 
   protected void generateAndPublishAudit(String streamName, String fileName,
@@ -509,23 +499,26 @@ public abstract class AbstractService implements Service, Runnable {
       return;
     }
     if (streamName.equals(AuditUtil.AUDIT_STREAM_TOPIC_NAME)) {
-      LOG.debug("Not generation audit for audit stream");
+      LOG.debug("Not generating audit for audit stream");
       return;
     }
-    String streamFileNameCombo = streamName + CopyMapper.DELIMITER + fileName;
+    String streamFileNameCombo = streamName + DatabusConstants.DELIMITER
+        + fileName;
     Map<Long, Long> received = parsedCounters.row(streamFileNameCombo);
     if (!received.isEmpty()) {
       // create audit message
       AuditMessage auditMsg = createAuditMessage(streamName, received);
-      if (auditMsg == null)
-        return;
-      publishAuditMessage(auditMsg);
+      try {
+        publishAuditMessage(auditMsg);
+      } catch (Throwable th) {
+        LOG.error("Not able to publsh audit message ", th);
+      }
     } else {
       LOG.info("Not publishing audit packet as counters are empty");
     }
   }
 
-  private void publishAuditMessage(AuditMessage auditMsg) {
+  private void publishAuditMessage(AuditMessage auditMsg) throws Exception {
     try {
       LOG.debug("Publishing audit message from local stream service "
           + auditMsg);
@@ -536,6 +529,3 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 } 
-
-
-

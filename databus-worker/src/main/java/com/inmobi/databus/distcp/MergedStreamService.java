@@ -55,9 +55,10 @@ public class MergedStreamService extends DistcpBaseService {
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess,
-      MessagePublisher publisher) throws Exception {
+      MessagePublisher publisher, String hostName) throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster,provider, streamsToProcess,publisher);
+        destinationCluster, currentCluster,provider, streamsToProcess,
+        publisher, hostName);
   }
 
   @Override

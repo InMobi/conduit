@@ -152,13 +152,11 @@
       <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
-      <version>${messaging-client-version}</version>
       <type>jar</type>
     </dependency>
-         <dependency>
+    <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
-      <version>${messaging-client-version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

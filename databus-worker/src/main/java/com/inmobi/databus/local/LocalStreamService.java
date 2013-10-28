@@ -52,6 +52,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.publisher.MessagePublisher;
 
 
@@ -88,11 +89,11 @@ ConfigConstants {
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher)
-      throws IOException {
+      Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
+          throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider,streamsToProcess, publisher);
+        provider,streamsToProcess, publisher, hostName);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -146,8 +147,8 @@ ConfigConstants {
       Job job = createJob(tmpJobInputPath, totalSize);
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
-         counterGrp = job.getCounters().getGroup(
-            CopyMapper.COUNTER_GROUP);
+        counterGrp = job.getCounters().getGroup(
+            DatabusConstants.COUNTER_GROUP);
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
         commit(prepareForCommit(commitTime), true);
@@ -227,7 +228,10 @@ ConfigConstants {
       throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
-    Table<String, Long, Long> parsedCounters= parseCounters(counterGrp);
+    Table<String, Long, Long> parsedCounters = null;
+    if (generateAudit) {
+      parsedCounters = parseCounters(counterGrp);
+    }
 
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
@@ -240,10 +244,6 @@ ConfigConstants {
       }
       if (generateAudit) {
         String filename = entry.getKey().getName();
-        if (filename == null) {
-          LOG.error("Malformed filename: " + entry.getKey().getName());
-          continue;
-        }
         String streamName = getTopicNameFromDestnPath(entry.getValue());
         generateAndPublishAudit(streamName, filename, parsedCounters);
       }
@@ -251,23 +251,7 @@ ConfigConstants {
 
   }
 
-
-  /*
-   * file name ending with .gz and starting with name of collector
-   * eg:<collectorName>-<streamName>-2013-08-03-15-58_00000.gz
-   */
-
-  private String removeCollectorNameAndExt(String fileName) {
-    String fileWithoutExt = fileName.substring(0, fileName.length() - 3);
-    int firstIndex = fileWithoutExt.indexOf(TOPIC_SEPARATOR_FILENAME);
-    if (firstIndex == -1)
-      return null;
-    return fileWithoutExt.substring(firstIndex + 1);
-
-  }
-
-
-  private long createMRInput(Path inputPath,
+  protected long createMRInput(Path inputPath,
       Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
       Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
@@ -286,14 +270,11 @@ ConfigConstants {
       Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
-        if (out == null) {
-          out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-              inputPath, Text.class, entry.getKey().getClass());
-        }
-        out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
+        FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
+        out.append(new Text(entry.getValue()), status);
+
         // Create a sync point after each entry. This will ensure that SequenceFile
         // Reader can work at file entry level granularity, given that SequenceFile
-
         // Reader reads from the starting of sync point.
         out.sync();
 
@@ -376,7 +357,7 @@ ConfigConstants {
         FileStatus[] files = null;
         try {
           files = fs.listStatus(collector.getPath(),
-            new CollectorPathFilter());
+              new CollectorPathFilter());
         } catch (FileNotFoundException e) {
         }
 
@@ -440,9 +421,8 @@ ConfigConstants {
         retVal = true;
       }
     } catch (IOException e) {
-      LOG.error(
-          "Unable to find if file is empty or not [" + fileStatus.getPath()
-              + "]", e);
+      LOG.error("Unable to find if file is empty or not ["
+          + fileStatus.getPath() + "]", e);
     } finally {
       if (in != null) {
         try {
@@ -530,11 +510,6 @@ ConfigConstants {
     return src.getParent().getParent().getName();
   }
 
-  private String getCategoryFromDestPath(Path dest) {
-    return dest.getParent().getParent().getParent().getParent().getParent()
-        .getParent().getName();
-  }
-
   private Path getCategoryJobOutTmpPath(String category) {
     return new Path(tmpJobOutputPath, category);
   }
@@ -555,7 +530,7 @@ ConfigConstants {
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
     // job.getConfiguration());
     job.getConfiguration().set(
-"tmpjars", inputFormatJarDestPath.toString());
+        "tmpjars", inputFormatJarDestPath.toString());
     LOG.debug("Adding file [" + inputFormatJarDestPath
         + "] to distributed cache");
     job.setInputFormatClass(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
@@ -631,8 +606,8 @@ ConfigConstants {
    */
   public String getTopicNameFromDestnPath(Path destnPath) {
     String destnPathAsString = destnPath.toString();
-    String destnDirAsString = new Path(srcCluster.getLocalFinalDestDirRoot())
-        .toString();
+    String destnDirAsString = new Path(
+        srcCluster.getLocalFinalDestDirRoot()).toString();
     String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
         .length());
     Path tmpPath = new Path(pathWithoutRoot);

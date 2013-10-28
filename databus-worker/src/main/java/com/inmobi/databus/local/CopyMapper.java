@@ -32,15 +32,13 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 
 import com.inmobi.databus.ConfigConstants;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.FileUtil;
 
 
 public class CopyMapper extends Mapper<Text, FileStatus, Text,
     Text> implements ConfigConstants{
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
-  private static final String AUDIT_ENABLED_KEY = "audit.enabled";
-  public static final String COUNTER_GROUP = "audit";
-  public static final String DELIMITER = "#";
 
   @Override
   public void map(Text key, FileStatus value, Context context) throws IOException,
@@ -50,8 +48,10 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
     String collector = src.getParent().getName();
     String category = src.getParent().getParent().getName();
     Map<Long,Long> received = null;
-    if (context.getConfiguration().getBoolean(AUDIT_ENABLED_KEY, true))
+    if (context.getConfiguration().
+        getBoolean(DatabusConstants.AUDIT_ENABLED_KEY, true)) {
       received = new HashMap<Long, Long>();
+    }
     Configuration srcConf = new Configuration();
     srcConf.set(FS_DEFAULT_NAME_KEY,
         context.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
@@ -70,7 +70,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
       for (Entry<Long, Long> entry : received.entrySet()) {
         String counterName = getCounterName(category, destnFilename,
             entry.getKey());
-        context.getCounter(COUNTER_GROUP, counterName).increment(
+        context.getCounter(DatabusConstants.COUNTER_GROUP, counterName).increment(
             entry.getValue());
       }
     }
@@ -79,7 +79,8 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
 
   private String getCounterName(String streamName, String filename,
       Long timeWindow) {
-    return streamName + DELIMITER + filename + DELIMITER + timeWindow;
+    return streamName + DatabusConstants.DELIMITER + filename
+        + DatabusConstants.DELIMITER + timeWindow;
   }
   private Path getTempPath(Context context, Path src, String category,
       String collector) {

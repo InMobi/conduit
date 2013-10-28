@@ -54,7 +54,7 @@ public class TestMergedStreamService extends MergedStreamService
       throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, publisher);
+        streamsToProcess, publisher, null);
     this.srcCluster = srcCluster;
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -195,7 +195,12 @@ public class TestMergedStreamService extends MergedStreamService
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
-      Assert.assertEquals(auditReceived, totalFileProcessedInRun);
+      /*
+       * Number of counters for each file is 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file.
+       * Counter name is func(streamname, filename, timestamp)
+       */
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(
