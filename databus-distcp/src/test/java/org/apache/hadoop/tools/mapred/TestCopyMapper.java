@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.tools.mapred;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -48,11 +49,16 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.inmobi.databus.DatabusConstants;
+import com.inmobi.messaging.Message;
+import com.inmobi.messaging.util.AuditUtil;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +76,8 @@ public class TestCopyMapper {
   private static final String TARGET_PATH = "/tmp/target";
 
   private static Configuration configuration;
+  private static long currentTimestamp = new Date().getTime();
+  private static long nextMinuteTimeStamp = currentTimestamp + 60000;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -140,10 +148,20 @@ public class TestCopyMapper {
               blockSize);
       compressedOut = gzipCodec.createOutputStream(outputStream,
           gzipCompressor);
-      compressedOut.write(new byte[FILE_SIZE]);
+      Message msg = new Message("generating test data".getBytes());
+      AuditUtil.attachHeaders(msg, currentTimestamp);
+      byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
+      compressedOut.write(encodeMsg);
+      compressedOut.write("\n".getBytes());
+      compressedOut.write(encodeMsg);
+      compressedOut.write("\n".getBytes());
+      // Genearate a msg with different timestamp.  Default window period is 60sec
+      AuditUtil.attachHeaders(msg, nextMinuteTimeStamp);
+      encodeMsg = Base64.encodeBase64(msg.getData().array());
+      compressedOut.write(encodeMsg);
       compressedOut.write("\n".getBytes());
       compressedOut.flush();
-      //outputStream.write(new byte[FILE_SIZE]);
+      compressedOut.close();
       pathList.add(qualifiedPath);
       ++nFiles;
 
@@ -168,7 +186,10 @@ public class TestCopyMapper {
     }
 
     @Override
-    public Counter getCounter(String group, String name) {return null;}
+    public Counter getCounter(String group, String name) {
+      System.out.println("BBBBBBBBBBBBBBBBBBB ");
+      return counters.findCounter(group, name);
+    }
 
     @Override
     public void progress() {}
@@ -199,6 +220,15 @@ public class TestCopyMapper {
         return reporter.getCounter((Enum<?>) invocationOnMock.getArguments()[0]);
       }
     }).when(ctx).getCounter(Mockito.any(CopyMapper.Counter.class));
+
+    Mockito.doAnswer(new Answer<Counter>() {
+      @Override
+      public Counter answer(InvocationOnMock invocationOnMock) throws Throwable {
+        return reporter.getCounter((String)invocationOnMock.getArguments()[0],
+            (String)invocationOnMock.getArguments()[1]);
+      }
+    }).when(ctx).getCounter(Mockito.any(String.class), Mockito.any(String.class));
+
     final TaskAttemptID id = Mockito.mock(TaskAttemptID.class);
     Mockito.when(id.toString()).thenReturn("attempt1");
     Mockito.doAnswer(new Answer<TaskAttemptID>(){
@@ -267,6 +297,20 @@ public class TestCopyMapper {
         Assert.assertTrue(!fs.isFile(targetPath) ||
                 fs.getFileChecksum(targetPath).equals(
                         fs.getFileChecksum(path)));
+        if (fs.isFile(path)) {
+          String counterName = "test1" + DatabusConstants.DELIMITER +
+              path.getName() + DatabusConstants.DELIMITER +
+              (currentTimestamp - (currentTimestamp % 60000));
+          Counter counter = reporter.getCounter(DatabusConstants.COUNTER_GROUP,
+              counterName);
+          Assert.assertEquals(2, counter.getValue());
+          counterName = "test1" + DatabusConstants.DELIMITER + path.getName() +
+              DatabusConstants.DELIMITER +
+              (nextMinuteTimeStamp - (nextMinuteTimeStamp % 60000));
+          counter = reporter.getCounter(DatabusConstants.COUNTER_GROUP,
+              counterName);
+          Assert.assertEquals(1, counter.getValue());
+        }
       }
 
       Assert.assertEquals(pathList.size(),
