@@ -148,7 +148,7 @@ ConfigConstants {
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
         counterGrp = job.getCounters().getGroup(
-            DatabusConstants.COUNTER_GROUP);
+            DatabusConstants.AUDIT_COUNTER_GROUP);
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
         commit(prepareForCommit(commitTime), true);

@@ -461,12 +461,14 @@ public abstract class AbstractService implements Service, Runnable {
 
     for (Counter counter : counterGrp) {
       String counterName = counter.getName();
-      String tmp[] = counterName.split(DatabusConstants.DELIMITER);
+      String tmp[] = counterName.split(DatabusConstants.
+          AUDIT_COUNTER_NAME_DELIMITER);
       if (tmp.length < 3) {
         LOG.error("Malformed counter name,skipping " + counterName);
         continue;
       }
-      String streamFileNameCombo = tmp[0] + DatabusConstants.DELIMITER + tmp[1];
+      String streamFileNameCombo = tmp[0] + DatabusConstants.
+          AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
       Long publishTimeWindow = Long.parseLong(tmp[2]);
       Long numOfMsgs = counter.getValue();
       result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
@@ -502,8 +504,8 @@ public abstract class AbstractService implements Service, Runnable {
       LOG.debug("Not generating audit for audit stream");
       return;
     }
-    String streamFileNameCombo = streamName + DatabusConstants.DELIMITER
-        + fileName;
+    String streamFileNameCombo = streamName + DatabusConstants.
+        AUDIT_COUNTER_NAME_DELIMITER + fileName;
     Map<Long, Long> received = parsedCounters.row(streamFileNameCombo);
     if (!received.isEmpty()) {
       // create audit message

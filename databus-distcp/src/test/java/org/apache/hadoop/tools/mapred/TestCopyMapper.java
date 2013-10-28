@@ -298,16 +298,17 @@ public class TestCopyMapper {
                 fs.getFileChecksum(targetPath).equals(
                         fs.getFileChecksum(path)));
         if (fs.isFile(path)) {
-          String counterName = "test1" + DatabusConstants.DELIMITER +
-              path.getName() + DatabusConstants.DELIMITER +
+          String counterName = "test1" +
+              DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + path.getName() +
+              DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
               (currentTimestamp - (currentTimestamp % 60000));
-          Counter counter = reporter.getCounter(DatabusConstants.COUNTER_GROUP,
+          Counter counter = reporter.getCounter(DatabusConstants.AUDIT_COUNTER_GROUP,
               counterName);
           Assert.assertEquals(2, counter.getValue());
-          counterName = "test1" + DatabusConstants.DELIMITER + path.getName() +
-              DatabusConstants.DELIMITER +
+          counterName = "test1" + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
+              path.getName() + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
               (nextMinuteTimeStamp - (nextMinuteTimeStamp % 60000));
-          counter = reporter.getCounter(DatabusConstants.COUNTER_GROUP,
+          counter = reporter.getCounter(DatabusConstants.AUDIT_COUNTER_GROUP,
               counterName);
           Assert.assertEquals(1, counter.getValue());
         }

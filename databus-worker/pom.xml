@@ -158,7 +158,6 @@
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
       <type>test-jar</type>
-      <scope>test</scope>
     </dependency>
     <dependency>
     <groupId>com.inmobi.databus</groupId>

@@ -257,7 +257,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
           for (Entry<Long, Long> entry : received.entrySet()) {
             String counterName = getCounterName(streamName,
                 sourcePath.getName(), entry.getKey());
-            context.getCounter(DatabusConstants.COUNTER_GROUP,
+            context.getCounter(DatabusConstants.AUDIT_COUNTER_GROUP,
                 counterName).increment(entry.getValue());
           }
         }
@@ -273,8 +273,8 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
 
   private String getCounterName(String streamName, String filename,
       Long timeWindow) {
-    return streamName + DatabusConstants.DELIMITER + filename
-        + DatabusConstants.DELIMITER + timeWindow;
+    return streamName + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
+        filename + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow;
   }
 
   private String getFileType(FileStatus fileStatus) {

@@ -85,11 +85,12 @@ public class TestIntegration {
       int numberOfCountersForFile = 0;
       int sumOfCounterValues = 0;
       for (CounterGroup counterGrp : job.getCounters()) {
-        if (counterGrp.getName().equals(DatabusConstants.COUNTER_GROUP)) {
+        if (counterGrp.getName().equals(DatabusConstants.AUDIT_COUNTER_GROUP)) {
           for (org.apache.hadoop.mapreduce.Counter counter : counterGrp) {
             numberOfCountersForFile++;
             String counterName = counter.getName();
-            String tmp[] = counterName.split(DatabusConstants.DELIMITER);
+            String tmp[] = counterName.split(
+                DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER);
             Assert.assertEquals(3, tmp.length);
             // stream name is test1
             Assert.assertEquals("test1", tmp[0]);
