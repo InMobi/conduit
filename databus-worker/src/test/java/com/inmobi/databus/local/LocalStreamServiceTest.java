@@ -511,7 +511,7 @@ cluster.getCheckpointDir()),
       testJobConf.waitForCompletion(true);
 
       CounterGroup counterGrp = testJobConf.getCounters().getGroup(
-          DatabusConstants.COUNTER_GROUP);
+          DatabusConstants.AUDIT_COUNTER_GROUP);
       Assert.assertEquals(counterGrp.size(), number_files * 2);
       Assert.assertEquals(counterGrp.getName(), "audit");
       int totalSize = 0;
@@ -623,7 +623,6 @@ cluster.getCheckpointDir()),
         "system/tmp/LocalStreamService_testcluster2_test1@/" +
         "job_local_0001/attempt_local_0001_m_000000_0/"), filenameStr + ".gz");
     FileUtil.gzip(src, target, new Configuration(), received);
-    System.out.println("RRRRRRRR received " + received + "   sssrc " + src + "  target " + target);
     Assert.assertEquals(2, received.size());
     // current timestamp window = currentTimestamp - (currentTimestamp % 60000)
     Assert.assertTrue(
