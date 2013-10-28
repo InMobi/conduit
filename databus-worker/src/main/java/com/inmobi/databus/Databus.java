@@ -453,7 +453,17 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
-      databus.setPublisher(getMessagePublisher(prop));
+      String auditProperty = prop.getProperty(AUDIT_ENABLED_KEY);
+      boolean auditEnable = true;
+      if (auditProperty != null && auditProperty.length() != 0) {
+         auditEnable = Boolean.parseBoolean(auditProperty);
+      }
+      if (auditEnable) {
+        databus.setPublisher(getMessagePublisher(prop));
+      } else {
+        // not creating publisher in case if audit is disabled
+        databus.setPublisher(null);
+      }
       Signal.handle(new Signal("TERM"), new SignalHandler() {
 
         @Override
