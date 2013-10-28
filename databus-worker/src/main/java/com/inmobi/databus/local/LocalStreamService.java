@@ -46,6 +46,7 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 
 import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -85,15 +86,13 @@ ConfigConstants {
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
 
-
-
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
+      Set<String> streamsToProcess, MessagePublisher publisher)
           throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider,streamsToProcess, publisher, hostName);
+        provider,streamsToProcess, publisher);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -121,8 +120,8 @@ ConfigConstants {
 
   @Override
   protected void execute() throws Exception {
+    List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     try {
-
       FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
       // Cleanup tmpPath before everyRun to avoid
       // any old data being used in this run if the old run was aborted
@@ -148,19 +147,21 @@ ConfigConstants {
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
         counterGrp = job.getCounters().getGroup(
-            DatabusConstants.COUNTER_GROUP);
+            DatabusConstants.AUDIT_COUNTER_GROUP);
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
-        commit(prepareForCommit(commitTime), true);
+        commit(prepareForCommit(commitTime), true, auditMsgList);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
-        commit(populateTrashCommitPaths(trashSet), false);
+        commit(populateTrashCommitPaths(trashSet), false, auditMsgList);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
 
       }
     } catch (Exception e) {
       LOG.warn("Error in running LocalStreamService " + e);
       throw e;
+    } finally {
+      publishAuditMessages(auditMsgList);
     }
   }
 
@@ -223,9 +224,8 @@ ConfigConstants {
     return trashPaths;
   }
 
-
-  private void commit(Map<Path, Path> commitPaths, boolean generateAudit)
-      throws Exception {
+  private void commit(Map<Path, Path> commitPaths, boolean generateAudit,
+      List<AuditMessage> auditMsgList) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     Table<String, Long, Long> parsedCounters = null;
@@ -245,7 +245,7 @@ ConfigConstants {
       if (generateAudit) {
         String filename = entry.getKey().getName();
         String streamName = getTopicNameFromDestnPath(entry.getValue());
-        generateAndPublishAudit(streamName, filename, parsedCounters);
+        generateAuditMsgs(streamName, filename, parsedCounters, auditMsgList);
       }
     }
 
@@ -524,7 +524,8 @@ ConfigConstants {
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
-
+    conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
+        System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
     Job job = new Job(conf);
     job.setJobName(jobName);
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,

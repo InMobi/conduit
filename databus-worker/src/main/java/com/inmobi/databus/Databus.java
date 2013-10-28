@@ -17,8 +17,6 @@ package com.inmobi.databus;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,9 +60,7 @@ public class Databus implements Service, DatabusConstants {
   private volatile boolean stopRequested = false;
   private CuratorLeaderManager curatorLeaderManager = null;
   private volatile boolean databusStarted = false;
-
-
-
+  
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
       String currentCluster) {
     this(config, clustersToProcess);
@@ -89,7 +85,6 @@ public class Databus implements Service, DatabusConstants {
   }
 
   protected List<AbstractService> init() throws Exception {
-    String hostName = getHostName();
     Cluster currentCluster = null;
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
@@ -117,7 +112,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
-                streamsToProcess, publisher, hostName));
+                streamsToProcess, publisher));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -176,7 +171,7 @@ public class Databus implements Service, DatabusConstants {
           if (streamsToProcess.size() > 0) {
             services.add(getMergedStreamService(config, config.getClusters()
                 .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher, hostName));
+                publisher));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -194,7 +189,7 @@ public class Databus implements Service, DatabusConstants {
           if (streamsToProcess.size() > 0) {
             services.add(getMirrorStreamService(config, config.getClusters()
                 .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher, hostName));
+                publisher));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -231,30 +226,30 @@ public class Databus implements Service, DatabusConstants {
 
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
       Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess,
-      MessagePublisher publisher, String hostName) throws IOException {
+      MessagePublisher publisher) throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
         new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
-        publisher, hostName);
+        publisher);
   }
 
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String>  streamsToProcess, MessagePublisher publisher, String hostName)
+      Set<String>  streamsToProcess, MessagePublisher publisher)
           throws Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess,publisher, hostName);
+        streamsToProcess,publisher);
   }
 
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String> streamsToProcess, MessagePublisher publisher, String hostName)
+      Set<String> streamsToProcess, MessagePublisher publisher)
           throws Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess, publisher, hostName);
+        streamsToProcess, publisher);
 
   }
 
@@ -457,7 +452,18 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
-      databus.setPublisher(getMessagePublisher(prop));
+      String auditProperty = prop.getProperty(AUDIT_ENABLED_KEY);
+      boolean auditEnable = true;
+      if (auditProperty != null && auditProperty.length() != 0) {
+         System.setProperty(AUDIT_ENABLED_KEY, auditProperty);
+         auditEnable = Boolean.parseBoolean(auditProperty);
+      }
+      if (auditEnable) {
+        databus.setPublisher(getMessagePublisher(prop));
+      } else {
+        // not creating publisher in case if audit is disabled
+        databus.setPublisher(null);
+      }
       Signal.handle(new Signal("TERM"), new SignalHandler() {
 
         @Override
@@ -483,18 +489,6 @@ public class Databus implements Service, DatabusConstants {
       LOG.warn("Error in starting Databus daemon", e);
       throw new Exception(e);
     }
-  }
-
-  private String getHostName() {
-    String hostName;
-    try {
-      hostName = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      LOG.error("Unable to find the hostanme of the worker box,audit packets"
-          + " won't contain hostname");
-      hostName = "";
-    }
-    return hostName;
   }
 
   private void startCuratorLeaderManager(

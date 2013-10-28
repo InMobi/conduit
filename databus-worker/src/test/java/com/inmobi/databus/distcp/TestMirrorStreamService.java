@@ -52,7 +52,7 @@ public class TestMirrorStreamService extends MirrorStreamService
       MessagePublisher publisher) throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, publisher, null);
+        streamsToProcess, publisher);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());

@@ -374,7 +374,7 @@ public class TestLocalStreamService extends LocalStreamService implements
       Set<String> streamsToProcess, MessagePublisher publisher)
       throws IOException {
     super(config, srcCluster, currentCluster, provider, streamsToProcess,
-        publisher, null);
+        publisher);
     this.srcCluster = srcCluster;
     this.provider = provider;
     try {

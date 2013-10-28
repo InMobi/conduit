@@ -34,7 +34,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpOptions;
-import org.apache.hadoop.tools.mapred.CopyMapper;
 
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -62,10 +61,10 @@ public abstract class DistcpBaseService extends AbstractService {
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      MessagePublisher publisher, String hostName) throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publisher)
+          throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess,publisher, hostName);
+        config, streamsToProcess,publisher);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
@@ -110,6 +109,8 @@ public abstract class DistcpBaseService extends AbstractService {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
+    conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
+        System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
     conf.set("mapred.job.name", serviceName);
 
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
@@ -119,7 +120,7 @@ public abstract class DistcpBaseService extends AbstractService {
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
       Job job = distCp.execute();
-      counterGrp = job.getCounters().getGroup(DatabusConstants.COUNTER_GROUP);
+      counterGrp = job.getCounters().getGroup(DatabusConstants.AUDIT_COUNTER_GROUP);
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;

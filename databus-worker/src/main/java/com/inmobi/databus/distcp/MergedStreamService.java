@@ -34,6 +34,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -55,10 +56,9 @@ public class MergedStreamService extends DistcpBaseService {
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess,
-      MessagePublisher publisher, String hostName) throws Exception {
+      MessagePublisher publisher) throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster,provider, streamsToProcess,
-        publisher, hostName);
+        destinationCluster, currentCluster,provider, streamsToProcess,publisher);
   }
 
   @Override
@@ -71,6 +71,7 @@ public class MergedStreamService extends DistcpBaseService {
   
   @Override
   public void execute() throws Exception {
+    List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     try {
       boolean skipCommit = false;
@@ -126,7 +127,7 @@ public class MergedStreamService extends DistcpBaseService {
           commitPaths = createLocalCommitPaths(tmpOut, commitTime,
               categoriesToCommit);
           // category, Set of Paths to commit
-          doLocalCommit(commitPaths);
+          doLocalCommit(commitPaths, auditMsgList);
         }
         finalizeCheckPoints();
       }
@@ -136,6 +137,8 @@ public class MergedStreamService extends DistcpBaseService {
     } catch (Exception e) {
       LOG.warn("Error in run ", e);
       throw new Exception(e);
+    } finally {
+      publishAuditMessages(auditMsgList);
     }
   }
 
@@ -202,7 +205,8 @@ public class MergedStreamService extends DistcpBaseService {
     return mvPaths;
   }
 
-  private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
+  private void doLocalCommit(Map<Path, Path> commitPaths,
+      List<AuditMessage> auditMsgList) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
     Table<String, Long, Long> parsedCounters = parseCounters(counterGrp);
@@ -217,7 +221,7 @@ public class MergedStreamService extends DistcpBaseService {
       }
       String filename = entry.getKey().getName();
       String streamName = getTopicNameFromDestnPath(entry.getValue());
-      generateAndPublishAudit(streamName, filename, parsedCounters);
+      generateAuditMsgs(streamName, filename, parsedCounters, auditMsgList);
     }
   }
 
@@ -226,8 +230,6 @@ public class MergedStreamService extends DistcpBaseService {
     return new Path(finalDestDir);
 
   }
-
-
 
   private boolean isValidYYMMDDHHMMPath(Path prefix, Path path) {
     if (path.depth() < prefix.depth() + 5)
