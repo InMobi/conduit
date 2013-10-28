@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -38,7 +39,6 @@ import org.apache.thrift.TSerializer;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.local.CopyMapper;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
@@ -499,8 +499,8 @@ public abstract class AbstractService implements Service, Runnable {
 
   abstract protected String getTier();
 
-  protected void generateAndPublishAudit(String streamName, String fileName,
-      Table<String, Long, Long> parsedCounters) {
+  protected void generateAuditMsgs(String streamName, String fileName,
+      Table<String, Long, Long> parsedCounters, List<AuditMessage> auditMsgList) {
     if (publisher == null) {
       LOG.info("Not generating audit messages as publisher is null");
       return;
@@ -519,24 +519,23 @@ public abstract class AbstractService implements Service, Runnable {
     if (!received.isEmpty()) {
       // create audit message
       AuditMessage auditMsg = createAuditMessage(streamName, received);
-      try {
-        publishAuditMessage(auditMsg);
-      } catch (Throwable th) {
-        LOG.error("Not able to publsh audit message ", th);
-      }
+      auditMsgList.add(auditMsg);
     } else {
       LOG.info("Not publishing audit packet as counters are empty");
     }
   }
 
-  private void publishAuditMessage(AuditMessage auditMsg) throws Exception {
-    try {
-      LOG.debug("Publishing audit message from local stream service "
-          + auditMsg);
-      publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
-          ByteBuffer.wrap(serializer.serialize(auditMsg))));
-    } catch (TException e) {
-      LOG.error("Publishing of audit message failed", e);
+  protected void publishAuditMessages(List<AuditMessage> auditMsgList) throws Exception {
+    for (AuditMessage auditMsg : auditMsgList) {
+      try {
+        LOG.debug("Publishing audit message from local stream service "
+            + auditMsg);
+        publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
+            ByteBuffer.wrap(serializer.serialize(auditMsg))));
+      } catch (Exception e) {
+        LOG.error("Publishing of audit message failed ", e);
+        // LOG.warn("Might be a mismatch between actual committed paths and audit metrics " + auditMsg.getReceived());
+      }
     }
   }
 } 

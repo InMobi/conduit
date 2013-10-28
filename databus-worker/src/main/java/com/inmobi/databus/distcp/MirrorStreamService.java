@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -73,6 +74,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected void execute() throws Exception {
+    List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     try {
       boolean skipCommit = false;
@@ -108,7 +110,7 @@ public class MirrorStreamService extends DistcpBaseService {
       }
       if (!skipCommit) {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
-        doLocalCommit(commitPaths);
+        doLocalCommit(commitPaths, auditMsgList);
         finalizeCheckPoints();
       }
       getDestFs().delete(tmpOut, true);
@@ -116,10 +118,13 @@ public class MirrorStreamService extends DistcpBaseService {
     } catch (Exception e) {
       LOG.warn(e);
       LOG.warn("Error in MirrorStream Service..skipping RUN ", e);
+    } finally {
+      publishAuditMessages(auditMsgList);
     }
   }
 
-  void doLocalCommit(Map<FileStatus, Path> commitPaths) throws Exception {
+  void doLocalCommit(Map<FileStatus, Path> commitPaths,
+      List<AuditMessage> auditMsgList) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     Table<String, Long, Long> parsedCounters = parseCounters(counterGrp);
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
@@ -142,8 +147,8 @@ public class MirrorStreamService extends DistcpBaseService {
               + "] to [" + entry.getValue() + "]");
         }
         String streamName = getTopicNameFromDestnPath(entry.getValue());
-        generateAndPublishAudit(streamName, entry.getKey().getPath().getName(),
-            parsedCounters);
+        generateAuditMsgs(streamName, entry.getKey().getPath().getName(),
+            parsedCounters, auditMsgList);
       }
     }
   }
