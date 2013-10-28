@@ -187,7 +187,6 @@ public class TestCopyMapper {
 
     @Override
     public Counter getCounter(String group, String name) {
-      System.out.println("BBBBBBBBBBBBBBBBBBB ");
       return counters.findCounter(group, name);
     }
 
