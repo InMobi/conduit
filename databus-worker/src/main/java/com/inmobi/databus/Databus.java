@@ -419,7 +419,6 @@ public class Databus implements Service, DatabusConstants {
          System.setProperty(AUDIT_ENABLED_KEY, auditProperty);
          auditEnable = Boolean.parseBoolean(auditProperty);
       }
-      prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {
         LOG.info("Security enabled, trying kerberoes login principal ["
