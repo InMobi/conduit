@@ -413,6 +413,12 @@ public class Databus implements Service, DatabusConstants {
       if (numRetries != null) {
         System.setProperty(NUM_RETRIES, numRetries);
       }
+      String auditProperty = prop.getProperty(AUDIT_ENABLED_KEY);
+      boolean auditEnable = true;
+      if (auditProperty != null && auditProperty.length() != 0) {
+         System.setProperty(AUDIT_ENABLED_KEY, auditProperty);
+         auditEnable = Boolean.parseBoolean(auditProperty);
+      }
       prop = null;
 
       if (UserGroupInformation.isSecurityEnabled()) {
@@ -452,12 +458,6 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
-      String auditProperty = prop.getProperty(AUDIT_ENABLED_KEY);
-      boolean auditEnable = true;
-      if (auditProperty != null && auditProperty.length() != 0) {
-         System.setProperty(AUDIT_ENABLED_KEY, auditProperty);
-         auditEnable = Boolean.parseBoolean(auditProperty);
-      }
       if (auditEnable) {
         databus.setPublisher(getMessagePublisher(prop));
       } else {

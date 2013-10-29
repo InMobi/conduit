@@ -153,10 +153,6 @@ public class DataPurgerService extends AbstractService {
     return retentionInHours;
   }
 
-  private long getMsecInDay() {
-    return 1000 * 60 * 60 * 24; // 1 day
-  }
-
   @Override
   protected void execute() throws Exception {
     try {

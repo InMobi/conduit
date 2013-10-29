@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,7 +32,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
-import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
@@ -254,7 +252,6 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected void publishMissingPaths(FileSystem fs, String destDir,
 	    long commitTime, String categoryName) throws Exception {
-    Set<Path> missingDirectories = new TreeSet<Path>();
 		Long prevRuntime = new Long(-1);
 		if (!prevRuntimeForCategory.containsKey(categoryName)) {
 			LOG.debug("Calculating Previous Runtime from Directory Listing");

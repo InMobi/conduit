@@ -285,27 +285,6 @@ ConfigConstants {
     return totalSize;
   }
 
-  // This method is taken from DistCp SimpleCopyListing class.
-  private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
-    // if the file is not an instance of RawLocaleFileStatus, simply return it
-    if (fileStatus.getClass() == FileStatus.class) {
-      return fileStatus;
-    }
-
-    // Else if it is a local file, we need to convert it to an instance of
-    // FileStatus class. The reason is that SequenceFile.Writer/Reader does
-    // an exact match for FileStatus class.
-    FileStatus status = new FileStatus();
-
-    buffer.reset();
-    DataOutputStream out = new DataOutputStream(buffer);
-    fileStatus.write(out);
-
-    in.reset(buffer.toByteArray(), 0, buffer.size());
-    status.readFields(in);
-    return status;
-  }
-
   public static class CollectorPathFilter implements PathFilter {
     public boolean accept(Path path) {
       if (path.getName().endsWith("current")
