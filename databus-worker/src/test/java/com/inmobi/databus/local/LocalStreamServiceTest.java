@@ -75,6 +75,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     // clean up the test data if any thing is left in the previous runs
     cleanup();
     super.setup(2, 6, 1);
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     createExpectedOutput();
   }
 

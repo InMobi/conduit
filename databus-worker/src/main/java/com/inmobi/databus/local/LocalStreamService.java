@@ -56,8 +56,6 @@ import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.publisher.MessagePublisher;
 
-
-
 /*
  * Handles Local Streams for a Cluster
  * Assumptions
@@ -153,7 +151,7 @@ ConfigConstants {
         commit(prepareForCommit(commitTime), true, auditMsgList);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
-        commit(populateTrashCommitPaths(trashSet), false, auditMsgList);
+        commit(populateTrashCommitPaths(trashSet), false, null);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
 
       }
