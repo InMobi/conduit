@@ -59,7 +59,7 @@ display_help() {
   cat <<EOF
 Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>] 
           [-filter <TIER=xxx,HOSTNAME=xxx,TOPIC=xxx,CLUSTER=xxx>] [-percentile <comma separated list of percentiles>] <dd-mm-yyyy-HH:mm> <dd-mm-yyyy-HH:mm> --conf <confdir>
-       $0 feeder --conf <confdir>   
+       $0 feeder --conf <confdir>
 EOF
 }
 
@@ -102,7 +102,7 @@ case "$mode" in
     ;;
    feeder)
     opt_feeder=1
-    ;; 
+    ;;
   *)
     error "Unknown or unspecified command '$mode'"
     echo
@@ -185,7 +185,7 @@ done
 # finally, invoke the appropriate command
 if [ -n "$opt_audit" ] ; then
   run_client $CLIENT_AUDIT_QUERY_CLASS $args
-fi  
+fi
 if [ -n "$opt_feeder" ] ; then
   run_client $CLIENT_FEEDER_CLASS $args
 else

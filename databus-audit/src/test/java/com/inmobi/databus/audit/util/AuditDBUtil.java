@@ -27,7 +27,7 @@ public class AuditDBUtil {
   private String tableName = "audit";
 
   public void setupDB(boolean updateDB) {
-    ClientConfig config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
+    ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     connection = AuditDBHelper.getConnection(
         config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
         config.getString(AuditDBConstants.DB_URL),
@@ -57,7 +57,7 @@ public class AuditDBUtil {
   }
 
   private void updateDBWithData() {
-    ClientConfig config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
+    ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     AuditDBHelper dbHelper = new AuditDBHelper(config);
     boolean isSuccessful = dbHelper.update(tupleSet1);
     Assert.assertTrue(isSuccessful);

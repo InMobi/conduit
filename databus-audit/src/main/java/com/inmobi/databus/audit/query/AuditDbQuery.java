@@ -14,6 +14,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.inmobi.databus.audit.util.AuditDBConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -79,7 +80,7 @@ public class AuditDbQuery {
     if (config != null)
       this.config = config;
     else {
-      this.config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
+      this.config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     }
 
   }
