@@ -530,7 +530,7 @@ public abstract class AbstractService implements Service, Runnable {
         publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
             ByteBuffer.wrap(serializer.serialize(auditMsg))));
       } catch (Exception e) {
-        LOG.error("Publishing of audit message" + auditMsg.toString() + "failed ", e);
+        LOG.error("Publishing of audit message " + auditMsg.toString() + " failed ", e);
       }
     }
   }
