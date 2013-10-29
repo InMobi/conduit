@@ -32,7 +32,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.tools.DistCp;
-import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.databus.AbstractService;
@@ -176,6 +175,8 @@ public abstract class DistcpBaseService extends AbstractService {
         if (!checkPointValue.trim().equals("")) {
         lastCheckPointPath = new Path(checkPointValue);
         }
+        lastCheckPointPath = fullyQualifyCheckPointWithReadURL
+          (lastCheckPointPath, srcCluster);
         if (lastCheckPointPath == null
             || !getSrcFs().exists(lastCheckPointPath)) {
           LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
@@ -254,6 +255,32 @@ public abstract class DistcpBaseService extends AbstractService {
 
     }
     return result;
+  }
+
+  /**
+   * Method to qualify the checkpoint path based on the readurl configured
+   * for the source cluster. The readurl of the cluster can change and the
+   * checkpoint paths should be re-qualified to the new source cluster read
+   * path.
+   *
+   * @param lastCheckPointPath path which can be null read from checkpoint
+   *                           file.
+   * @param srcCluster the cluster for which checkpoint file which should be
+   *                   re-qualified.
+   * @return path which is re-qualified.
+   */
+  protected Path fullyQualifyCheckPointWithReadURL(Path lastCheckPointPath,
+                                           Cluster srcCluster) {
+    //if checkpoint value was empty or null just fall thro' let the service
+    // determine the new path.
+    if(lastCheckPointPath == null) {
+      return null;
+    }
+    String readUrl = srcCluster.getReadUrl();
+    URI checkpointURI = lastCheckPointPath.toUri();
+    String unQualifiedPathStr = checkpointURI.getPath();
+    Path newCheckPointPath = new Path(readUrl,unQualifiedPathStr);
+    return newCheckPointPath;
   }
 
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
