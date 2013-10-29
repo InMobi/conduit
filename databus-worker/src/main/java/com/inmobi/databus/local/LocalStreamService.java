@@ -56,8 +56,6 @@ import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.publisher.MessagePublisher;
 
-
-
 /*
  * Handles Local Streams for a Cluster
  * Assumptions
@@ -153,7 +151,7 @@ ConfigConstants {
         commit(prepareForCommit(commitTime), true, auditMsgList);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
-        commit(populateTrashCommitPaths(trashSet), false, auditMsgList);
+        commit(populateTrashCommitPaths(trashSet), false, null);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
 
       }
@@ -285,27 +283,6 @@ ConfigConstants {
     }
 
     return totalSize;
-  }
-
-  // This method is taken from DistCp SimpleCopyListing class.
-  private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
-    // if the file is not an instance of RawLocaleFileStatus, simply return it
-    if (fileStatus.getClass() == FileStatus.class) {
-      return fileStatus;
-    }
-
-    // Else if it is a local file, we need to convert it to an instance of
-    // FileStatus class. The reason is that SequenceFile.Writer/Reader does
-    // an exact match for FileStatus class.
-    FileStatus status = new FileStatus();
-
-    buffer.reset();
-    DataOutputStream out = new DataOutputStream(buffer);
-    fileStatus.write(out);
-
-    in.reset(buffer.toByteArray(), 0, buffer.size());
-    status.readFields(in);
-    return status;
   }
 
   public static class CollectorPathFilter implements PathFilter {

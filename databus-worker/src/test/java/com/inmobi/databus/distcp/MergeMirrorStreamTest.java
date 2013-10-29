@@ -138,6 +138,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   public void setup() throws Exception {
     // clean up the test data if any thing is left in the previous runs
     cleanup();
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     super.setup(2, 6, 1);
   }
 
