@@ -80,7 +80,7 @@ public class Databus implements Service, DatabusConstants {
     return config;
   }
 
-  public void setPublisher(MessagePublisher publisher) {
+  public static void setPublisher(MessagePublisher publisher) {
     Databus.publisher = publisher;
   }
 

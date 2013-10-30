@@ -528,7 +528,8 @@ public abstract class AbstractService implements Service, Runnable {
       try {
         LOG.debug("Publishing audit message from local stream service "
             + auditMsg);
-        Databus.getPublisher().publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME,
+        MessagePublisher publisher = Databus.getPublisher();
+        publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME,
             new Message(ByteBuffer.wrap(serializer.serialize(auditMsg))));
       } catch (Exception e) {
         LOG.error("Publishing of audit message " + auditMsg.toString() +

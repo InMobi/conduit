@@ -546,7 +546,6 @@ cluster.getCheckpointDir()),
     DatabusConfig config = parser.getConfig();
     Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
-    MessagePublisher publisher = MessagePublisherFactory.create();
     Set<String> clustersToProcess = new HashSet<String>();
     Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
 
