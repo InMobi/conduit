@@ -201,7 +201,7 @@ public class DataPurgerServiceTest {
       Assert.assertEquals(Retention.intValue(), 48);
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService","purgePaths.count","main").getCount() , 0);
   }
 
   final static int NUM_OF_FILES = 35;
@@ -344,7 +344,7 @@ public class DataPurgerServiceTest {
     testPurgerService("test-dps-databus_X_4.xml", -3, false, true);
     testPurgerService("test-dps-databus_X_4.xml", -1, true, true);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 6);
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService","purgePaths.count","main").getCount() , 6);
   }
   
   public void testDataPurger() throws Exception {
@@ -396,7 +396,7 @@ public class DataPurgerServiceTest {
       fs.close();
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService","purgePaths.count","main").getCount() , 9);
   }
 
   private Path[] getMergeCommitPath(FileSystem fs, Cluster cluster,
@@ -460,7 +460,7 @@ public class DataPurgerServiceTest {
       fs.close();
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService.purgePaths.count").getCount() , 6);
+    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService","purgePaths.count","main").getCount() , 6);
   }
   
   private DataPurgerService buildPurgerService() {

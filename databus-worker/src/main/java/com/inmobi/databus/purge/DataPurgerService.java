@@ -31,7 +31,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
@@ -70,7 +69,7 @@ public class DataPurgerService extends AbstractService {
     this.defaultstreamPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig.getDefaults().get(
             DatabusConfigParser.RETENTION_IN_HOURS)));
-    ConduitMetrics.registerCounter("DataPurgerService.purgePaths.count");
+    ConduitMetrics.registerCounter("DataPurgerService","purgePaths.count","main");
   }
 
   @Override
@@ -350,10 +349,7 @@ public class DataPurgerService extends AbstractService {
         purgePath = (Path) it.next();
         fs.delete(purgePath, true);
         LOG.info("Purging [" + purgePath + "]");
-        Counter purgeCounter = ConduitMetrics.getCounter("DataPurgerService.purgePaths.count");
-        if(purgeCounter!=null){
-      	  purgeCounter.inc();
-        }  
+        ConduitMetrics.incCounter("DataPurgerService", "purgePaths.count", "main", 1);
       } catch (Exception e) {
         LOG.warn("Cannot delete path " + purgePath, e);
       }

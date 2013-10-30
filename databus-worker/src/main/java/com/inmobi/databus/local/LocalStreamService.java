@@ -105,13 +105,12 @@ ConfigConstants {
 	
     //register metrics
     for (String eachStream : streamsToProcess) {
-		ConduitMetrics.registerCounter("LocalStreamService.retry.checkPoint."+eachStream);
-		ConduitMetrics.registerCounter("LocalStreamService.retry.mkDir."+eachStream);
-		ConduitMetrics.registerCounter("LocalStreamService.retry.rename."+eachStream);
-		ConduitMetrics.registerCounter("LocalStreamService.emptyDir.create."+eachStream);
-		ConduitMetrics.registerCounter("LocalStreamService.commitPaths.count."+eachStream);
-	}
-
+      ConduitMetrics.registerCounter("LocalStreamService","retry.checkPoint",eachStream);
+      ConduitMetrics.registerCounter("LocalStreamService","retry.mkDir",eachStream);
+      ConduitMetrics.registerCounter("LocalStreamService","retry.rename",eachStream);
+      ConduitMetrics.registerCounter("LocalStreamService","emptyDir.create",eachStream);
+      ConduitMetrics.registerCounter("LocalStreamService","commitPaths.count",eachStream);
+    }
   }
 
 
@@ -243,21 +242,12 @@ ConfigConstants {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
-	if (!entry.getValue().toString().contains("trash")) {
-		Counter commitCounter = ConduitMetrics
-				.getCounter("LocalStreamService.commitPaths.count."
-						+ streamName);
-		if (commitCounter != null) {
-			commitCounter.inc();
-		}
-	}
-      
+      if (!entry.getValue().toString().contains("trash")) {
+        ConduitMetrics.incCounter("LocalStreamService", "commitPaths.count", streamName, 1);
+      }
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
-    Counter commitTime = ConduitMetrics.getCounter("LocalStreamService.commit.time." + Thread.currentThread().getName());
-    if(commitTime!=null){
-    	commitTime.inc(elapsedTime);
-    }
+    ConduitMetrics.incCounter(getServiceName(), "commit.time", Thread.currentThread().getName(), elapsedTime);
 
   }
 
@@ -612,5 +602,27 @@ ConfigConstants {
 
   public Cluster getCurrentCluster() {
     return currentCluster;
+  }
+
+  /*
+   * Find the topic name from path of format
+   * /databus/streams_local/<streamName>/2013/10/
+   * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
+   */
+  public String getTopicNameFromDestnPath(Path destnPath) {
+    String destnPathAsString = destnPath.toString();
+    String destnDirAsString = new Path(
+        srcCluster.getLocalFinalDestDirRoot()).toString();
+    String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
+        .length());
+    Path tmpPath = new Path(pathWithoutRoot);
+    while (tmpPath.depth() != 1)
+      tmpPath = tmpPath.getParent();
+    return tmpPath.getName();
+  }
+
+  @Override
+  public String getServiceName() {
+    return "LocalStreamService";
   }
 }

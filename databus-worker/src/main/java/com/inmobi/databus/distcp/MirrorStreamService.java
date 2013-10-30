@@ -60,12 +60,12 @@ public class MirrorStreamService extends DistcpBaseService {
         streamsToProcess);
     
     for (String eachStream : streamsToProcess) {
-		ConduitMetrics.registerCounter("MirrorStreamService.retry.checkPoint."+eachStream);
-		ConduitMetrics.registerCounter("MirrorStreamService.retry.mkDir."+eachStream);
-		ConduitMetrics.registerCounter("MirrorStreamService.retry.rename."+eachStream);
-		ConduitMetrics.registerCounter("MirrorStreamService.retry.exist."+eachStream);
-		ConduitMetrics.registerCounter("MirrorStreamService.commitPaths.count."+eachStream);
-	}
+      ConduitMetrics.registerCounter("MirrorStreamService","retry.checkPoint",eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService","retry.mkDir",eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService","retry.rename",eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService","retry.exist",eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService","commitPaths.count",eachStream);
+    }
   }
 
   @Override
@@ -154,16 +154,11 @@ public class MirrorStreamService extends DistcpBaseService {
               + "] to [" + entry.getValue() + "]");
         }
       }
-      Counter commitCounter = ConduitMetrics.getCounter("MirrorStreamService.commitPaths.count."+streamName);
-      if(commitCounter!=null){
-    	  commitCounter.inc();
-      }
+      ConduitMetrics.incCounter("MirrorStreamService","commitPaths.count",streamName,1);
+
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
-    Counter commitTime = ConduitMetrics.getCounter("MirrorStreamService.commit.time." + Thread.currentThread().getName());
-    if(commitTime!=null){
-    	commitTime.inc(elapsedTime);
-    }
+    ConduitMetrics.incCounter("MirrorStreamService","commit.time",Thread.currentThread().getName(),elapsedTime);
   }
 
   /*
@@ -400,5 +395,10 @@ public class MirrorStreamService extends DistcpBaseService {
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
     return srcPath.getPath().toUri().getPath();
+  }
+
+  @Override
+  public String getServiceName() {
+    return "MirrorStreamService";
   }
 }

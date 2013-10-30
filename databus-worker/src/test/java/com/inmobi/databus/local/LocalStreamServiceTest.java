@@ -395,63 +395,60 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
       i++;
     }
-    
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.stream1").getCount() , 0);
-    
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","stream1").getCount() , 0);
   }
 
   @Test
   public void testMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-databus.xml");
     testMapReduce("test-lss-databus.xml", 1);
-    
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() ,9 );
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() ,0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() ,0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() ,0 );
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() ,9 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() ,0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() ,0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() ,0 );
   }
 
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml");
     testMapReduce("test-lss-multiple-databus.xml", 1);
-   
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 9);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test2").getCount() , 9);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test3").getCount() , 9);
-    
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test2").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test3").getCount() , 9);
   }
 
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduceWithMultipleRuns() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml, Running Twice");
     testMapReduce("test-lss-multiple-databus1.xml", 2);
-    
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 19);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test2").getCount() , 19);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test3").getCount() , 19);
-    
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test2").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test3").getCount() , 19);
   }
 
   private static class NullCheckPointProvider implements CheckpointProvider {
@@ -499,32 +496,31 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       Assert.assertEquals(service.getMapperClass(), S3NCopyMapper.class);
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.emptyDir.create.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 0);
-    
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 0);
   }
 
   @Test
   public void testWithOutClusterName() throws Exception {
     testClusterName("test-lss-databus.xml", null);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 0);
   }
 
   @Test
   public void testWithClusterName() throws Exception {
     testClusterName("test-lss-databus.xml", "testcluster2");
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.mkDir.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.checkPoint.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.retry.rename.test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService.commitPaths.count.test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 0);
   }
 
   private void testClusterName(String configName, String currentClusterName)

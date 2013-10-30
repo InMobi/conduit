@@ -110,13 +110,14 @@ public abstract class AbstractService implements Service, Runnable {
   protected void postExecute() throws Exception {
   }
 
+
   @Override
   public void run() {
     LOG.info("Starting Service [" + Thread.currentThread().getName() + "]");
-    Counter runtimeCounter = ConduitMetrics.registerCounter(getServiceName()+".runtime."+Thread.currentThread().getName());
-    Counter failureJobCounter = ConduitMetrics.registerCounter(getServiceName()+".failures."+Thread.currentThread().getName());
+    Counter runtimeCounter = ConduitMetrics.registerCounter(getServiceName(),"runtime",Thread.currentThread().getName());
+    Counter failureJobCounter = ConduitMetrics.registerCounter(getServiceName(),"failures",Thread.currentThread().getName());
     if(!"DataPurgerService".equalsIgnoreCase(getServiceName())){
-    	ConduitMetrics.registerCounter(getServiceName()+".commit.time."+Thread.currentThread().getName());
+      ConduitMetrics.registerCounter(getServiceName(),"commit.time",Thread.currentThread().getName());
     }
     while (!stopped && !thread.isInterrupted()) {
       long startTime = System.currentTimeMillis();
@@ -238,30 +239,27 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   protected void publishMissingPaths(FileSystem fs, String destDir,
-	    long commitTime, String categoryName) throws Exception {
-    	Counter missingDirectoryCounter = ConduitMetrics.getCounter(getServiceName()+".emptyDir.create."+categoryName);
-		Long prevRuntime = new Long(-1);
-		if (!prevRuntimeForCategory.containsKey(categoryName)) {
-			LOG.debug("Calculating Previous Runtime from Directory Listing");
-			prevRuntime = getPreviousRuntime(fs, destDir, categoryName);
-		} else {
-			LOG.debug("Reading Previous Runtime from Cache");
-			prevRuntime = prevRuntimeForCategory.get(categoryName);
-		}
+      long commitTime, String categoryName) throws Exception {
+    Long prevRuntime = new Long(-1);
+    if (!prevRuntimeForCategory.containsKey(categoryName)) {
+      LOG.debug("Calculating Previous Runtime from Directory Listing");
+      prevRuntime = getPreviousRuntime(fs, destDir, categoryName);
+    } else {
+      LOG.debug("Reading Previous Runtime from Cache");
+      prevRuntime = prevRuntimeForCategory.get(categoryName);
+    }
 
-		if (prevRuntime != -1) {
-			if (isMissingPaths(commitTime, prevRuntime)) {
-				LOG.debug("Previous Runtime: [" + getLogDateString(prevRuntime) + "]");
-				while (isMissingPaths(commitTime, prevRuntime)) {
-					String missingPath = Cluster.getDestDir(destDir, categoryName,
-					    prevRuntime);
+    if (prevRuntime != -1) {
+      if (isMissingPaths(commitTime, prevRuntime)) {
+        LOG.debug("Previous Runtime: [" + getLogDateString(prevRuntime) + "]");
+        while (isMissingPaths(commitTime, prevRuntime)) {
+          String missingPath = Cluster.getDestDir(destDir, categoryName,
+              prevRuntime);
           Path missingDir = new Path(missingPath);
           if (!fs.exists(missingDir)) {
             LOG.debug("Creating Missing Directory [" + missingDir + "]");
             fs.mkdirs(missingDir);
-            if(missingDirectoryCounter != null){
-            	missingDirectoryCounter.inc();
-            }
+            ConduitMetrics.incCounter(getServiceName(),"emptyDir.create",categoryName,1);
           }
 					prevRuntime += MILLISECONDS_IN_MINUTE;
 				}
@@ -280,7 +278,6 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception exception = null;
-    Counter retriableRenameCounter = ConduitMetrics.getCounter(getServiceName()+".retry.rename."+streamName);
     while (count < numOfRetries) {
       try {
         result = fs.rename(src, dst);
@@ -293,9 +290,7 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      if(retriableRenameCounter!=null){
-      retriableRenameCounter.inc();
-      }
+      ConduitMetrics.incCounter(getServiceName(),"retry.rename",streamName,1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -351,7 +346,6 @@ public abstract class AbstractService implements Service, Runnable {
       byte[] checkpoint) throws Exception {
     int count = 0;
     String streamName = MetricsUtil.getSteamNameFromCheckPointKey(key);
-    Counter retriableCheckCounter =ConduitMetrics.getCounter(getServiceName()+".retry.checkPoint."+streamName);
     Exception ex = null;
     while (count < numOfRetries) {
       try {
@@ -365,9 +359,7 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      if(retriableCheckCounter!=null){
-		retriableCheckCounter.inc();
-      }
+      ConduitMetrics.incCounter(getServiceName(),"retry.checkPoint",streamName,1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -386,10 +378,6 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception ex = null;
-    Counter retriableMkDirsCounter = null;
-    if(!p.toString().contains("trash")){
-    retriableMkDirsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.mkDir."+streamName);
-    }
     while (count < numOfRetries) {
       try {
         result = fs.mkdirs(p);
@@ -403,9 +391,7 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      if(retriableMkDirsCounter!=null){
-      retriableMkDirsCounter.inc();
-      }
+      ConduitMetrics.incCounter(getServiceName(),"retry.mkDir",streamName,1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -426,7 +412,6 @@ public abstract class AbstractService implements Service, Runnable {
     int count = 0;
     boolean result = false;
     Exception ex = null;
-    Counter retriableExistsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.exist."+streamName);
     while (count < numOfRetries) {
       try {
         result = fs.exists(p);
@@ -440,9 +425,7 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      if(retriableExistsCounter!=null){
-      retriableExistsCounter.inc();
-      }
+      ConduitMetrics.incCounter(getServiceName(),"retry.exist",streamName,1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -473,9 +456,6 @@ public abstract class AbstractService implements Service, Runnable {
   /**
    * Get the service name from the name
    */
-  public String getServiceName(){
-	  StringTokenizer st = new StringTokenizer(name, "_");
-	  return st.nextToken();
-  }
+  abstract public String getServiceName();
 
 }

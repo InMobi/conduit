@@ -102,6 +102,6 @@ public class PublishMissingPathsTest {
     fs.delete(new Path(cluster.getRootDir()), true);
     
     fs.close();
-    Assert.assertTrue(ConduitMetrics.getCounter("LocalStreamService.emptyDir.create.test1").getCount() >0 );
+    Assert.assertTrue(ConduitMetrics.getCounter("LocalStreamService","emptyDir.create","test1").getCount() >0 );
   }
 }
