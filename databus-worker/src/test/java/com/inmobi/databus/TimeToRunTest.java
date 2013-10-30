@@ -20,7 +20,7 @@ public class TimeToRunTest {
     LOG.info("Test Date [" + format.format(date) + "]");
     try {
       LocalStreamService service = new LocalStreamService(null,
-          ClusterTest.buildLocalCluster(), null, null, null, null);
+          ClusterTest.buildLocalCluster(), null, null, null);
       
       long mSecondsTillNextMin = service.getMSecondsTillNextRun(date.getTime());
       LOG.info("mSecondsTillNextMin = [" + mSecondsTillNextMin + "]");

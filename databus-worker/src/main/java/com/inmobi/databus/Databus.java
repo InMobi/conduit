@@ -51,7 +51,7 @@ public class Databus implements Service, DatabusConstants {
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
-  private MessagePublisher publisher;
+  private static MessagePublisher publisher;
   private static int numStreamsMergeService = 5;
   private static int numStreamsMirrorService = 1;
   private static boolean isPurgerEnabled = true;
@@ -81,7 +81,11 @@ public class Databus implements Service, DatabusConstants {
   }
 
   public void setPublisher(MessagePublisher publisher) {
-    this.publisher = publisher;
+    Databus.publisher = publisher;
+  }
+
+  public static MessagePublisher getPublisher() {
+    return publisher;
   }
 
   protected List<AbstractService> init() throws Exception {
@@ -112,7 +116,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
-                streamsToProcess, publisher));
+                streamsToProcess));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -170,8 +174,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getMergedStreamService(config, config.getClusters()
-                .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher));
+                .get(remote), cluster, currentCluster, streamsToProcess));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -188,8 +191,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getMirrorStreamService(config, config.getClusters()
-                .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher));
+                .get(remote), cluster, currentCluster, streamsToProcess));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -225,31 +227,30 @@ public class Databus implements Service, DatabusConstants {
   }
 
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess,
-      MessagePublisher publisher) throws IOException {
+      Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
+          throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
-        publisher);
+        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
 
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String>  streamsToProcess, MessagePublisher publisher)
+      Set<String>  streamsToProcess)
           throws Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess,publisher);
+        streamsToProcess);
   }
 
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
           throws Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess, publisher);
+        streamsToProcess);
 
   }
 
@@ -322,7 +323,7 @@ public class Databus implements Service, DatabusConstants {
     return null;
   }
 
-  private static MessagePublisher getMessagePublisher(Properties prop)
+  private static MessagePublisher createMessagePublisher(Properties prop)
       throws IOException {
     String configFile = prop.getProperty(AUDIT_PUBLISHER_CONFIG_FILE);
     if (configFile != null) {
@@ -452,7 +453,7 @@ public class Databus implements Service, DatabusConstants {
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
 
-      MessagePublisher msgPublisher = getMessagePublisher(prop);
+      MessagePublisher msgPublisher = createMessagePublisher(prop);
       if (msgPublisher != null) {
         System.setProperty(AUDIT_ENABLED_KEY, "true");
       } else {

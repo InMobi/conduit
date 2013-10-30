@@ -373,8 +373,7 @@ public class TestLocalStreamService extends LocalStreamService implements
  CheckpointProvider provider,
       Set<String> streamsToProcess, MessagePublisher publisher)
       throws IOException {
-    super(config, srcCluster, currentCluster, provider, streamsToProcess,
-        publisher);
+    super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.srcCluster = srcCluster;
     this.provider = provider;
     try {

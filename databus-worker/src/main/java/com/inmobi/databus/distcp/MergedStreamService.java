@@ -41,7 +41,6 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 import com.inmobi.databus.utils.FileUtil;
-import com.inmobi.messaging.publisher.MessagePublisher;
 
 
 /*
@@ -55,10 +54,9 @@ public class MergedStreamService extends DistcpBaseService {
 
   public MergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      MessagePublisher publisher) throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess) throws Exception {
     super(config, MergedStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster,provider, streamsToProcess,publisher);
+        destinationCluster, currentCluster,provider, streamsToProcess);
   }
 
   @Override

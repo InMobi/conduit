@@ -216,7 +216,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     public MirrorStreamFixService(DatabusConfig databusConfig, Cluster srcCluster,
         Cluster destCluster, Set<String> streamsToProcess) throws Exception {
       super(databusConfig, srcCluster, destCluster, null, null,
-          streamsToProcess, null);
+          streamsToProcess);
     }
 
     @Override

@@ -54,7 +54,6 @@ import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.FileUtil;
-import com.inmobi.messaging.publisher.MessagePublisher;
 
 /*
  * Handles Local Streams for a Cluster
@@ -86,11 +85,11 @@ ConfigConstants {
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
           throws IOException {
-    super("LocalStreamService_" + srcCluster + "_"
-        + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider,streamsToProcess, publisher);
+    super("LocalStreamService_" + srcCluster + "_" +
+        getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
+        provider, streamsToProcess);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
