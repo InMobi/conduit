@@ -503,7 +503,8 @@ public abstract class AbstractService implements Service, Runnable {
       return;
     }
     if (parsedCounters == null) {
-      LOG.error("Not generating audit message as parsed counters are null");
+      LOG.error("Not generating audit message for stream " +  streamName +
+          " as parsed counters are null");
       return;
     }
     if (streamName.equals(AuditUtil.AUDIT_STREAM_TOPIC_NAME)) {
@@ -518,7 +519,8 @@ public abstract class AbstractService implements Service, Runnable {
       AuditMessage auditMsg = createAuditMessage(streamName, received);
       auditMsgList.add(auditMsg);
     } else {
-      LOG.info("Not publishing audit packet as counters are empty");
+      LOG.info("Not publishing audit packet for stream " + streamName +
+          " as counters are empty");
     }
   }
 
