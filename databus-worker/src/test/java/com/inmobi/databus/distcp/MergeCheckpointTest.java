@@ -160,7 +160,7 @@ public class MergeCheckpointTest {
       for (String remote : mergedStreamRemoteClusters) {
         MergedStreamService service = new TestMergedStreamService(config,
             config.getClusters().get(remote), currentCluster, currentCluster,
-            mergedSrcClusterToStreamsMap.get(remote), null);
+            mergedSrcClusterToStreamsMap.get(remote));
         service.execute();
         if (!srcRemoteMergeMap.containsKey(cluster)) {
           List<String> tmp = new ArrayList<String>();

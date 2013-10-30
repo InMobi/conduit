@@ -215,7 +215,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       streamsToProcess.add("stream2");
       TestLocalStreamService service = new TestLocalStreamService(null,
           cluster, null, new FSCheckpointProvider(cluster.getRootDir()
-              + "/databus-checkpoint"), streamsToProcess, null);
+              + "/databus-checkpoint"), streamsToProcess);
       service.createListing(fs, dataDir, results, trashSet, checkpointPaths);
 
       Set<String> tmpResults = new LinkedHashSet<String>();
@@ -372,7 +372,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     TestLocalStreamService service = new TestLocalStreamService(
         databusConfig, cluster, null, new FSCheckpointProvider(
 cluster.getCheckpointDir()),
-        streamsToProcess, null);
+        streamsToProcess);
 
     Map<Path, Path> trashCommitPaths = service
         .populateTrashCommitPaths(trashSet);
@@ -449,7 +449,7 @@ cluster.getCheckpointDir()),
       cluster.getHadoopConf().set("mapred.job.tracker",
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-          cluster, null, new NullCheckPointProvider(), streamsToProcess, null);
+          cluster, null, new NullCheckPointProvider(), streamsToProcess);
       services.add(service);
     }
 
@@ -491,7 +491,7 @@ cluster.getCheckpointDir()),
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster, new NullCheckPointProvider(),
-          streamsToProcess, null);
+          streamsToProcess);
       services.add(service);
     }
 
@@ -562,7 +562,7 @@ cluster.getCheckpointDir()),
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()),
-          streamsToProcess, publisher);
+          streamsToProcess);
       services.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);

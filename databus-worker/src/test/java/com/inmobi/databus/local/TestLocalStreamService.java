@@ -33,13 +33,13 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.Databus;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
-import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MockInMemoryPublisher;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -340,7 +340,7 @@ public class TestLocalStreamService extends LocalStreamService implements
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
 
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;
@@ -371,7 +371,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   public TestLocalStreamService(DatabusConfig config,
                                 Cluster srcCluster, Cluster currentCluster,
  CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
       throws IOException {
     super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.srcCluster = srcCluster;
