@@ -54,7 +54,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected volatile boolean stopped = false;
   protected CheckpointProvider checkpointProvider = null;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
-  //protected final MessagePublisher publisher;
   protected CounterGroup counterGrp;
   private final TSerializer serializer = new TSerializer();
   private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;

@@ -51,7 +51,7 @@ public class Databus implements Service, DatabusConstants {
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
-  private static MessagePublisher publisher;
+  private static volatile MessagePublisher publisher;
   private static int numStreamsMergeService = 5;
   private static int numStreamsMirrorService = 1;
   private static boolean isPurgerEnabled = true;
