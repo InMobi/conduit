@@ -39,9 +39,16 @@ public class ConduitMetrics {
   private final static String IS_ENABLED_PROPERTY="com.inmobi.databus.metrics.enabled";
 
 
-  private final static Map<String, ScheduledReporter> reporterMap = new HashMap<String, ScheduledReporter>();
-
-  private final static Map<String, Map<String, Map<String, Counter>>> threeLevelCache = new HashMap<String, Map<String, Map<String, Counter>>>();
+  private final static Map<String, ScheduledReporter> reporterMap =
+      new HashMap<String, ScheduledReporter>();
+  /*
+   *The three level cache. every counter would be accessed as 
+   *(Service,counterType,(Context)StreamName/ServiceName) => counter
+   *Each level is maintained by a hashMap, The highest level is the serviceLevel
+   *which is created on init(), rest is created lazily
+   */
+  private final static Map<String, Map<String, Map<String, Counter>>> threeLevelCache =
+      new HashMap<String, Map<String, Map<String, Counter>>>();
 
   private static boolean isEnabled =false;
   private static int timeBetweenPolls = 10;
@@ -187,7 +194,7 @@ public class ConduitMetrics {
    * @param name
    * @return
    */
-  public static Counter registerCounter(String serviceName, String counterType, String context) {
+  synchronized public static Counter registerCounter(String serviceName, String counterType, String context) {
     if(!isEnabled){
       LOG.warn("metrics not enabled");
       return null;
@@ -224,7 +231,7 @@ public class ConduitMetrics {
     }
     Counter c = counterTypeLevel.get(context);
     if(c == null){
-      LOG.info("counter does not exist:" );
+      LOG.info("counter does not exist:" + serviceName + "." +counterType + "." + context);
       return null;
     }
     return c;

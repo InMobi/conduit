@@ -114,10 +114,15 @@ public abstract class AbstractService implements Service, Runnable {
   @Override
   public void run() {
     LOG.info("Starting Service [" + Thread.currentThread().getName() + "]");
-    Counter runtimeCounter = ConduitMetrics.registerCounter(getServiceName(),"runtime",Thread.currentThread().getName());
-    Counter failureJobCounter = ConduitMetrics.registerCounter(getServiceName(),"failures",Thread.currentThread().getName());
+    Counter runtimeCounter =
+        ConduitMetrics.registerCounter(getServiceName(), "runtime", 
+            Thread.currentThread().getName());
+    Counter failureJobCounter =
+        ConduitMetrics.registerCounter(getServiceName(), "failures", 
+            Thread.currentThread().getName());
     if(!"DataPurgerService".equalsIgnoreCase(getServiceName())){
-      ConduitMetrics.registerCounter(getServiceName(),"commit.time",Thread.currentThread().getName());
+      ConduitMetrics.registerCounter(getServiceName(),"commit.time",
+          Thread.currentThread().getName());
     }
     while (!stopped && !thread.isInterrupted()) {
       long startTime = System.currentTimeMillis();
