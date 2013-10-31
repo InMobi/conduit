@@ -455,6 +455,7 @@ public class Databus implements Service, DatabusConstants {
 
       MessagePublisher msgPublisher = createMessagePublisher(prop);
       if (msgPublisher != null) {
+        LOG.info("Audit feature is enabled for worker ");
         System.setProperty(AUDIT_ENABLED_KEY, "true");
       } else {
         /*
