@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,8 +19,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.thrift.TDeserializer;
 import org.testng.Assert;
 
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -27,7 +30,10 @@ import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MockInMemoryPublisher;
+import com.inmobi.messaging.util.AuditUtil;
 
 
 public class TestMergedStreamService extends MergedStreamService
@@ -169,6 +175,20 @@ public class TestMergedStreamService extends MergedStreamService
           }
         }
 
+      }
+
+      // verfying audit is generated for all the messages
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
+      BlockingQueue<Message> auditQueue = mPublisher.source
+          .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
+      Message tmpMsg;
+      int auditReceived = 0;
+      while ((tmpMsg = auditQueue.poll()) != null) {
+        byte[] auditData = tmpMsg.getData().array();
+        TDeserializer deserializer = new TDeserializer();
+        AuditMessage msg = new AuditMessage();
+        deserializer.deserialize(msg, auditData);
+        auditReceived += msg.getReceivedSize();
       }
     } catch (Exception e) {
       e.printStackTrace();
