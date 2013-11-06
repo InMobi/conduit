@@ -216,12 +216,11 @@ public abstract class DistcpBaseService extends AbstractService {
       Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
           inputPath);
       Path lastPathAdded = null;
-      FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
-      FileStatus[] nextToNextPathFileStatus;
+      FileStatus[] nextPathFileStatus;
       while (pathsAlreadyAdded <= numOfDirPerDistcpPerStream
-          && nextPathFileStatus != null
-          && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
-              nextToNextPath)) != null) {
+          && srcFs.exists(nextToNextPath)
+          && (nextPathFileStatus = FileUtil
+              .listStatusAsPerHDFS(srcFs, nextPath)) != null) {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
           FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
@@ -246,8 +245,6 @@ public abstract class DistcpBaseService extends AbstractService {
         nextDate = CalendarHelper.addAMinute(nextDate);
         nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
             inputPath);
-        nextPathFileStatus=nextToNextPathFileStatus;
-        nextToNextPathFileStatus=null;
       }
       if (lastPathAdded != null) {
         checkPointPaths.put(stream, lastPathAdded);
