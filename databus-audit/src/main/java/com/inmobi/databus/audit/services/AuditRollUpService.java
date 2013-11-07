@@ -265,17 +265,18 @@ public class AuditRollUpService extends AuditDBService {
   private Date rollupTables(Connection connection) {
     CallableStatement rollupStmt = null;
     Date fromTime = getFromTime(connection);
+    Date currentDate = fromTime;
     try {
       if (!isStop) {
         String statement = getRollUpQuery();
         rollupStmt = connection.prepareCall(statement);
         Date toDate = addDaysToCurrentDate(-tilldays);
-        LOG.info("Starting roll up of tables from:"+fromTime+" till:"+toDate);
-        while (fromTime.before(toDate) && !isStop) {
-          Date nextDay = addDaysToGivenDate(fromTime, 1);
-          String srcTable = createTableName(fromTime, false);
-          String destTable = createTableName(fromTime, true);
-          Long firstMillisOfDay = getFirstMilliOfDay(fromTime);
+        LOG.info("Starting roll up of tables from:"+currentDate+" till:"+toDate);
+        while (currentDate.before(toDate) && !isStop) {
+          Date nextDay = addDaysToGivenDate(currentDate, 1);
+          String srcTable = createTableName(currentDate, false);
+          String destTable = createTableName(currentDate, true);
+          Long firstMillisOfDay = getFirstMilliOfDay(currentDate);
           Long firstMillisOfNextDay = getFirstMilliOfDay(nextDay);
           int index = 1;
           rollupStmt.setString(index++, srcTable);
@@ -287,7 +288,7 @@ public class AuditRollUpService extends AuditDBService {
           rollupStmt.setLong(index++, intervalLength);
           LOG.debug("Rollup query is " + rollupStmt.toString());
           rollupStmt.addBatch();
-          fromTime = nextDay;
+          currentDate = nextDay;
         }
         rollupStmt.executeBatch();
         connection.commit();
@@ -297,6 +298,7 @@ public class AuditRollUpService extends AuditDBService {
         LOG.error("SQLException while rolling up:"+ e.getMessage());
         e = e.getNextException();
       }
+      return fromTime;
     } finally {
       if (rollupStmt != null) {
         try {
@@ -307,7 +309,7 @@ public class AuditRollUpService extends AuditDBService {
         }
       }
     }
-    return fromTime;
+    return currentDate;
   }
 
   private Connection getConnection() {
