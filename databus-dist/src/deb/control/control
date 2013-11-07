@@ -1,7 +1,7 @@
 Package: databus
 Version: [[project.version]] 
 Section:  misc
-Priority: high
+Priority: optional
 Architecture: all
 Pre-Depends: sun-java6-jre | java2-runtime, hadoop-distcp
 Maintainer: Inmobi
