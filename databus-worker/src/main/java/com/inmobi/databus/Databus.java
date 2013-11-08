@@ -99,6 +99,11 @@ public class Databus implements Service, DatabusConstants {
         org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
     LOG.debug("Jar containing UniformSizeInputFormat [" + inputFormatSrcJar + "]");
 
+    // find the name of the jar containing AuditUtil class.
+    String auditUtilSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
+    LOG.debug("Jar containing AuditUtil [" + auditUtilSrcJar + "]");
+
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
@@ -107,7 +112,7 @@ public class Databus implements Service, DatabusConstants {
       if (cluster.getSourceStreams().size() > 0) {
         // copy input format jar from local to cluster FS
         copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
-
+        copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
         Iterator<String> iterator = cluster.getSourceStreams().iterator();
         Set<String> streamsToProcess = new HashSet<String>();
         while (iterator.hasNext()) {
@@ -133,6 +138,8 @@ public class Databus implements Service, DatabusConstants {
         //from where it has to mirror mergedStreams
 
         if (cStream.isPrimary()) {
+          // copy messaging-client-core jar from local to cluster FS
+          copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
           for (String cName : config.getSourceStreams().get(cStream.getName())
               .getSourceClusters()) {
             mergedStreamRemoteClusters.add(cName);
@@ -146,6 +153,8 @@ public class Databus implements Service, DatabusConstants {
           }
         }
         if (!cStream.isPrimary()) {
+          // copy messaging-client-core jar from local to cluster FS
+          copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
           Cluster primaryCluster = config.getPrimaryClusterForDestinationStream(cStream.getName());
           if (primaryCluster != null) {
             mirroredRemoteClusters.add(primaryCluster.getName());
@@ -220,9 +229,24 @@ public class Databus implements Service, DatabusConstants {
       clusterFS.mkdirs(jarsPath);
     }
     // copy inputFormat source jar into /databus/system/tmp/jars path
-    Path inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+    Path inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
     if (!clusterFS.exists(inputFormatJarDestPath)) {
       clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
+    }
+  }
+
+  private void copyAuditUtilJarToClusterFs(Cluster cluster,
+      String auditUtilSrcJar) throws IOException {
+    FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
+    // create jars path inside /databus/system/tmp path
+    Path jarsPath = new Path(cluster.getTmpPath(), "jars");
+    if (!clusterFS.exists(jarsPath)) {
+      clusterFS.mkdirs(jarsPath);
+    }
+    // copy inputFormat source jar into /databus/system/tmp/jars path
+    Path AuditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+    if (!clusterFS.exists(AuditUtilJarDestPath)) {
+      clusterFS.copyFromLocalFile(new Path(auditUtilSrcJar), AuditUtilJarDestPath);
     }
   }
 

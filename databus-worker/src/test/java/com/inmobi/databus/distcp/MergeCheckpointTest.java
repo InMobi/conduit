@@ -38,11 +38,14 @@ import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 
 public class MergeCheckpointTest {
 
   private static final Log LOG = LogFactory
       .getLog(MergeCheckpointTest.class);
+  private Path auditUtilJarDestPath;
+  private Path jarsPath;
   private static final NumberFormat idFormat = NumberFormat.getInstance();
   static {
     idFormat.setGroupingUsed(false);
@@ -134,6 +137,9 @@ public class MergeCheckpointTest {
 
   private Map<String, List<String>> launchMergeServices(DatabusConfig config)
       throws Exception {
+    FileSystem fs = FileSystem.getLocal(new Configuration());
+    String auditSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
     List<String> sourceClusters = new ArrayList<String>();
     Map<String, List<String>> srcRemoteMergeMap = new HashMap<String, List<String>>();
     for (SourceStream stream : config.getSourceStreams().values()) {
@@ -143,7 +149,11 @@ public class MergeCheckpointTest {
     Map<String, Set<String>> mergedSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
     for (String cluster : sourceClusters) {
       Cluster currentCluster = config.getClusters().get(cluster);
+      jarsPath = new Path(currentCluster.getTmpPath(), "jars");
+      auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
       for (String stream : currentCluster.getPrimaryDestinationStreams()) {
+        // Copy AuditUtil src jar to FS
+        fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
         for (String cName : config.getSourceStreams().get(stream)
             .getSourceClusters()) {
           mergedStreamRemoteClusters.add(cName);

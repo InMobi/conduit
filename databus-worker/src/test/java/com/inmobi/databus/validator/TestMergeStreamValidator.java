@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.FileUtil;
 
 public class TestMergeStreamValidator extends AbstractTestStreamValidator {
   private static final Log LOG = LogFactory.getLog(TestMergeStreamValidator.class);
@@ -86,6 +87,9 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     DatabusConfig config = setup("test-merge-validator-databus.xml");
     // clean up root dir before generating test data
     cleanUp(config);
+    FileSystem fs = FileSystem.getLocal(new Configuration());
+    String auditSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
     Set<String> streamsSet = config.getSourceStreams().keySet();
     for (String streamName : streamsSet) {
       Cluster mergedCluster = null;
@@ -95,6 +99,10 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
         }
         if (cluster.getPrimaryDestinationStreams().contains(streamName)) {
           mergedCluster = cluster;
+          jarsPath = new Path(mergedCluster.getTmpPath(), "jars");
+          auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+          // Copy AuditUtil src jar to FS
+          fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
           createMergeData(config, date, cluster, streamName);
         }
       }

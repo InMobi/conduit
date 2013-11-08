@@ -31,6 +31,7 @@ import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MessagePublisherFactory;
@@ -49,7 +50,7 @@ public class TestMergedStreamService extends MergedStreamService
   private Map<String, List<String>> files = null;
   private Calendar behinddate = new GregorianCalendar();
   private Date todaysdate = null;
-  
+
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       Set<String> streamsToProcess)
@@ -98,7 +99,7 @@ public class TestMergedStreamService extends MergedStreamService
     }
     return lastFile;
   }
-  
+
   @Override
   protected void preExecute() throws Exception {
     try {
@@ -126,7 +127,11 @@ public class TestMergedStreamService extends MergedStreamService
             + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
         fs.mkdirs(new Path(dummycommitpath));
       }
-      
+      // Copy input format src jar to FS
+      String auditSrcJar = FileUtil.findContainingJar(
+          com.inmobi.messaging.util.AuditUtil.class);
+      fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
+
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("Error in MergedStreamService Test PreExecute");

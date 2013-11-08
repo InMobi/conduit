@@ -57,6 +57,8 @@ public abstract class DistcpBaseService extends AbstractService {
 
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService.class);
   private final int numOfDirPerDistcpPerStream;
+  protected final Path jarsPath;
+  protected final Path auditUtilJarDestPath;
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
@@ -82,6 +84,8 @@ public abstract class DistcpBaseService extends AbstractService {
     } else
       numOfDirPerDistcpPerStream = DEFAULT_NUM_DIR_PER_DISTCP_STREAM;
 
+    jarsPath = new Path(destCluster.getTmpPath(), "jars");
+    auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
   }
 
   protected Cluster getSrcCluster() {
@@ -111,7 +115,7 @@ public abstract class DistcpBaseService extends AbstractService {
     conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
         System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
     conf.set("mapred.job.name", serviceName);
-
+    conf.set("tmpjars", auditUtilJarDestPath.toString());
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.

@@ -82,6 +82,7 @@ ConfigConstants {
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
+  final Path auditUtilJarDestPath;
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
@@ -99,8 +100,8 @@ ConfigConstants {
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
-    inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
-
+    inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
+    auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
   }
 
   private void cleanUpTmp(FileSystem fs) throws Exception {
@@ -507,7 +508,7 @@ ConfigConstants {
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
     // job.getConfiguration());
     job.getConfiguration().set(
-        "tmpjars", inputFormatJarDestPath.toString());
+        "tmpjars", inputFormatJarDestPath.toString() + "," + auditUtilJarDestPath.toString());
     LOG.debug("Adding file [" + inputFormatJarDestPath
         + "] to distributed cache");
     job.setInputFormatClass(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);

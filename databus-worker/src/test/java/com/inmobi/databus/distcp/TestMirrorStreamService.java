@@ -30,6 +30,7 @@ import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MessagePublisherFactory;
@@ -100,6 +101,10 @@ public class TestMirrorStreamService extends MirrorStreamService
           fs.mkdirs(nextPath);
         }
       }
+      // Copy input format src jar to FS
+      String auditSrcJar = FileUtil.findContainingJar(
+          com.inmobi.messaging.util.AuditUtil.class);
+      fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);
