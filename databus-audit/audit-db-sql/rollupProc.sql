@@ -43,7 +43,7 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION createDailyTable(masterTable text, dayTable text, currentTimeStamp text)
+CREATE OR REPLACE FUNCTION createDailyTable(masterTable text, dayTable text, currentTimeStamp text, nextDayTime text)
 RETURNS void AS
 $BODY$
 DECLARE
@@ -57,7 +57,7 @@ DECLARE
  pkeyconstraint text;
 BEGIN
 pkeyname = dayTable || '_pkey';
-checkconstraint = 'CHECK(timeinterval >= extract (epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint AND timeinterval < extract(epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint )';
+checkconstraint = 'CHECK(timeinterval >= extract (epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint AND timeinterval < extract(epoch from timestamp ' || quote_literal(nextDayTime) || ')*1000::bigint )';
 pkeyconstraint = 'CONSTRAINT ' || pkeyname || ' PRIMARY KEY (timeinterval, cluster, topic, hostname, tier)';
 createTable = 'CREATE TABLE IF NOT EXISTS ' || dayTable || '(' || checkconstraint || ', ' || pkeyconstraint || ') INHERITS (' || masterTable || ')';
 EXECUTE createTable;

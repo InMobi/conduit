@@ -95,7 +95,10 @@ public class AuditDBHelper {
         insertPreparedStatement.executeBatch();
       connection.commit();
     } catch (SQLException e) {
-      LOG.error("SQLException thrown ", e);
+      while (e != null) {
+        LOG.error("SQLException while updating daily table", e);
+        e = e.getNextException();
+      }
       return false;
     } finally {
       try {

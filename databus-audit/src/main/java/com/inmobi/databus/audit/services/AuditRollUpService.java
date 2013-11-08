@@ -170,9 +170,8 @@ public class AuditRollUpService extends AuditDBService {
         connection = getConnection();
       }
       try {
-        Date markTime = rollupTables(connection);
         createDailyTable(connection);
-        mark(getFirstMilliOfDay(markTime));
+        rollupTables(connection);
       } finally {
         try {
           connection.close();
@@ -197,11 +196,14 @@ public class AuditRollUpService extends AuditDBService {
         while (!fromDate.after(todate) && !isStop) {
           LOG.info("Creating day table of date:"+fromDate);
           String currentDateString = dayChkFormat.format(fromDate);
+          String nextDayString = dayChkFormat.format(addDaysToGivenDate
+              (fromDate, 1));
           String dayTable = createTableName(fromDate, false);
           int index = 1;
           createDailyTableStmt.setString(index++, masterTable);
           createDailyTableStmt.setString(index++, dayTable);
           createDailyTableStmt.setString(index++, currentDateString);
+          createDailyTableStmt.setString(index++, nextDayString);
           createDailyTableStmt.addBatch();
           fromDate = addDaysToGivenDate(fromDate, 1);
           LOG.debug("Table created for day:"+currentDateString+" with table " +
@@ -212,7 +214,7 @@ public class AuditRollUpService extends AuditDBService {
       }
     } catch (SQLException e) {
       while (e != null) {
-        LOG.error("SQLException while creating daily table:"+ e.getMessage());
+        LOG.error("SQLException while creating daily table", e);
         e = e.getNextException();
       }
     } finally {
@@ -262,7 +264,7 @@ public class AuditRollUpService extends AuditDBService {
     }
   }
 
-  private Date rollupTables(Connection connection) {
+  private void rollupTables(Connection connection) {
     CallableStatement rollupStmt = null;
     Date fromTime = getFromTime(connection);
     Date currentDate = fromTime;
@@ -292,13 +294,13 @@ public class AuditRollUpService extends AuditDBService {
         }
         rollupStmt.executeBatch();
         connection.commit();
+        mark(getFirstMilliOfDay(currentDate));
       }
     } catch (SQLException e) {
       while (e != null) {
-        LOG.error("SQLException while rolling up:"+ e.getMessage());
+        LOG.error("SQLException while rolling up", e);
         e = e.getNextException();
       }
-      return fromTime;
     } finally {
       if (rollupStmt != null) {
         try {
@@ -309,7 +311,6 @@ public class AuditRollUpService extends AuditDBService {
         }
       }
     }
-    return currentDate;
   }
 
   private Connection getConnection() {
