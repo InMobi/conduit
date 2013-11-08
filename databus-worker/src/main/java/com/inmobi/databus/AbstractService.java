@@ -275,12 +275,11 @@ public abstract class AbstractService implements Service, Runnable {
    * "com.inmobi.databus.retries" system property Returns the outcome of last
    * retry;throws exception in case last retry threw an exception
    */
-  protected boolean retriableRename(FileSystem fs, Path src, Path dst)
-      throws Exception {
+  protected boolean retriableRename(FileSystem fs, Path src, Path dst,
+      String streamName) throws Exception {
     int count = 0;
     boolean result = false;
     Exception exception = null;
-    String streamName = MetricsUtil.getStreamNameFromTmpPath(src.toString());
     Counter retriableRenameCounter = ConduitMetrics.getCounter(getServiceName()+".retry.rename."+streamName);
     while (count < numOfRetries) {
       try {
@@ -382,13 +381,13 @@ public abstract class AbstractService implements Service, Runnable {
       throw ex;
   }
 
-  protected boolean retriableMkDirs(FileSystem fs, Path p) throws Exception {
+  protected boolean retriableMkDirs(FileSystem fs, Path p, String streamName)
+      throws Exception {
     int count = 0;
     boolean result = false;
     Exception ex = null;
     Counter retriableMkDirsCounter = null;
     if(!p.toString().contains("trash")){
-    String streamName = MetricsUtil.getStreamNameFromPath(p.toString());
     retriableMkDirsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.mkDir."+streamName);
     }
     while (count < numOfRetries) {
@@ -422,11 +421,11 @@ public abstract class AbstractService implements Service, Runnable {
       throw ex;
   }
 
-  protected boolean retriableExists(FileSystem fs, Path p) throws Exception {
+  protected boolean retriableExists(FileSystem fs, Path p, String streamName)
+      throws Exception {
     int count = 0;
     boolean result = false;
     Exception ex = null;
-    String streamName = MetricsUtil.getStreamNameFromPath(p.toString());
     Counter retriableExistsCounter =ConduitMetrics.getCounter(getServiceName()+".retry.exist."+streamName);
     while (count < numOfRetries) {
       try {

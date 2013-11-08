@@ -137,16 +137,16 @@ public class MirrorStreamService extends DistcpBaseService {
       LOG.info("Renaming [" + entry.getKey().getPath() + "] to ["
           + entry.getValue() + "]");
       if (entry.getKey().isDir()) {
-        retriableMkDirs(getDestFs(), entry.getValue());
+        retriableMkDirs(getDestFs(), entry.getValue(), streamName);
       } else {
-        if (retriableExists(getDestFs(), entry.getValue())) {
+        if (retriableExists(getDestFs(), entry.getValue(),streamName)) {
           LOG.warn("File with Path [" + entry.getValue()
               + "] already exist,hence skipping renaming operation");
           continue;
         }
-        retriableMkDirs(getDestFs(), entry.getValue().getParent());
+        retriableMkDirs(getDestFs(), entry.getValue().getParent(),streamName);
         if (retriableRename(getDestFs(), entry.getKey().getPath(),
-            entry.getValue()) == false) {
+            entry.getValue(), streamName) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
               + "data loss. Partial data replay could happen in next run");
           throw new Exception("Rename failed from [" + entry.getKey().getPath()
