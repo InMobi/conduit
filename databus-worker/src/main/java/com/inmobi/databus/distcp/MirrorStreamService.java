@@ -136,6 +136,7 @@ public class MirrorStreamService extends DistcpBaseService {
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey().getPath() + "] to ["
           + entry.getValue() + "]");
+      String streamName = getTopicNameFromDestnPath(entry.getValue());
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue(), streamName);
       } else {
@@ -153,7 +154,7 @@ public class MirrorStreamService extends DistcpBaseService {
               + "] to [" + entry.getValue() + "]");
         }
       }
-      Counter commitCounter = ConduitMetrics.getCounter("MirrorStreamService.commitPaths.count."+MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
+      Counter commitCounter = ConduitMetrics.getCounter("MirrorStreamService.commitPaths.count."+streamName);
       if(commitCounter!=null){
     	  commitCounter.inc();
       }

@@ -246,7 +246,7 @@ ConfigConstants {
 	if (!entry.getValue().toString().contains("trash")) {
 		Counter commitCounter = ConduitMetrics
 				.getCounter("LocalStreamService.commitPaths.count."
-						+ MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
+						+ streamName);
 		if (commitCounter != null) {
 			commitCounter.inc();
 		}

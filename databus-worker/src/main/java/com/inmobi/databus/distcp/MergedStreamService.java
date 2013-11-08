@@ -224,7 +224,7 @@ public class MergedStreamService extends DistcpBaseService {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
-      Counter commitCounter = ConduitMetrics.getCounter("MergedStreamService.commitPaths.count."+MetricsUtil.getStreamNameFromPath(entry.getValue().toString()));
+      Counter commitCounter = ConduitMetrics.getCounter("MergedStreamService.commitPaths.count."+streamName);
       if(commitCounter!=null){
     	  commitCounter.inc();
       }
