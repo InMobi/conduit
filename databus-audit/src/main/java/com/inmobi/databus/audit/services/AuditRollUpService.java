@@ -239,7 +239,7 @@ public class AuditRollUpService extends AuditDBService {
   }
 
   String getCreateTableQuery() {
-    String query = "{call createDailyTable(?,?,?)}";
+    String query = "{call createDailyTable(?,?,?,?)}";
     return query;
   }
 
