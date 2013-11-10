@@ -1,16 +1,16 @@
 /*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.inmobi.databus;
 
 import java.io.File;
@@ -98,7 +98,7 @@ public abstract class AbstractService implements Service, Runnable {
   public abstract long getMSecondsTillNextRun(long currentTime);
 
   protected abstract void execute() throws Exception;
-  
+
   public static String getCheckPointKey(String serviceName, String stream,
       String source) {
     return serviceName + "_" + stream + "_" + source;
@@ -106,7 +106,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected void preExecute() throws Exception {
   }
-  
+
   protected void postExecute() throws Exception {
   }
 
@@ -136,15 +136,15 @@ public abstract class AbstractService implements Service, Runnable {
         if (stopped || thread.isInterrupted())
           return;
       } catch (Exception e) {
-    	if(failureJobCounter!=null){
-    	failureJobCounter.inc();
-    	}
+        if(failureJobCounter!=null){
+          failureJobCounter.inc();
+        }
         LOG.warn("Error in run", e);
       }
       long finishTime = System.currentTimeMillis();
       long elapsedTime = finishTime - startTime;
       if(runtimeCounter!=null){
-      runtimeCounter.inc(elapsedTime);
+        runtimeCounter.inc(elapsedTime);
       }
       if (elapsedTime >= runIntervalInMsec)
         continue;
@@ -185,29 +185,29 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
-	protected String getLogDateString(long commitTime) {
-		return LogDateFormat.format(commitTime);
-	}
+  protected String getLogDateString(long commitTime) {
+    return LogDateFormat.format(commitTime);
+  }
 
-	private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
+  private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
 
     FileStatus[] fileStatus;
     try {
-     fileStatus = fs.listStatus(Dir);
+      fileStatus = fs.listStatus(Dir);
     } catch (FileNotFoundException fe) {
       fileStatus = null;
     }
-		if (fileStatus != null && fileStatus.length > 0) {
-			FileStatus latestfile = fileStatus[0];
-			for (FileStatus currentfile : fileStatus) {
-				if (currentfile.getPath().getName()
-				    .compareTo(latestfile.getPath().getName()) > 0)
-					latestfile = currentfile;
-			}
-			return latestfile.getPath();
-		}
-		return null;
-	}
+    if (fileStatus != null && fileStatus.length > 0) {
+      FileStatus latestfile = fileStatus[0];
+      for (FileStatus currentfile : fileStatus) {
+        if (currentfile.getPath().getName()
+            .compareTo(latestfile.getPath().getName()) > 0)
+          latestfile = currentfile;
+      }
+      return latestfile.getPath();
+    }
+    return null;
+  }
 
   private long getPreviousRuntime(FileSystem fs, String destDir, String category)
       throws Exception {
@@ -266,14 +266,14 @@ public abstract class AbstractService implements Service, Runnable {
             fs.mkdirs(missingDir);
             ConduitMetrics.incCounter(getServiceName(),"emptyDir.create",categoryName,1);
           }
-					prevRuntime += MILLISECONDS_IN_MINUTE;
-				}
-			}
+          prevRuntime += MILLISECONDS_IN_MINUTE;
+        }
+      }
       prevRuntimeForCategory.put(categoryName, commitTime);
-		}
-	}
+    }
+  }
 
- /*
+  /*
    * Retries renaming a file to a given num of times defined by
    * "com.inmobi.databus.retries" system property Returns the outcome of last
    * retry;throws exception in case last retry threw an exception

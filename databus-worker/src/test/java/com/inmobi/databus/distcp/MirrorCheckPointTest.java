@@ -44,18 +44,18 @@ public class MirrorCheckPointTest {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
   }
-  
+
   @BeforeMethod
   public void beforeTest() throws Exception{
-	Properties prop = new Properties();
-	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
-	ConduitMetrics.init(prop);
-	ConduitMetrics.startAll();
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
   }
-  
+
   @AfterMethod
   public void afterTest() throws Exception{
-	  ConduitMetrics.stopAll();;
+    ConduitMetrics.stopAll();;
   }
 
   private static String getDateAsYYYYMMDDHHmm(Date date) {
@@ -134,16 +134,16 @@ public class MirrorCheckPointTest {
     for (Cluster cluster : config.getClusters().values()) {
       for(DestinationStream stream:cluster.getDestinationStreams().values()){
         if(!stream.isPrimary()){
-         Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
-         if(remote!=null){
-           if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
-             mirrorSrcClusterToStreamsMap.get(remote.getName()).add(stream.getName());
-           }else {
-             Set<String> tmp = new HashSet<String>();
-             tmp.add(stream.getName());
-             mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
-           }  
-         }
+          Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
+          if(remote!=null){
+            if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
+              mirrorSrcClusterToStreamsMap.get(remote.getName()).add(stream.getName());
+            }else {
+              Set<String> tmp = new HashSet<String>();
+              tmp.add(stream.getName());
+              mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
+            }  
+          }
         }
       }
       for(String remote:mirrorSrcClusterToStreamsMap.keySet()){
@@ -169,7 +169,7 @@ public class MirrorCheckPointTest {
   private void assertAllPathsOnSrcPresentOnDest(
       Map<String, List<Path>> srcPathList,
       Map<String, List<String>> srcToRemote, DatabusConfig config)
-      throws IOException {
+          throws IOException {
     for (String src : srcPathList.keySet()) {
       for (String remote : srcToRemote.get(src)) {
         Cluster remoteCluster = config.getClusters().get(remote);
@@ -255,7 +255,7 @@ public class MirrorCheckPointTest {
     String finalRelativePath = pathToBeCreated.toString();
     String srcRootDir = new Path(srcCluster.getRootDir()).toString();
     String tmp = finalRelativePath.substring(
-srcRootDir.length() + 1,
+        srcRootDir.length() + 1,
         finalRelativePath.length());
     Path finalPath = remoteFs.makeQualified(new Path(destnCluster.getRootDir(),
         tmp));
@@ -284,8 +284,8 @@ srcRootDir.length() + 1,
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
   }
-  
-   /*
+
+  /*
    * no distcp should be launched hence no paths on target
    */
   @Test

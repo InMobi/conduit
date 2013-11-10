@@ -1,16 +1,16 @@
 /*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.inmobi.databus.purge;
 
 import com.inmobi.conduit.metrics.ConduitMetrics;
@@ -48,18 +48,18 @@ import com.inmobi.databus.utils.CalendarHelper;
 public class DataPurgerServiceTest {
   private static Logger LOG = Logger.getLogger(DataPurgerServiceTest.class);
   DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
-  
+
   @BeforeMethod
   public void beforeTest() throws Exception{
-	Properties prop = new Properties();
-	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
-	ConduitMetrics.init(prop);
-	ConduitMetrics.startAll();
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
   }
-  
+
   @AfterMethod
   public void afterTest() throws Exception{
-	  ConduitMetrics.stopAll();;
+    ConduitMetrics.stopAll();;
   }
 
   public void isPurgeTest1() {
@@ -69,7 +69,7 @@ public class DataPurgerServiceTest {
 
     boolean status = service.isPurge(date, new Integer(1));
     LOG.info("isPurgeTest1 streamDate [" + dateFormat.format(date.getTime())+
-    "] shouldPurge [" + status + "]" );
+        "] shouldPurge [" + status + "]" );
     assert  status == true;
   }
 
@@ -80,7 +80,7 @@ public class DataPurgerServiceTest {
     date.add(Calendar.HOUR, -3);
     boolean status = service.isPurge(date, new Integer(1));
     LOG.info("isPurgeTest2 streamDate [" + dateFormat.format(date.getTime())
-    + "] shouldPurge [" + status + "]" );
+        + "] shouldPurge [" + status + "]" );
     assert  status == true;
   }
 
@@ -90,7 +90,7 @@ public class DataPurgerServiceTest {
     Calendar date = new GregorianCalendar();
     boolean status = service.isPurge(date, new Integer(24));
     LOG.info("isPurgeTest3 streamDate [" + dateFormat.format(date.getTime())
-    + "] shouldPurge [" + status + "]" );
+        + "] shouldPurge [" + status + "]" );
     assert status  == false;
   }
 
@@ -100,7 +100,7 @@ public class DataPurgerServiceTest {
     date.add(Calendar.HOUR, -2);
     boolean status = service.isPurge(date, new Integer(3));
     LOG.info("isPurgeTest4 streamDate [" + dateFormat.format(date.getTime())
-    + "] shouldPurge [" + status + "]" );
+        + "] shouldPurge [" + status + "]" );
     assert status  == false;
   }
 
@@ -110,7 +110,7 @@ public class DataPurgerServiceTest {
     date.add(Calendar.HOUR, -3);
     boolean status = service.isPurge(date, new Integer(2));
     LOG.info("isPurgeTest5 streamDate [" + dateFormat.format(date.getTime())
-    + "] shouldPurge [" + status + "]" );
+        + "] shouldPurge [" + status + "]" );
     assert status  == true;
   }
 
@@ -120,7 +120,7 @@ public class DataPurgerServiceTest {
     date.add(Calendar.DAY_OF_MONTH, -3);
     boolean status = service.isPurge(date, new Integer(24 * 3));
     LOG.info("isPurgeTest6 streamDate [" + dateFormat.format(date.getTime())
-    + "] shouldPurge [" + status + "]" );
+        + "] shouldPurge [" + status + "]" );
     assert status  == true;
   }
 
@@ -171,7 +171,7 @@ public class DataPurgerServiceTest {
 
       LOG.info("Creating Service for Cluster " + cluster.getName());
       TestDataPurgerService service = new TestDataPurgerService(config, cluster);
-      
+
       service.runOnce();
 
       LOG.info("Getting Retention Period for test1");
@@ -205,9 +205,9 @@ public class DataPurgerServiceTest {
   }
 
   final static int NUM_OF_FILES = 35;
-  
+
   private static final NumberFormat idFormat = NumberFormat.getInstance();
-  
+
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
@@ -215,7 +215,7 @@ public class DataPurgerServiceTest {
 
   private void createTestPurgefiles(FileSystem fs, Cluster cluster,
       Calendar date, boolean createEmptyDirs)
-      throws Exception {
+          throws Exception {
     for(String streamname: cluster.getSourceStreams()) {
       String[] files = new String[NUM_OF_FILES];
       String datapath = Cluster
@@ -264,7 +264,7 @@ public class DataPurgerServiceTest {
             Assert.assertTrue(fs.exists(path));            
           }
         }
-        
+
       }
       if (createEmptyDirs) {
         Path path = new Path(trashpath);
@@ -310,25 +310,25 @@ public class DataPurgerServiceTest {
   private void testPurgerService(String testfilename, int numofhourstoadd,
       boolean checkifexists,
       boolean checktrashexists)
-      throws Exception {
+          throws Exception {
     DatabusConfigParser configparser = new DatabusConfigParser(testfilename);
     DatabusConfig config = configparser.getConfig();
-    
+
     for (Cluster cluster : config.getClusters().values()) {
       TestDataPurgerService service = new TestDataPurgerService(
           config, cluster);
-      
+
       FileSystem fs = FileSystem.getLocal(new Configuration());
       fs.delete(new Path(cluster.getRootDir()), true);
-      
+
       Calendar todaysdate = new GregorianCalendar(Calendar.getInstance()
           .getTimeZone());
       todaysdate.add(Calendar.HOUR, numofhourstoadd);
-  
+
       createTestPurgefiles(fs, cluster, todaysdate, false);
-  
+
       service.runOnce();
-  
+
       verifyPurgefiles(fs, cluster, todaysdate, checkifexists, checktrashexists);
       fs.delete(new Path(cluster.getRootDir()), true);
       fs.close();
@@ -346,7 +346,7 @@ public class DataPurgerServiceTest {
 
     Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService","purgePaths.count","main").getCount() , 6);
   }
-  
+
   public void testDataPurger() throws Exception {
     LOG.info("Check data purger does not stop when unable to delete a path");
     DatabusConfigParser configparser = new DatabusConfigParser(
@@ -462,7 +462,7 @@ public class DataPurgerServiceTest {
 
     Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService","purgePaths.count","main").getCount() , 6);
   }
-  
+
   private DataPurgerService buildPurgerService() {
     DataPurgerService service;
     try {

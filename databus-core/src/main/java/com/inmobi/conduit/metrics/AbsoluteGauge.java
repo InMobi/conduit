@@ -5,18 +5,18 @@ package com.inmobi.conduit.metrics;
  */
 public class AbsoluteGauge {
 
-	Number value;
+  Number value;
 
-	public AbsoluteGauge(Number value) {
-		this.value = value;
+  public AbsoluteGauge(Number value) {
+    this.value = value;
 
-	}
+  }
 
-	public void setValue(Number value) {
-		this.value = value;
-	};
+  public void setValue(Number value) {
+    this.value = value;
+  };
 
-	public Number getValue() {
-		return this.value;
-	}
+  public Number getValue() {
+    return this.value;
+  }
 }

@@ -61,19 +61,19 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   Set<String> expectedResults = new LinkedHashSet<String>();
   Set<String> expectedTrashPaths = new LinkedHashSet<String>();
   Map<String, String> expectedCheckPointPaths = new HashMap<String, String>();
-  
+
   @BeforeMethod
   public void beforeTest() throws Exception{
-	Properties prop = new Properties();
-	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
-	ConduitMetrics.init(prop);
-	ConduitMetrics.startAll();
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
   }
   @AfterMethod
   public void afterTest() throws Exception{
-	  ConduitMetrics.stopAll();;
+    ConduitMetrics.stopAll();;
   }
-  
+
 
   @BeforeSuite
   public void setup() throws Exception {
@@ -559,10 +559,10 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       Job testJobConf = service.createJob(tmpJobInputPath, 1000);
       Assert.assertEquals(
           testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY), service
-              .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+          .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
       Assert.assertEquals(
           testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY), service
-              .getCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+          .getCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
       if (currentCluster == null)
         Assert.assertEquals(
             testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),

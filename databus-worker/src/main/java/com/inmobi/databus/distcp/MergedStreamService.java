@@ -58,7 +58,7 @@ public class MergedStreamService extends DistcpBaseService {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
-    
+
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerCounter("MergedStreamService","retry.checkPoint",eachStream);
       ConduitMetrics.registerCounter("MergedStreamService","retry.mkDir",eachStream);
@@ -73,10 +73,10 @@ public class MergedStreamService extends DistcpBaseService {
   protected Path getDistCpTargetPath() {
     return new Path(getDestCluster().getTmpPath(),
         "distcp_mergedStream_" + getSrcCluster().getName() + "_"
-        + getDestCluster().getName() + "_"
-        + getServiceName(streamsToProcess)).makeQualified(getDestFs());
+            + getDestCluster().getName() + "_"
+            + getServiceName(streamsToProcess)).makeQualified(getDestFs());
   }
-  
+
   @Override
   public void execute() throws Exception {
     LOG.info("Starting a run of service " + getName());
@@ -395,7 +395,7 @@ public class MergedStreamService extends DistcpBaseService {
     } catch (IOException ie) {
       LOG.error(
           "IOException while doing recursive listing to create checkpoint on " +
-            "cluster filesystem" + currentFs.getUri(), ie);
+              "cluster filesystem" + currentFs.getUri(), ie);
     }
     return null;
 

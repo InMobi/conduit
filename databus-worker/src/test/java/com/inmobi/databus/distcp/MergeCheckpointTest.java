@@ -46,20 +46,20 @@ public class MergeCheckpointTest {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
   }
-  
+
   @BeforeMethod
   public void beforeTest() throws Exception{
-	Properties prop = new Properties();
-	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
-	ConduitMetrics.init(prop);
-	ConduitMetrics.startAll();
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
   }
-  
+
   @AfterMethod
   public void afterTest() throws Exception{
-	  ConduitMetrics.stopAll();;
+    ConduitMetrics.stopAll();;
   }
-  
+
 
 
   private static String getDateAsYYYYMMDDHHmm(Date date) {
@@ -99,20 +99,20 @@ public class MergeCheckpointTest {
     Map<String, List<Path>> srcClusterToPathMap = new HashMap<String, List<Path>>();
     for (String stream : sourceClusters.keySet()) {
       for (String cluster : sourceClusters.get(stream)) {
-      Cluster srcCluster = config.getClusters().get(cluster);
-      List<Path> paths = new ArrayList<Path>();
-    FileSystem fs = FileSystem.getLocal(new Configuration());
+        Cluster srcCluster = config.getClusters().get(cluster);
+        List<Path> paths = new ArrayList<Path>();
+        FileSystem fs = FileSystem.getLocal(new Configuration());
         Path streamLevelDir = new Path(srcCluster.getReadLocalFinalDestDirRoot()
             + stream);
         paths.addAll(createData(fs, streamLevelDir, date, stream, cluster));
-    Date nextDate = CalendarHelper.addAMinute(date);
+        Date nextDate = CalendarHelper.addAMinute(date);
         paths.addAll(createData(fs, streamLevelDir, nextDate, stream, cluster));
-      srcClusterToPathMap.put(cluster, paths);
+        srcClusterToPathMap.put(cluster, paths);
         // Add a dummy empty directory in the end
         Date lastDate = CalendarHelper.addAMinute(nextDate);
         fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
 
-    }
+      }
     }
     return srcClusterToPathMap;
   }
@@ -168,14 +168,14 @@ public class MergeCheckpointTest {
           srcRemoteMergeMap.get(remote).add(cluster);
         }
       }
-      }
-    return srcRemoteMergeMap;
     }
+    return srcRemoteMergeMap;
+  }
 
   private void assertAllPathsOnSrcPresentOnDest(
       Map<String, List<Path>> srcPathList,
       Map<String, List<String>> srcToRemote, DatabusConfig config)
-      throws IOException {
+          throws IOException {
     for (String src : srcPathList.keySet()) {
       for (String remote : srcToRemote.get(src)) {
         Cluster remoteCluster = config.getClusters().get(remote);
@@ -340,8 +340,8 @@ public class MergeCheckpointTest {
     Collections.sort(results, new DatePathComparator());
     assert (!results.get(1).getPath().getParent()
         .equals(results.get(2).getPath().getParent()));// second path and other
-                                                       // paths should be
-                                                       // different directories
+    // paths should be
+    // different directories
     assert (!results.get(0).getPath().getParent()
         .equals(results.get(1).getPath().getParent()));// first and second path
     // should be in diff

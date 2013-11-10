@@ -30,18 +30,18 @@ import com.inmobi.databus.local.TestLocalStreamService;
 public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   private static final Log LOG = LogFactory.getLog(MergeMirrorStreamTest.class);
-  
+
   @BeforeMethod
   public void beforeTest() throws Exception{
-	Properties prop = new Properties();
-	prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
-	ConduitMetrics.init(prop);
-	ConduitMetrics.startAll();
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
   }
-  
+
   @AfterMethod
   public void afterTest() throws Exception{
-	  ConduitMetrics.stopAll();;
+    ConduitMetrics.stopAll();;
   }
 
   /*
@@ -98,7 +98,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","commitPaths.count","stream1").getCount() , 18);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","stream2").getCount() , 18);
   }
-  
+
   @Test
   public void testMergeMirrorStreamWithMirror() throws Exception {
     // Test with 2 mirror sites
@@ -206,31 +206,31 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 9);
   }
-  
+
   @BeforeSuite
   public void setup() throws Exception {
     // clean up the test data if any thing is left in the previous runs
     cleanup();
     super.setup(2, 6, 1);
   }
-  
+
   @AfterSuite
   public void cleanup() throws Exception {
     super.cleanup();
   }
 
   private void testMergeMirrorStream(String filename, String currentClusterName,
-                                     Set<String> additionalClustersToProcess)
-      throws Exception {
+      Set<String> additionalClustersToProcess)
+          throws Exception {
     testMergeMirrorStream(filename, currentClusterName,
         additionalClustersToProcess, true);
   }
 
   private void testMergeMirrorStream(String filename, String currentClusterName,
-                                     Set<String> additionalClustersToProcess,
-                                     boolean addAllSourceClusters)
-      throws Exception {
-    
+      Set<String> additionalClustersToProcess,
+      boolean addAllSourceClusters)
+          throws Exception {
+
     DatabusConfigParser parser = new DatabusConfigParser(filename);
     DatabusConfig config = parser.getConfig();
     Set<String> streamsToProcessLocal = new HashSet<String>();
@@ -264,12 +264,12 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster,new FSCheckpointProvider(cluster
-.getCheckpointDir()), streamsToProcessLocal);
+              .getCheckpointDir()), streamsToProcessLocal);
       localStreamServices.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
     }
-    
+
     LOG.info("Running LocalStream Service");
 
     for (TestLocalStreamService service : localStreamServices) {
@@ -285,7 +285,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     for (String clusterString : clustersToProcess) {
       Cluster cluster = config.getClusters().get(clusterString);
       cluster.getHadoopConf().set("mapred.job.tracker", "local");
-    
+
       Set<String> mergedStreamRemoteClusters = new HashSet<String>();
       Set<String> mirroredRemoteClusters = new HashSet<String>();
       Map<String, Set<String>> mergedSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
@@ -295,7 +295,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
         //from where it has to fetch a partial stream and is hosting a primary stream
         //Start MirroredStreamConsumerService instances for this cluster for each cluster
         //from where it has to mirror mergedStreams
-  
+
         if (cStream.isPrimary()) {
           for (String cName : config.getSourceStreams().get(cStream.getName())
               .getSourceClusters()) {
@@ -325,39 +325,39 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
             }
           }
         }
-        }
+      }
 
-  
+
       for (String remote : mergedStreamRemoteClusters) {
         TestMergedStreamService remoteMergeService =
             new TestMergedStreamService(config,
- config.getClusters().get(remote), cluster,
- currentCluster,
-            mergedSrcClusterToStreamsMap.get(remote));
+                config.getClusters().get(remote), cluster,
+                currentCluster,
+                mergedSrcClusterToStreamsMap.get(remote));
         mergedStreamServices.add(remoteMergeService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMergeService.getCurrentCluster(),
               currentCluster);
         else
           Assert.assertEquals(remoteMergeService.getCurrentCluster(),
- cluster);
+              cluster);
       }
       for (String remote : mirroredRemoteClusters) {
         TestMirrorStreamService remoteMirrorService =
             new TestMirrorStreamService(config,
- config.getClusters().get(remote), cluster,
- currentCluster,
-            mirrorSrcClusterToStreamsMap.get(remote));
+                config.getClusters().get(remote), cluster,
+                currentCluster,
+                mirrorSrcClusterToStreamsMap.get(remote));
         mirrorStreamServices.add(remoteMirrorService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMirrorService.getCurrentCluster(),
               currentCluster);
         else
           Assert.assertEquals(remoteMirrorService.getCurrentCluster(),
- cluster);
+              cluster);
       }
     }
-    
+
     LOG.info("Running MergedStream Service");
 
     for (TestMergedStreamService service : mergedStreamServices) {
@@ -368,7 +368,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       service.runPostExecute();
 
     }
-    
+
     LOG.info("Running MirrorStreamService Service");
 
     for (TestMirrorStreamService service : mirrorStreamServices) {

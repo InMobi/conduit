@@ -65,7 +65,7 @@ public class DataPurgerService extends AbstractService {
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig
-        .getDefaults().get(DatabusConfigParser.TRASH_RETENTION_IN_HOURS)));
+            .getDefaults().get(DatabusConfigParser.TRASH_RETENTION_IN_HOURS)));
     this.defaultstreamPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig.getDefaults().get(
             DatabusConfigParser.RETENTION_IN_HOURS)));
@@ -366,11 +366,11 @@ public class DataPurgerService extends AbstractService {
     }
     return files;
   }
-  
+
   /**
    * Get the service name 
    */
   public String getServiceName(){
-  	  return "DataPurgerService";
+    return "DataPurgerService";
   }
 }
