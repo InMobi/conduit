@@ -34,7 +34,7 @@ public class TestConduitMetrics {
     Assert.assertNull(abGauge);
 
   }
-
+  /**
   @Test
   public void testRegisterCounter() {
     final String counterName = "test.counter";
@@ -50,7 +50,7 @@ public class TestConduitMetrics {
     abCounter = ConduitMetrics.registerCounter(counterName);
     Assert.assertNull(abCounter);
 
-  }
+  }*/
 
   @SuppressWarnings("unchecked")
   @Test
@@ -70,6 +70,7 @@ public class TestConduitMetrics {
     Assert.assertEquals(gaugeInst.getValue(), new Integer(1));
     gaugeInst = ConduitMetrics.registerGauge(gaugeName, gaugeInst);
     Assert.assertNull(gaugeInst);
+
   }
 
 
