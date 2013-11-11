@@ -45,6 +45,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -99,6 +100,15 @@ ConfigConstants {
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+	
+    //register metrics
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
+    }
   }
 
 
@@ -219,22 +229,36 @@ ConfigConstants {
 
   private void commit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    long startTime = System.currentTimeMillis();
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      retriableMkDirs(fs, entry.getValue().getParent());
-      if (retriableRename(fs, entry.getKey(), entry.getValue()) == false) {
+      String streamName = getTopicNameFromDestnPath(entry.getValue());
+      retriableMkDirs(fs, entry.getValue().getParent(), streamName);
+      if (retriableRename(fs, entry.getKey(), entry.getValue(), streamName) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
             + "dataloss. Partial data replay could happen in next run");
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
+      /*
+       * trash path: hdfs://rootdir/system/trash/YYYY-MM-DD/HH/filename
+       */
+      if (!entry.getValue().getParent().getParent().getParent().getName().
+          equals("trash")) {
+        ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
+            streamName, 1);
+      }
     }
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
+        Thread.currentThread().getName(), elapsedTime);
 
   }
 
   private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
-      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
+      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths)
+          throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
@@ -584,5 +608,27 @@ ConfigConstants {
 
   public Cluster getCurrentCluster() {
     return currentCluster;
+  }
+
+  /*
+   * Find the topic name from path of format
+   * /databus/streams_local/<streamName>/2013/10/
+   * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
+   */
+  public String getTopicNameFromDestnPath(Path destnPath) {
+    String destnPathAsString = destnPath.toString();
+    String destnDirAsString = new Path(
+        srcCluster.getLocalFinalDestDirRoot()).toString();
+    String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
+        .length());
+    Path tmpPath = new Path(pathWithoutRoot);
+    while (tmpPath.depth() != 1)
+      tmpPath = tmpPath.getParent();
+    return tmpPath.getName();
+  }
+
+  @Override
+  public String getServiceType() {
+    return "LocalStreamService";
   }
 }

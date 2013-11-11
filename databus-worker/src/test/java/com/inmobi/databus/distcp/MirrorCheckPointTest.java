@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -19,8 +20,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -38,6 +43,19 @@ public class MirrorCheckPointTest {
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
+  }
+
+  @BeforeMethod
+  public void beforeTest() throws Exception{
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
+  }
+
+  @AfterMethod
+  public void afterTest() throws Exception{
+    ConduitMetrics.stopAll();;
   }
 
   private static String getDateAsYYYYMMDDHHmm(Date date) {
@@ -116,16 +134,16 @@ public class MirrorCheckPointTest {
     for (Cluster cluster : config.getClusters().values()) {
       for(DestinationStream stream:cluster.getDestinationStreams().values()){
         if(!stream.isPrimary()){
-         Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
-         if(remote!=null){
-           if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
-             mirrorSrcClusterToStreamsMap.get(remote.getName()).add(stream.getName());
-           }else {
-             Set<String> tmp = new HashSet<String>();
-             tmp.add(stream.getName());
-             mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
-           }  
-         }
+          Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
+          if(remote!=null){
+            if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
+              mirrorSrcClusterToStreamsMap.get(remote.getName()).add(stream.getName());
+            }else {
+              Set<String> tmp = new HashSet<String>();
+              tmp.add(stream.getName());
+              mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
+            }  
+          }
         }
       }
       for(String remote:mirrorSrcClusterToStreamsMap.keySet()){
@@ -151,7 +169,7 @@ public class MirrorCheckPointTest {
   private void assertAllPathsOnSrcPresentOnDest(
       Map<String, List<Path>> srcPathList,
       Map<String, List<String>> srcToRemote, DatabusConfig config)
-      throws IOException {
+          throws IOException {
     for (String src : srcPathList.keySet()) {
       for (String remote : srcToRemote.get(src)) {
         Cluster remoteCluster = config.getClusters().get(remote);
@@ -208,6 +226,11 @@ public class MirrorCheckPointTest {
     String checkPointString = new String(value);
     assert (fStatusList.get(7).getPath().getParent().toString()
         .equals(checkPointString));
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 8);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
   }
 
   /**
@@ -232,7 +255,7 @@ public class MirrorCheckPointTest {
     String finalRelativePath = pathToBeCreated.toString();
     String srcRootDir = new Path(srcCluster.getRootDir()).toString();
     String tmp = finalRelativePath.substring(
-srcRootDir.length() + 1,
+        srcRootDir.length() + 1,
         finalRelativePath.length());
     Path finalPath = remoteFs.makeQualified(new Path(destnCluster.getRootDir(),
         tmp));
@@ -255,9 +278,14 @@ srcRootDir.length() + 1,
     assert (fStatusList.get(7).getPath().getParent().toString()
         .equals(checkPointValue));
 
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 7);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
   }
-  
-   /*
+
+  /*
    * no distcp should be launched hence no paths on target
    */
   @Test
@@ -267,7 +295,11 @@ srcRootDir.length() + 1,
     Cluster destnCluster = config.getClusters().get("testcluster2");
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
     assert (!remoteFs.exists(new Path(destnCluster.getFinalDestDirRoot())));
-
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
   }
 
   @Test
@@ -284,6 +316,11 @@ srcRootDir.length() + 1,
         destFs.getFileStatus(new Path(streamLevelDir)), results);
     assert (results.size() == 2);
 
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
   }
 
   @Test
@@ -314,7 +351,11 @@ srcRootDir.length() + 1,
     String checkPointString = new String(value);
     assert (fStatus1.get(7).getPath().getParent().toString()
         .equals(checkPointString));
-
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 4);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
   }
 
   @Test
@@ -333,6 +374,11 @@ srcRootDir.length() + 1,
         remoteFs2.getFileStatus(emptyPath), results);
     assert (results.size() == 8);
 
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 8);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
   }
 
 }

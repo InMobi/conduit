@@ -1,16 +1,16 @@
 /*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.inmobi.databus.distcp;
 
 import java.io.File;
@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -51,10 +52,18 @@ public class MirrorStreamService extends DistcpBaseService {
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
-      throws Exception {
+          throws Exception {
     super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
+
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_EXIST, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
+    }
   }
 
   @Override
@@ -63,7 +72,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
     return new Path(finalDestDir);
   }
-  
+
   @Override
   protected Path getDistCpTargetPath() {
     return new Path(getDestCluster().getTmpPath(), "distcp_mirror_"
@@ -121,27 +130,34 @@ public class MirrorStreamService extends DistcpBaseService {
 
   void doLocalCommit(Map<FileStatus, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    long startTime = System.currentTimeMillis();
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey().getPath() + "] to ["
           + entry.getValue() + "]");
+      String streamName = getTopicNameFromDestnPath(entry.getValue());
       if (entry.getKey().isDir()) {
-        retriableMkDirs(getDestFs(), entry.getValue());
+        retriableMkDirs(getDestFs(), entry.getValue(), streamName);
       } else {
-        if (retriableExists(getDestFs(), entry.getValue())) {
+        if (retriableExists(getDestFs(), entry.getValue(), streamName)) {
           LOG.warn("File with Path [" + entry.getValue()
               + "] already exist,hence skipping renaming operation");
           continue;
         }
-        retriableMkDirs(getDestFs(), entry.getValue().getParent());
+        retriableMkDirs(getDestFs(), entry.getValue().getParent(), streamName);
         if (retriableRename(getDestFs(), entry.getKey().getPath(),
-            entry.getValue()) == false) {
+            entry.getValue(), streamName) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
               + "data loss. Partial data replay could happen in next run");
           throw new Exception("Rename failed from [" + entry.getKey().getPath()
               + "] to [" + entry.getValue() + "]");
         }
       }
+      ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
+          streamName, 1);
     }
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
+        Thread.currentThread().getName(), elapsedTime);
   }
 
   /*
@@ -167,13 +183,13 @@ public class MirrorStreamService extends DistcpBaseService {
         + File.separator + getSrcCluster().getUnqaulifiedReadUrlFinalDestDirRoot());
     LOG.debug("tmpStreamRoot [" + tmpStreamRoot + "]");
 
-     /* tmpStreamRoot eg -
-      * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/databus
-      * /streams/
-      *
-      * multiple streams can get mirrored from the same cluster
-      * streams can get processed in any order but we have to retain order
-      * of paths within a stream*/
+    /* tmpStreamRoot eg -
+     * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/databus
+     * /streams/
+     *
+     * multiple streams can get mirrored from the same cluster
+     * streams can get processed in any order but we have to retain order
+     * of paths within a stream*/
     FileStatus[] fileStatuses = null;
     try {
       fileStatuses = getDestFs().listStatus(tmpStreamRoot);
@@ -185,7 +201,7 @@ public class MirrorStreamService extends DistcpBaseService {
       for (FileStatus streamRoot : fileStatuses) {
         //for each stream : list the path in order of YYYY/mm/DD/HH/MM
         LOG.debug("StreamRoot [" + streamRoot.getPath() + "] streamName [" +
-        streamRoot.getPath().getName() + "]");
+            streamRoot.getPath().getName() + "]");
         List<FileStatus> streamPaths = new ArrayList<FileStatus>();
         createListing(getDestFs(), streamRoot, streamPaths);
         Collections.sort(streamPaths, new DatePathComparator());
@@ -196,22 +212,19 @@ public class MirrorStreamService extends DistcpBaseService {
     return commitPaths;
   }
 
-
-
-
   private void createCommitPaths(LinkedHashMap<FileStatus, Path> commitPaths,
-                                 List<FileStatus> streamPaths) {
-   /*  Path eg in streamPaths -
-    *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
-    *  /<streamName>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
-    *  -21_00000.gz
-    *
-    * or it could be an emptyDir like
-    *  /* Path eg in streamPaths -
-    *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
-    *  /<streamName>/2012/1/13/15/7/
-    *
-    */
+      List<FileStatus> streamPaths) {
+    /*  Path eg in streamPaths -
+     *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+     *  /<streamName>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
+     *  -21_00000.gz
+     *
+     * or it could be an emptyDir like
+     *  /* Path eg in streamPaths -
+     *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+     *  /<streamName>/2012/1/13/15/7/
+     *
+     */
 
     for (FileStatus fileStatus : streamPaths) {
       String fileName = null;
@@ -233,9 +246,9 @@ public class MirrorStreamService extends DistcpBaseService {
       Path streamName = year.getParent();
 
       String finalPath = getDestCluster().getFinalDestDirRoot() + File
-      .separator + streamName.getName() + File.separator + year.getName() + File
-      .separator + month.getName() + File.separator + day.getName() + File
-      .separator + hr.getName() + File.separator + min.getName();
+          .separator + streamName.getName() + File.separator + year.getName() + File
+          .separator + month.getName() + File.separator + day.getName() + File
+          .separator + hr.getName() + File.separator + min.getName();
 
       if (fileName != null) {
         finalPath += File.separator + fileName;
@@ -243,7 +256,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
       commitPaths.put(fileStatus, new Path(finalPath));
       LOG.debug("Going to commit [" + fileStatus.getPath() + "] to [" +
-      finalPath + "]");
+          finalPath + "]");
     }
 
   }
@@ -329,7 +342,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   private void recursiveListingTillMinuteDir(FileSystem fs,
       FileStatus fileStatus, List<FileStatus> results, int depth)
-      throws IOException {
+          throws IOException {
     if (fileStatus.isDir()) {
 
       FileStatus[] stats = FileUtil.listStatusAsPerHDFS(fs,
@@ -378,5 +391,10 @@ public class MirrorStreamService extends DistcpBaseService {
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
     return srcPath.getPath().toUri().getPath();
+  }
+
+  @Override
+  public String getServiceType() {
+    return "MirrorStreamService";
   }
 }
