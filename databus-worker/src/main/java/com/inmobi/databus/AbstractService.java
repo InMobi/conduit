@@ -61,6 +61,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected final static String EMPTYDIR_CREATE = "emptyDir.create";
   protected final static String RETRY_CHECKPOINT = "retry.checkPoint";
   protected final static String COMMITPATHS_COUNT = "commitPaths.count";
+  protected final static String DATAPURGER_SERVICE = "DataPurgerService";
 
   public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
     this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
@@ -128,7 +129,7 @@ public abstract class AbstractService implements Service, Runnable {
     Counter failureJobCounter =
         ConduitMetrics.registerCounter(getServiceType(), FAILURES,
             Thread.currentThread().getName());
-    if(!"DataPurgerService".equalsIgnoreCase(getServiceType())){
+    if(!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())){
       ConduitMetrics.registerCounter(getServiceType(), COMMIT_TIME,
           Thread.currentThread().getName());
     }
