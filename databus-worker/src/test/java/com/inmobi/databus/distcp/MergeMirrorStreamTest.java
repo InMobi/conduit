@@ -83,7 +83,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","stream2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","stream2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","stream2").getCount() , 130);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","stream2").getCount() , 129);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","stream2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","stream2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","stream2").getCount() , 0);

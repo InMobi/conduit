@@ -225,10 +225,12 @@ public class MergedStreamService extends DistcpBaseService {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
 
-      ConduitMetrics.incCounter("MergedStreamService","commitPaths.count",streamName,1);
+      ConduitMetrics.incCounter("MergedStreamService", "commitPaths.count",
+          streamName, 1);
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
-    ConduitMetrics.incCounter(getServiceName(), "commit.time", Thread.currentThread().getName(), elapsedTime);
+    ConduitMetrics.incCounter(getServiceType(), "commit.time",
+        Thread.currentThread().getName(), elapsedTime);
 
   }
 
@@ -420,7 +422,7 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   @Override
-  public String getServiceName() {
+  public String getServiceType() {
     return "MergedStreamService";
   }
 }

@@ -45,9 +45,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 
-import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -244,16 +242,19 @@ ConfigConstants {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
       if (!entry.getValue().toString().contains("trash")) {
-        ConduitMetrics.incCounter("LocalStreamService", "commitPaths.count", streamName, 1);
+        ConduitMetrics.incCounter("LocalStreamService", "commitPaths.count",
+            streamName, 1);
       }
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
-    ConduitMetrics.incCounter(getServiceName(), "commit.time", Thread.currentThread().getName(), elapsedTime);
+    ConduitMetrics.incCounter(getServiceType(), "commit.time",
+        Thread.currentThread().getName(), elapsedTime);
 
   }
 
   private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
-      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths) throws IOException {
+      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths)
+          throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
@@ -623,7 +624,7 @@ ConfigConstants {
   }
 
   @Override
-  public String getServiceName() {
+  public String getServiceType() {
     return "LocalStreamService";
   }
 }

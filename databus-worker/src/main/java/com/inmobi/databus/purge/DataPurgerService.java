@@ -370,7 +370,7 @@ public class DataPurgerService extends AbstractService {
   /**
    * Get the service name 
    */
-  public String getServiceName(){
+  public String getServiceType(){
     return "DataPurgerService";
   }
 }

@@ -31,9 +31,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -140,12 +138,12 @@ public class MirrorStreamService extends DistcpBaseService {
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue(), streamName);
       } else {
-        if (retriableExists(getDestFs(), entry.getValue(),streamName)) {
+        if (retriableExists(getDestFs(), entry.getValue(), streamName)) {
           LOG.warn("File with Path [" + entry.getValue()
               + "] already exist,hence skipping renaming operation");
           continue;
         }
-        retriableMkDirs(getDestFs(), entry.getValue().getParent(),streamName);
+        retriableMkDirs(getDestFs(), entry.getValue().getParent(), streamName);
         if (retriableRename(getDestFs(), entry.getKey().getPath(),
             entry.getValue(), streamName) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
@@ -154,11 +152,12 @@ public class MirrorStreamService extends DistcpBaseService {
               + "] to [" + entry.getValue() + "]");
         }
       }
-      ConduitMetrics.incCounter("MirrorStreamService","commitPaths.count",streamName,1);
-
+      ConduitMetrics.incCounter("MirrorStreamService", "commitPaths.count",
+          streamName, 1);
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
-    ConduitMetrics.incCounter("MirrorStreamService","commit.time",Thread.currentThread().getName(),elapsedTime);
+    ConduitMetrics.incCounter("MirrorStreamService", "commit.time",
+        Thread.currentThread().getName(), elapsedTime);
   }
 
   /*
@@ -212,9 +211,6 @@ public class MirrorStreamService extends DistcpBaseService {
     }
     return commitPaths;
   }
-
-
-
 
   private void createCommitPaths(LinkedHashMap<FileStatus, Path> commitPaths,
       List<FileStatus> streamPaths) {
@@ -398,7 +394,7 @@ public class MirrorStreamService extends DistcpBaseService {
   }
 
   @Override
-  public String getServiceName() {
+  public String getServiceType() {
     return "MirrorStreamService";
   }
 }
