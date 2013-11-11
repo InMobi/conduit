@@ -103,11 +103,11 @@ ConfigConstants {
 	
     //register metrics
     for (String eachStream : streamsToProcess) {
-      ConduitMetrics.registerCounter("LocalStreamService","retry.checkPoint",eachStream);
-      ConduitMetrics.registerCounter("LocalStreamService","retry.mkDir",eachStream);
-      ConduitMetrics.registerCounter("LocalStreamService","retry.rename",eachStream);
-      ConduitMetrics.registerCounter("LocalStreamService","emptyDir.create",eachStream);
-      ConduitMetrics.registerCounter("LocalStreamService","commitPaths.count",eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
     }
   }
 
@@ -242,7 +242,7 @@ ConfigConstants {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
       if (!entry.getValue().toString().contains("trash")) {
-        ConduitMetrics.incCounter("LocalStreamService", COMMITPATHS_COUNT,
+        ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
             streamName, 1);
       }
     }

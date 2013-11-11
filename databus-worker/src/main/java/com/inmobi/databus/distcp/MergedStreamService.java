@@ -60,12 +60,12 @@ public class MergedStreamService extends DistcpBaseService {
         streamsToProcess);
 
     for (String eachStream : streamsToProcess) {
-      ConduitMetrics.registerCounter("MergedStreamService","retry.checkPoint",eachStream);
-      ConduitMetrics.registerCounter("MergedStreamService","retry.mkDir",eachStream);
-      ConduitMetrics.registerCounter("MergedStreamService","retry.rename",eachStream);
-      ConduitMetrics.registerCounter("MergedStreamService","retry.exist",eachStream);
-      ConduitMetrics.registerCounter("MergedStreamService","emptyDir.create",eachStream);
-      ConduitMetrics.registerCounter("MergedStreamService","commitPaths.count",eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_EXIST, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
     }
   }
 
@@ -225,7 +225,7 @@ public class MergedStreamService extends DistcpBaseService {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
 
-      ConduitMetrics.incCounter("MergedStreamService", COMMITPATHS_COUNT,
+      ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
           streamName, 1);
     }
     long elapsedTime = System.currentTimeMillis() - startTime;

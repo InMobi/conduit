@@ -129,7 +129,7 @@ public abstract class AbstractService implements Service, Runnable {
     Counter failureJobCounter =
         ConduitMetrics.registerCounter(getServiceType(), FAILURES,
             Thread.currentThread().getName());
-    if(!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())){
+    if(!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())) {
       ConduitMetrics.registerCounter(getServiceType(), COMMIT_TIME,
           Thread.currentThread().getName());
     }
