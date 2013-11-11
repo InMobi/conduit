@@ -6,11 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * Util class to get stream names from paths/keys
  */
 public class MetricsUtil {
 
+  private static final Log LOG = LogFactory.getLog(MetricsUtil.class);
   private static Map<String, String> pathToStreamCache = new HashMap<String, String>();
 
   /**
@@ -23,9 +27,12 @@ public class MetricsUtil {
     try {
       String streamName = pathToStreamCache.get(key);
       if (streamName == null) {
-        StringTokenizer st = new StringTokenizer(key, "_");
-        st.nextToken();
-        streamName = st.nextToken();
+        String[] st = key.split("_");
+        if (st.length != 3) {
+          LOG.error("Invalid checkpoint key " + key);
+        } else {
+          streamName = st[1];
+        }
         pathToStreamCache.put(key, streamName);
       }
       return streamName;

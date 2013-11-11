@@ -144,7 +144,8 @@ public class ConduitMetrics {
    * @param initalValue
    * @return
    */
-  public static AbsoluteGauge registerAbsoluteGauge(String name, Number initalValue) {
+  public static AbsoluteGauge registerAbsoluteGauge(String name,
+      Number initalValue) {
     if(!isEnabled){
       LOG.warn("metrics not enabled");
       return null;
@@ -194,13 +195,16 @@ public class ConduitMetrics {
    * @param name
    * @return
    */
-  synchronized public static Counter registerCounter(String serviceName, String counterType, String context) {
+  synchronized public static Counter registerCounter(String serviceName,
+      String counterType, String context) {
     if(!isEnabled){
       LOG.warn("metrics not enabled");
       return null;
     }
-    if (registry.getCounters().get(serviceName+"."+counterType+"."+context) != null) {
-      LOG.warn("Counter with name " + serviceName + counterType + context + " already exsits");
+    if (registry.getCounters().get(serviceName + "." + counterType + "."
+        + context) != null) {
+      LOG.warn("Counter with name " + serviceName + "." + counterType + "."
+          + context + " already exsits");
       return null;
     }
     Map<String, Map<String, Counter>> serviceLevelCache = threeLevelCache.get(serviceName);
@@ -209,7 +213,8 @@ public class ConduitMetrics {
       counterTypeLevel = new HashMap<String , Counter>();
       serviceLevelCache.put(counterType, counterTypeLevel);
     }
-    Counter counterInst = registry.counter(serviceName+"."+counterType+"."+context);
+    Counter counterInst = registry.counter(serviceName + "." + counterType + "."
+        + context);
     counterTypeLevel.put(context, counterInst);
     return counterInst;
   }
@@ -217,7 +222,8 @@ public class ConduitMetrics {
   /**
    * Get a counter from the cache
    */
-  public static Counter getCounter(String serviceName, String counterType, String context) {
+  public static Counter getCounter(String serviceName, String counterType,
+      String context) {
     if(!isEnabled){
       LOG.warn("metrics not enabled");
       return null;
@@ -226,18 +232,21 @@ public class ConduitMetrics {
 
     Map<String, Counter> counterTypeLevel = serviceLevel.get(counterType);
     if(counterTypeLevel == null){
-      LOG.info("counter does not exist:" );
+      LOG.info("counter does not exist:" + serviceName + "." +counterType + "."
+          + context);
       return null;
     }
     Counter c = counterTypeLevel.get(context);
     if(c == null){
-      LOG.info("counter does not exist:" + serviceName + "." +counterType + "." + context);
+      LOG.info("counter does not exist:" + serviceName + "." +counterType + "."
+          + context);
       return null;
     }
     return c;
   }
 
-  public static void incCounter(String serviceName, String counterType, String context ,long value){
+  public static void incCounter(String serviceName, String counterType,
+      String context ,long value){
     Counter c = getCounter(serviceName, counterType , context);
     if(c!=null){
       c.inc(value);
