@@ -19,8 +19,6 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,10 +27,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import com.codahale.metrics.Counter;
-import com.inmobi.conduit.metrics.AbsoluteGauge;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.DatabusFileUtil;
 
 public abstract class AbstractService implements Service, Runnable {
 
@@ -53,6 +51,16 @@ public abstract class AbstractService implements Service, Runnable {
   protected final Set<String> streamsToProcess;
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
+  
+  protected final static String RUNTIME = "runtime";
+  protected final static String FAILURES = "failures";
+  protected final static String COMMIT_TIME = "commit.time";
+  protected final static String RETRY_RENAME = "retry.rename";
+  protected final static String RETRY_EXIST = "retry.exist";
+  protected final static String RETRY_MKDIR = "retry.mkDir";
+  protected final static String EMPTYDIR_CREATE = "emptyDir.create";
+  protected final static String RETRY_CHECKPOINT = "retry.checkPoint";
+  protected final static String COMMITPATHS_COUNT = "commitPaths.count";
 
   public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
     this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
@@ -101,7 +109,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   public static String getCheckPointKey(String serviceName, String stream,
       String source) {
-    return serviceName + "_" + stream + "_" + source;
+    return DatabusFileUtil.getCheckPointKey(serviceName, stream, source);
   }
 
   protected void preExecute() throws Exception {
@@ -115,13 +123,13 @@ public abstract class AbstractService implements Service, Runnable {
   public void run() {
     LOG.info("Starting Service [" + Thread.currentThread().getName() + "]");
     Counter runtimeCounter =
-        ConduitMetrics.registerCounter(getServiceType(), "runtime",
+        ConduitMetrics.registerCounter(getServiceType(), RUNTIME,
             Thread.currentThread().getName());
     Counter failureJobCounter =
-        ConduitMetrics.registerCounter(getServiceType(), "failures",
+        ConduitMetrics.registerCounter(getServiceType(), FAILURES,
             Thread.currentThread().getName());
     if(!"DataPurgerService".equalsIgnoreCase(getServiceType())){
-      ConduitMetrics.registerCounter(getServiceType(),"commit.time",
+      ConduitMetrics.registerCounter(getServiceType(), COMMIT_TIME,
           Thread.currentThread().getName());
     }
     while (!stopped && !thread.isInterrupted()) {
@@ -264,7 +272,7 @@ public abstract class AbstractService implements Service, Runnable {
           if (!fs.exists(missingDir)) {
             LOG.debug("Creating Missing Directory [" + missingDir + "]");
             fs.mkdirs(missingDir);
-            ConduitMetrics.incCounter(getServiceType(), "emptyDir.create",
+            ConduitMetrics.incCounter(getServiceType(), EMPTYDIR_CREATE,
                 categoryName, 1);
           }
           prevRuntime += MILLISECONDS_IN_MINUTE;
@@ -296,7 +304,7 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      ConduitMetrics.incCounter(getServiceType(), "retry.rename", streamName, 1);
+      ConduitMetrics.incCounter(getServiceType(), RETRY_RENAME, streamName, 1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -368,7 +376,7 @@ public abstract class AbstractService implements Service, Runnable {
       if (streamName == null) {
         streamName = MetricsUtil.getSteamNameFromCheckPointKey(key);
       }
-      ConduitMetrics.incCounter(getServiceType(), "retry.checkPoint",
+      ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
           streamName, 1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
@@ -401,7 +409,7 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      ConduitMetrics.incCounter(getServiceType(), "retry.mkDir", streamName, 1);
+      ConduitMetrics.incCounter(getServiceType(), RETRY_MKDIR, streamName, 1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -435,7 +443,7 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      ConduitMetrics.incCounter(getServiceType(), "retry.exist", streamName, 1);
+      ConduitMetrics.incCounter(getServiceType(), RETRY_EXIST, streamName, 1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {

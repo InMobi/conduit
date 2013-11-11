@@ -1,20 +1,15 @@
 package com.inmobi.conduit.metrics;
 
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.inmobi.databus.utils.DatabusFileUtil;
 
 /**
  * Util class to get stream names from paths/keys
  */
 public class MetricsUtil {
 
-  private static final Log LOG = LogFactory.getLog(MetricsUtil.class);
   private static Map<String, String> pathToStreamCache = new HashMap<String, String>();
 
   /**
@@ -27,12 +22,7 @@ public class MetricsUtil {
     try {
       String streamName = pathToStreamCache.get(key);
       if (streamName == null) {
-        String[] st = key.split("_");
-        if (st.length != 3) {
-          LOG.error("Invalid checkpoint key " + key);
-        } else {
-          streamName = st[1];
-        }
+        streamName = DatabusFileUtil.getSteamNameFromCheckPointKey(key);
         pathToStreamCache.put(key, streamName);
       }
       return streamName;

@@ -56,6 +56,7 @@ public class DataPurgerService extends AbstractService {
   private Set<Path> streamsToPurge;
   private DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
   private static long MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
+  private final static String PURGEPATHS_COUNT = "purgePaths.count";
 
   public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
       throws Exception {
@@ -349,7 +350,7 @@ public class DataPurgerService extends AbstractService {
         purgePath = (Path) it.next();
         fs.delete(purgePath, true);
         LOG.info("Purging [" + purgePath + "]");
-        ConduitMetrics.incCounter("DataPurgerService", "purgePaths.count", "main", 1);
+        ConduitMetrics.incCounter("DataPurgerService", PURGEPATHS_COUNT, "main", 1);
       } catch (Exception e) {
         LOG.warn("Cannot delete path " + purgePath, e);
       }

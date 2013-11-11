@@ -58,11 +58,11 @@ public class MirrorStreamService extends DistcpBaseService {
         streamsToProcess);
 
     for (String eachStream : streamsToProcess) {
-      ConduitMetrics.registerCounter("MirrorStreamService","retry.checkPoint",eachStream);
-      ConduitMetrics.registerCounter("MirrorStreamService","retry.mkDir",eachStream);
-      ConduitMetrics.registerCounter("MirrorStreamService","retry.rename",eachStream);
-      ConduitMetrics.registerCounter("MirrorStreamService","retry.exist",eachStream);
-      ConduitMetrics.registerCounter("MirrorStreamService","commitPaths.count",eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService", RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService", RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService", RETRY_RENAME, eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService", RETRY_EXIST, eachStream);
+      ConduitMetrics.registerCounter("MirrorStreamService", COMMITPATHS_COUNT, eachStream);
     }
   }
 
@@ -152,11 +152,11 @@ public class MirrorStreamService extends DistcpBaseService {
               + "] to [" + entry.getValue() + "]");
         }
       }
-      ConduitMetrics.incCounter("MirrorStreamService", "commitPaths.count",
+      ConduitMetrics.incCounter("MirrorStreamService", COMMITPATHS_COUNT,
           streamName, 1);
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
-    ConduitMetrics.incCounter("MirrorStreamService", "commit.time",
+    ConduitMetrics.incCounter("MirrorStreamService", COMMIT_TIME,
         Thread.currentThread().getName(), elapsedTime);
   }
 

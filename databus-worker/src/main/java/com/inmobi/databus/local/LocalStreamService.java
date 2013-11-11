@@ -242,12 +242,12 @@ ConfigConstants {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
       if (!entry.getValue().toString().contains("trash")) {
-        ConduitMetrics.incCounter("LocalStreamService", "commitPaths.count",
+        ConduitMetrics.incCounter("LocalStreamService", COMMITPATHS_COUNT,
             streamName, 1);
       }
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
-    ConduitMetrics.incCounter(getServiceType(), "commit.time",
+    ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
         Thread.currentThread().getName(), elapsedTime);
 
   }

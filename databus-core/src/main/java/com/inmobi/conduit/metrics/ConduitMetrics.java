@@ -37,6 +37,10 @@ public class ConduitMetrics {
   private final static String GANGLIA_PORT = "com.inmobi.databus.metrics.ganglia.port";
   private final static String REPORTING_PERIOD = "com.inmobi.databus.metrics.period";
   private final static String IS_ENABLED_PROPERTY="com.inmobi.databus.metrics.enabled";
+  private final static String LOCAL_SERVICE = "LocalStreamService";
+  private final static String MERGED_SERVICE = "MergedStreamService";
+  private final static String MIRROR_SERVICE = "MirrorStreamService";
+  private final static String PURGER_SERVICE = "DataPurgerService";
 
 
   private final static Map<String, ScheduledReporter> reporterMap =
@@ -63,10 +67,10 @@ public class ConduitMetrics {
 
     if(config.getProperty(IS_ENABLED_PROPERTY,"false").equalsIgnoreCase("true")){
       isEnabled=true;
-      threeLevelCache.put("LocalStreamService", new HashMap<String , Map<String, Counter>>());
-      threeLevelCache.put("MirrorStreamService", new HashMap<String , Map<String, Counter>>());
-      threeLevelCache.put("MergedStreamService", new HashMap<String , Map<String, Counter>>());
-      threeLevelCache.put("DataPurgerService", new HashMap<String , Map<String, Counter>>());
+      threeLevelCache.put(LOCAL_SERVICE, new HashMap<String , Map<String, Counter>>());
+      threeLevelCache.put(MIRROR_SERVICE, new HashMap<String , Map<String, Counter>>());
+      threeLevelCache.put(MERGED_SERVICE, new HashMap<String , Map<String, Counter>>());
+      threeLevelCache.put(PURGER_SERVICE, new HashMap<String , Map<String, Counter>>());
       registry= new MetricRegistry();
     }else{
       return;
