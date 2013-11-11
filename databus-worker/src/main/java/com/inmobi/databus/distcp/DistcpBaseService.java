@@ -324,4 +324,21 @@ public abstract class DistcpBaseService extends AbstractService {
       results.add(fileStatus);
     }
   }
+
+  /*
+   * Find the topic name from path of format
+   * /databus/streams/<streamName>/2013/10/01/09/17 or
+   * /databus/streams/<streamName>/2013/10/
+   * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
+   */
+  protected String getTopicNameFromDestnPath(Path destnPath) {
+    String destnPathAsString =destnPath.toString();
+    String destnDirAsString =new Path(destCluster.getFinalDestDirRoot()).toString();
+    String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
+        .length());
+    Path tmpPath = new Path(pathWithoutRoot);
+    while (tmpPath.depth() != 1)
+      tmpPath=tmpPath.getParent();
+    return tmpPath.getName();
+  }
 }

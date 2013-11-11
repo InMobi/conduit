@@ -235,8 +235,9 @@ ConfigConstants {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      retriableMkDirs(fs, entry.getValue().getParent());
-      if (retriableRename(fs, entry.getKey(), entry.getValue()) == false) {
+      String streamName = getTopicNameFromDestnPath(entry.getValue());
+      retriableMkDirs(fs, entry.getValue().getParent(), streamName);
+      if (retriableRename(fs, entry.getKey(), entry.getValue(), streamName) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
             + "dataloss. Partial data replay could happen in next run");
         throw new Exception("Abort transaction Commit. Rename failed from ["
