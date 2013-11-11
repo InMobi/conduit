@@ -119,8 +119,9 @@ public abstract class AbstractService implements Service, Runnable {
         postExecute();
         if (stopped || thread.isInterrupted())
           return;
-      } catch (Exception e) {
-        LOG.warn("Error in run", e);
+      } catch (Throwable th) {
+        LOG.error(" Is thread " + thread + " interrupted "
+            + thread.isInterrupted() +  " and Error in run: " + th);
       }
       long finishTime = System.currentTimeMillis();
       long elapsedTime = finishTime - startTime;
@@ -145,6 +146,13 @@ public abstract class AbstractService implements Service, Runnable {
   public synchronized void start() {
     thread = new Thread(this, this.name);
     LOG.info("Starting thread " + thread.getName());
+    thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+
+      public void uncaughtException(Thread t, Throwable e) {
+        LOG.error(" Is thread " + thread + " interrupted "
+            + thread.isInterrupted() +  " and thread throws exception: " + e );
+      }
+    });
     thread.start();
   }
 
