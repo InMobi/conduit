@@ -76,7 +76,7 @@ public class AuditStats {
     });
     databusConfigList = new ArrayList<DatabusConfig>();
     if (xmlFiles.length == 0) {
-      LOG.info("No xml files found in the conf folder:"+databusConfFolder);
+      LOG.error("No xml files found in the conf folder:"+databusConfFolder);
       return;
     }
     LOG.info("Databus xmls included in the conf folder:");
