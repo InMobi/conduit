@@ -241,7 +241,11 @@ ConfigConstants {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
-      if (!entry.getValue().toString().contains("trash")) {
+      /*
+       * trash path: hdfs://rootdir/system/trash/YYYY-MM-DD/HH/filename
+       */
+      if (!entry.getValue().getParent().getParent().getParent().getName().
+          equals("trash")) {
         ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
             streamName, 1);
       }
