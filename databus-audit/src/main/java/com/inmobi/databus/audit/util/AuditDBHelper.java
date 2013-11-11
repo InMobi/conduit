@@ -128,7 +128,10 @@ public class AuditDBHelper {
       selectPreparedStatement.setString(i++, tuple.getCluster());
       rs = selectPreparedStatement.executeQuery();
     } catch (SQLException e) {
-      LOG.error("Exception encountered ", e);
+      while (e != null) {
+        LOG.error("Exception encountered ", e);
+        e = e.getNextException();
+      }
       return null;
     }
     return rs;
@@ -194,7 +197,10 @@ public class AuditDBHelper {
           + insertPreparedStatement.toString());
       insertPreparedStatement.addBatch();
     } catch (SQLException e) {
-      LOG.error("Exception thrown while adding to insert statement batch", e);
+      while (e != null) {
+        LOG.error("Exception thrown while adding to insert statement batch", e);
+        e = e.getNextException();
+      }
       return false;
     }
     return true;
@@ -232,7 +238,10 @@ public class AuditDBHelper {
           + updatePreparedStatement.toString());
       updatePreparedStatement.addBatch();
     } catch (SQLException e) {
-      LOG.error("Exception thrown while adding to batch of update statement", e);
+      while (e != null) {
+        LOG.error("Exception thrown while adding to batch of update statement", e);
+        e = e.getNextException();
+      }
       return false;
     }
     return true;
@@ -286,7 +295,10 @@ public class AuditDBHelper {
       }
       connection.commit();
     } catch (SQLException e) {
-      LOG.error("SQLException encountered", e);
+      while (e != null) {
+        LOG.error("SQLException encountered", e);
+        e = e.getNextException();
+      }
     } finally {
       try {
         if (rs != null)
@@ -320,7 +332,10 @@ public class AuditDBHelper {
           columnValuesInTuple.get(Column.TOPIC), latencyCountMap,
           rs.getLong(AuditDBConstants.SENT));
     } catch (SQLException e) {
-      LOG.error("Exception thrown while creating new tuple ", e);
+      while (e != null) {
+        LOG.error("SException thrown while creating new tuple ", e);
+        e = e.getNextException();
+      }
       return null;
     }
     return tuple;

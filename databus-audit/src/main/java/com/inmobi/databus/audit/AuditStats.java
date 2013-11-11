@@ -74,8 +74,12 @@ public class AuditStats {
         return false;
       }
     });
-    LOG.info("Databus xmls included in the conf folder:");
     databusConfigList = new ArrayList<DatabusConfig>();
+    if (xmlFiles.length == 0) {
+      LOG.info("No xml files found in the conf folder:"+databusConfFolder);
+      return;
+    }
+    LOG.info("Databus xmls included in the conf folder:");
     for (File file : xmlFiles) {
       String fullPath = file.getAbsolutePath();
       LOG.info("File:"+fullPath);

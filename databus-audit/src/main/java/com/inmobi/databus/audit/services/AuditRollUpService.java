@@ -96,8 +96,10 @@ public class AuditRollUpService extends AuditDBService {
       if (rs.next())
         result = rs.getLong(AuditDBConstants.TIMESTAMP);
     } catch (SQLException e) {
-      LOG.error("SQLException while getting first time interval from db:"+e
-          .getMessage());
+      while (e != null) {
+        LOG.error("SQLException while getting first time interval from db:", e);
+        e = e.getNextException();
+      }
     } finally {
       try {
         rs.close();
