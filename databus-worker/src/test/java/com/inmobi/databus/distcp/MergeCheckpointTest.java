@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -21,8 +22,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -41,6 +46,20 @@ public class MergeCheckpointTest {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
   }
+
+  @BeforeMethod
+  public void beforeTest() throws Exception{
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
+  }
+
+  @AfterMethod
+  public void afterTest() throws Exception{
+    ConduitMetrics.stopAll();;
+  }
+
 
 
   private static String getDateAsYYYYMMDDHHmm(Date date) {
@@ -80,20 +99,20 @@ public class MergeCheckpointTest {
     Map<String, List<Path>> srcClusterToPathMap = new HashMap<String, List<Path>>();
     for (String stream : sourceClusters.keySet()) {
       for (String cluster : sourceClusters.get(stream)) {
-      Cluster srcCluster = config.getClusters().get(cluster);
-      List<Path> paths = new ArrayList<Path>();
-    FileSystem fs = FileSystem.getLocal(new Configuration());
+        Cluster srcCluster = config.getClusters().get(cluster);
+        List<Path> paths = new ArrayList<Path>();
+        FileSystem fs = FileSystem.getLocal(new Configuration());
         Path streamLevelDir = new Path(srcCluster.getReadLocalFinalDestDirRoot()
             + stream);
         paths.addAll(createData(fs, streamLevelDir, date, stream, cluster));
-    Date nextDate = CalendarHelper.addAMinute(date);
+        Date nextDate = CalendarHelper.addAMinute(date);
         paths.addAll(createData(fs, streamLevelDir, nextDate, stream, cluster));
-      srcClusterToPathMap.put(cluster, paths);
+        srcClusterToPathMap.put(cluster, paths);
         // Add a dummy empty directory in the end
         Date lastDate = CalendarHelper.addAMinute(nextDate);
         fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
 
-    }
+      }
     }
     return srcClusterToPathMap;
   }
@@ -149,14 +168,14 @@ public class MergeCheckpointTest {
           srcRemoteMergeMap.get(remote).add(cluster);
         }
       }
-      }
-    return srcRemoteMergeMap;
     }
+    return srcRemoteMergeMap;
+  }
 
   private void assertAllPathsOnSrcPresentOnDest(
       Map<String, List<Path>> srcPathList,
       Map<String, List<String>> srcToRemote, DatabusConfig config)
-      throws IOException {
+          throws IOException {
     for (String src : srcPathList.keySet()) {
       for (String remote : srcToRemote.get(src)) {
         Cluster remoteCluster = config.getClusters().get(remote);
@@ -209,7 +228,11 @@ public class MergeCheckpointTest {
 
     assert (pathsCreated2.get(2).getParent().toString()
         .equals(checkPointString));
-
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","commitPaths.count","test1").getCount() , 8);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","test1").getCount() , 0);
   }
 
   /**
@@ -248,10 +271,15 @@ public class MergeCheckpointTest {
     Collections.sort(results, new DatePathComparator());
     assert (results.get(0).getPath().equals(fileToBeCreated));
     assert (!results.get(0).getPath().getParent()
-        .equals(results.get(1)
-        .getPath().getParent()));// first path and other paths should be
-                                 // different directories
+        .equals(results.get(1).getPath().getParent()));// first path and other paths should be
+    // different directories
 
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","commitPaths.count","test1").getCount() , 7);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","test1").getCount() , 0);
   }
 
   /*
@@ -264,7 +292,12 @@ public class MergeCheckpointTest {
     Cluster destnCluster = config.getClusters().get("testcluster1");
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
     assert (!remoteFs.exists(new Path(destnCluster.getFinalDestDirRoot())));
-
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","test1").getCount() , 0);
   }
 
   @Test
@@ -307,15 +340,21 @@ public class MergeCheckpointTest {
     Collections.sort(results, new DatePathComparator());
     assert (!results.get(1).getPath().getParent()
         .equals(results.get(2).getPath().getParent()));// second path and other
-                                                       // paths should be
-                                                       // different directories
+    // paths should be
+    // different directories
     assert (!results.get(0).getPath().getParent()
         .equals(results.get(1).getPath().getParent()));// first and second path
-                                                       // should be in diff
-                                                       // directory as they have
-                                                       // been create in diff
-                                                       // directories
+    // should be in diff
+    // directory as they have
+    // been create in diff
+    // directories
 
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","commitPaths.count","test1").getCount() , 6);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","test1").getCount() , 0);
   }
 
   @Test
@@ -355,7 +394,12 @@ public class MergeCheckpointTest {
 
     assert (pathsCreated2.get(2).getParent().toString()
         .equals(checkPointString));
-
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","commitPaths.count","test1").getCount() , 4);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","test1").getCount() , 0);
   }
 
   @Test
@@ -389,7 +433,12 @@ public class MergeCheckpointTest {
     FileStatus fToBeListed = remoteFs1.getFileStatus(pathToBeListed);
     DistcpBaseService.createListing(remoteFs1, fToBeListed, results);
     assert (results.size() == (1 + getNumOfPublishMissingPaths(results)));
-
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","commitPaths.count","test1").getCount() , 1);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.rename","test1").getCount() , 0);
   }
 
   private int getNumOfPublishMissingPaths(List<FileStatus> results) {

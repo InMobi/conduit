@@ -54,6 +54,7 @@ public class TestMirrorStreamService extends MirrorStreamService
   protected void preExecute() throws Exception {
     try {
       mergeCommitTime = behinddate.getTimeInMillis();
+      System.out.println("MMMMMMMMMM " + mergeCommitTime + "  bb " + behinddate);
       // PublishMissingPathsTest.testPublishMissingPaths(this, false);
       if (files != null)
         files.clear();
