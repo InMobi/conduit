@@ -59,7 +59,7 @@ public abstract class DistcpBaseService extends AbstractService {
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
-      throws Exception {
+          throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
         config, streamsToProcess);
     this.srcCluster = srcCluster;
@@ -102,7 +102,7 @@ public abstract class DistcpBaseService extends AbstractService {
 
   protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
-      throws Exception {
+          throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
@@ -130,7 +130,7 @@ public abstract class DistcpBaseService extends AbstractService {
    * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
-  
+
   /*
    * @return the target path where distcp will copy paths from source cluster 
    */
@@ -173,10 +173,10 @@ public abstract class DistcpBaseService extends AbstractService {
         // creating a path object from empty string throws exception;hence
         // checking for it
         if (!checkPointValue.trim().equals("")) {
-        lastCheckPointPath = new Path(checkPointValue);
+          lastCheckPointPath = new Path(checkPointValue);
         }
         lastCheckPointPath = fullyQualifyCheckPointWithReadURL
-          (lastCheckPointPath, srcCluster);
+            (lastCheckPointPath, srcCluster);
         if (lastCheckPointPath == null
             || !getSrcFs().exists(lastCheckPointPath)) {
           LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
@@ -220,7 +220,7 @@ public abstract class DistcpBaseService extends AbstractService {
       while (pathsAlreadyAdded <= numOfDirPerDistcpPerStream
           && srcFs.exists(nextToNextPath)
           && (nextPathFileStatus = FileUtil
-              .listStatusAsPerHDFS(srcFs, nextPath)) != null) {
+          .listStatusAsPerHDFS(srcFs, nextPath)) != null) {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
           FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
@@ -267,7 +267,7 @@ public abstract class DistcpBaseService extends AbstractService {
    * @return path which is re-qualified.
    */
   protected Path fullyQualifyCheckPointWithReadURL(Path lastCheckPointPath,
-                                           Cluster srcCluster) {
+      Cluster srcCluster) {
     //if checkpoint value was empty or null just fall thro' let the service
     // determine the new path.
     if(lastCheckPointPath == null) {
@@ -287,7 +287,7 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getName());
   }
 
- 
+
 
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
@@ -312,16 +312,33 @@ public abstract class DistcpBaseService extends AbstractService {
       // method was called
       if (stats != null) {
         if (stats.length == 0) {
-        results.add(fileStatus);
-        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      }
-      for (FileStatus stat : stats) {
-        createListing(fs, stat, results);
-      }
+          results.add(fileStatus);
+          LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
+        }
+        for (FileStatus stat : stats) {
+          createListing(fs, stat, results);
+        }
       }
     } else {
       LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
       results.add(fileStatus);
     }
+  }
+
+  /*
+   * Find the topic name from path of format
+   * /databus/streams/<streamName>/2013/10/01/09/17 or
+   * /databus/streams/<streamName>/2013/10/
+   * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
+   */
+  protected String getTopicNameFromDestnPath(Path destnPath) {
+    String destnPathAsString =destnPath.toString();
+    String destnDirAsString =new Path(destCluster.getFinalDestDirRoot()).toString();
+    String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
+        .length());
+    Path tmpPath = new Path(pathWithoutRoot);
+    while (tmpPath.depth() != 1)
+      tmpPath=tmpPath.getParent();
+    return tmpPath.getName();
   }
 }

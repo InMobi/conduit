@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -55,6 +56,7 @@ public class DataPurgerService extends AbstractService {
   private Set<Path> streamsToPurge;
   private DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
   private static long MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
+  private final static String PURGEPATHS_COUNT = "purgePaths.count";
 
   public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
       throws Exception {
@@ -64,10 +66,11 @@ public class DataPurgerService extends AbstractService {
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig
-        .getDefaults().get(DatabusConfigParser.TRASH_RETENTION_IN_HOURS)));
+            .getDefaults().get(DatabusConfigParser.TRASH_RETENTION_IN_HOURS)));
     this.defaultstreamPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig.getDefaults().get(
             DatabusConfigParser.RETENTION_IN_HOURS)));
+    ConduitMetrics.registerCounter(getServiceType(),"purgePaths.count","main");
   }
 
   @Override
@@ -347,6 +350,7 @@ public class DataPurgerService extends AbstractService {
         purgePath = (Path) it.next();
         fs.delete(purgePath, true);
         LOG.info("Purging [" + purgePath + "]");
+        ConduitMetrics.incCounter(getServiceType(), PURGEPATHS_COUNT, "main", 1);
       } catch (Exception e) {
         LOG.warn("Cannot delete path " + purgePath, e);
       }
@@ -362,5 +366,12 @@ public class DataPurgerService extends AbstractService {
 
     }
     return files;
+  }
+
+  /**
+   * Get the service name 
+   */
+  public String getServiceType(){
+    return "DataPurgerService";
   }
 }

@@ -33,6 +33,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
+
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -56,16 +58,25 @@ public class MergedStreamService extends DistcpBaseService {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
+
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_EXIST, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
+    }
   }
 
   @Override
   protected Path getDistCpTargetPath() {
     return new Path(getDestCluster().getTmpPath(),
         "distcp_mergedStream_" + getSrcCluster().getName() + "_"
-        + getDestCluster().getName() + "_"
-        + getServiceName(streamsToProcess)).makeQualified(getDestFs());
+            + getDestCluster().getName() + "_"
+            + getServiceName(streamsToProcess)).makeQualified(getDestFs());
   }
-  
+
   @Override
   public void execute() throws Exception {
     LOG.info("Starting a run of service " + getName());
@@ -201,17 +212,26 @@ public class MergedStreamService extends DistcpBaseService {
 
   private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    long startTime = System.currentTimeMillis();
     FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      retriableMkDirs(fs, entry.getValue().getParent());
-      if (retriableRename(fs, entry.getKey(), entry.getValue()) == false) {
+      String streamName = getTopicNameFromDestnPath(entry.getValue());
+      retriableMkDirs(fs, entry.getValue().getParent(), streamName);
+      if (retriableRename(fs, entry.getKey(), entry.getValue(), streamName) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
             + "dataloss. Partial data replay could happen in next run");
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
+
+      ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
+          streamName, 1);
     }
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
+        Thread.currentThread().getName(), elapsedTime);
+
   }
 
   protected Path getInputPath() throws IOException {
@@ -378,7 +398,7 @@ public class MergedStreamService extends DistcpBaseService {
     } catch (IOException ie) {
       LOG.error(
           "IOException while doing recursive listing to create checkpoint on " +
-            "cluster filesystem" + currentFs.getUri(), ie);
+              "cluster filesystem" + currentFs.getUri(), ie);
     }
     return null;
 
@@ -401,4 +421,8 @@ public class MergedStreamService extends DistcpBaseService {
 
   }
 
+  @Override
+  public String getServiceType() {
+    return "MergedStreamService";
+  }
 }
