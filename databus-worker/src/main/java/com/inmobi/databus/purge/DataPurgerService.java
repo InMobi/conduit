@@ -70,7 +70,7 @@ public class DataPurgerService extends AbstractService {
     this.defaultstreamPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig.getDefaults().get(
             DatabusConfigParser.RETENTION_IN_HOURS)));
-    ConduitMetrics.registerCounter("DataPurgerService","purgePaths.count","main");
+    ConduitMetrics.registerCounter(getServiceType(),"purgePaths.count","main");
   }
 
   @Override
@@ -350,7 +350,7 @@ public class DataPurgerService extends AbstractService {
         purgePath = (Path) it.next();
         fs.delete(purgePath, true);
         LOG.info("Purging [" + purgePath + "]");
-        ConduitMetrics.incCounter("DataPurgerService", PURGEPATHS_COUNT, "main", 1);
+        ConduitMetrics.incCounter(getServiceType(), PURGEPATHS_COUNT, "main", 1);
       } catch (Exception e) {
         LOG.warn("Cannot delete path " + purgePath, e);
       }
