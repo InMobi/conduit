@@ -11,7 +11,11 @@ DECLARE
  valueString text;
  disinherit text;
  inherit text;
+ numRowsRet integer;
 BEGIN
+execute 'select table_name from information_schema.tables where table_name = '|| quote_literal(destTable);
+GET DIAGNOSTICS numRowsRet = ROW_COUNT;
+IF numRowsRet = 0 THEN
 createTable = 'CREATE TABLE ' || destTable || '( LIKE ' || srcTable || ' INCLUDING ALL)';
 EXECUTE createTable;
 while (tmpend < endTime) LOOP
@@ -28,6 +32,7 @@ disinherit = 'ALTER TABLE ' || srcTable || ' NO INHERIT ' || masterTable ;
 EXECUTE disinherit;
 inherit = 'ALTER TABLE ' || destTable || ' INHERIT ' || masterTable ;
 EXECUTE inherit;
+END IF;
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -36,7 +41,7 @@ CREATE OR REPLACE FUNCTION createConstraintIfNotExists(tName text, iName text, c
 RETURNS void AS
 $BODY$
 BEGIN
-	IF NOT EXISTS (SELECT indexname FROM pg_indexes WHERE tablename = tName  and indexname = iName) THEN
+       IF NOT EXISTS (SELECT indexname FROM pg_indexes WHERE tablename = tName  and indexname = iName) THEN
         EXECUTE 'CREATE INDEX ' || iName || ' ON ' || tName || ' USING btree(' || columnName || ')';
   END IF;
 END;
