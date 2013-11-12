@@ -173,6 +173,8 @@ public class AuditRollUpService extends AuditDBService {
         createDailyTable(connection);
         Date markTime = rollupTables(connection);
         mark(getFirstMilliOfDay(markTime));
+      } catch (SQLException e) {
+        logNextException("SQLException while rollup up tables", e);
       } finally {
         try {
           connection.close();
@@ -261,7 +263,7 @@ public class AuditRollUpService extends AuditDBService {
     }
   }
 
-  private Date rollupTables(Connection connection) {
+  private Date rollupTables(Connection connection) throws SQLException {
     CallableStatement rollupStmt = null;
     Date fromTime = getFromTime(connection);
     Date currentDate = fromTime;
@@ -292,9 +294,6 @@ public class AuditRollUpService extends AuditDBService {
         rollupStmt.executeBatch();
         connection.commit();
       }
-    } catch (SQLException e) {
-      logNextException("SQLException while rollup up tables", e);
-      return fromTime;
     } finally {
       if (rollupStmt != null) {
         try {

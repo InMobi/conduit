@@ -11,11 +11,14 @@ DECLARE
  valueString text;
  disinherit text;
  inherit text;
- numRowsRet integer;
+ destRowsRet integer;
+ srcRowsRet integer;
 BEGIN
 execute 'select table_name from information_schema.tables where table_name = '|| quote_literal(destTable);
-GET DIAGNOSTICS numRowsRet = ROW_COUNT;
-IF numRowsRet = 0 THEN
+GET DIAGNOSTICS destRowsRet = ROW_COUNT;
+execute 'select table_name from information_schema.tables where table_name = '|| quote_literal(srcTable);
+GET DIAGNOSTICS srcRowsRet = ROW_COUNT;
+IF destRowsRet = 0 and srcRowsRet = 1 THEN
 createTable = 'CREATE TABLE ' || destTable || '( LIKE ' || srcTable || ' INCLUDING ALL)';
 EXECUTE createTable;
 while (tmpend < endTime) LOOP
