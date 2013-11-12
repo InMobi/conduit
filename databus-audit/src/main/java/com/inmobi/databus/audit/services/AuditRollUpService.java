@@ -96,16 +96,14 @@ public class AuditRollUpService extends AuditDBService {
       if (rs.next())
         result = rs.getLong(AuditDBConstants.TIMESTAMP);
     } catch (SQLException e) {
-      while (e != null) {
-        LOG.error("SQLException while getting first time interval from db:", e);
-        e = e.getNextException();
-      }
+      logNextException("SQLException while getting first time interval" +
+          " from db:", e);
     } finally {
       try {
         rs.close();
         preparedStatement.close();
       } catch (SQLException e) {
-        LOG.error("SQLException while closing statement:"+e.getMessage());
+        logNextException("SQLException while closing statement:", e);
       }
     }
     return new Date(result);
@@ -173,12 +171,13 @@ public class AuditRollUpService extends AuditDBService {
       }
       try {
         createDailyTable(connection);
-        rollupTables(connection);
+        Date markTime = rollupTables(connection);
+        mark(getFirstMilliOfDay(markTime));
       } finally {
         try {
           connection.close();
         } catch (SQLException e) {
-          LOG.error("SQLException while closing connection:"+ e.getMessage());
+          logNextException("SQLException while closing connection:", e);
         }
       }
       sleepTillNextRun();
@@ -215,16 +214,12 @@ public class AuditRollUpService extends AuditDBService {
         connection.commit();
       }
     } catch (SQLException e) {
-      while (e != null) {
-        LOG.error("SQLException while creating daily table", e);
-        e = e.getNextException();
-      }
+      logNextException("SQLException while creating daily table", e);
     } finally {
       try {
         createDailyTableStmt.close();
       } catch (SQLException e) {
-        LOG.error("SQLException while closing call statement:"+ e.getMessage
-            ());
+        logNextException("SQLException while closing call statement:", e);
       }
     }
   }
@@ -266,7 +261,7 @@ public class AuditRollUpService extends AuditDBService {
     }
   }
 
-  private void rollupTables(Connection connection) {
+  private Date rollupTables(Connection connection) {
     CallableStatement rollupStmt = null;
     Date fromTime = getFromTime(connection);
     Date currentDate = fromTime;
@@ -296,23 +291,20 @@ public class AuditRollUpService extends AuditDBService {
         }
         rollupStmt.executeBatch();
         connection.commit();
-        mark(getFirstMilliOfDay(currentDate));
       }
     } catch (SQLException e) {
-      while (e != null) {
-        LOG.error("SQLException while rolling up", e);
-        e = e.getNextException();
-      }
+      logNextException("SQLException while rollup up tables", e);
+      return fromTime;
     } finally {
       if (rollupStmt != null) {
         try {
           rollupStmt.close();
         } catch (SQLException e) {
-          LOG.error("SQLException while closing call statement:"+ e.getMessage
-              ());
+          logNextException("SQLException while closing call statement:", e);
         }
       }
     }
+    return currentDate;
   }
 
   private Connection getConnection() {
@@ -339,5 +331,12 @@ public class AuditRollUpService extends AuditDBService {
   @Override
   public String getServiceName() {
     return "RollUpService";
+  }
+
+  private void logNextException(String message, SQLException e) {
+    while (e != null) {
+      LOG.error(message, e);
+      e = e.getNextException();
+    }
   }
 }
