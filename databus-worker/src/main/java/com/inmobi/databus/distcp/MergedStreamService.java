@@ -66,7 +66,6 @@ public class MergedStreamService extends DistcpBaseService {
       ConduitMetrics.registerCounter(getServiceType(), RETRY_EXIST, eachStream);
       ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
       ConduitMetrics.registerCounter(getServiceType(), FILES_COPIED_COUNT, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
     }
   }
 
@@ -226,8 +225,6 @@ public class MergedStreamService extends DistcpBaseService {
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
       ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
-          streamName, 1);
-      ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
           streamName, 1);
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
