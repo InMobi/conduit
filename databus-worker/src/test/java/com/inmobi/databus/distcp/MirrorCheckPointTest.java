@@ -227,7 +227,7 @@ public class MirrorCheckPointTest {
     assert (fStatusList.get(7).getPath().getParent().toString()
         .equals(checkPointString));
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 8);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","filesCopied.count","test1").getCount() , 8);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
@@ -279,7 +279,7 @@ public class MirrorCheckPointTest {
         .equals(checkPointValue));
 
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 7);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","filesCopied.count","test1").getCount() , 7);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
@@ -296,7 +296,7 @@ public class MirrorCheckPointTest {
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
     assert (!remoteFs.exists(new Path(destnCluster.getFinalDestDirRoot())));
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","filesCopied.count","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
@@ -317,7 +317,7 @@ public class MirrorCheckPointTest {
     assert (results.size() == 2);
 
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","filesCopied.count","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
@@ -352,7 +352,7 @@ public class MirrorCheckPointTest {
     assert (fStatus1.get(7).getPath().getParent().toString()
         .equals(checkPointString));
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 4);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","filesCopied.count","test1").getCount() , 4);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
@@ -375,7 +375,7 @@ public class MirrorCheckPointTest {
     assert (results.size() == 8);
 
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.checkPoint","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","commitPaths.count","test1").getCount() , 8);
+    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","filesCopied.count","test1").getCount() , 8);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService","retry.rename","test1").getCount() , 0);
