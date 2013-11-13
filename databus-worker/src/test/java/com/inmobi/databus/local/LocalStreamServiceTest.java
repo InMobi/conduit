@@ -399,7 +399,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","stream1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","stream1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","stream1").getCount() , 0);
   }
 
   @Test
@@ -407,7 +407,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     LOG.info("Running LocalStreamIntegration for filename test-lss-databus.xml");
     testMapReduce("test-lss-databus.xml", 1);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() ,9 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test1").getCount() ,9 );
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() ,0 );
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() ,0 );
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() ,0 );
@@ -421,15 +421,15 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test1").getCount() , 9);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test2").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test2").getCount() , 9);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test3").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test3").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test3").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test3").getCount() , 9);
   }
 
   @Test(groups = { "integration" })
@@ -440,15 +440,15 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test1").getCount() , 19);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test2").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test2").getCount() , 19);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test3").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test3").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test3").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test3").getCount() , 19);
   }
 
   private static class NullCheckPointProvider implements CheckpointProvider {
@@ -500,7 +500,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","emptyDir.create","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test1").getCount() , 0);
   }
 
   @Test
@@ -510,7 +510,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test1").getCount() , 0);
   }
 
   @Test
@@ -520,7 +520,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.mkDir","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","retry.rename","test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","commitPaths.count","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService","filesCopied.count","test1").getCount() , 0);
   }
 
   private void testClusterName(String configName, String currentClusterName)
