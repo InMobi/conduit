@@ -52,16 +52,16 @@ public abstract class AbstractService implements Service, Runnable {
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
   
-  protected final static String RUNTIME = "runtime";
-  protected final static String FAILURES = "failures";
-  protected final static String COMMIT_TIME = "commit.time";
-  protected final static String RETRY_RENAME = "retry.rename";
-  protected final static String RETRY_EXIST = "retry.exist";
-  protected final static String RETRY_MKDIR = "retry.mkDir";
-  protected final static String EMPTYDIR_CREATE = "emptyDir.create";
-  protected final static String RETRY_CHECKPOINT = "retry.checkPoint";
-  protected final static String FILES_COPIED_COUNT = "filesCopied.count";
-  protected final static String DATAPURGER_SERVICE = "DataPurgerService";
+  public final static String RUNTIME = "runtime";
+  public final static String FAILURES = "failures";
+  public final static String COMMIT_TIME = "commit.time";
+  public final static String RETRY_RENAME = "retry.rename";
+  public final static String RETRY_EXIST = "retry.exist";
+  public final static String RETRY_MKDIR = "retry.mkDir";
+  public final static String EMPTYDIR_CREATE = "emptyDir.create";
+  public final static String RETRY_CHECKPOINT = "retry.checkPoint";
+  public final static String FILES_COPIED_COUNT = "filesCopied.count";
+  public final static String DATAPURGER_SERVICE = "DataPurgerService";
 
   public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
     this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
