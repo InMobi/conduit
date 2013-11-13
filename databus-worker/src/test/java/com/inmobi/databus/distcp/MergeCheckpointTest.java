@@ -267,14 +267,15 @@ public class MergeCheckpointTest {
         .getFinalDestDirRoot(), "test1"));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
-    assert (results.size() == (8 + getNumOfPublishMissingPaths(results)));
+    int numberOfEmptyDirs = getNumOfPublishMissingPaths(results);
+    assert (results.size() == (8 + numberOfEmptyDirs));
     Collections.sort(results, new DatePathComparator());
     assert (results.get(0).getPath().equals(fileToBeCreated));
     assert (!results.get(0).getPath().getParent()
         .equals(results.get(1).getPath().getParent()));// first path and other paths should be
     // different directories
 
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , numberOfEmptyDirs);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
@@ -336,20 +337,17 @@ public class MergeCheckpointTest {
         .getFinalDestDirRoot()));
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs, pathToBeListed, results);
-    assert (results.size() == (8 + getNumOfPublishMissingPaths(results)));
+    int numberOfEmptyDirs = getNumOfPublishMissingPaths(results);
+    assert (results.size() == (8 + numberOfEmptyDirs));
     Collections.sort(results, new DatePathComparator());
     assert (!results.get(1).getPath().getParent()
         .equals(results.get(2).getPath().getParent()));// second path and other
-    // paths should be
-    // different directories
+    // paths should be different directories
     assert (!results.get(0).getPath().getParent()
         .equals(results.get(1).getPath().getParent()));// first and second path
-    // should be in diff
-    // directory as they have
-    // been create in diff
-    // directories
+    // should be in diff directory as they have been create in diff directories
 
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , numberOfEmptyDirs);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
@@ -383,7 +381,8 @@ public class MergeCheckpointTest {
     List<FileStatus> results = new ArrayList<FileStatus>();
     DistcpBaseService.createListing(remoteFs,
         remoteFs.getFileStatus(pathToBeListed), results);
-    assert (results.size() == (4 + getNumOfPublishMissingPaths(results)));
+    int numberOfEmptyDirs = getNumOfPublishMissingPaths(results);
+    assert (results.size() == (4 + numberOfEmptyDirs));
 
     byte[] value = provider.read(checkPointKey1);
     String checkPointString = new String(value);
@@ -394,7 +393,7 @@ public class MergeCheckpointTest {
 
     assert (pathsCreated2.get(2).getParent().toString()
         .equals(checkPointString));
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , numberOfEmptyDirs);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);
@@ -432,8 +431,9 @@ public class MergeCheckpointTest {
         + "test1");
     FileStatus fToBeListed = remoteFs1.getFileStatus(pathToBeListed);
     DistcpBaseService.createListing(remoteFs1, fToBeListed, results);
-    assert (results.size() == (1 + getNumOfPublishMissingPaths(results)));
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , 0);
+    int numberOfEmptyDirs = getNumOfPublishMissingPaths(results);
+    assert (results.size() == (1 + numberOfEmptyDirs));
+    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","emptyDir.create","test1").getCount() , numberOfEmptyDirs);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.exist","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.checkPoint","test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService","retry.mkDir","test1").getCount() , 0);

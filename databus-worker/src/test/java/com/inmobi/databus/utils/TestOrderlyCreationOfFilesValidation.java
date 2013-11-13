@@ -148,7 +148,6 @@ public class TestOrderlyCreationOfFilesValidation {
         for (int i = 1; time <= temptime; i++) {
           if (i != 61) {
             time = startTime + ((i-1) * increment);
-            LOG.info("Time "+(new Date(time)).toString());
             String path = Cluster.getDateAsYYYYMMDDHHMNPath(time);
             int filesCount = 2;
             Path minDir = new Path(listPath, path);
