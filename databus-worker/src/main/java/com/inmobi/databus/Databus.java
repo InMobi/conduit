@@ -290,8 +290,9 @@ public class Databus implements Service, DatabusConstants {
         }
       }
       databusStarted = true;
-    } catch (Exception e) {
-      LOG.warn("Error in initializing databus ", e);
+    } catch (Throwable e) {
+      stopRequested = true;
+      LOG.warn("Stopping databus because of error in initializing databus ", e);
     }
 
     // if there is any outstanding stop request meanwhile, handle it here
