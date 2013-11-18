@@ -62,7 +62,8 @@ public class MirrorStreamService extends DistcpBaseService {
       ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
       ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
       ConduitMetrics.registerCounter(getServiceType(), RETRY_EXIST, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), FILES_COPIED_COUNT, eachStream);
     }
   }
 
@@ -137,6 +138,8 @@ public class MirrorStreamService extends DistcpBaseService {
       String streamName = getTopicNameFromDestnPath(entry.getValue());
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue(), streamName);
+        ConduitMetrics.incCounter(getServiceType(), EMPTYDIR_CREATE,
+            streamName, 1);
       } else {
         if (retriableExists(getDestFs(), entry.getValue(), streamName)) {
           LOG.warn("File with Path [" + entry.getValue()
@@ -151,9 +154,9 @@ public class MirrorStreamService extends DistcpBaseService {
           throw new Exception("Rename failed from [" + entry.getKey().getPath()
               + "] to [" + entry.getValue() + "]");
         }
+        ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
+            streamName, 1);
       }
-      ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
-          streamName, 1);
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,

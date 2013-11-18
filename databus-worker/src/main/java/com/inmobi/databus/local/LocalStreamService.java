@@ -107,7 +107,7 @@ ConfigConstants {
       ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
       ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
       ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), COMMITPATHS_COUNT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), FILES_COPIED_COUNT, eachStream);
     }
   }
 
@@ -246,7 +246,7 @@ ConfigConstants {
        */
       if (!entry.getValue().getParent().getParent().getParent().getName().
           equals("trash")) {
-        ConduitMetrics.incCounter(getServiceType(), COMMITPATHS_COUNT,
+        ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
             streamName, 1);
       }
     }

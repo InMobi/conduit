@@ -52,16 +52,16 @@ public abstract class AbstractService implements Service, Runnable {
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
   
-  protected final static String RUNTIME = "runtime";
-  protected final static String FAILURES = "failures";
-  protected final static String COMMIT_TIME = "commit.time";
-  protected final static String RETRY_RENAME = "retry.rename";
-  protected final static String RETRY_EXIST = "retry.exist";
-  protected final static String RETRY_MKDIR = "retry.mkDir";
-  protected final static String EMPTYDIR_CREATE = "emptyDir.create";
-  protected final static String RETRY_CHECKPOINT = "retry.checkPoint";
-  protected final static String COMMITPATHS_COUNT = "commitPaths.count";
-  protected final static String DATAPURGER_SERVICE = "DataPurgerService";
+  public final static String RUNTIME = "runtime";
+  public final static String FAILURES = "failures";
+  public final static String COMMIT_TIME = "commit.time";
+  public final static String RETRY_RENAME = "retry.rename";
+  public final static String RETRY_EXIST = "retry.exist";
+  public final static String RETRY_MKDIR = "retry.mkDir";
+  public final static String EMPTYDIR_CREATE = "emptyDir.create";
+  public final static String RETRY_CHECKPOINT = "retry.checkPoint";
+  public final static String FILES_COPIED_COUNT = "filesCopied.count";
+  public final static String DATAPURGER_SERVICE = "DataPurgerService";
 
   public AbstractService(String name, DatabusConfig config,Set<String> streamsToProcess) {
     this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
@@ -133,7 +133,7 @@ public abstract class AbstractService implements Service, Runnable {
       ConduitMetrics.registerCounter(getServiceType(), COMMIT_TIME,
           Thread.currentThread().getName());
     }
-    while (!stopped && !thread.isInterrupted()) {
+    while (!stopped) {
       long startTime = System.currentTimeMillis();
       try {
         LOG.info("Performing Pre Execute Step before a run...");
@@ -142,14 +142,14 @@ public abstract class AbstractService implements Service, Runnable {
         execute();
         LOG.info("Performing Post Execute Step after a run...");
         postExecute();
-        if (stopped || thread.isInterrupted())
+        if (stopped)
           return;
       } catch (Throwable th) {
         if(failureJobCounter!=null){
           failureJobCounter.inc();
         }
-        LOG.error(" Is thread " + thread + " interrupted "
-            + thread.isInterrupted() +  " and Error in run: " + th);
+        LOG.error("Thread: " + thread + " interrupt status: "
+            + thread.isInterrupted() + " and Error in run: " + th);
       }
       long finishTime = System.currentTimeMillis();
       long elapsedTime = finishTime - startTime;
@@ -167,7 +167,6 @@ public abstract class AbstractService implements Service, Runnable {
           }
         } catch (InterruptedException e) {
           LOG.warn("thread interrupted " + thread.getName(), e);
-          return;
         }
       }
     }
@@ -180,8 +179,9 @@ public abstract class AbstractService implements Service, Runnable {
     thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 
       public void uncaughtException(Thread t, Throwable e) {
-        LOG.error(" Is thread " + thread + " interrupted "
-            + thread.isInterrupted() +  " and thread throws exception: " + e );
+        LOG.error("Thread: " + thread + " Uncaught handler:" +
+            " Thread interrupt status: " + thread.isInterrupted()
+            + " and exception caught is: " + e);
       }
     });
     thread.start();
