@@ -40,6 +40,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -209,7 +211,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
       Map<FileStatus, String> results = new TreeMap<FileStatus, java.lang.String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
-      Map<String, FileStatus> checkpointPaths = new HashMap<String, FileStatus>();
+      Table<String, String, String> checkpointPaths = HashBasedTable.create();
       fs.delete(cluster.getDataDir(), true);
       FileStatus dataDir = new FileStatus(20, false, 3, 23823, 2438232,
           cluster.getDataDir());
@@ -240,12 +242,16 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       }
 
       Map<String, String> tmpCheckPointPaths = new TreeMap<String, String>();
-      // print checkPointPaths
-      for (String key : checkpointPaths.keySet()) {
-        tmpCheckPointPaths.put(key, checkpointPaths.get(key).getPath()
-            .getName());
-        LOG.debug("CheckPoint key [" + key + "] value ["
-            + checkpointPaths.get(key).getPath().getName() + "]");
+      Set<String> streams = checkpointPaths.rowKeySet();
+      for (String streamName : streams) {
+        Map<String, String> collectorCheckpointValueMap = checkpointPaths.row(streamName);
+        for (String collector : collectorCheckpointValueMap.keySet()) {
+          String checkpointKey = AbstractService.getCheckPointKey(service.getName(), streamName, collector);
+          LOG.debug("Check Pointing Key [" + checkpointKey + "] with value ["
+              +  collectorCheckpointValueMap.get(collector) + "]");
+          tmpCheckPointPaths.put(checkpointKey,
+              collectorCheckpointValueMap.get(collector));
+        }
       }
       validateExpectedOutput(tmpResults, tmpTrashPaths, tmpCheckPointPaths);
       fs.delete(new Path(cluster.getRootDir() + "/databus-checkpoint"), true);

@@ -292,8 +292,7 @@ public abstract class DistcpBaseService extends AbstractService {
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
       retriableCheckPoint(provider, getCheckPointKey(entry.getKey()), entry
-          .getValue()
-          .toString().getBytes());
+          .getValue().toString().getBytes(), entry.getKey());
     }
     checkPointPaths.clear();
   }

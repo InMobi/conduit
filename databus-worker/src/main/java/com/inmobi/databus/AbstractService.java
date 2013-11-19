@@ -366,9 +366,8 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   protected void retriableCheckPoint(CheckpointProvider provider, String key,
-      byte[] checkpoint) throws Exception {
+      byte[] checkpoint, String streamName) throws Exception {
     int count = 0;
-    String streamName = null;
     Exception ex = null;
     while (count < numOfRetries) {
       try {
@@ -382,9 +381,6 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      if (streamName == null) {
-        streamName = MetricsUtil.getSteamNameFromCheckPointKey(key);
-      }
       ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
           streamName, 1);
       try {

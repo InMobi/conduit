@@ -45,6 +45,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -142,7 +144,8 @@ ConfigConstants {
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
       // checkpointKey, CheckPointPath
-      Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
+      //Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
+      Table<String, String, String> checkpointPaths = HashBasedTable.create();
 
       long totalSize = createMRInput(tmpJobInputPath, fileListing, trashSet,
           checkpointPaths);
@@ -168,15 +171,20 @@ ConfigConstants {
     }
   }
 
-  private void checkPoint(Map<String, FileStatus> checkPointPaths)
+  private void checkPoint(Table<String, String, String> checkPointPaths)
       throws Exception {
-    Set<Entry<String, FileStatus>> entries = checkPointPaths.entrySet();
-    for (Entry<String, FileStatus> entry : entries) {
-      String value = entry.getValue().getPath().getName();
-      LOG.debug("Check Pointing Key [" + entry.getKey() + "] with value ["
-          + value + "]");
-      retriableCheckPoint(checkpointProvider, entry.getKey(), value.getBytes());
+    Set<String> streams = checkPointPaths.rowKeySet();
+    for (String streamName : streams) {
+      Map<String, String> collectorCheckpointValueMap = checkPointPaths.row(streamName);
+      for (String collector : collectorCheckpointValueMap.keySet()) {
+        String checkpointKey = getCheckPointKey(getClass().getSimpleName(), streamName, collector);
+        LOG.debug("Check Pointing Key [" + checkpointKey + "] with value ["
+            +  collectorCheckpointValueMap.get(collector) + "]");
+        retriableCheckPoint(checkpointProvider, checkpointKey,
+            collectorCheckpointValueMap.get(collector).getBytes(), streamName);
+      }
     }
+    checkPointPaths.clear();
   }
 
   Map<Path, Path> prepareForCommit(long commitTime) throws Exception {
@@ -257,7 +265,7 @@ ConfigConstants {
   }
 
   private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
-      Set<FileStatus> trashSet,Map<String, FileStatus> checkpointPaths)
+      Set<FileStatus> trashSet,Table<String, String, String> checkpointPaths)
           throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
@@ -329,7 +337,7 @@ ConfigConstants {
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths)
+      Table<String, String, String> checkpointPaths)
           throws IOException {
     List<FileStatus> streamsFileStatus = new ArrayList<FileStatus>();
     FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
@@ -385,8 +393,7 @@ ConfigConstants {
               collectorPaths);
         }
         populateTrash(collectorPaths, trashSet);
-        populateCheckpointPathForCollector(checkpointPaths, collectorPaths,
-            checkPointKey);
+        populateCheckpointPathForCollector(checkpointPaths, collectorPaths);
       } // all files in a collector
     }
   }
@@ -448,13 +455,15 @@ ConfigConstants {
   }
 
   private void populateCheckpointPathForCollector(
-      Map<String, FileStatus> checkpointPaths,
-      TreeMap<String, FileStatus> collectorPaths, String checkpointKey) {
+      Table<String, String, String> checkpointPaths,
+      TreeMap<String, FileStatus> collectorPaths) {
     // Last file in sorted ascending order to be check-pointed for this
     // collector
     if (collectorPaths != null && collectorPaths.size() > 0) {
       Entry<String, FileStatus> entry = collectorPaths.lastEntry();
-      checkpointPaths.put(checkpointKey, entry.getValue());
+      Path filePath = entry.getValue().getPath();
+      checkpointPaths.put(filePath.getParent().getParent().getName(),
+          filePath.getParent().getName(), filePath.getName());
     }
   }
 
