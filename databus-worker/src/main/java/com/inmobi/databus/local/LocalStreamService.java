@@ -143,8 +143,8 @@ ConfigConstants {
 
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
-      // checkpointKey, CheckPointPath
-      //Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
+      /* checkpointPaths table contains streamaname as rowkey,
+      source(collector) name as column key and checkpoint value as value */
       Table<String, String, String> checkpointPaths = HashBasedTable.create();
 
       long totalSize = createMRInput(tmpJobInputPath, fileListing, trashSet,
