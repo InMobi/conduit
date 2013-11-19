@@ -23,9 +23,6 @@ public class AuditAdmin {
       System.exit(-1);
     }
 
-    for (String arg: args) {
-      System.out.println("Argument : "+arg);
-    }
     int run = 0;
     String date = null;
     if (args[0].equals("-rollup")) {
@@ -52,7 +49,6 @@ public class AuditAdmin {
       System.exit(-1);
     }
 
-    System.out.println("currentDate:"+currentDate);
     ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants
         .FEEDER_CONF_FILE);
     AuditRollUpService rollUpService = new AuditRollUpService(config);
@@ -119,7 +115,6 @@ public class AuditAdmin {
 
   private static boolean rollupDayTable(AuditRollUpService service,
                                         Date fromDate, ClientConfig config) throws SQLException{
-    System.out.println("in rollup from date:"+fromDate);
     Connection connection = null;
     try {
       connection = AuditDBHelper.getConnection(config.getString
@@ -147,12 +142,9 @@ public class AuditAdmin {
   private static Date getDate(String date) {
     Date currentDate;
     try {
-      System.out.println("getDate string passed:"+date);
       currentDate = formatter.parse(date);
-      System.out.println("getDate parsed date:"+currentDate);
       //passed date should not be before 01-01-2013-00:00
       if (currentDate.before(new Date(1356998400000l))) {
-        System.out.println("getDate current date before "+new Date(1356998400000l));
         return null;
       }
     } catch (Exception e) {
