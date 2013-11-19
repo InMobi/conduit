@@ -18,20 +18,13 @@ public class AuditRollUpService extends AuditDBService {
   final private ClientConfig config;
   final private int rollUpHourOfDay, tilldays;
   final private long intervalLength;
-  final private String checkPointDir, checkpointKey;
+  final private String checkPointDir, checkpointKey, masterTable;
   final private SimpleDateFormat dayChkFormat = new SimpleDateFormat
       ("yyyy-MM-dd");
   final private SimpleDateFormat tableDateFormat = new SimpleDateFormat
       ("yyyyMMdd");
-  private boolean isFirstRun = true;
-  private volatile boolean isStop = false;
+  private final FSCheckpointProvider provider;
   private static final Log LOG = LogFactory.getLog(AuditRollUpService.class);
-
-  //this constructor is used for UTs
-  public AuditRollUpService(ClientConfig config, boolean isFirstRun) {
-    this(config);
-    this.isFirstRun = isFirstRun;
-  }
 
   public AuditRollUpService(ClientConfig config) {
     this.config = config;
@@ -41,10 +34,13 @@ public class AuditRollUpService extends AuditDBService {
     checkPointDir = config.getString(AuditDBConstants.CHECKPOINT_DIR_KEY);
     checkpointKey = config.getString(AuditDBConstants.CHECKPOINT_KEY,
         AuditDBConstants.DEFAULT_CHECKPOINT_KEY);
+    masterTable = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
     tilldays = config.getInteger(AuditDBConstants.TILLDAYS_KEY);
+    provider = new FSCheckpointProvider(checkPointDir);
     LOG.info("Initialized AuditRollupService with configs rollup hour " +
-        "as:"+rollUpHourOfDay+", interval length as:"+intervalLength+", " +
-        "checkpoint directory as "+checkPointDir+" and till days as:"+tilldays);
+        "as:" + rollUpHourOfDay + ", interval length as:" + intervalLength +
+        ", checkpoint directory as " + checkPointDir + " and till days as:" +
+        tilldays);
   }
 
   @Override
@@ -77,15 +73,22 @@ public class AuditRollUpService extends AuditDBService {
   }
 
   /*
-   * Queries the daily table and finds the first entry ordered by timeinterval
-   * Return the corresponding timeinterval
+   * Queries the daily table and finds the first/last entry ordered by
+   * timeinterval depending on isAsc
    */
-  Date getFirstTimeIntervalDailyTable(Connection connection) {
-    LOG.debug("Get fromTime from Table");
+  Date getTimeEnrtyDailyTable(Connection connection, boolean isAsc) {
+
     String statement = "select " + AuditDBConstants.TIMESTAMP + " from " +
         config.getString(AuditDBConstants.MASTER_TABLE_NAME) + " order by " +
-        "timeinterval limit 1;";
-    LOG.debug("Statement to get first timeinterval in table : "+statement);
+        "timeinterval";
+    if (isAsc) {
+      statement += " asc limit 1;";
+    } else {
+      statement += " desc limit 1;";
+    }
+    LOG.debug("Statement to get first/last timeinterval in table : " +
+        statement);
+
     PreparedStatement preparedStatement = null;
     ResultSet rs = null;
     Long result = 0l;
@@ -96,7 +99,7 @@ public class AuditRollUpService extends AuditDBService {
       if (rs.next())
         result = rs.getLong(AuditDBConstants.TIMESTAMP);
     } catch (SQLException e) {
-      logNextException("SQLException while getting first time interval" +
+      logNextException("SQLException while getting first/last time interval" +
           " from db:", e);
     } finally {
       try {
@@ -120,18 +123,58 @@ public class AuditRollUpService extends AuditDBService {
   }
 
   Date getFromTime(Connection connection) {
-    FSCheckpointProvider provider = new FSCheckpointProvider(checkPointDir);
     byte[] value = provider.read(checkpointKey);
     if (value != null) {
-      Long timestamp = Long.parseLong(new String(value));
+      Long timestamp;
+      try {
+        timestamp = Long.parseLong(new String(value));
+      } catch (NumberFormatException e) {
+        LOG.error("Unparseable timestamp value from checkpoint", e);
+        return getFromTimeFromDB(connection);
+      }
       LOG.info("Get fromTime from checkpoint:"+timestamp);
       if (checkLongValOfDateValid(timestamp))
         return new Date(timestamp);
-      else
-        return getFirstTimeIntervalDailyTable(connection);
-    } else {
-      return getFirstTimeIntervalDailyTable(connection);
     }
+    return getFromTimeFromDB(connection);
+  }
+
+  private Date getFromTimeFromDB(Connection connection) {
+    LOG.debug("Get fromTime from Table");
+    Date firstDate = getTimeEnrtyDailyTable(connection, true);
+    Date lastDate = getTimeEnrtyDailyTable(connection, false);
+    Date currentDate = lastDate;
+    while (!currentDate.before(firstDate)) {
+      if (isRolledUp(connection, currentDate))
+        return addDaysToGivenDate(currentDate, 1);
+      currentDate = addDaysToGivenDate(currentDate, -1);
+    }
+    return firstDate;
+  }
+
+  private boolean isRolledUp(Connection connection, Date date) {
+    String statement = "select table_name from information_schema.tables " +
+        "where table_name = '" + createTableName(date, true) +"';";
+    PreparedStatement preparedStatement = null;
+    ResultSet rs = null;
+    try {
+      preparedStatement = connection.prepareStatement(statement);
+      rs = preparedStatement.executeQuery();
+      if (rs.next())
+        return true;
+    } catch (SQLException e) {
+      logNextException("Exception while checking for rolled up table", e);
+    } finally {
+      try {
+        if (rs != null)
+          rs.close();
+        if (preparedStatement != null)
+          preparedStatement.close();
+      } catch (SQLException e) {
+        logNextException("SQLException while closing resultset/statement", e);
+      }
+    }
+    return false;
   }
 
   /*
@@ -148,31 +191,44 @@ public class AuditRollUpService extends AuditDBService {
     return cal.getTime().getTime();
   }
 
-  void mark(Long toTime) {
-    FSCheckpointProvider provider = new FSCheckpointProvider(checkPointDir);
-    provider.checkpoint(checkpointKey, toTime.toString().getBytes());
-    LOG.info("Marked checkpoint to the date at which to start next run:"
-        + toTime);
+  public void mark(Long toTime) {
+    try {
+      provider.checkpoint(checkpointKey, toTime.toString().getBytes());
+      LOG.info("Marked checkpoint to the date at which to start next run:"
+          + toTime);
+    } catch (Exception e) {
+      LOG.error("Marking checkpoint failed", e);
+    }
   }
 
   @Override
   public void execute() {
-    if (isFirstRun) {
-      LOG.info("First run: Sleeping till rollup hour");
-      sleepTillNextRun();
-    }
 
     while (!isStop && !thread.isInterrupted()) {
       LOG.info("Starting new run");
       Connection connection = getConnection();
       while (connection == null && !isStop) {
-        LOG.info("Connection not initialized. Retrying.");
-        connection = getConnection();
+        LOG.info("Connection not initialized. Retry after 5 minutes");
+        try {
+          Thread.sleep(300000l);
+        } catch (InterruptedException e) {
+          LOG.error("Interrupted before connecting to db", e);
+        }
+        LOG.info("Retrying to establish connection.");
+        if (!isStop) {
+          connection = getConnection();
+        }
       }
+      LOG.info("Connection initialized");
+
       try {
-        createDailyTable(connection);
-        Date markTime = rollupTables(connection);
-        mark(getFirstMilliOfDay(markTime));
+        if (!isStop) {
+          createDailyTable(connection);
+          Date markTime = rollupTables(connection);
+          if (markTime != null) {
+            mark(getFirstMilliOfDay(markTime));
+          }
+        }
       } catch (SQLException e) {
         logNextException("SQLException while rollup up tables", e);
       } finally {
@@ -187,15 +243,22 @@ public class AuditRollUpService extends AuditDBService {
   }
 
   private void createDailyTable(Connection connection) {
+    if (!isStop) {
+      Date fromDate = new Date();
+      Date todate = addDaysToCurrentDate(config.getInteger(AuditDBConstants
+          .NUM_DAYS_AHEAD_TABLE_CREATION));
+      createDailyTable(fromDate, todate, connection);
+    }
+  }
+
+  public boolean createDailyTable(Date fromDate, Date todate,
+                                  Connection connection) {
     CallableStatement createDailyTableStmt = null;
     try {
       if (!isStop) {
-        Date fromDate = new Date();
-        Date todate = addDaysToCurrentDate(config.getInteger(AuditDBConstants
-            .NUM_DAYS_AHEAD_TABLE_CREATION));
         String statement = getCreateTableQuery();
         createDailyTableStmt = connection.prepareCall(statement);
-        String masterTable = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
+        int addedToBatch = 0;
         while (!fromDate.after(todate) && !isStop) {
           LOG.info("Creating day table of date:"+fromDate);
           String currentDateString = dayChkFormat.format(fromDate);
@@ -208,15 +271,21 @@ public class AuditRollUpService extends AuditDBService {
           createDailyTableStmt.setString(index++, currentDateString);
           createDailyTableStmt.setString(index++, nextDayString);
           createDailyTableStmt.addBatch();
+          LOG.debug("Table added to batch for day:"+currentDateString+" with " +
+              "table name as:"+dayTable+" and parent is :"+masterTable);
+          addedToBatch++;
           fromDate = addDaysToGivenDate(fromDate, 1);
-          LOG.debug("Table created for day:"+currentDateString+" with table " +
-              "name as:"+dayTable+" and parent is :"+masterTable);
         }
-        createDailyTableStmt.executeBatch();
+        int[] retVal = createDailyTableStmt.executeBatch();
+        if (retVal.length != addedToBatch) {
+          LOG.error("Mismatch in number of tables added to batch[" +
+              addedToBatch + "] and rolledup tables[" + retVal.length + "]");
+        }
         connection.commit();
       }
     } catch (SQLException e) {
       logNextException("SQLException while creating daily table", e);
+      return false;
     } finally {
       try {
         createDailyTableStmt.close();
@@ -224,9 +293,10 @@ public class AuditRollUpService extends AuditDBService {
         logNextException("SQLException while closing call statement:", e);
       }
     }
+    return true;
   }
 
-  Date addDaysToGivenDate(Date date, int increment) {
+  public Date addDaysToGivenDate(Date date, int increment) {
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(date);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -237,12 +307,12 @@ public class AuditRollUpService extends AuditDBService {
     return calendar.getTime();
   }
 
-  String getCreateTableQuery() {
+  private String getCreateTableQuery() {
     String query = "{call createDailyTable(?,?,?,?)}";
     return query;
   }
 
-  Date addDaysToCurrentDate(Integer dayIncrement) {
+  public Date addDaysToCurrentDate(Integer dayIncrement) {
     Calendar calendar = Calendar.getInstance();
     calendar.set(Calendar.HOUR_OF_DAY, 0);
     calendar.set(Calendar.MINUTE, 0);
@@ -257,21 +327,33 @@ public class AuditRollUpService extends AuditDBService {
     long waitTime = getTimeToSleep();
     LOG.info("Sleeping for "+waitTime+"ms");
     try {
-      Thread.sleep(waitTime);
+      if (!isStop) {
+        Thread.sleep(waitTime);
+      }
     } catch (InterruptedException e) {
       LOG.warn("RollUp Service interrupted", e);
     }
   }
 
   private Date rollupTables(Connection connection) throws SQLException {
+    if (!isStop) {
+      Date fromTime = getFromTime(connection);
+      Date toDate = addDaysToCurrentDate(-tilldays);
+      if (!fromTime.after(toDate))
+        return rollupTables(fromTime, toDate, connection);
+    }
+    return null;
+  }
+
+  public Date rollupTables(Date fromTime, Date toDate,
+                            Connection connection) throws SQLException {
     CallableStatement rollupStmt = null;
-    Date fromTime = getFromTime(connection);
     Date currentDate = fromTime;
     try {
       if (!isStop) {
         String statement = getRollUpQuery();
         rollupStmt = connection.prepareCall(statement);
-        Date toDate = addDaysToCurrentDate(-tilldays);
+        int addedToBatch = 0;
         LOG.info("Starting roll up of tables from:"+currentDate+" till:"+toDate);
         while (currentDate.before(toDate) && !isStop) {
           Date nextDay = addDaysToGivenDate(currentDate, 1);
@@ -282,16 +364,20 @@ public class AuditRollUpService extends AuditDBService {
           int index = 1;
           rollupStmt.setString(index++, srcTable);
           rollupStmt.setString(index++, destTable);
-          rollupStmt.setString(index++,
-              config.getString(AuditDBConstants.MASTER_TABLE_NAME));
+          rollupStmt.setString(index++, masterTable);
           rollupStmt.setLong(index++, firstMillisOfDay);
           rollupStmt.setLong(index++, firstMillisOfNextDay);
           rollupStmt.setLong(index++, intervalLength);
           LOG.debug("Rollup query is " + rollupStmt.toString());
           rollupStmt.addBatch();
+          addedToBatch++;
           currentDate = nextDay;
         }
-        rollupStmt.executeBatch();
+        int[] retVal = rollupStmt.executeBatch();
+        if (retVal.length != addedToBatch) {
+          LOG.error("Mismatch in number of tables added to batch[" +
+              addedToBatch + "] and rolledup tables[" + retVal.length + "]");
+        }
         connection.commit();
       }
     } finally {

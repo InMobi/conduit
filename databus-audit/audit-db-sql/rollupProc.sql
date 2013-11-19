@@ -21,7 +21,7 @@ GET DIAGNOSTICS srcRowsRet = ROW_COUNT;
 IF destRowsRet = 0 and srcRowsRet = 1 THEN
 createTable = 'CREATE TABLE ' || destTable || '( LIKE ' || srcTable || ' INCLUDING ALL)';
 EXECUTE createTable;
-while (tmpend < endTime) LOOP
+while (tmpstart < endTime) LOOP
 selectquery = 'select tier,topic,hostname,cluster,sum(sent) as sent, sum(c0) as c0, sum(c1) as c1, sum(c2) as c2, sum(c3) as c3, sum(c4) as c4, sum(c5) as c5, sum(c6) as c6, sum(c7) as c7, sum(c8) as c8, sum(c9) as c9, sum(c10) as c10, sum(c15) as c15, sum(c30) as c30, sum(c60) as c60, sum(c120) as c120, sum(c240) as c240, sum(c600) as c600 from ' || srcTable || ' where timeinterval >= ' || tmpstart || ' and timeinterval < ' || tmpend || ' group by tier,topic,hostname,cluster';
 FOR rec IN EXECUTE selectquery LOOP
 valueString = tmpstart||','||quote_literal(rec.tier)||','||quote_literal(rec.topic)||','||quote_literal(rec.hostname)||','||quote_literal(rec.cluster)||','||rec.sent||','||rec.c0||','||rec.c1||','||rec.c2||','||rec.c3||','||rec.c4||','||rec.c5||','||rec.c6||','||rec.c7||','||rec.c8||','||rec.c9||','||rec.c10||','||rec.c15||','||rec.c30||','||rec.c60||','||rec.c120||','||rec.c240||','||rec.c600;

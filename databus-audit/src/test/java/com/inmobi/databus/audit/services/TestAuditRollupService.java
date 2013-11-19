@@ -22,7 +22,7 @@ public class TestAuditRollupService extends AuditRollupTestUtil {
   @BeforeClass
   public void setup() {
     super.setup();
-    rollUpService = new AuditRollUpService(config, false);
+    rollUpService = new AuditRollUpService(config);
     cleanUp();
   }
 
@@ -58,7 +58,7 @@ public class TestAuditRollupService extends AuditRollupTestUtil {
     Assert.assertEquals(calendar.getTime(), fromTime);
 
     calendar.add(Calendar.MINUTE, -5);
-    fromTime = rollUpService.getFirstTimeIntervalDailyTable(connection);
+    fromTime = rollUpService.getTimeEnrtyDailyTable(connection, true);
     Assert.assertEquals(calendar.getTime(), fromTime);
   }
 

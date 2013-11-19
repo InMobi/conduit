@@ -26,6 +26,7 @@
 
 CLIENT_AUDIT_QUERY_CLASS="com.inmobi.databus.audit.query.AuditDbQuery"
 CLIENT_FEEDER_CLASS="com.inmobi.databus.audit.AuditStats"
+CLIENT_ADMIN_CLASS="com.inmobi.databus.audit.AuditAdmin"
 
 ################################
 # functions
@@ -60,6 +61,9 @@ display_help() {
 Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>] 
           [-filter <TIER=xxx,HOSTNAME=xxx,TOPIC=xxx,CLUSTER=xxx>] [-percentile <comma separated list of percentiles>] <dd-mm-yyyy-HH:mm> <dd-mm-yyyy-HH:mm> --conf <confdir>
        $0 feeder --conf <confdir>
+       $0 admin -rollup -date <dd-mm-yyyy-HH:mn> --conf <confdir>
+       $0 admin -create -date <dd-mm-yyyy-HH:mn> --conf <confdir>
+       $0 admin -checkpoint -date <dd-mm-yyyy-HH:mn> --conf <confdir>
 EOF
 }
 
@@ -100,8 +104,11 @@ case "$mode" in
   audit)
     opt_audit=1
     ;;
-   feeder)
+  feeder)
     opt_feeder=1
+    ;;
+  admin)
+    opt_admin=1
     ;;
   *)
     error "Unknown or unspecified command '$mode'"
@@ -188,6 +195,9 @@ if [ -n "$opt_audit" ] ; then
 fi
 if [ -n "$opt_feeder" ] ; then
   run_client $CLIENT_FEEDER_CLASS $args
+fi
+if [ -n "$opt_admin" ] ; then
+  run_client $CLIENT_ADMIN_CLASS $args
 else
   error "This message should never appear" 1
 fi
