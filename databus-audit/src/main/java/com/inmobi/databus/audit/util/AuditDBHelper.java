@@ -357,7 +357,7 @@ public class AuditDBHelper {
     return statement;
   }
 
-  private static void logNextException(String message, SQLException e) {
+  public static void logNextException(String message, SQLException e) {
     while (e != null) {
       LOG.error(message, e);
       e = e.getNextException();

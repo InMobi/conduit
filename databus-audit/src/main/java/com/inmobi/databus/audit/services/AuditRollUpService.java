@@ -99,14 +99,14 @@ public class AuditRollUpService extends AuditDBService {
       if (rs.next())
         result = rs.getLong(AuditDBConstants.TIMESTAMP);
     } catch (SQLException e) {
-      logNextException("SQLException while getting first/last time interval" +
+      AuditDBHelper.logNextException("SQLException while getting first/last time interval" +
           " from db:", e);
     } finally {
       try {
         rs.close();
         preparedStatement.close();
       } catch (SQLException e) {
-        logNextException("SQLException while closing statement:", e);
+        AuditDBHelper.logNextException("SQLException while closing statement:", e);
       }
     }
     return new Date(result);
@@ -163,7 +163,7 @@ public class AuditRollUpService extends AuditDBService {
       if (rs.next())
         return true;
     } catch (SQLException e) {
-      logNextException("Exception while checking for rolled up table", e);
+      AuditDBHelper.logNextException("Exception while checking for rolled up table", e);
     } finally {
       try {
         if (rs != null)
@@ -171,7 +171,7 @@ public class AuditRollUpService extends AuditDBService {
         if (preparedStatement != null)
           preparedStatement.close();
       } catch (SQLException e) {
-        logNextException("SQLException while closing resultset/statement", e);
+        AuditDBHelper.logNextException("SQLException while closing resultset/statement", e);
       }
     }
     return false;
@@ -230,12 +230,12 @@ public class AuditRollUpService extends AuditDBService {
           }
         }
       } catch (SQLException e) {
-        logNextException("SQLException while rollup up tables", e);
+        AuditDBHelper.logNextException("SQLException while rollup up tables", e);
       } finally {
         try {
           connection.close();
         } catch (SQLException e) {
-          logNextException("SQLException while closing connection:", e);
+          AuditDBHelper.logNextException("SQLException while closing connection:", e);
         }
       }
       sleepTillNextRun();
@@ -284,13 +284,13 @@ public class AuditRollUpService extends AuditDBService {
         connection.commit();
       }
     } catch (SQLException e) {
-      logNextException("SQLException while creating daily table", e);
+      AuditDBHelper.logNextException("SQLException while creating daily table", e);
       return false;
     } finally {
       try {
         createDailyTableStmt.close();
       } catch (SQLException e) {
-        logNextException("SQLException while closing call statement:", e);
+        AuditDBHelper.logNextException("SQLException while closing call statement:", e);
       }
     }
     return true;
@@ -385,7 +385,7 @@ public class AuditRollUpService extends AuditDBService {
         try {
           rollupStmt.close();
         } catch (SQLException e) {
-          logNextException("SQLException while closing call statement:", e);
+          AuditDBHelper.logNextException("SQLException while closing call statement:", e);
         }
       }
     }
@@ -416,12 +416,5 @@ public class AuditRollUpService extends AuditDBService {
   @Override
   public String getServiceName() {
     return "RollUpService";
-  }
-
-  private void logNextException(String message, SQLException e) {
-    while (e != null) {
-      LOG.error(message, e);
-      e = e.getNextException();
-    }
   }
 }
