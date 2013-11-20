@@ -61,9 +61,11 @@ display_help() {
 Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>] 
           [-filter <TIER=xxx,HOSTNAME=xxx,TOPIC=xxx,CLUSTER=xxx>] [-percentile <comma separated list of percentiles>] <dd-mm-yyyy-HH:mm> <dd-mm-yyyy-HH:mm> --conf <confdir>
        $0 feeder --conf <confdir>
-       $0 admin -rollup -date <dd-mm-yyyy-HH:mn> --conf <confdir>
-       $0 admin -create -date <dd-mm-yyyy-HH:mn> --conf <confdir>
-       $0 admin -checkpoint -date <dd-mm-yyyy-HH:mn> --conf <confdir>
+       $0 admin -rollup -date <dd-mm-yyyy> [-n <number of days] --conf <confdir>
+       $0 admin -create -date <dd-mm-yyyy> [-n <number of days] --conf <confdir>
+       $0 admin -checkpoint -date <dd-mm-yyyy> --conf <confdir>
+       $0 admin -check -rolledup -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
+       $0 admin -check -created -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
 EOF
 }
 

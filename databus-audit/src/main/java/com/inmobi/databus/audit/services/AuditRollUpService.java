@@ -76,7 +76,7 @@ public class AuditRollUpService extends AuditDBService {
    * Queries the daily table and finds the first/last entry ordered by
    * timeinterval depending on isAsc
    */
-  Date getTimeEnrtyDailyTable(Connection connection, boolean isAsc) {
+  protected Date getTimeEnrtyDailyTable(Connection connection, boolean isAsc) {
 
     String statement = "select " + AuditDBConstants.TIMESTAMP + " from " +
         config.getString(AuditDBConstants.MASTER_TABLE_NAME) + " order by " +
@@ -103,8 +103,10 @@ public class AuditRollUpService extends AuditDBService {
           " from db:", e);
     } finally {
       try {
-        rs.close();
-        preparedStatement.close();
+        if (rs != null)
+          rs.close();
+        if (preparedStatement != null)
+          preparedStatement.close();
       } catch (SQLException e) {
         AuditDBHelper.logNextException("SQLException while closing statement:", e);
       }
@@ -122,14 +124,14 @@ public class AuditRollUpService extends AuditDBService {
     return true;
   }
 
-  Date getFromTime(Connection connection) {
+  protected Date getFromTime(Connection connection) {
     byte[] value = provider.read(checkpointKey);
     if (value != null) {
       Long timestamp;
       try {
         timestamp = Long.parseLong(new String(value));
       } catch (NumberFormatException e) {
-        LOG.error("Unparseable timestamp value from checkpoint", e);
+        LOG.error("Unparseable timestamp value from checkpoint:" + value, e);
         return getFromTimeFromDB(connection);
       }
       LOG.info("Get fromTime from checkpoint:"+timestamp);
@@ -145,16 +147,16 @@ public class AuditRollUpService extends AuditDBService {
     Date lastDate = getTimeEnrtyDailyTable(connection, false);
     Date currentDate = lastDate;
     while (!currentDate.before(firstDate)) {
-      if (isRolledUp(connection, currentDate))
+      if (checkTableExists(connection, createTableName(currentDate, true)))
         return addDaysToGivenDate(currentDate, 1);
       currentDate = addDaysToGivenDate(currentDate, -1);
     }
     return firstDate;
   }
 
-  private boolean isRolledUp(Connection connection, Date date) {
+  public boolean checkTableExists(Connection connection, String tableName) {
     String statement = "select table_name from information_schema.tables " +
-        "where table_name = '" + createTableName(date, true) +"';";
+        "where table_name = '" + tableName +"';";
     PreparedStatement preparedStatement = null;
     ResultSet rs = null;
     try {
@@ -163,7 +165,7 @@ public class AuditRollUpService extends AuditDBService {
       if (rs.next())
         return true;
     } catch (SQLException e) {
-      AuditDBHelper.logNextException("Exception while checking for rolled up table", e);
+      AuditDBHelper.logNextException("Exception while checking for table", e);
     } finally {
       try {
         if (rs != null)
@@ -181,7 +183,7 @@ public class AuditRollUpService extends AuditDBService {
    * Return long corresponding to first millisecond of day to which date
    * belongs
    */
-  Long getFirstMilliOfDay(Date date) {
+  private Long getFirstMilliOfDay(Date date) {
     Calendar cal = Calendar.getInstance();
     cal.setTime(date);
     cal.set(Calendar.HOUR_OF_DAY, 0);
@@ -233,7 +235,8 @@ public class AuditRollUpService extends AuditDBService {
         AuditDBHelper.logNextException("SQLException while rollup up tables", e);
       } finally {
         try {
-          connection.close();
+          if (connection != null)
+            connection.close();
         } catch (SQLException e) {
           AuditDBHelper.logNextException("SQLException while closing connection:", e);
         }
@@ -288,7 +291,8 @@ public class AuditRollUpService extends AuditDBService {
       return false;
     } finally {
       try {
-        createDailyTableStmt.close();
+        if (createDailyTableStmt != null)
+          createDailyTableStmt.close();
       } catch (SQLException e) {
         AuditDBHelper.logNextException("SQLException while closing call statement:", e);
       }
@@ -346,7 +350,7 @@ public class AuditRollUpService extends AuditDBService {
   }
 
   public Date rollupTables(Date fromTime, Date toDate,
-                            Connection connection) throws SQLException {
+                           Connection connection) throws SQLException {
     CallableStatement rollupStmt = null;
     Date currentDate = fromTime;
     try {
@@ -403,7 +407,7 @@ public class AuditRollUpService extends AuditDBService {
     return connection;
   }
 
-  String createTableName(Date currentDate, boolean isRollupTable) {
+  public String createTableName(Date currentDate, boolean isRollupTable) {
     String tableName = "";
     if (isRollupTable) {
       tableName += "hourly_";
