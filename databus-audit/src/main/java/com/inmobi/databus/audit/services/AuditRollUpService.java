@@ -143,8 +143,10 @@ public class AuditRollUpService extends AuditDBService {
 
   private Date getFromTimeFromDB(Connection connection) {
     LOG.debug("Get fromTime from Table");
-    Date firstDate = getTimeEnrtyDailyTable(connection, true);
-    Date lastDate = getTimeEnrtyDailyTable(connection, false);
+    Date firstDate = new Date(getFirstMilliOfDay(getTimeEnrtyDailyTable
+        (connection, true)));
+    Date lastDate = new Date(getFirstMilliOfDay(getTimeEnrtyDailyTable
+        (connection, false)));
     Date currentDate = lastDate;
     while (!currentDate.before(firstDate)) {
       if (checkTableExists(connection, createTableName(currentDate, true)))
