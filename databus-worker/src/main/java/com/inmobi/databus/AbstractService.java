@@ -28,9 +28,7 @@ import org.apache.hadoop.fs.Path;
 
 import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.utils.CalendarHelper;
-import com.inmobi.databus.utils.DatabusFileUtil;
 
 public abstract class AbstractService implements Service, Runnable {
 
@@ -110,7 +108,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   public static String getCheckPointKey(String serviceName, String stream,
       String source) {
-    return DatabusFileUtil.getCheckPointKey(serviceName, stream, source);
+    return serviceName + "_" + stream + "_" + source;
   }
 
   protected void preExecute() throws Exception {
