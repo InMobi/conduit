@@ -124,8 +124,8 @@ public class MirrorStreamService extends DistcpBaseService {
       getDestFs().delete(tmpOut, true);
       LOG.debug("Cleanup [" + tmpOut + "]");
     } catch (Exception e) {
-      LOG.warn(e);
       LOG.warn("Error in MirrorStream Service..skipping RUN ", e);
+      throw new Exception(e);
     }
   }
 
