@@ -15,6 +15,8 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.FSCheckpointProvider;
 
@@ -59,8 +61,7 @@ public class TestCreateListing {
 
     Map<FileStatus, String> results = new HashMap<FileStatus, String>();
     Set<FileStatus> trashSet = new HashSet<FileStatus>();
-    Map<String, FileStatus> checkpointPaths = new HashMap<String,
-    FileStatus>();
+    Table<String, String, String> checkpointPaths = HashBasedTable.create();
 
     LocalStreamService service = new LocalStreamService(null, cluster, null,
         new FSCheckpointProvider("/tmp/test-databus/databus/checkpoint"),
@@ -188,7 +189,7 @@ public class TestCreateListing {
   }
 
   public void clearLists(Map<FileStatus, String> results,
-  Set<FileStatus> trashSet, Map<String, FileStatus> checkpointPaths) {
+  Set<FileStatus> trashSet, Table<String, String, String> checkpointPaths) {
     results.clear();
     trashSet.clear();
     checkpointPaths.clear();

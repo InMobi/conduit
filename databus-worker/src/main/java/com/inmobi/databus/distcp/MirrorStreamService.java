@@ -159,6 +159,7 @@ public class MirrorStreamService extends DistcpBaseService {
       }
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
+    LOG.debug("Committed " + commitPaths.size() + " paths.");
     ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
         Thread.currentThread().getName(), elapsedTime);
   }
