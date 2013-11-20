@@ -379,8 +379,10 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
-          streamName, 1);
+      if (streamName != null) {
+        ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
+            streamName, 1);
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
