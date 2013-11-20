@@ -276,7 +276,7 @@ public class AuditRollUpService extends AuditDBService {
           createDailyTableStmt.setString(index++, currentDateString);
           createDailyTableStmt.setString(index++, nextDayString);
           createDailyTableStmt.addBatch();
-          LOG.debug("Table added to batch for day:"+currentDateString+" with " +
+          LOG.info("Table added to batch for day:"+currentDateString+" with " +
               "table name as:"+dayTable+" and parent is :"+masterTable);
           addedToBatch++;
           fromDate = addDaysToGivenDate(fromDate, 1);
@@ -345,8 +345,12 @@ public class AuditRollUpService extends AuditDBService {
     if (!isStop) {
       Date fromTime = getFromTime(connection);
       Date toDate = addDaysToCurrentDate(-tilldays);
-      if (!fromTime.after(toDate))
+      if (!fromTime.after(toDate)) {
         return rollupTables(fromTime, toDate, connection);
+      } else {
+        LOG.error("Start time[" + fromTime +"] is after end time[" + toDate
+            + "] for rollup");
+      }
     }
     return null;
   }
@@ -374,7 +378,8 @@ public class AuditRollUpService extends AuditDBService {
           rollupStmt.setLong(index++, firstMillisOfDay);
           rollupStmt.setLong(index++, firstMillisOfNextDay);
           rollupStmt.setLong(index++, intervalLength);
-          LOG.debug("Rollup query is " + rollupStmt.toString());
+          LOG.info("Adding rollup of table to batch for day:"+currentDate+"" +
+              " and query:"+rollupStmt);
           rollupStmt.addBatch();
           addedToBatch++;
           currentDate = nextDay;
