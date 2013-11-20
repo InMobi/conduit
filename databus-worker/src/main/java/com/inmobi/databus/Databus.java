@@ -55,6 +55,7 @@ public class Databus implements Service, DatabusConstants {
   private final Set<String> clustersToProcess;
   private final List<AbstractService> services = new ArrayList<AbstractService>();
   private volatile boolean stopRequested = false;
+  private volatile boolean initFailed = false;
   private CuratorLeaderManager curatorLeaderManager = null;
   private volatile boolean databusStarted = false;
 
@@ -290,12 +291,13 @@ public class Databus implements Service, DatabusConstants {
         }
       }
       databusStarted = true;
-    } catch (Exception e) {
-      LOG.warn("Error in initializing databus", e);
+    } catch (Throwable e) {
+      initFailed = true;
+      LOG.warn("Stopping databus because of error in initializing databus ", e);
     }
 
     // if there is any outstanding stop request meanwhile, handle it here
-    if (stopRequested) {
+    if (stopRequested || initFailed) {
       stop();
     }
     // Block this method to avoid losing leadership of current work

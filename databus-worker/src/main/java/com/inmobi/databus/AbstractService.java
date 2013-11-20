@@ -196,7 +196,12 @@ public abstract class AbstractService implements Service, Runnable {
   @Override
   public synchronized void join() {
     try {
-      thread.join();
+      if (thread != null) {
+        thread.join();
+      } else {
+        LOG.warn("service " + this.getName() +  " not started hence returning" +
+            " from join()");
+      }
     } catch (InterruptedException e) {
       LOG.warn("thread interrupted " + thread.getName());
     }
