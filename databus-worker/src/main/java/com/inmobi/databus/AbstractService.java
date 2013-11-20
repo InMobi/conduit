@@ -382,6 +382,8 @@ public abstract class AbstractService implements Service, Runnable {
       if (streamName != null) {
         ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
             streamName, 1);
+      } else {
+        LOG.warn("Can not increment retriable checkpoint counter as stream name is null");
       }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
