@@ -28,9 +28,7 @@ import org.apache.hadoop.fs.Path;
 
 import com.codahale.metrics.Counter;
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.MetricsUtil;
 import com.inmobi.databus.utils.CalendarHelper;
-import com.inmobi.databus.utils.DatabusFileUtil;
 
 public abstract class AbstractService implements Service, Runnable {
 
@@ -110,7 +108,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   public static String getCheckPointKey(String serviceName, String stream,
       String source) {
-    return DatabusFileUtil.getCheckPointKey(serviceName, stream, source);
+    return serviceName + "_" + stream + "_" + source;
   }
 
   protected void preExecute() throws Exception {
@@ -196,7 +194,12 @@ public abstract class AbstractService implements Service, Runnable {
   @Override
   public synchronized void join() {
     try {
-      thread.join();
+      if (thread != null) {
+        thread.join();
+      } else {
+        LOG.warn("service " + this.getName() +  " not started hence returning" +
+            " from join()");
+      }
     } catch (InterruptedException e) {
       LOG.warn("thread interrupted " + thread.getName());
     }
@@ -366,9 +369,8 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   protected void retriableCheckPoint(CheckpointProvider provider, String key,
-      byte[] checkpoint) throws Exception {
+      byte[] checkpoint, String streamName) throws Exception {
     int count = 0;
-    String streamName = null;
     Exception ex = null;
     while (count < numOfRetries) {
       try {
@@ -382,11 +384,12 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      if (streamName == null) {
-        streamName = MetricsUtil.getSteamNameFromCheckPointKey(key);
+      if (streamName != null) {
+        ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
+            streamName, 1);
+      } else {
+        LOG.warn("Can not increment retriable checkpoint counter as stream name is null");
       }
-      ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
-          streamName, 1);
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {

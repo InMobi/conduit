@@ -124,8 +124,8 @@ public class MirrorStreamService extends DistcpBaseService {
       getDestFs().delete(tmpOut, true);
       LOG.debug("Cleanup [" + tmpOut + "]");
     } catch (Exception e) {
-      LOG.warn(e);
       LOG.warn("Error in MirrorStream Service..skipping RUN ", e);
+      throw new Exception(e);
     }
   }
 
@@ -159,6 +159,7 @@ public class MirrorStreamService extends DistcpBaseService {
       }
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
+    LOG.debug("Committed " + commitPaths.size() + " paths.");
     ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
         Thread.currentThread().getName(), elapsedTime);
   }
