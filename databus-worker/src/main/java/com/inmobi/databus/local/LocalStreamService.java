@@ -463,8 +463,10 @@ ConfigConstants {
     if (collectorPaths != null && collectorPaths.size() > 0) {
       Entry<String, FileStatus> entry = collectorPaths.lastEntry();
       Path filePath = entry.getValue().getPath();
-      checkpointPaths.put(filePath.getParent().getParent().getName(),
-          filePath.getParent().getName(), filePath.getName());
+      String streamName = getCategoryFromSrcPath(filePath);
+      String collectorName = filePath.getParent().getName();
+      String checkpointPath = filePath.getName();
+      checkpointPaths.put(streamName, collectorName, checkpointPath);
     }
   }
 
