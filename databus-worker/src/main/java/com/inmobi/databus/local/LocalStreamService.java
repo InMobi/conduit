@@ -247,9 +247,9 @@ ConfigConstants {
         streamName = getTopicNameFromDestnPath(entry.getValue());
       } else {
         /*
-         * hdfsUrl/databus/system/tmp/<LocalStreamServiceName>/jobOut/<streamName>/<fileName>
+         * hdfsUrl/databus/data/<streamname>/<collectorname>/<fileName>
          */
-        streamName = entry.getKey().getParent().getName();
+        streamName = getCategoryFromSrcPath(entry.getKey());
       }
       retriableMkDirs(fs, entry.getValue().getParent(), streamName);
       if (retriableRename(fs, entry.getKey(), entry.getValue(), streamName) == false) {
