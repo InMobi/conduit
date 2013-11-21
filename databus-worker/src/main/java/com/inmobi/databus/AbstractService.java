@@ -316,7 +316,11 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      ConduitMetrics.incCounter(getServiceType(), RETRY_RENAME, streamName, 1);
+      if (streamName != null) {
+        ConduitMetrics.incCounter(getServiceType(), RETRY_RENAME, streamName, 1);
+      } else {
+        LOG.warn("Can not increment retriable rename counter as stream name is null");
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -421,7 +425,11 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      ConduitMetrics.incCounter(getServiceType(), RETRY_MKDIR, streamName, 1);
+      if (streamName != null) {
+        ConduitMetrics.incCounter(getServiceType(), RETRY_MKDIR, streamName, 1);
+      } else {
+        LOG.warn("Can not increment retriable mkdir counter as stream name is null");
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {
@@ -455,7 +463,11 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      ConduitMetrics.incCounter(getServiceType(), RETRY_EXIST, streamName, 1);
+      if (streamName != null) {
+        ConduitMetrics.incCounter(getServiceType(), RETRY_EXIST, streamName, 1);
+      } else {
+        LOG.warn("Can not increment retriable exists counter as stream name is null");
+      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {

@@ -159,10 +159,10 @@ ConfigConstants {
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
-        commit(prepareForCommit(commitTime));
+        commit(prepareForCommit(commitTime), false);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
-        commit(populateTrashCommitPaths(trashSet));
+        commit(populateTrashCommitPaths(trashSet), true);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
       }
     } catch (Exception e) {
@@ -235,13 +235,22 @@ ConfigConstants {
     return trashPaths;
   }
 
-  private void commit(Map<Path, Path> commitPaths) throws Exception {
+  private void commit(Map<Path, Path> commitPaths, boolean isTrashData)
+      throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     long startTime = System.currentTimeMillis();
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      String streamName = getTopicNameFromDestnPath(entry.getValue());
+      String streamName = null;
+      if (!isTrashData) {
+        streamName = getTopicNameFromDestnPath(entry.getValue());
+      } else {
+        /*
+         * hdfsUrl/databus/system/tmp/<LocalStreamServiceName>/jobOut/<streamName>/<fileName>
+         */
+        streamName = entry.getKey().getParent().getName();
+      }
       retriableMkDirs(fs, entry.getValue().getParent(), streamName);
       if (retriableRename(fs, entry.getKey(), entry.getValue(), streamName) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
@@ -249,11 +258,7 @@ ConfigConstants {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
-      /*
-       * trash path: hdfs://rootdir/system/trash/YYYY-MM-DD/HH/filename
-       */
-      if (!entry.getValue().getParent().getParent().getParent().getName().
-          equals("trash")) {
+      if (!isTrashData) {
         ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
             streamName, 1);
       }
