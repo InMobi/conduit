@@ -235,6 +235,14 @@ ConfigConstants {
     return trashPaths;
   }
 
+  /*
+   * Trash paths: srcPath:  hdfsUri/databus/data/<streamname>/<collectorname>/<fileName>
+   *              destPath: hdfsUri/databus/system/trash/yyyy-MM-dd/HH/<filename>
+   *
+   * local stream Paths:
+   *  srcPath: hdfsUri/databus/system/tmp/<localStreamservicename>/jobout/<streamName>/<fileName>
+   *  destPath: hdfsUri/databus/streams_local/<streamName>/yyyy/MM/dd/HH/mm/<fileName>
+   */
   private void commit(Map<Path, Path> commitPaths, boolean isTrashData)
       throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
@@ -243,12 +251,14 @@ ConfigConstants {
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       String streamName = null;
+      /*
+       * finding streamname from srcPaths for committing trash paths as we don't
+       * have streamname in destPath.
+       * finding streamname from dest path for other paths
+       */
       if (!isTrashData) {
         streamName = getTopicNameFromDestnPath(entry.getValue());
       } else {
-        /*
-         * hdfsUrl/databus/data/<streamname>/<collectorname>/<fileName>
-         */
         streamName = getCategoryFromSrcPath(entry.getKey());
       }
       retriableMkDirs(fs, entry.getValue().getParent(), streamName);
