@@ -31,11 +31,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
-import org.apache.hadoop.tools.mapred.CopyMapper;
 
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -78,6 +76,8 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
+    Path tmpPath = new Path(destCluster.getTmpPath(), getName());
+    this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     this.provider = provider;
     String tmp;
     if ((tmp = System.getProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM)) != null) {
@@ -117,10 +117,10 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
     DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
+    options.setOutPutDirectory(tmpCounterOutputPath);
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
-      Job job = distCp.execute();
-      counterGrp = job.getCounters().getGroup(CopyMapper.COUNTER_GROUP);
+      distCp.execute();
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;

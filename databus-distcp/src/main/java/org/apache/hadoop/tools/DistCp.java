@@ -18,6 +18,10 @@
 
 package org.apache.hadoop.tools;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Random;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -30,16 +34,14 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobSubmissionFiles;
-import org.apache.hadoop.tools.CopyListing.*;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.tools.CopyListing.DuplicateFileException;
+import org.apache.hadoop.tools.CopyListing.InvalidInputException;
 import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.hadoop.tools.mapred.CopyOutputFormat;
 import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.Random;
 
 public class DistCp extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(DistCp.class);
@@ -170,9 +172,12 @@ public class DistCp extends Configured implements Tool {
     configureOutputFormat(job);
 
     job.setMapperClass(CopyMapper.class);
-    job.setNumReduceTasks(0);
+    job.setReducerClass(Reducer.class);
+    job.setNumReduceTasks(1);
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(Text.class);
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(Text.class);
     job.setOutputFormatClass(CopyOutputFormat.class);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution", "false");
     job.getConfiguration().set(DistCpConstants.CONF_LABEL_NUM_MAPS,
@@ -289,13 +294,14 @@ public class DistCp extends Configured implements Tool {
     }
     CopyOutputFormat.setCommitDirectory(job, targetPath);
 
-    Path logPath = inputOptions.getLogPath();
-    if (logPath == null) {
-      logPath = new Path(metaFolder, "_logs");
+    Path counterFilePath = inputOptions.getOutPutDirectory();
+    if (counterFilePath == null) {
+      LOG.error("Output directory is null for distcp");
     } else {
-      LOG.info("DistCp job log path: " + logPath);
+      LOG.info("DistCp output directory path: " + counterFilePath);
+      CopyOutputFormat.setOutputPath(job, counterFilePath);
     }
-    CopyOutputFormat.setOutputPath(job, logPath);
+
   }
 
   /**

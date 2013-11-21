@@ -200,8 +200,8 @@ public class MergedStreamService extends DistcpBaseService {
 
   private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
-    FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
-    Table<String, Long, Long> parsedCounters = parseCounters(counterGrp);
+    FileSystem fs = getDestFs();
+    Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       retriableMkDirs(fs, entry.getValue().getParent());

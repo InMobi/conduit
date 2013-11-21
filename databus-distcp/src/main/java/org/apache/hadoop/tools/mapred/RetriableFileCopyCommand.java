@@ -183,11 +183,6 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     Path source = sourceFileStatus.getPath();
     ThrottledInputStream inStream = null;
     long totalBytesRead = 0;
-    // GzipCodec gzipCodec = (GzipCodec) ReflectionUtils.newInstance(
-    // GzipCodec.class, new Configuration());
-    // Decompressor gzipDeCompressor = CodecPool.getDecompressor(gzipCodec);
-    // Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
-
     final CompressionCodec codec = compressionCodecs.getCodec(source);
     InputStream compressedIn = null;
     OutputStream commpressedOut = null;

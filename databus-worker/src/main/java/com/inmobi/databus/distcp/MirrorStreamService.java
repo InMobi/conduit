@@ -121,7 +121,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   void doLocalCommit(Map<FileStatus, Path> commitPaths) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
-    Table<String, Long, Long> parsedCounters = parseCounters(counterGrp);
+    Table<String, Long, Long> parsedCounters = parseCountersFile(getDestFs());
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey() + "] to [" + entry.getValue()
           + "]");
