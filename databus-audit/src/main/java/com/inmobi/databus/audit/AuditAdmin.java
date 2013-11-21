@@ -104,6 +104,19 @@ public class AuditAdmin {
     }
   }
 
+  /**
+   *
+   * @param service AuditRollupService object
+   * @param date start date from which to check for tables
+   * @param numDays The number of days for which to check the existence of
+   *                tables. Default value is 1 and checks the table
+   *                corresponding to date
+   * @param config ClientConfig of audit-feeder.properties
+   * @param isRolledUp true if check the existence of rolled up tables and
+   *                   false to check the existence of daily tables
+   * @return true if all tables within the time range exist else even if one
+   * table does not exist return false
+   */
   private static boolean checkTableExists(AuditRollUpService service,
                                        Date date, int numDays,
                                        ClientConfig config,
@@ -143,6 +156,13 @@ public class AuditAdmin {
     return isSuccess;
   }
 
+  /**
+   *
+   * @param service AuditRollupService object
+   * @param date date at which to checkpoint
+   * @return true if marked the checkpoint, false if mark failed with any
+   * exception
+   */
   private static boolean checkpointRollupToDate(AuditRollUpService service,
                                                 Date date) {
     try {
@@ -154,6 +174,17 @@ public class AuditAdmin {
     return true;
   }
 
+  /**
+   *
+   * @param service AuditRollupService object
+   * @param date date from which to start creating tables(included)
+   * @param numDays number of days to create daily tables (including date
+   *                passed). Default value is 1
+   * @param config ClientConfig of audit-feeder.properties
+   * @return true if all tables in the time range have been created and false
+   * if creation of tables failed. If creation of any table fails,
+   * then no table in the time range will be created
+   */
   private static boolean createDayTable(AuditRollUpService service,
                                         Date date, int numDays,
                                         ClientConfig config) {
@@ -177,6 +208,18 @@ public class AuditAdmin {
     }
   }
 
+  /**
+   *
+   * @param service AuditRollupService object
+   * @param fromDate date from which to rollup daily tables(fromDate included)
+   * @param numDays number of days for which to rollup daily tables from
+   *                fromdate(including fromDate). Default value is 1
+   * @param config ClientConfig for audit-feeder.properties
+   * @return returns true if rollup for all tables in the date range is
+   * successful else returns false. Even if rollup of one table fails,
+   * no tables will be rolled up
+   * @throws SQLException
+   */
   private static boolean rollupDayTable(AuditRollUpService service,
                                         Date fromDate, int numDays,
                                         ClientConfig config) throws SQLException{
