@@ -31,7 +31,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpOptions;
 
@@ -77,6 +76,8 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
+    Path tmpPath = new Path(destCluster.getTmpPath(), getName());
+    this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     this.provider = provider;
     String tmp;
     if ((tmp = System.getProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM)) != null) {
@@ -120,10 +121,10 @@ public abstract class DistcpBaseService extends AbstractService {
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
     DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
+    options.setOutPutDirectory(tmpCounterOutputPath);
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
-      Job job = distCp.execute();
-      counterGrp = job.getCounters().getGroup(DatabusConstants.AUDIT_COUNTER_GROUP);
+      distCp.execute();
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;

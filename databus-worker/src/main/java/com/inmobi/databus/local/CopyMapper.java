@@ -39,6 +39,8 @@ import com.inmobi.databus.utils.FileUtil;
 public class CopyMapper extends Mapper<Text, FileStatus, Text,
     Text> implements ConfigConstants{
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
+  private static final String AUDIT_ENABLED_KEY = "audit.enabled";
+  public static final String DELIMITER = "#";
 
   @Override
   public void map(Text key, FileStatus value, Context context) throws IOException,
@@ -70,8 +72,8 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
       for (Entry<Long, Long> entry : received.entrySet()) {
         String counterName = getCounterName(category, destnFilename,
             entry.getKey());
-        context.getCounter(DatabusConstants.AUDIT_COUNTER_GROUP,
-            counterName).increment(entry.getValue());
+        context.write(new Text(counterName), new Text(entry.getValue()
+            .toString()));
       }
     }
 

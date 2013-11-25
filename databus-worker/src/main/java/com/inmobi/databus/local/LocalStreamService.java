@@ -14,7 +14,6 @@
 package com.inmobi.databus.local;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,8 +41,10 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
+import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
 
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
@@ -99,6 +100,7 @@ ConfigConstants {
     this.tmpPath = new Path(srcCluster.getTmpPath(), getName());
     this.tmpJobInputPath = new Path(tmpPath, "jobIn");
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
+    this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
     auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
@@ -126,7 +128,6 @@ ConfigConstants {
       cleanUpTmp(fs);
       LOG.info("TmpPath is [" + tmpPath + "]");
       long commitTime = srcCluster.getCommitTime();
-      counterGrp=null;
       publishMissingPaths(fs,
           srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
@@ -144,8 +145,6 @@ ConfigConstants {
       Job job = createJob(tmpJobInputPath, totalSize);
       job.waitForCompletion(true);
       if (job.isSuccessful()) {
-        counterGrp = job.getCounters().getGroup(
-            DatabusConstants.AUDIT_COUNTER_GROUP);
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
         commit(prepareForCommit(commitTime), true, auditMsgList);
@@ -226,11 +225,7 @@ ConfigConstants {
       List<AuditMessage> auditMsgList) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
-    Table<String, Long, Long> parsedCounters = null;
-    if (generateAudit) {
-      parsedCounters = parseCounters(counterGrp);
-    }
-
+    Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       retriableMkDirs(fs, entry.getValue().getParent());
@@ -262,17 +257,20 @@ ConfigConstants {
     if (fileListing.isEmpty()) {
       return 0;
     }
-    SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-        inputPath, Text.class, FileStatus.class);
+    SequenceFile.Writer out = SequenceFile.createWriter(fs,
+        srcCluster.getHadoopConf(), inputPath, Text.class, FileStatus.class);
     try {
-      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
+      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
+          .iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
         FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
         out.append(new Text(entry.getValue()), status);
 
-        // Create a sync point after each entry. This will ensure that SequenceFile
-        // Reader can work at file entry level granularity, given that SequenceFile
+        // Create a sync point after each entry. This will ensure that
+        // SequenceFile
+        // Reader can work at file entry level granularity, given that
+        // SequenceFile
         // Reader reads from the starting of sync point.
         out.sync();
 
@@ -511,15 +509,22 @@ ConfigConstants {
         "tmpjars", inputFormatJarDestPath.toString() + "," + auditUtilJarDestPath.toString());
     LOG.debug("Adding file [" + inputFormatJarDestPath
         + "] to distributed cache");
-    job.setInputFormatClass(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
-
-    Class<? extends Mapper> mapperClass = getMapperClass();
+    job.setInputFormatClass(UniformSizeInputFormat.class);
+    Class<? extends Mapper<Text, FileStatus, Text, Text>> mapperClass = getMapperClass();
     job.setJarByClass(mapperClass);
 
     job.setMapperClass(mapperClass);
-    job.setNumReduceTasks(0);
-
-    job.setOutputFormatClass(NullOutputFormat.class);
+    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputValueClass(Text.class);
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(Text.class);
+    // setting identity reducer
+    job.setReducerClass(Reducer.class);
+    // job.setNumReduceTasks(0);
+    job.setNumReduceTasks(1);
+    job.setOutputFormatClass(TextOutputFormat.class);
+    TextOutputFormat.setOutputPath(job, tmpCounterOutputPath);
+    // job.setOutputFormatClass(NullOutputFormat.class);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution",
         "false");
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());
@@ -555,13 +560,15 @@ ConfigConstants {
   /*
    * The visiblity of method is set to protected to enable unit testing
    */
-  protected Class<? extends Mapper> getMapperClass() {
+  @SuppressWarnings("unchecked")
+  protected Class<? extends Mapper<Text, FileStatus, Text, Text>> getMapperClass() {
     String className = srcCluster.getCopyMapperImpl();
     if (className == null || className.isEmpty()) {
       return CopyMapper.class;
     } else {
       try {
-        return (Class<? extends Mapper>) Class.forName(className);
+        return (Class<? extends Mapper<Text, FileStatus, Text, Text>>) Class
+            .forName(className);
       } catch (ClassNotFoundException e) {
         throw new IllegalArgumentException("Copy mapper Impl " + className
             + "is not found in class path");

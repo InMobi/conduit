@@ -44,6 +44,7 @@ import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.tools.util.HadoopCompat;
 import org.apache.hadoop.util.StringUtils;
+
 import com.inmobi.databus.DatabusConstants;
 
 /**
@@ -83,6 +84,10 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
   private Path targetWorkPath = null;
   private long startEpoch;
   private long totalBytesCopied = 0;
+  private static final String AUDIT_ENABLED_KEY = "audit.enabled";
+  public static final String DELIMITER = "#";
+  protected final static char TOPIC_SEPARATOR_FILENAME = '-';
+
 
   @Override
   public void setup(Context context) throws IOException, InterruptedException {
@@ -253,12 +258,12 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
             fileAttributes, received);
         // generate audit counters
         if (received != null) {
-
           for (Entry<Long, Long> entry : received.entrySet()) {
             String counterName = getCounterName(streamName,
                 sourcePath.getName(), entry.getKey());
-            context.getCounter(DatabusConstants.AUDIT_COUNTER_GROUP,
-                counterName).increment(entry.getValue());
+            context.write(new Text(counterName), new Text(entry.getValue()
+                .toString()));
+
           }
         }
       }
