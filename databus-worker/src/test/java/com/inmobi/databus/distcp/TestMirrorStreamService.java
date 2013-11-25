@@ -101,7 +101,7 @@ public class TestMirrorStreamService extends MirrorStreamService
           fs.mkdirs(nextPath);
         }
       }
-      // Copy input format src jar to FS
+      // Copy AuditUtil src jar to FS
       String auditSrcJar = FileUtil.findContainingJar(
           com.inmobi.messaging.util.AuditUtil.class);
       fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);

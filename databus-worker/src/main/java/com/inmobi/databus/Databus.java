@@ -243,7 +243,7 @@ public class Databus implements Service, DatabusConstants {
     if (!clusterFS.exists(jarsPath)) {
       clusterFS.mkdirs(jarsPath);
     }
-    // copy inputFormat source jar into /databus/system/tmp/jars path
+    // copy AuditUtil source jar into /databus/system/tmp/jars path
     Path AuditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
     if (!clusterFS.exists(AuditUtilJarDestPath)) {
       clusterFS.copyFromLocalFile(new Path(auditUtilSrcJar), AuditUtilJarDestPath);

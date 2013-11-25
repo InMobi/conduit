@@ -127,7 +127,7 @@ public class TestMergedStreamService extends MergedStreamService
             + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
         fs.mkdirs(new Path(dummycommitpath));
       }
-      // Copy input format src jar to FS
+      // Copy AuditUtil src jar to FS
       String auditSrcJar = FileUtil.findContainingJar(
           com.inmobi.messaging.util.AuditUtil.class);
       fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
