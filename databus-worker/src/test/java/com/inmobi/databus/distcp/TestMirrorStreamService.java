@@ -23,14 +23,17 @@ import org.testng.Assert;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.Databus;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
 import com.inmobi.messaging.publisher.MockInMemoryPublisher;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -48,11 +51,12 @@ public class TestMirrorStreamService extends MirrorStreamService
   
   public TestMirrorStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      Set<String> streamsToProcess,
-      MessagePublisher publisher) throws Exception {
+      Set<String> streamsToProcess) throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, publisher);
+        streamsToProcess);
+    MessagePublisher publisher = MessagePublisherFactory.create();
+    Databus.setPublisher(publisher);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -97,6 +101,10 @@ public class TestMirrorStreamService extends MirrorStreamService
           fs.mkdirs(nextPath);
         }
       }
+      // Copy AuditUtil src jar to FS
+      String auditSrcJar = FileUtil.findContainingJar(
+          com.inmobi.messaging.util.AuditUtil.class);
+      fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);
@@ -141,7 +149,7 @@ public class TestMirrorStreamService extends MirrorStreamService
         }
       }
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;
@@ -153,7 +161,12 @@ public class TestMirrorStreamService extends MirrorStreamService
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
-      Assert.assertEquals(auditReceived, totalFileProcessedInRun);
+      /*
+       * Number of counters for each file is 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file.
+       * Counter name is func(streamname, filename, timestamp)
+       */
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);
@@ -177,6 +190,17 @@ public class TestMirrorStreamService extends MirrorStreamService
   public void runPostExecute() throws Exception {
     postExecute();
   }
+
+
+  public void testRequalification() throws Exception {
+    Path p = new Path("hdfs://xxxx/abc/abc");
+    String readUrl = srcCluster.getReadUrl();
+    Path expectedPath = new Path(readUrl, "/abc/abc");
+    Path path = this.fullyQualifyCheckPointWithReadURL(p, srcCluster);
+    LOG.info("Expected Requalified path is " + expectedPath);
+    Assert.assertEquals(expectedPath,path);
+  }
+
 
   @Override
   public Cluster getCluster() {

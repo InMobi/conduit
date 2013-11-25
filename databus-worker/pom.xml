@@ -5,7 +5,7 @@
   <parent>
     <artifactId>databus-parent</artifactId>
     <groupId>com.inmobi.databus</groupId>
-    <version>2.0.3-SNAPSHOT</version>
+    <version>2.0.5-SNAPSHOT</version>
 
   </parent>
 
@@ -152,15 +152,16 @@
       <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
-      <version>${messaging-client-version}</version>
       <type>jar</type>
     </dependency>
-         <dependency>
+    <dependency>
+      <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-scribe</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
-      <version>${messaging-client-version}</version>
       <type>test-jar</type>
-      <scope>test</scope>
     </dependency>
     <dependency>
     <groupId>com.inmobi.databus</groupId>

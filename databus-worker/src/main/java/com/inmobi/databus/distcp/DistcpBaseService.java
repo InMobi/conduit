@@ -31,11 +31,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
-import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptions;
-import org.apache.hadoop.tools.mapred.CopyMapper;
 
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
@@ -44,7 +41,6 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.FileUtil;
-import com.inmobi.messaging.publisher.MessagePublisher;
 
 
 public abstract class DistcpBaseService extends AbstractService {
@@ -54,30 +50,34 @@ public abstract class DistcpBaseService extends AbstractService {
   protected final Cluster currentCluster;
   private final FileSystem srcFs;
   private final FileSystem destFs;
-  protected static final int DISTCP_SUCCESS = DistCpConstants.SUCCESS;
   protected final CheckpointProvider provider;
   protected Map<String, Path> checkPointPaths = new HashMap<String, Path>();
   private static final int DEFAULT_NUM_DIR_PER_DISTCP_STREAM = 30;
 
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService.class);
   private final int numOfDirPerDistcpPerStream;
+  protected final Path jarsPath;
+  protected final Path auditUtilJarDestPath;
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publisher)
-      throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess)
+          throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess,publisher);
+        config, streamsToProcess);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
       this.currentCluster = currentCluster;
     else
       this.currentCluster = destCluster;
+    //always return the HDFS read for the src cluster
     srcFs = FileSystem.get(new URI(srcCluster.getReadUrl()),
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
+    Path tmpPath = new Path(destCluster.getTmpPath(), getName());
+    this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     this.provider = provider;
     String tmp;
     if ((tmp = System.getProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM)) != null) {
@@ -85,6 +85,8 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
     } else
       numOfDirPerDistcpPerStream = DEFAULT_NUM_DIR_PER_DISTCP_STREAM;
 
+    jarsPath = new Path(destCluster.getTmpPath(), "jars");
+    auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
   }
 
   protected Cluster getSrcCluster() {
@@ -107,20 +109,22 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
 
   protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
-      throws Exception {
+          throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
+    conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
+        System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
     conf.set("mapred.job.name", serviceName);
-    
+    conf.set("tmpjars", auditUtilJarDestPath.toString());
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
     DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
+    options.setOutPutDirectory(tmpCounterOutputPath);
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
-      Job job = distCp.execute();
-      counterGrp = job.getCounters().getGroup(CopyMapper.COUNTER_GROUP);
+      distCp.execute();
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;
@@ -136,7 +140,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
    * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
-  
+
   /*
    * @return the target path where distcp will copy paths from source cluster 
    */
@@ -158,7 +162,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
 
   /*
    * Return a map of destination path,source path file status Since the map uses
-   * destination path as the key,no conflicting duplicates paths would not be
+   * destination path as the key,no conflicting duplicates paths would be
    * passed on to distcp
    * 
    * @return
@@ -179,8 +183,10 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
         // creating a path object from empty string throws exception;hence
         // checking for it
         if (!checkPointValue.trim().equals("")) {
-        lastCheckPointPath = new Path(checkPointValue);
+          lastCheckPointPath = new Path(checkPointValue);
         }
+        lastCheckPointPath = fullyQualifyCheckPointWithReadURL
+          (lastCheckPointPath, srcCluster);
         if (lastCheckPointPath == null
             || !getSrcFs().exists(lastCheckPointPath)) {
           LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
@@ -261,6 +267,32 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
     return result;
   }
 
+  /**
+   * Method to qualify the checkpoint path based on the readurl configured
+   * for the source cluster. The readurl of the cluster can change and the
+   * checkpoint paths should be re-qualified to the new source cluster read
+   * path.
+   *
+   * @param lastCheckPointPath path which can be null read from checkpoint
+   *                           file.
+   * @param srcCluster the cluster for which checkpoint file which should be
+   *                   re-qualified.
+   * @return path which is re-qualified.
+   */
+  protected Path fullyQualifyCheckPointWithReadURL(Path lastCheckPointPath,
+                                           Cluster srcCluster) {
+    //if checkpoint value was empty or null just fall thro' let the service
+    // determine the new path.
+    if(lastCheckPointPath == null) {
+      return null;
+    }
+    String readUrl = srcCluster.getReadUrl();
+    URI checkpointURI = lastCheckPointPath.toUri();
+    String unQualifiedPathStr = checkpointURI.getPath();
+    Path newCheckPointPath = new Path(readUrl,unQualifiedPathStr);
+    return newCheckPointPath;
+  }
+
   protected abstract String getFinalDestinationPath(FileStatus srcPath);
 
   protected String getCheckPointKey(String stream) {
@@ -268,7 +300,7 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
         srcCluster.getName());
   }
 
- 
+
 
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
@@ -294,18 +326,18 @@ CheckpointProvider provider, Set<String> streamsToProcess,MessagePublisher publi
       // method was called
       if (stats != null) {
         if (stats.length == 0) {
-        results.add(fileStatus);
-        LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
-      }
-      for (FileStatus stat : stats) {
-        createListing(fs, stat, results);
-      }
+          results.add(fileStatus);
+          LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
+        }
+        for (FileStatus stat : stats) {
+          createListing(fs, stat, results);
+        }
       }
     } else {
       LOG.debug("createListing :: Adding [" + fileStatus.getPath() + "]");
       results.add(fileStatus);
     }
-}
+  }
 
   /*
    * Find the topic name from path of format

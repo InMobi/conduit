@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public abstract class AuditDBService implements Runnable {
-  private Thread thread;
+  protected Thread thread;
   private static final Log LOG = LogFactory.getLog(AuditDBService.class);
 
   @Override

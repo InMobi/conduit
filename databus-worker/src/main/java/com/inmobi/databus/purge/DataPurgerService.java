@@ -59,7 +59,7 @@ public class DataPurgerService extends AbstractService {
   public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
       throws Exception {
     super(DataPurgerService.class.getName(), databusConfig, 60000 * 60, null,
-        new HashSet<String>(), null);
+        new HashSet<String>());
     this.cluster = cluster;
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
@@ -151,10 +151,6 @@ public class DataPurgerService extends AbstractService {
     if (retentionInHours == null)
       return getDefaultStreamRetentionInHours();
     return retentionInHours;
-  }
-
-  private long getMsecInDay() {
-    return 1000 * 60 * 60 * 24; // 1 day
   }
 
   @Override
@@ -364,16 +360,15 @@ public class DataPurgerService extends AbstractService {
     return files;
   }
 
-
   @Override
   protected String getTier() {
-    // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException(" requested method is not" +
+        " implemented in purger service");
   }
 
   @Override
   protected String getTopicNameFromDestnPath(Path destnPath) {
-    // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException(" requested method is not" +
+        " implemented in purger service");
   }
 }

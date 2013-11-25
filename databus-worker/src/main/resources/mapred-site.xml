@@ -6,4 +6,8 @@
   <name>mapred.max.split.size</name>
   <value>2048</value>
 </property>
+<property>
+    <name>mapreduce.job.counters.counter.name.max</name>
+    <value>256</value>
+</property>
 </configuration>

@@ -68,6 +68,7 @@ public class DistCpOptions {
 
   private Path sourceFileListing;
   private List<Path> sourcePaths;
+  private Path outputDir;
 
   private Path targetPath;
 
@@ -109,8 +110,11 @@ public class DistCpOptions {
 
   /**
    * Constructor, to initialize source/target paths.
-   * @param sourceFileListing: File containing list of source paths
-   * @param targetPath: Destination path for the dist-copy.
+   * 
+   * @param sourceFileListing
+   *          : File containing list of source paths
+   * @param targetPath
+   *          : Destination path for the dist-copy.
    */
   public DistCpOptions(Path sourceFileListing, Path targetPath) {
     assert sourceFileListing != null : "Invalid source paths";
@@ -433,9 +437,9 @@ public class DistCpOptions {
   }
 
   /**
-   * File path (hdfs:// or file://) that contains the list of actual
-   * files to copy
-   *
+   * File path (hdfs:// or file://) that contains the list of actual files to
+   * copy
+   * 
    * @return - Source listing file path
    */
   public Path getSourceFileListing() {
@@ -456,6 +460,14 @@ public class DistCpOptions {
    */
   public Path getTargetPath() {
     return targetPath;
+  }
+
+  public void setOutPutDirectory(Path outputDir) {
+    this.outputDir = outputDir;
+  }
+
+  public Path getOutPutDirectory() {
+    return outputDir;
   }
 
   public void validate(DistCpOptionSwitch option, boolean value) {
@@ -534,7 +546,7 @@ public class DistCpOptions {
         ", maxMaps=" + maxMaps +
         ", sslConfigurationFile='" + sslConfigurationFile + '\'' +
         ", copyStrategy='" + copyStrategy + '\'' +
-        ", sourceFileListing=" + sourceFileListing +
+ ", sourceFileListing=" + sourceFileListing +
         ", sourcePaths=" + sourcePaths +
         ", targetPath=" + targetPath +
         '}';

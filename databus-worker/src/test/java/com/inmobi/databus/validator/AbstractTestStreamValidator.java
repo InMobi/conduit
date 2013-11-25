@@ -21,6 +21,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
 
 public class AbstractTestStreamValidator {
@@ -28,6 +29,8 @@ public class AbstractTestStreamValidator {
   protected static final NumberFormat idFormat = NumberFormat.getInstance();
   protected List<Path> missingPaths = new ArrayList<Path>();
   protected List<Path> duplicateFiles = new ArrayList<Path>();
+  protected Path auditUtilJarDestPath;
+  protected Path jarsPath;
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
@@ -39,6 +42,7 @@ public class AbstractTestStreamValidator {
   }
 
   protected DatabusConfig setup(String configFile) throws Exception {
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     DatabusConfigParser configParser;
     DatabusConfig config = null;
     configParser = new DatabusConfigParser(configFile);

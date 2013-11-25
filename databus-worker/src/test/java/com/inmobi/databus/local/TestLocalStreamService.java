@@ -33,6 +33,7 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.Databus;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
@@ -40,6 +41,7 @@ import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
 import com.inmobi.messaging.publisher.MockInMemoryPublisher;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -84,6 +86,13 @@ public class TestLocalStreamService extends LocalStreamService implements
       LOG.debug("Creating Test Data with filename [" + filesList.get(j) + "]");
       FSDataOutputStream streamout = fs.create(path);
       String content = "Creating Test data for teststream";
+      /*
+       * Here we are writing 3 messages to a file. Two messages were generated
+       *  with same timestamp and genearating the 3rd message with a diff timestamp
+       * such that it falls in another window as default window period is 60 sec.
+       * So, we will be having two counters for each file.
+       * CounterName is func(streamname, filename, timestamp)
+       */
       Message msg = new Message(content.getBytes());
       long currentTimestamp = new Date().getTime();
       AuditUtil.attachHeaders(msg, currentTimestamp);
@@ -93,8 +102,15 @@ public class TestLocalStreamService extends LocalStreamService implements
       // streamout
       // .writeBytes("AavN7wAAAUBPSdyVAAAEsAsAAQAAAA93ZWIxMDAyLmFkcy51YTIKAAIAAAFAT0nckQwAAwwAAQoAAU9J3JEBQByzCgAC1twAJZCWTZoADAADCAABAAABzwYAAgAMCAADAABxmAgABAAAm2kADAAECAABAAB5QAgAAgAAAAYGAAMABAsABAAAAAxOb2tpYTUxMzBjLTIABgAFAAEGAAYAAQgABwAAAAEKAAgAAAAAAAIp3AgACQAAAAEMAAsNAAQLCwAAAAACAAUADQAHCwsAAAAAAAYADAADDAAPCgABAAAAAAACKdwLAAIAAAAgNDAyOGNiZmYzYTZlYWY1NzAxM2E4OTA0MmZkYjAxY2UIAAMAAAABAA0AEAsLAAAAAQAAAAp1LWxvY2F0aW9uAAAAAlBLDQARCwsAAAACAAAAD3gtZm9yd2FyZGVkLWZvcgAAABk0Mi44My44Ni4xOSwgMTQxLjAuMTAuMjA3AAAAFHgtb3BlcmFtaW5pLXBob25lLXVhAAAADE5va2lhNTEzMGMtMgsAEgAAABZwci1TUEVDLUNUQVRBLTIwMTMwMTExDAATCAABAAAAAwgAAgAAAAMLAAMAAAACdWsLAAQAAAACdWsCAAUACwAGAAAACHNfc21hYXRvAAsAFAAAAAs0Mi44My44Ni4xOQsAFQAAABdodHRwOi8vd3d3LmFkaXF1aXR5LmNvbQgAFgAAAAULABoAAAAEYXhtbAsAGwAAACA0MDI4Y2JmZjNhNmVhZjU3MDEzYTg5MDQyZmRiMDFjZQ0AHQsLAAAAAQAAAAdyZWYtdGFnAAAACDY1ODEyNTIwCwAeAAAADE5va2lhNTEzMGMtMg0AIAsLAAAAAgAAAA5kLWxvY2FsaXphdGlvbgAAAAVlbl9QSwAAAAlkLW5ldHR5cGUAAAAHY2FycmllcgAPAAQMAAAAAAYABQABAgAGAAsABwAAAAJOTw8ACAsAAAAACwALAAAACzQyLjgzLjg2LjE5BgAMAAEGAA0AAAsADwAAACMzMy42NjY5OTk4MTY4OTQ1Myw3My4xMzMwMDMyMzQ4NjMyOA8AEQoAAAAACwASAAAADDMzLjcxLDczLjA4NggAFgAAChcEABc/hHrhR64UewwAGg8AAQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
       streamout.write(encodeMsg);
+      streamout.write("\n".getBytes());
+      streamout.write(encodeMsg);
+      streamout.write("\n".getBytes());
+      // Genearate a msg with different timestamp.  Default window period is 60sec
+      AuditUtil.attachHeaders(msg, currentTimestamp + 60001);
+      encodeMsg = Base64.encodeBase64(msg.getData().array());
+      streamout.write(encodeMsg);
       streamout.close();
-      
+
       Assert.assertTrue(fs.exists(path));
     }
     
@@ -169,11 +185,15 @@ public class TestLocalStreamService extends LocalStreamService implements
             + this.getName() + File.separator;
         tmpFilesList = createScribeData(fs, this.getName(), pathName, 1);
       }
-      
+
       // Copy input format src jar to FS
-      String inputFormatSrcJar = FileUtil.findContainingJar(
-          org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+      String inputFormatSrcJar = FileUtil
+          .findContainingJar(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
       fs.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
+      // Copy AuditUtil src jar to FS
+      String auditSrcJar = FileUtil.findContainingJar(
+          com.inmobi.messaging.util.AuditUtil.class);
+      fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
     } catch (Exception e) {
       e.printStackTrace();
       throw new Error("Error in LocalStreamService Test PreExecute");
@@ -183,7 +203,7 @@ public class TestLocalStreamService extends LocalStreamService implements
     }
     todaysdate = new Date();
   }
-  
+
   @Override
   protected void postExecute() throws Exception {
     try {
@@ -324,9 +344,8 @@ public class TestLocalStreamService extends LocalStreamService implements
         fs.mkdirs(nextPath);
       }
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
-
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;
@@ -338,10 +357,12 @@ public class TestLocalStreamService extends LocalStreamService implements
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
-      // audit won't be generated for last file as last file is not
-      // processed by local stream
-
-      Assert.assertEquals(auditReceived, totalFileProcessedInRun);
+      /* audit won't be generated for last file as last file is not
+       * processed by local stream
+       * Number of counters for each file = 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file
+       */
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       throw new Error("Error in LocalStreamService Test PostExecute");
@@ -355,12 +376,13 @@ public class TestLocalStreamService extends LocalStreamService implements
   public TestLocalStreamService(DatabusConfig config,
                                 Cluster srcCluster, Cluster currentCluster,
  CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
       throws IOException {
-    super(config, srcCluster, currentCluster, provider, streamsToProcess,
-        publisher);
+    super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.srcCluster = srcCluster;
     this.provider = provider;
+    MessagePublisher publisher = MessagePublisherFactory.create();
+    Databus.setPublisher(publisher);
     try {
       this.fs = FileSystem.getLocal(new Configuration());
     } catch (IOException e) {

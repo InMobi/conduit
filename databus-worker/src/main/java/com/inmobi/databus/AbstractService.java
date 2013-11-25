@@ -15,30 +15,31 @@ package com.inmobi.databus;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.CounterGroup;
-import org.apache.thrift.TException;
+import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.local.CopyMapper;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
@@ -55,32 +56,19 @@ public abstract class AbstractService implements Service, Runnable {
   protected Thread thread;
   protected volatile boolean stopped = false;
   protected CheckpointProvider checkpointProvider = null;
-  protected String hostname;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
-  protected final MessagePublisher publisher;
-  protected final static char TOPIC_SEPARATOR_FILENAME = '-';
-  protected CounterGroup counterGrp;
   private final TSerializer serializer = new TSerializer();
   private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
   private Map<String, Long> prevRuntimeForCategory = new HashMap<String, Long>();
   protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
       "yyyy/MM/dd, hh:mm");
-  private final static long MILLISECONDS_IN_HOUR = 60 * MILLISECONDS_IN_MINUTE;
   protected final Set<String> streamsToProcess;
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
+  protected Path tmpCounterOutputPath;
 
-
-  public AbstractService(String name, DatabusConfig config,
-      Set<String> streamsToProcess,MessagePublisher publisher) {
-    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, publisher);
-  }
-
-  public AbstractService(String name, DatabusConfig config,
-      long runIntervalInMsec, Set<String> streamsToProcess,MessagePublisher publisher) {
-    this.config = config;
-    this.name = name;
-    this.runIntervalInMsec = runIntervalInMsec;
+  protected static String hostname;
+  static {
     try {
       hostname = InetAddress.getLocalHost().getHostName();
     } catch (UnknownHostException e) {
@@ -88,7 +76,19 @@ public abstract class AbstractService implements Service, Runnable {
           + " won't contain hostname");
       hostname = "";
     }
-    this.publisher = publisher;
+  }
+
+
+  public AbstractService(String name, DatabusConfig config,
+      Set<String> streamsToProcess) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
+  }
+
+  public AbstractService(String name, DatabusConfig config,
+      long runIntervalInMsec, Set<String> streamsToProcess) {
+    this.config = config;
+    this.name = name;
+    this.runIntervalInMsec = runIntervalInMsec;
     String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
     if (retries == null) {
@@ -100,8 +100,8 @@ public abstract class AbstractService implements Service, Runnable {
 
   public AbstractService(String name, DatabusConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher) {
-    this(name, config, runIntervalInMsec, streamsToProcess,publisher);
+      Set<String> streamsToProcess) {
+    this(name, config, runIntervalInMsec, streamsToProcess);
     this.checkpointProvider = provider;
   }
 
@@ -254,7 +254,6 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected void publishMissingPaths(FileSystem fs, String destDir,
 	    long commitTime, String categoryName) throws Exception {
-    Set<Path> missingDirectories = new TreeSet<Path>();
 		Long prevRuntime = new Long(-1);
 		if (!prevRuntimeForCategory.containsKey(categoryName)) {
 			LOG.debug("Calculating Previous Runtime from Directory Listing");
@@ -461,24 +460,62 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
-  protected Table<String, Long, Long> parseCounters(CounterGroup counterGrp) {
-    if (counterGrp == null) {
-      LOG.error("Counter Group is null");
+  private List<Path> listPartFiles(Path path, FileSystem fs) {
+    List<Path> matches = new LinkedList<Path>();
+    try {
+      FileStatus[] statuses = fs.listStatus(path, new PathFilter() {
+        public boolean accept(Path path) {
+          return path.toString().contains("part");
+        }
+      });
+      for (FileStatus status : statuses) {
+        matches.add(status.getPath());
+      }
+    } catch (IOException e) {
+      LOG.error(e.getMessage(), e);
+    }
+    return matches;
+  }
+
+  protected Table<String, Long, Long> parseCountersFile(FileSystem fs) {
+    if (tmpCounterOutputPath == null) {
+      LOG.error("Path to Counters file is null");
+      return null;
+    }
+    List<Path> partFiles = listPartFiles(tmpCounterOutputPath, fs);
+    if (partFiles == null || partFiles.size() == 0) {
+      LOG.warn("No counters files generated by mapred job");
       return null;
     }
     Table<String, Long, Long> result = HashBasedTable.create();
-
-    for (Counter counter : counterGrp) {
-      String counterName = counter.getName();
-      String tmp[] = counterName.split(CopyMapper.DELIMITER);
-      if (tmp.length < 3) {
-        LOG.error("Malformed counter name,skipping " + counterName);
+    for (Path filePath : partFiles) {
+      Scanner scanner;
+      try {
+        scanner = new Scanner(fs.open(filePath));
+      } catch (IOException e1) {
+        LOG.error("Error while opening file " + filePath + "Skipping");
         continue;
       }
-      String streamFileNameCombo = tmp[0] + CopyMapper.DELIMITER + tmp[1];
-      Long publishTimeWindow = Long.parseLong(tmp[2]);
-      Long numOfMsgs = counter.getValue();
-      result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
+      while (scanner.hasNext()) {
+        String counterName = null;
+        try {
+          counterName = scanner.next();
+          String tmp[] = counterName.split(CopyMapper.DELIMITER);
+          if (tmp.length < 3) {
+            LOG.error("Malformed counter name,skipping " + counterName);
+            continue;
+          }
+          String streamFileNameCombo = tmp[0] + CopyMapper.DELIMITER + tmp[1];
+          Long publishTimeWindow = Long.parseLong(tmp[2]);
+          Long numOfMsgs = scanner.nextLong();
+          result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
+        } catch (Exception e) {
+          LOG.error("Counters file has malformed line with counter name ="
+              + counterName + "..skipping the line", e);
+        }
+      }
+
+
     }
     return result;
 
@@ -495,47 +532,48 @@ public abstract class AbstractService implements Service, Runnable {
 
   abstract protected String getTopicNameFromDestnPath(Path destnPath);
 
-
   abstract protected String getTier();
 
-  protected void generateAndPublishAudit(String streamName, String fileName,
-      Table<String, Long, Long> parsedCounters) {
-    if (publisher == null) {
+  protected void generateAuditMsgs(String streamName, String fileName,
+      Table<String, Long, Long> parsedCounters, List<AuditMessage> auditMsgList) {
+    if (Databus.getPublisher() == null) {
       LOG.info("Not generating audit messages as publisher is null");
       return;
     }
     if (parsedCounters == null) {
-      LOG.error("Not generating audit message as parsed counters are null");
+      LOG.error("Not generating audit message for stream " +  streamName +
+          " as parsed counters are null");
       return;
     }
     if (streamName.equals(AuditUtil.AUDIT_STREAM_TOPIC_NAME)) {
-      LOG.debug("Not generation audit for audit stream");
+      LOG.debug("Not generating audit for audit stream");
       return;
     }
-    String streamFileNameCombo = streamName + CopyMapper.DELIMITER + fileName;
+    String streamFileNameCombo = streamName + DatabusConstants.
+        AUDIT_COUNTER_NAME_DELIMITER + fileName;
     Map<Long, Long> received = parsedCounters.row(streamFileNameCombo);
     if (!received.isEmpty()) {
       // create audit message
       AuditMessage auditMsg = createAuditMessage(streamName, received);
-      if (auditMsg == null)
-        return;
-      publishAuditMessage(auditMsg);
+      auditMsgList.add(auditMsg);
     } else {
-      LOG.info("Not publishing audit packet as counters are empty");
+      LOG.info("Not publishing audit packet for stream " + streamName +
+          " as counters are empty");
     }
   }
 
-  private void publishAuditMessage(AuditMessage auditMsg) {
-    try {
-      LOG.debug("Publishing audit message from local stream service "
-          + auditMsg);
-      publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
-          ByteBuffer.wrap(serializer.serialize(auditMsg))));
-    } catch (TException e) {
-      LOG.error("Publishing of audit message failed", e);
+  protected void publishAuditMessages(List<AuditMessage> auditMsgList){
+    for (AuditMessage auditMsg : auditMsgList) {
+      try {
+        LOG.debug("Publishing audit message from local stream service "
+            + auditMsg);
+        MessagePublisher publisher = Databus.getPublisher();
+        publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME,
+            new Message(ByteBuffer.wrap(serializer.serialize(auditMsg))));
+      } catch (Exception e) {
+        LOG.error("Publishing of audit message " + auditMsg.toString() +
+            " failed ", e);
+      }
     }
   }
 } 
-
-
-

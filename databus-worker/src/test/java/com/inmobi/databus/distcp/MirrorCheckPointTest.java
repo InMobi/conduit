@@ -31,16 +31,20 @@ import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.DestinationStream;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 
 public class MirrorCheckPointTest {
 
   private static final Log LOG = LogFactory.getLog(MirrorCheckPointTest.class);
   private static final NumberFormat idFormat = NumberFormat.getInstance();
+  private Path auditUtilJarDestPath;
+  private Path jarsPath;
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
@@ -116,6 +120,7 @@ public class MirrorCheckPointTest {
   }
 
   private DatabusConfig setup(String configFile) throws Exception {
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     DatabusConfigParser configParser;
     DatabusConfig config = null;
     configParser = new DatabusConfigParser(configFile);
@@ -130,11 +135,18 @@ public class MirrorCheckPointTest {
 
   private Map<String, List<String>> launchMirrorServices(DatabusConfig config)
       throws Exception {
+    FileSystem fs = FileSystem.getLocal(new Configuration());
+    String auditSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
     Map<String, List<String>> srcRemoteMirrorMap = new HashMap<String, List<String>>();
     Map<String, Set<String>> mirrorSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
     for (Cluster cluster : config.getClusters().values()) {
       for(DestinationStream stream:cluster.getDestinationStreams().values()){
         if(!stream.isPrimary()){
+          jarsPath = new Path(cluster.getTmpPath(), "jars");
+          auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+          // Copy AuditUtil src jar to FS
+          fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
          Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
          if(remote!=null){
            if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
@@ -151,7 +163,7 @@ public class MirrorCheckPointTest {
         Cluster srcCluster = config.getClusters().get(remote);
         MirrorStreamService service = new TestMirrorStreamService(config,
             srcCluster, cluster, cluster,
-            mirrorSrcClusterToStreamsMap.get(remote), null);
+            mirrorSrcClusterToStreamsMap.get(remote));
         service.execute();
         if(srcRemoteMirrorMap.get(remote)==null){
           List<String> tmp = new ArrayList<String>();

@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,10 +27,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
@@ -42,13 +48,17 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ClusterTest;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.DestinationStream;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.TestMiniClusterUtil;
 import com.inmobi.databus.local.LocalStreamService.CollectorPathFilter;
+import com.inmobi.databus.utils.FileUtil;
+import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MessagePublisherFactory;
+import com.inmobi.messaging.util.AuditUtil;
 
 public class LocalStreamServiceTest extends TestMiniClusterUtil {
   private static Logger LOG = Logger.getLogger(LocalStreamServiceTest.class);
@@ -65,6 +75,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     // clean up the test data if any thing is left in the previous runs
     cleanup();
     super.setup(2, 6, 1);
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     createExpectedOutput();
   }
 
@@ -204,7 +215,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       streamsToProcess.add("stream2");
       TestLocalStreamService service = new TestLocalStreamService(null,
           cluster, null, new FSCheckpointProvider(cluster.getRootDir()
-              + "/databus-checkpoint"), streamsToProcess, null);
+              + "/databus-checkpoint"), streamsToProcess);
       service.createListing(fs, dataDir, results, trashSet, checkpointPaths);
 
       Set<String> tmpResults = new LinkedHashSet<String>();
@@ -361,7 +372,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     TestLocalStreamService service = new TestLocalStreamService(
         databusConfig, cluster, null, new FSCheckpointProvider(
 cluster.getCheckpointDir()),
-        streamsToProcess, null);
+        streamsToProcess);
 
     Map<Path, Path> trashCommitPaths = service
         .populateTrashCommitPaths(trashSet);
@@ -438,7 +449,7 @@ cluster.getCheckpointDir()),
       cluster.getHadoopConf().set("mapred.job.tracker",
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-          cluster, null, new NullCheckPointProvider(), streamsToProcess, null);
+          cluster, null, new NullCheckPointProvider(), streamsToProcess);
       services.add(service);
     }
 
@@ -480,17 +491,39 @@ cluster.getCheckpointDir()),
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster, new NullCheckPointProvider(),
-          streamsToProcess, null);
+          streamsToProcess);
       services.add(service);
     }
 
     for (TestLocalStreamService service : services) {
+      service.preExecute();
       if (currentClusterName != null)
         Assert.assertEquals(service.getCurrentCluster().getName(),
             currentClusterName);
       // creating a job with empty input path
       Path tmpJobInputPath = new Path("/tmp/job/input/path");
+      Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
+      Set<FileStatus> trashSet = new HashSet<FileStatus>();
+      // checkpointKey, CheckPointPath
+      Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
+      service.createMRInput(tmpJobInputPath, fileListing, trashSet,
+          checkpointPaths);
       Job testJobConf = service.createJob(tmpJobInputPath, 1000);
+      testJobConf.waitForCompletion(true);
+
+      CounterGroup counterGrp = testJobConf.getCounters().getGroup(
+          DatabusConstants.AUDIT_COUNTER_GROUP);
+      Assert.assertEquals(counterGrp.size(), number_files * 2);
+      Assert.assertEquals(counterGrp.getName(), "audit");
+      int totalSize = 0;
+      for (Counter counter : counterGrp) {
+        totalSize += counter.getValue();
+      }
+      /* sum of all the counter values must equal to total number of messages
+       * in all files. Here each file contains 3 messages.
+       * Total number of messages are (number_files * 3)
+       */
+      Assert.assertEquals(totalSize, number_files * 3);
       Assert.assertEquals(
           testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY), service
               .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
@@ -501,7 +534,10 @@ cluster.getCheckpointDir()),
         Assert.assertEquals(
             testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),
             testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY));
+      service.getFileSystem().delete(
+          new Path(service.getCluster().getRootDir()), true);
     }
+
   }
 
   private void testMapReduce(String fileName, int timesToRun) throws Exception {
@@ -510,7 +546,6 @@ cluster.getCheckpointDir()),
     DatabusConfig config = parser.getConfig();
     Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
-    MessagePublisher publisher = MessagePublisherFactory.create();
     Set<String> clustersToProcess = new HashSet<String>();
     Set<TestLocalStreamService> services = new HashSet<TestLocalStreamService>();
 
@@ -526,7 +561,7 @@ cluster.getCheckpointDir()),
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()),
-          streamsToProcess, publisher);
+          streamsToProcess);
       services.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
@@ -553,7 +588,48 @@ cluster.getCheckpointDir()),
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
     }
-
   }
 
+  @Test
+  public void testFileUtil() throws Exception {
+    String streamName = "test1";
+    Path rootDir = new Path("/tmp/localServiceTest/testcluster2/mergeservice");
+    Path dataDir = new Path(rootDir, "data/test1/testcluster2");
+    FileSystem fs = dataDir.getFileSystem(new Configuration());
+    fs.mkdirs(dataDir);
+    String filenameStr = new String(streamName + "-" +
+        TestLocalStreamService.getDateAsYYYYMMDDHHmm(new Date()) + "_00001");
+    Path src = new Path(dataDir, filenameStr);
+
+    LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
+    FSDataOutputStream streamout = fs.create(src);
+    String content = "Creating Test data for teststream";
+    Message msg = new Message(content.getBytes());
+    long currentTimestamp = new Date().getTime();
+    AuditUtil.attachHeaders(msg, currentTimestamp);
+    byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
+    streamout.write(encodeMsg);
+    streamout.write("\n".getBytes());
+    streamout.write(encodeMsg);
+    streamout.write("\n".getBytes());
+    long nextMinuteTimeStamp = currentTimestamp + 60000;
+    // Genearate a msg with different timestamp.  Default window period is 60sec
+    AuditUtil.attachHeaders(msg, nextMinuteTimeStamp);
+    encodeMsg = Base64.encodeBase64(msg.getData().array());
+    streamout.write(encodeMsg);
+    streamout.close();
+    Map<Long, Long> received = new HashMap<Long, Long>();
+    Path target = new Path(new Path(rootDir,
+        "system/tmp/LocalStreamService_testcluster2_test1@/" +
+        "job_local_0001/attempt_local_0001_m_000000_0/"), filenameStr + ".gz");
+    FileUtil.gzip(src, target, new Configuration(), received);
+    Assert.assertEquals(2, received.size());
+    // current timestamp window = currentTimestamp - (currentTimestamp % 60000)
+    Assert.assertTrue(
+        2 == received.get(currentTimestamp - (currentTimestamp % 60000)));
+    // next timestamp window = nextMinuteTimeStamp - (nextMinuteTimeStamp %60000)
+    Assert.assertTrue(
+        1 == received.get(nextMinuteTimeStamp - (nextMinuteTimeStamp %60000)));
+    fs.delete(rootDir, true);
+  }
 }

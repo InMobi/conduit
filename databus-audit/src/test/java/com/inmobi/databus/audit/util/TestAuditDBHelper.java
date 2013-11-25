@@ -35,7 +35,7 @@ public class TestAuditDBHelper extends  AuditDBUtil {
 
   @Test(priority = 1)
   public void testUpdate() {
-    ClientConfig config = ClientConfig.loadFromClasspath(AuditStats.CONF_FILE);
+    ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     AuditDBHelper helper = new AuditDBHelper(config);
     String selectStmt = helper.getSelectStmtForUpdation();
     PreparedStatement selectStatement = null;
@@ -114,7 +114,7 @@ public class TestAuditDBHelper extends  AuditDBUtil {
     GroupBy groupBy = new GroupBy("TIER,HOSTNAME,CLUSTER");
     Filter filter = new Filter("hostname="+tuple1.getHostname());
     AuditDBHelper helper = new AuditDBHelper(
-        ClientConfig.loadFromClasspath(AuditStats.CONF_FILE));
+        ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE));
     Set<Tuple> tupleSet = helper.retrieve(toDate, fromDate, filter, groupBy);
     Assert.assertEquals(1, tupleSet.size());
     Iterator<Tuple> tupleSetIter = tupleSet.iterator();
@@ -153,7 +153,7 @@ public class TestAuditDBHelper extends  AuditDBUtil {
     GroupBy groupBy = new GroupBy("CLUSTER,TIER,HOSTNAME,TOPIC");
     Filter filter = new Filter("hostname="+tuple1.getHostname());
     AuditDBHelper helper = new AuditDBHelper(
-        ClientConfig.loadFromClasspath(AuditStats.CONF_FILE));
+        ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE));
     Set<Tuple> tupleSet = helper.retrieve(toDate, fromDate, filter, groupBy);
     Assert.assertEquals(2, tupleSet.size());
     Iterator<Tuple> tupleSetIter = tupleSet.iterator();

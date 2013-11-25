@@ -177,17 +177,11 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private long copyBytes(FileStatus sourceFileStatus, OutputStream outStream,
-                         int bufferSize, boolean mustCloseStream,
- Mapper.Context context,
+      int bufferSize, boolean mustCloseStream, Mapper.Context context,
       Map<Long, Long> received) throws IOException {
     Path source = sourceFileStatus.getPath();
     ThrottledInputStream inStream = null;
     long totalBytesRead = 0;
-    // GzipCodec gzipCodec = (GzipCodec) ReflectionUtils.newInstance(
-    // GzipCodec.class, new Configuration());
-    // Decompressor gzipDeCompressor = CodecPool.getDecompressor(gzipCodec);
-    // Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
-
     final CompressionCodec codec = compressionCodecs.getCodec(source);
     InputStream compressedIn = null;
     OutputStream commpressedOut = null;
@@ -203,9 +197,10 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       byte[] bytesRead = readLine(reader);
       while (bytesRead != null) {
         commpressedOut.write(bytesRead);
+        commpressedOut.write("\n".getBytes());
         updateContextStatus(totalBytesRead, context, sourceFileStatus);
-        byte[] decodedMsg = Base64.decodeBase64(bytesRead);
         if (received != null) {
+          byte[] decodedMsg = Base64.decodeBase64(bytesRead);
           incrementReceived(decodedMsg, received);
         }
         bytesRead = readLine(reader);
@@ -245,12 +240,13 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     long window = getWindow(timestamp);
     if (timestamp != -1) {
       if (received.containsKey(window)) {
-        received.put(window, received.get(timestamp) + 1);
+        received.put(window, received.get(window) + 1);
       } else {
         received.put(window, new Long(1));
       }
     }
   }
+
   private void updateContextStatus(long totalBytesRead, Mapper.Context context,
       FileStatus sourceFileStatus) {
     StringBuilder message = new StringBuilder(DistCpUtils.getFormatter()
