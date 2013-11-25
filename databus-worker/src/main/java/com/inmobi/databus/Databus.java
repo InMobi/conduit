@@ -51,7 +51,7 @@ public class Databus implements Service, DatabusConstants {
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
-  private MessagePublisher publisher;
+  private static volatile MessagePublisher publisher;
   private static int numStreamsMergeService = 5;
   private static int numStreamsMirrorService = 1;
   private static boolean isPurgerEnabled = true;
@@ -80,8 +80,12 @@ public class Databus implements Service, DatabusConstants {
     return config;
   }
 
-  public void setPublisher(MessagePublisher publisher) {
-    this.publisher = publisher;
+  public static void setPublisher(MessagePublisher publisher) {
+    Databus.publisher = publisher;
+  }
+
+  public static MessagePublisher getPublisher() {
+    return publisher;
   }
 
   protected List<AbstractService> init() throws Exception {
@@ -95,6 +99,11 @@ public class Databus implements Service, DatabusConstants {
         org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
     LOG.debug("Jar containing UniformSizeInputFormat [" + inputFormatSrcJar + "]");
 
+    // find the name of the jar containing AuditUtil class.
+    String auditUtilSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
+    LOG.debug("Jar containing AuditUtil [" + auditUtilSrcJar + "]");
+
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
@@ -103,7 +112,7 @@ public class Databus implements Service, DatabusConstants {
       if (cluster.getSourceStreams().size() > 0) {
         // copy input format jar from local to cluster FS
         copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
-
+        copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
         Iterator<String> iterator = cluster.getSourceStreams().iterator();
         Set<String> streamsToProcess = new HashSet<String>();
         while (iterator.hasNext()) {
@@ -112,7 +121,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,
-                streamsToProcess, publisher));
+                streamsToProcess));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -129,6 +138,8 @@ public class Databus implements Service, DatabusConstants {
         //from where it has to mirror mergedStreams
 
         if (cStream.isPrimary()) {
+          // copy messaging-client-core jar from local to cluster FS
+          copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
           for (String cName : config.getSourceStreams().get(cStream.getName())
               .getSourceClusters()) {
             mergedStreamRemoteClusters.add(cName);
@@ -142,6 +153,8 @@ public class Databus implements Service, DatabusConstants {
           }
         }
         if (!cStream.isPrimary()) {
+          // copy messaging-client-core jar from local to cluster FS
+          copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
           Cluster primaryCluster = config.getPrimaryClusterForDestinationStream(cStream.getName());
           if (primaryCluster != null) {
             mirroredRemoteClusters.add(primaryCluster.getName());
@@ -170,8 +183,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getMergedStreamService(config, config.getClusters()
-                .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher));
+                .get(remote), cluster, currentCluster, streamsToProcess));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -188,8 +200,7 @@ public class Databus implements Service, DatabusConstants {
           }
           if (streamsToProcess.size() > 0) {
             services.add(getMirrorStreamService(config, config.getClusters()
-                .get(remote), cluster, currentCluster, streamsToProcess,
-                publisher));
+                .get(remote), cluster, currentCluster, streamsToProcess));
             streamsToProcess = new HashSet<String>();
           }
         }
@@ -218,38 +229,52 @@ public class Databus implements Service, DatabusConstants {
       clusterFS.mkdirs(jarsPath);
     }
     // copy inputFormat source jar into /databus/system/tmp/jars path
-    Path inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
+    Path inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
     if (!clusterFS.exists(inputFormatJarDestPath)) {
       clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
     }
   }
 
+  private void copyAuditUtilJarToClusterFs(Cluster cluster,
+      String auditUtilSrcJar) throws IOException {
+    FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
+    // create jars path inside /databus/system/tmp path
+    Path jarsPath = new Path(cluster.getTmpPath(), "jars");
+    if (!clusterFS.exists(jarsPath)) {
+      clusterFS.mkdirs(jarsPath);
+    }
+    // copy AuditUtil source jar into /databus/system/tmp/jars path
+    Path AuditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+    if (!clusterFS.exists(AuditUtilJarDestPath)) {
+      clusterFS.copyFromLocalFile(new Path(auditUtilSrcJar), AuditUtilJarDestPath);
+    }
+  }
+
   protected LocalStreamService getLocalStreamService(DatabusConfig config,
-      Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess,
-      MessagePublisher publisher) throws IOException {
+      Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
+          throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
-        publisher);
+        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
 
   protected MergedStreamService getMergedStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String>  streamsToProcess, MessagePublisher publisher)
+      Set<String>  streamsToProcess)
           throws Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess,publisher);
+        streamsToProcess);
   }
 
   protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
           throws Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess, publisher);
+        streamsToProcess);
 
   }
 
@@ -322,7 +347,7 @@ public class Databus implements Service, DatabusConstants {
     return null;
   }
 
-  private static MessagePublisher getMessagePublisher(Properties prop)
+  private static MessagePublisher createMessagePublisher(Properties prop)
       throws IOException {
     String configFile = prop.getProperty(AUDIT_PUBLISHER_CONFIG_FILE);
     if (configFile != null) {
@@ -413,12 +438,6 @@ public class Databus implements Service, DatabusConstants {
       if (numRetries != null) {
         System.setProperty(NUM_RETRIES, numRetries);
       }
-      String auditProperty = prop.getProperty(AUDIT_ENABLED_KEY);
-      boolean auditEnable = true;
-      if (auditProperty != null && auditProperty.length() != 0) {
-         System.setProperty(AUDIT_ENABLED_KEY, auditProperty);
-         auditEnable = Boolean.parseBoolean(auditProperty);
-      }
 
       if (UserGroupInformation.isSecurityEnabled()) {
         LOG.info("Security enabled, trying kerberoes login principal ["
@@ -457,12 +476,20 @@ public class Databus implements Service, DatabusConstants {
       }
       final Databus databus = new Databus(config, clustersToProcess,
           currentCluster);
-      if (auditEnable) {
-        databus.setPublisher(getMessagePublisher(prop));
+
+      MessagePublisher msgPublisher = createMessagePublisher(prop);
+      if (msgPublisher != null) {
+        LOG.info("Audit feature is enabled for worker ");
+        System.setProperty(AUDIT_ENABLED_KEY, "true");
       } else {
-        // not creating publisher in case if audit is disabled
-        databus.setPublisher(null);
+        /*
+         * Disable the audit feature for worker in case if we are not able to create
+         * a publisher from a given publisher configuration file
+         */
+        System.setProperty(AUDIT_ENABLED_KEY, "false");
       }
+      databus.setPublisher(msgPublisher);
+
       Signal.handle(new Signal("TERM"), new SignalHandler() {
 
         @Override

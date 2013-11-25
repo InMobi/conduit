@@ -39,7 +39,6 @@ import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 import com.inmobi.databus.utils.FileUtil;
-import com.inmobi.messaging.publisher.MessagePublisher;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
  * (i)   1 Mirror Thread per src DatabusConfig.Cluster from where streams need to be mirrored on destCluster
@@ -53,9 +52,9 @@ public class MirrorStreamService extends DistcpBaseService {
 
   public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster,Cluster currentCluster,CheckpointProvider provider,
-      Set<String> streamsToProcess,MessagePublisher publisher) throws Exception {
+      Set<String> streamsToProcess) throws Exception {
     super(config, MirrorStreamService.class.getName(), srcCluster,
-        destinationCluster, currentCluster,provider,streamsToProcess, publisher);
+        destinationCluster, currentCluster,provider,streamsToProcess);
   }
 
   @Override

@@ -136,11 +136,6 @@ if [ -z $HADOOP_HOME ]; then
   exit 1
 fi
 
-if [ -z $HADOOP_DISTCP_HOME ]; then
-  echo "Please define HADOOP_DISCTP_HOME to point to distcp install folder.EG:: /usr/local/inmobi-distcp-0.8-cdh3"
-  exit 1
-fi
-
 #set classpath
 for f in $HADOOP_HOME/hadoop-*.jar;do
   if [[ "$f" != *tool* ]]; then
@@ -148,7 +143,6 @@ export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:$f
   fi
 done
 export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
-export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:`ls $HADOOP_DISTCP_HOME/*jar | tr "\n" :`;
 export DATABUS_CLASSPATH="${DATABUS_HOME}/lib/*:$DEV_CLASSPATH:$DATABUS_CLASSPATH"
 
 

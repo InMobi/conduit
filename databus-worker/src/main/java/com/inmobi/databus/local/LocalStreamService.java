@@ -55,7 +55,6 @@ import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.FileUtil;
-import com.inmobi.messaging.publisher.MessagePublisher;
 
 /*
  * Handles Local Streams for a Cluster
@@ -84,14 +83,15 @@ ConfigConstants {
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
+  final Path auditUtilJarDestPath;
 
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
           throws IOException {
-    super("LocalStreamService_" + srcCluster + "_"
-        + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider,streamsToProcess, publisher);
+    super("LocalStreamService_" + srcCluster + "_" +
+        getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
+        provider, streamsToProcess);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -102,8 +102,8 @@ ConfigConstants {
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
-    inputFormatJarDestPath = new Path(jarsPath, "hadoop-distcp-current.jar");
-
+    inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
+    auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
   }
 
   private void cleanUpTmp(FileSystem fs) throws Exception {
@@ -505,7 +505,8 @@ ConfigConstants {
     job.setJobName(jobName);
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
     // job.getConfiguration());
-    job.getConfiguration().set("tmpjars", inputFormatJarDestPath.toString());
+    job.getConfiguration().set(
+        "tmpjars", inputFormatJarDestPath.toString() + "," + auditUtilJarDestPath.toString());
     LOG.debug("Adding file [" + inputFormatJarDestPath
         + "] to distributed cache");
     job.setInputFormatClass(UniformSizeInputFormat.class);

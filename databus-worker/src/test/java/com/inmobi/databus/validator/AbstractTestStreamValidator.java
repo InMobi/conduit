@@ -29,6 +29,8 @@ public class AbstractTestStreamValidator {
   protected static final NumberFormat idFormat = NumberFormat.getInstance();
   protected List<Path> missingPaths = new ArrayList<Path>();
   protected List<Path> duplicateFiles = new ArrayList<Path>();
+  protected Path auditUtilJarDestPath;
+  protected Path jarsPath;
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);

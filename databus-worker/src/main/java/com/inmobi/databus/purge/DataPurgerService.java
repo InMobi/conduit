@@ -59,7 +59,7 @@ public class DataPurgerService extends AbstractService {
   public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
       throws Exception {
     super(DataPurgerService.class.getName(), databusConfig, 60000 * 60, null,
-        new HashSet<String>(), null);
+        new HashSet<String>());
     this.cluster = cluster;
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(

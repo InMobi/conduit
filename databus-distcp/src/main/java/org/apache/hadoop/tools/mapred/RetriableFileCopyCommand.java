@@ -177,8 +177,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private long copyBytes(FileStatus sourceFileStatus, OutputStream outStream,
-                         int bufferSize, boolean mustCloseStream,
- Mapper.Context context,
+      int bufferSize, boolean mustCloseStream, Mapper.Context context,
       Map<Long, Long> received) throws IOException {
     Path source = sourceFileStatus.getPath();
     ThrottledInputStream inStream = null;
@@ -200,8 +199,8 @@ public class RetriableFileCopyCommand extends RetriableCommand {
         commpressedOut.write(bytesRead);
         commpressedOut.write("\n".getBytes());
         updateContextStatus(totalBytesRead, context, sourceFileStatus);
-        byte[] decodedMsg = Base64.decodeBase64(bytesRead);
         if (received != null) {
+          byte[] decodedMsg = Base64.decodeBase64(bytesRead);
           incrementReceived(decodedMsg, received);
         }
         bytesRead = readLine(reader);

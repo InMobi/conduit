@@ -57,8 +57,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected volatile boolean stopped = false;
   protected CheckpointProvider checkpointProvider = null;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
-  protected final MessagePublisher publisher;
-  protected final static char TOPIC_SEPARATOR_FILENAME = '-';
   private final TSerializer serializer = new TSerializer();
   private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
   private Map<String, Long> prevRuntimeForCategory = new HashMap<String, Long>();
@@ -82,16 +80,15 @@ public abstract class AbstractService implements Service, Runnable {
 
 
   public AbstractService(String name, DatabusConfig config,
-      Set<String> streamsToProcess,MessagePublisher publisher) {
-    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, publisher);
+      Set<String> streamsToProcess) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
   }
 
   public AbstractService(String name, DatabusConfig config,
-      long runIntervalInMsec, Set<String> streamsToProcess,MessagePublisher publisher) {
+      long runIntervalInMsec, Set<String> streamsToProcess) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
-    this.publisher = publisher;
     String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
     if (retries == null) {
@@ -103,8 +100,8 @@ public abstract class AbstractService implements Service, Runnable {
 
   public AbstractService(String name, DatabusConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher) {
-    this(name, config, runIntervalInMsec, streamsToProcess,publisher);
+      Set<String> streamsToProcess) {
+    this(name, config, runIntervalInMsec, streamsToProcess);
     this.checkpointProvider = provider;
   }
 
@@ -539,12 +536,13 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected void generateAuditMsgs(String streamName, String fileName,
       Table<String, Long, Long> parsedCounters, List<AuditMessage> auditMsgList) {
-    if (publisher == null) {
+    if (Databus.getPublisher() == null) {
       LOG.info("Not generating audit messages as publisher is null");
       return;
     }
     if (parsedCounters == null) {
-      LOG.error("Not generating audit message as parsed counters are null");
+      LOG.error("Not generating audit message for stream " +  streamName +
+          " as parsed counters are null");
       return;
     }
     if (streamName.equals(AuditUtil.AUDIT_STREAM_TOPIC_NAME)) {
@@ -559,7 +557,8 @@ public abstract class AbstractService implements Service, Runnable {
       AuditMessage auditMsg = createAuditMessage(streamName, received);
       auditMsgList.add(auditMsg);
     } else {
-      LOG.info("Not publishing audit packet as counters are empty");
+      LOG.info("Not publishing audit packet for stream " + streamName +
+          " as counters are empty");
     }
   }
 
@@ -568,10 +567,12 @@ public abstract class AbstractService implements Service, Runnable {
       try {
         LOG.debug("Publishing audit message from local stream service "
             + auditMsg);
-        publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
-            ByteBuffer.wrap(serializer.serialize(auditMsg))));
+        MessagePublisher publisher = Databus.getPublisher();
+        publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME,
+            new Message(ByteBuffer.wrap(serializer.serialize(auditMsg))));
       } catch (Exception e) {
-        LOG.error("Publishing of audit message" + auditMsg.toString() + "failed ", e);
+        LOG.error("Publishing of audit message " + auditMsg.toString() +
+            " failed ", e);
       }
     }
   }

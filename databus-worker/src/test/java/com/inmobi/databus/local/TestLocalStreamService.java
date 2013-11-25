@@ -33,6 +33,7 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.Databus;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
@@ -40,6 +41,7 @@ import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
 import com.inmobi.messaging.publisher.MockInMemoryPublisher;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -183,11 +185,15 @@ public class TestLocalStreamService extends LocalStreamService implements
             + this.getName() + File.separator;
         tmpFilesList = createScribeData(fs, this.getName(), pathName, 1);
       }
-      
+
       // Copy input format src jar to FS
       String inputFormatSrcJar = FileUtil
           .findContainingJar(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
       fs.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
+      // Copy AuditUtil src jar to FS
+      String auditSrcJar = FileUtil.findContainingJar(
+          com.inmobi.messaging.util.AuditUtil.class);
+      fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
     } catch (Exception e) {
       e.printStackTrace();
       throw new Error("Error in LocalStreamService Test PreExecute");
@@ -338,9 +344,8 @@ public class TestLocalStreamService extends LocalStreamService implements
         fs.mkdirs(nextPath);
       }
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
-
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;
@@ -371,12 +376,13 @@ public class TestLocalStreamService extends LocalStreamService implements
   public TestLocalStreamService(DatabusConfig config,
                                 Cluster srcCluster, Cluster currentCluster,
  CheckpointProvider provider,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
       throws IOException {
-    super(config, srcCluster, currentCluster, provider, streamsToProcess,
-        publisher);
+    super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.srcCluster = srcCluster;
     this.provider = provider;
+    MessagePublisher publisher = MessagePublisherFactory.create();
+    Databus.setPublisher(publisher);
     try {
       this.fs = FileSystem.getLocal(new Configuration());
     } catch (IOException e) {

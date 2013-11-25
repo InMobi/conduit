@@ -25,13 +25,16 @@ import org.testng.Assert;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.Databus;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
 import com.inmobi.messaging.publisher.MockInMemoryPublisher;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -49,11 +52,13 @@ public class TestMergedStreamService extends MergedStreamService implements
 
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      Set<String> streamsToProcess, MessagePublisher publisher)
+      Set<String> streamsToProcess)
       throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, publisher);
+        streamsToProcess);
+    MessagePublisher publisher = MessagePublisherFactory.create();
+    Databus.setPublisher(publisher);
     this.srcCluster = srcCluster;
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -120,6 +125,10 @@ public class TestMergedStreamService extends MergedStreamService implements
             + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
         fs.mkdirs(new Path(dummycommitpath));
       }
+      // Copy AuditUtil src jar to FS
+      String auditSrcJar = FileUtil.findContainingJar(
+          com.inmobi.messaging.util.AuditUtil.class);
+      fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -181,7 +190,7 @@ public class TestMergedStreamService extends MergedStreamService implements
         }
       }
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;

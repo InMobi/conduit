@@ -4,7 +4,7 @@
 
   <properties>
     <excluded.testng.groups>integration</excluded.testng.groups>
-    <messaging-client-version>4.0.1</messaging-client-version>
+    <messaging-client-version>4.0.2</messaging-client-version>
   </properties>
 
   <groupId>com.inmobi.databus</groupId>
@@ -137,6 +137,12 @@
         <version>${messaging-client-version}</version>
         <type>jar</type>
       </dependency>
+     <dependency>
+      <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-scribe</artifactId>
+      <version>${messaging-client-version}</version>
+      <scope>runtime</scope>
+    </dependency>
       <dependency>
         <groupId>com.inmobi.messaging</groupId>
         <artifactId>messaging-client-core</artifactId>

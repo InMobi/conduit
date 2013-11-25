@@ -50,8 +50,8 @@ public class FileUtil {
       String line;
       while ((line = reader.readLine()) != null) {
         byte[] msg = line.getBytes();
-        byte[] decodedMsg = Base64.decodeBase64(msg);
         if (received != null) {
+          byte[] decodedMsg = Base64.decodeBase64(msg);
           incrementReceived(decodedMsg, received);
         }
         compressedOut.write(msg);
