@@ -14,7 +14,6 @@
 package com.inmobi.databus.local;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,15 +47,15 @@ import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
 
 import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ConfigConstants;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConstants;
+import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.publisher.MessagePublisher;
-
-
 
 /*
  * Handles Local Streams for a Cluster
@@ -86,12 +85,10 @@ ConfigConstants {
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
 
-
-
   public LocalStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
       Set<String> streamsToProcess, MessagePublisher publisher)
-      throws IOException {
+          throws IOException {
     super("LocalStreamService_" + srcCluster + "_"
         + getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
         provider,streamsToProcess, publisher);
@@ -123,8 +120,8 @@ ConfigConstants {
 
   @Override
   protected void execute() throws Exception {
+    List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     try {
-
       FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
       // Cleanup tmpPath before everyRun to avoid
       // any old data being used in this run if the old run was aborted
@@ -150,16 +147,18 @@ ConfigConstants {
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
-        commit(prepareForCommit(commitTime), true);
+        commit(prepareForCommit(commitTime), true, auditMsgList);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
-        commit(populateTrashCommitPaths(trashSet), false);
+        commit(populateTrashCommitPaths(trashSet), false, null);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
 
       }
     } catch (Exception e) {
       LOG.warn("Error in running LocalStreamService " + e);
       throw e;
+    } finally {
+      publishAuditMessages(auditMsgList);
     }
   }
 
@@ -222,13 +221,11 @@ ConfigConstants {
     return trashPaths;
   }
 
-
-  private void commit(Map<Path, Path> commitPaths, boolean generateAudit)
-      throws Exception {
+  private void commit(Map<Path, Path> commitPaths, boolean generateAudit,
+      List<AuditMessage> auditMsgList) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
-
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       retriableMkDirs(fs, entry.getValue().getParent());
@@ -240,33 +237,14 @@ ConfigConstants {
       }
       if (generateAudit) {
         String filename = entry.getKey().getName();
-        if (filename == null) {
-          LOG.error("Malformed filename: " + entry.getKey().getName());
-          continue;
-        }
         String streamName = getTopicNameFromDestnPath(entry.getValue());
-        generateAndPublishAudit(streamName, filename, parsedCounters);
+        generateAuditMsgs(streamName, filename, parsedCounters, auditMsgList);
       }
     }
 
   }
 
-
-  /*
-   * file name ending with .gz and starting with name of collector
-   * eg:gsdc3001.red.ua2.inmobi.com-rr-2013-08-03-15-58_00000.gz
-   */
-
-  private String removeCollectorNameAndExt(String fileName) {
-    String fileWithoutExt = fileName.substring(0, fileName.length() - 3);
-    int firstIndex = fileWithoutExt.indexOf(TOPIC_SEPARATOR_FILENAME);
-    if (firstIndex == -1)
-      return null;
-    return fileWithoutExt.substring(firstIndex + 1);
-
-  }
-
-  private long createMRInput(Path inputPath,
+  protected long createMRInput(Path inputPath,
       Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
       Map<String, FileStatus> checkpointPaths) throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
@@ -279,20 +257,20 @@ ConfigConstants {
     if (fileListing.isEmpty()) {
       return 0;
     }
-    SequenceFile.Writer out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-        inputPath, Text.class, FileStatus.class);
+    SequenceFile.Writer out = SequenceFile.createWriter(fs,
+        srcCluster.getHadoopConf(), inputPath, Text.class, FileStatus.class);
     try {
-      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet().iterator();
+      Iterator<Entry<FileStatus, String>> it = fileListing.entrySet()
+          .iterator();
       while (it.hasNext()) {
         Entry<FileStatus, String> entry = it.next();
-        if (out == null) {
-          out = SequenceFile.createWriter(fs, srcCluster.getHadoopConf(),
-              inputPath, Text.class, entry.getKey().getClass());
-        }
-        out.append(new Text(entry.getValue()), getFileStatus(entry.getKey()));
-        // Create a sync point after each entry. This will ensure that SequenceFile
-        // Reader can work at file entry level granularity, given that SequenceFile
+        FileStatus status = FileUtil.getFileStatus(entry.getKey(), buffer, in);
+        out.append(new Text(entry.getValue()), status);
 
+        // Create a sync point after each entry. This will ensure that
+        // SequenceFile
+        // Reader can work at file entry level granularity, given that
+        // SequenceFile
         // Reader reads from the starting of sync point.
         out.sync();
 
@@ -303,27 +281,6 @@ ConfigConstants {
     }
 
     return totalSize;
-  }
-
-  // This method is taken from DistCp SimpleCopyListing class.
-  private FileStatus getFileStatus(FileStatus fileStatus) throws IOException {
-    // if the file is not an instance of RawLocaleFileStatus, simply return it
-    if (fileStatus.getClass() == FileStatus.class) {
-      return fileStatus;
-    }
-
-    // Else if it is a local file, we need to convert it to an instance of
-    // FileStatus class. The reason is that SequenceFile.Writer/Reader does
-    // an exact match for FileStatus class.
-    FileStatus status = new FileStatus();
-
-    buffer.reset();
-    DataOutputStream out = new DataOutputStream(buffer);
-    fileStatus.write(out);
-
-    in.reset(buffer.toByteArray(), 0, buffer.size());
-    status.readFields(in);
-    return status;
   }
 
   public static class CollectorPathFilter implements PathFilter {
@@ -375,7 +332,7 @@ ConfigConstants {
         FileStatus[] files = null;
         try {
           files = fs.listStatus(collector.getPath(),
-            new CollectorPathFilter());
+              new CollectorPathFilter());
         } catch (FileNotFoundException e) {
         }
 
@@ -439,9 +396,8 @@ ConfigConstants {
         retVal = true;
       }
     } catch (IOException e) {
-      LOG.error(
-          "Unable to find if file is empty or not [" + fileStatus.getPath()
-              + "]", e);
+      LOG.error("Unable to find if file is empty or not ["
+          + fileStatus.getPath() + "]", e);
     } finally {
       if (in != null) {
         try {
@@ -529,11 +485,6 @@ ConfigConstants {
     return src.getParent().getParent().getName();
   }
 
-  private String getCategoryFromDestPath(Path dest) {
-    return dest.getParent().getParent().getParent().getParent().getParent()
-        .getParent().getName();
-  }
-
   private Path getCategoryJobOutTmpPath(String category) {
     return new Path(tmpJobOutputPath, category);
   }
@@ -548,7 +499,8 @@ ConfigConstants {
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
-
+    conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
+        System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
     Job job = new Job(conf);
     job.setJobName(jobName);
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
@@ -633,14 +585,13 @@ ConfigConstants {
 
   /*
    * Find the topic name from path of format
-   * /databus/streams_local/ifc_ir/2013/10/01/09/17 or
-   * /databus/streams_local/ifc_ir/2013/10/
-   * 01/09/17/erdc4002.grid.lhr1.inmobi.com-ifc_ir-2013-10-01-09-13_00000.gz
+   * /databus/streams_local/<streamName>/2013/10/
+   * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
    */
-  protected String getTopicNameFromDestnPath(Path destnPath) {
+  public String getTopicNameFromDestnPath(Path destnPath) {
     String destnPathAsString = destnPath.toString();
-    String destnDirAsString = new Path(srcCluster.getLocalFinalDestDirRoot())
-        .toString();
+    String destnDirAsString = new Path(
+        srcCluster.getLocalFinalDestDirRoot()).toString();
     String pathWithoutRoot = destnPathAsString.substring(destnDirAsString
         .length());
     Path tmpPath = new Path(pathWithoutRoot);

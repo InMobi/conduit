@@ -34,6 +34,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -70,12 +71,16 @@ public class MergedStreamService extends DistcpBaseService {
   
   @Override
   public void execute() throws Exception {
+    List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     try {
       boolean skipCommit = false;
 
       Path tmpOut = getDistCpTargetPath();
       // CleanuptmpOut before every run
+      // the dest is a misnomer here. The service runs on the destination, so
+      //all the meaning of dest is actually local cluster.
+
       if (getDestFs().exists(tmpOut))
         getDestFs().delete(tmpOut, true);
       if (!getDestFs().mkdirs(tmpOut)) {
@@ -91,13 +96,13 @@ public class MergedStreamService extends DistcpBaseService {
       Map<String, FileStatus> fileListingMap = getDistCPInputFile();
       if (fileListingMap.size() == 0) {
         LOG.warn("No data to pull from " + "Cluster ["
-            + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+            + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
         finalizeCheckPoints();
         return;
       }
       LOG.info("Starting a distcp pull from Cluster ["
-          + getSrcCluster().getHdfsUrl() + "]" + " to Cluster ["
+          + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
           + getDestCluster().getHdfsUrl() + "] " + " Path ["
           + tmpOut.toString() + "]");
 
@@ -122,7 +127,7 @@ public class MergedStreamService extends DistcpBaseService {
           commitPaths = createLocalCommitPaths(tmpOut, commitTime,
               categoriesToCommit);
           // category, Set of Paths to commit
-          doLocalCommit(commitPaths);
+          doLocalCommit(commitPaths, auditMsgList);
         }
         finalizeCheckPoints();
       }
@@ -132,6 +137,8 @@ public class MergedStreamService extends DistcpBaseService {
     } catch (Exception e) {
       LOG.warn("Error in run ", e);
       throw new Exception(e);
+    } finally {
+      publishAuditMessages(auditMsgList);
     }
   }
 
@@ -198,7 +205,8 @@ public class MergedStreamService extends DistcpBaseService {
     return mvPaths;
   }
 
-  private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
+  private void doLocalCommit(Map<Path, Path> commitPaths,
+      List<AuditMessage> auditMsgList) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = getDestFs();
     Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
@@ -213,17 +221,15 @@ public class MergedStreamService extends DistcpBaseService {
       }
       String filename = entry.getKey().getName();
       String streamName = getTopicNameFromDestnPath(entry.getValue());
-      generateAndPublishAudit(streamName, filename, parsedCounters);
+      generateAuditMsgs(streamName, filename, parsedCounters, auditMsgList);
     }
   }
 
   protected Path getInputPath() throws IOException {
-    String finalDestDir = getSrcCluster().getLocalFinalDestDirRoot();
+    String finalDestDir = getSrcCluster().getReadLocalFinalDestDirRoot();
     return new Path(finalDestDir);
 
   }
-
-
 
   private boolean isValidYYMMDDHHMMPath(Path prefix, Path path) {
     if (path.depth() < prefix.depth() + 5)
@@ -264,7 +270,7 @@ public class MergedStreamService extends DistcpBaseService {
       if (getDestFs().exists(pathToBeListed)) {
         // TODO decide between removing invalid paths after recursive ls or
         // while ls
-        destnFiles = recursiveListingOfDir(destCluster, pathToBeListed);
+        destnFiles = recursiveListingOfDir(getDestFs(), pathToBeListed);
         filterInvalidPaths(destnFiles, pathToBeListed);
         Collections.sort(destnFiles, new DatePathComparator());
         LOG.debug("File found on destination after sorting for stream" + stream
@@ -275,11 +281,11 @@ public class MergedStreamService extends DistcpBaseService {
           + " on destination Fs");
     }
     Path lastLocalPathOnSrc = null;
-    pathToBeListed = new Path(srcCluster.getLocalFinalDestDirRoot(), stream);
+    pathToBeListed = new Path(srcCluster.getReadLocalFinalDestDirRoot(), stream);
     List<FileStatus> sourceFiles = null;
     try {
       if (getSrcFs().exists(pathToBeListed)) {
-        sourceFiles = recursiveListingOfDir(srcCluster, pathToBeListed);
+        sourceFiles = recursiveListingOfDir(getSrcFs(), pathToBeListed);
         filterInvalidPaths(sourceFiles, pathToBeListed);
         Collections.sort(sourceFiles, new DatePathComparator());
         LOG.debug("File found on source after sorting for stream" + stream
@@ -334,7 +340,7 @@ public class MergedStreamService extends DistcpBaseService {
       }
       // adding one minute to the found path to get the starting directory
       Path streamLevelLocalDir = new Path(getSrcCluster()
-          .getLocalFinalDestDirRoot() + stream);
+          .getReadLocalFinalDestDirRoot() + stream);
       Date date = CalendarHelper.getDateFromStreamDir(streamLevelLocalDir,
           lastLocalPathOnSrc);
       lastLocalPathOnSrc = CalendarHelper.getNextMinutePathFromDate(date,
@@ -371,18 +377,17 @@ public class MergedStreamService extends DistcpBaseService {
 
   }
 
-  private List<FileStatus> recursiveListingOfDir(Cluster cluster, Path path) {
+  private List<FileStatus> recursiveListingOfDir(FileSystem currentFs, Path path) {
 
     try {
-      FileSystem currentFs = FileSystem.get(cluster.getHadoopConf());
       FileStatus streamDir = currentFs.getFileStatus(path);
       List<FileStatus> filestatus = new ArrayList<FileStatus>();
       createListing(currentFs, streamDir, filestatus);
       return filestatus;
     } catch (IOException ie) {
       LOG.error(
-          "IOException while doing recursive listing to create checkpoint on cluster "
-              + cluster, ie);
+          "IOException while doing recursive listing to create checkpoint on " +
+            "cluster filesystem" + currentFs.getUri(), ie);
     }
     return null;
 
@@ -390,7 +395,7 @@ public class MergedStreamService extends DistcpBaseService {
 
   /*
    * srcPath is the FileStatus of minute directory in streams_local directory
-   * eg: /databus/streams_local/adroit_report_obj_ua2/2013/09/28/15/04
+   * eg: /databus/streams_local/<streamName>/2013/09/28/15/04
    */
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {

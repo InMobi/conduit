@@ -1,19 +1,21 @@
 package com.inmobi.databus.audit;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 
 public class Filter {
 
-  private Map<Column, String> filters;
+  private Map<Column, List<String>> filters;
 
   public Filter(String input) {
     if (input == null) {
       filters = null;
     } else {
-      filters = new HashMap<Column, String>();
+      filters = new HashMap<Column, List<String>>();
       String inputSplit[] = input.split(",");
       for (int i = 0; i < inputSplit.length; i++) {
         String tmp = inputSplit[i];
@@ -27,9 +29,14 @@ public class Filter {
         } catch (Exception e) {
           continue;
         }
-        String value = stripQuotes(keyValues[1]);
-        filters.put(key, value);
-
+        // User can provide multiple options for each filtered column.
+        // Values for the filtered column is separated by '|' symbol
+        String[] values = stripQuotes(keyValues[1]).split("\\|");
+        List<String> filterValues = new ArrayList<String>();
+        for (int j = 0; j < values.length; j++) {
+          filterValues.add(values[j]);
+        }
+        filters.put(key, filterValues);
       }
     }
   }
@@ -47,8 +54,8 @@ public class Filter {
   public boolean apply(Map<Column, String> values) {
 
     if (filters != null) {
-      for (Entry<Column, String> filter : filters.entrySet()) {
-        if (!filter.getValue().equals(values.get(filter.getKey()))) {
+      for (Entry<Column, List<String>> filter : filters.entrySet()) {
+        if (!filter.getValue().contains(values.get(filter.getKey()))) {
           return false;
         }
       }
@@ -61,7 +68,7 @@ public class Filter {
     return "Filter" + filters;
   }
 
-  public Map<Column, String> getFilters() {
+  public Map<Column, List<String>> getFilters() {
     return filters;
   }
 }

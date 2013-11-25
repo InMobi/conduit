@@ -21,6 +21,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
 
 public class AbstractTestStreamValidator {
@@ -39,6 +40,7 @@ public class AbstractTestStreamValidator {
   }
 
   protected DatabusConfig setup(String configFile) throws Exception {
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     DatabusConfigParser configParser;
     DatabusConfig config = null;
     configParser = new DatabusConfigParser(configFile);

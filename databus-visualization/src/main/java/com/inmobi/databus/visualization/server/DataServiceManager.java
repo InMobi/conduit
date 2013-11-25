@@ -15,18 +15,32 @@ import com.inmobi.databus.audit.query.AuditDbQuery;
 import com.inmobi.databus.visualization.server.util.ServerDataHelper;
 
 public class DataServiceManager {
-  private static final String FEEDER_PROPERTIES_PATH =
-      "/usr/local/databus-visualization/conf/audit-feeder.properties";
-  public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
-  public static final String TIMEZONE = "GMT";
-  public static final String AUDIT_STREAM = "_audit";
+
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
   private static DataServiceManager instance = null;
   private List<DatabusConfig> dataBusConfig;
+  private VisualizationProperties properties;
+  private String feederPropertiesPath;
 
-  private DataServiceManager() {
-    String folderPath = VisualizationProperties
-        .get(VisualizationProperties.PropNames.DATABUS_XML_PATH);
+  protected DataServiceManager(boolean init) {
+    this(init, null, null);
+  }
+
+  protected DataServiceManager(boolean init,
+                               String visualizationPropertiesPath,
+                               String feederPropertiesPath) {
+    if (feederPropertiesPath == null || feederPropertiesPath.length() == 0) {
+      feederPropertiesPath = ServerConstants.FEEDER_PROPERTIES_DEFAULT_PATH;
+    }
+    this.feederPropertiesPath = feederPropertiesPath;
+    properties = new VisualizationProperties(visualizationPropertiesPath);
+    if (init) {
+      String folderPath = properties.get(ServerConstants.DATABUS_XML_PATH);
+      initConfig(folderPath);
+    }
+  }
+
+  protected void initConfig(String folderPath) {
     File folder = new File(folderPath);
     File[] xmlFiles = folder.listFiles(new FileFilter() {
       @Override
@@ -41,19 +55,19 @@ public class DataServiceManager {
     dataBusConfig = new ArrayList<DatabusConfig>();
     for (File file : xmlFiles) {
       String fullPath = file.getAbsolutePath();
-      LOG.info("File:"+fullPath);
+      LOG.info("File:" + fullPath);
       try {
         DatabusConfigParser parser = new DatabusConfigParser(fullPath);
         dataBusConfig.add(parser.getConfig());
       } catch (Exception e) {
-        e.printStackTrace();
+        LOG.error("Exception while intializing DatabusConfigParser: ", e);
       }
     }
   }
 
-  public static DataServiceManager get() {
+  public static DataServiceManager get(boolean init) {
     if (instance == null) {
-      instance = new DataServiceManager();
+      instance = new DataServiceManager(init);
     }
     return instance;
   }
@@ -61,85 +75,52 @@ public class DataServiceManager {
   public String getStreamAndClusterList() {
     Set<String> streamSet = new TreeSet<String>();
     Set<String> clusterSet = new TreeSet<String>();
-    for(DatabusConfig config : dataBusConfig) {
+    for (DatabusConfig config : dataBusConfig) {
       streamSet.addAll(config.getSourceStreams().keySet());
       clusterSet.addAll(config.getClusters().keySet());
     }
-    streamSet.remove(AUDIT_STREAM);
+    streamSet.remove(ServerConstants.AUDIT_STREAM);
     List<String> streamList = new ArrayList<String>(streamSet);
     List<String> clusterList = new ArrayList<String>(clusterSet);
     streamList.add(0, "All");
     clusterList.add(0, "All");
-    LOG.info("Returning stream list:"+streamList+" and cluster list:"+clusterList);
+    LOG.info("Returning stream list:" + streamList + " and cluster list:" +
+        clusterList);
     String serverJson =
         ServerDataHelper.getInstance().setLoadMainPanelResponse(streamList,
-            clusterList);
+            clusterList, properties);
     return serverJson;
   }
 
   public String getData(String filterValues) {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
-    String responseJson;
-    String selectedStream =
-        ServerDataHelper.getInstance().getStreamFromGraphDataReq(filterValues);
-    String selectedCluster =
-        ServerDataHelper.getInstance().getColoFromGraphDataReq(filterValues);
-    String startTime = ServerDataHelper.getInstance()
-        .getStartTimeFromGraphDataReq(filterValues);
-    String endTime =
-        ServerDataHelper.getInstance().getEndTimeFromGraphDataReq(filterValues);
-    String filterString = setFilterString(selectedStream, selectedCluster);
-    ClientConfig config = ClientConfig.load(FEEDER_PROPERTIES_PATH);
-    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
-        GROUPBY_STRING, TIMEZONE, VisualizationProperties.get(
-        VisualizationProperties.PropNames.PERCENTILE_STRING), config);
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
+    ClientConfig config = ClientConfig.load(feederPropertiesPath);
+    AuditDbQuery dbQuery =
+        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+            ServerConstants.GROUPBY_STRING, ServerConstants.TIMEZONE,
+            properties.get(ServerConstants.PERCENTILE_STRING), config);
     try {
       dbQuery.execute();
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Exception while executing query: ", e);
     }
     LOG.info("Audit query: " + dbQuery.toString());
-    dbQuery.displayResults();
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
     Set<Tuple> tupleSet = dbQuery.getTupleSet();
     Set<Float> percentileSet = dbQuery.getPercentileSet();
-    Map<Tuple, Map<Float, Integer>> tuplesPercentileMap = dbQuery.getPercentile();
-    LOG.debug("Percentile Set:"+percentileSet);
-    LOG.debug("Tuples Percentile Map:"+tuplesPercentileMap);
-
+    Map<Tuple, Map<Float, Integer>> tuplesPercentileMap =
+        dbQuery.getPercentile();
+    LOG.debug("Percentile Set:" + percentileSet);
+    LOG.debug("Tuples Percentile Map:" + tuplesPercentileMap);
     for (Tuple tuple : tupleSet) {
-      LOG.info("Creating node from tuple :"+tuple);
-      String name, hostname = null;
-      if(tuple.getTier().equalsIgnoreCase(Tier.HDFS.toString())) {
-        name = tuple.getCluster();
-        hostname = tuple.getHostname();
-      } else
-        name = tuple.getHostname();
-      MessageStats receivedMessageStat =
-          new MessageStats(tuple.getTopic(), tuple.getReceived(), hostname);
-      MessageStats sentMessageStat =
-          new MessageStats(tuple.getTopic(), tuple.getSent(), hostname);
-      NodeKey newNodeKey = new NodeKey(name, tuple.getCluster(), tuple.getTier());
-      List<MessageStats> receivedMessageStatsList = new ArrayList<MessageStats>(),
-          sentMessageStatsList = new ArrayList<MessageStats>();
-      receivedMessageStatsList.add(receivedMessageStat);
-      sentMessageStatsList.add(sentMessageStat);
-      Node node = nodeMap.get(newNodeKey);
-      if(node == null) {
-        node = new Node(name, tuple.getCluster(), tuple.getTier());
-      }
-      if (node.getReceivedMessagesList().size() > 0) {
-        receivedMessageStatsList.addAll(node.getReceivedMessagesList());
-      }
-      if (node.getSentMessagesList().size() > 0) {
-        sentMessageStatsList.addAll(node.getSentMessagesList());
-      }
-      node.setReceivedMessagesList(receivedMessageStatsList);
-      node.setSentMessagesList(sentMessageStatsList);
-      node.setPercentileSet(percentileSet);
-      node.addToTopicPercentileMap(tuple.getTopic(), tuplesPercentileMap.get(tuple));
-      node.addToTopicCountMap(tuple.getTopic(), tuple.getLatencyCountMap());
-      nodeMap.put(newNodeKey, node);
-      LOG.debug("Node created: " + node);
+      createNode(tuple, nodeMap, percentileSet, tuplesPercentileMap.get(tuple));
     }
     buildPercentileMapOfAllNodes(nodeMap);
     addVIPNodesToNodesList(nodeMap, percentileSet);
@@ -148,34 +129,100 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
-    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTieLatencyMap
-        (endTime, startTime, filterString);
-    responseJson = ServerDataHelper.getInstance().setGraphDataResponse
-        (nodeMap, tierLatencyMap);
-    LOG.debug("Json response returned to client : " + responseJson);
-    return responseJson;
+    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
+        (feederPropertiesPath, filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
+    return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
+        tierLatencyMap, properties);
   }
 
-  private Map<Tuple, Map<Float, Integer>> getTieLatencyMap(String endTime,
-                                                           String startTime,
-                                                           String filterString) {
-    ClientConfig config = ClientConfig.load(FEEDER_PROPERTIES_PATH);
+  protected Map<String, String> getFilterMap(String filterValues) {
+    Map<String, String> filterMap = new HashMap<String, String>();
+    filterMap.put(ServerConstants.STREAM_FILTER, ServerDataHelper.getInstance()
+        .getStreamFromGraphDataReq(filterValues));
+    filterMap.put(ServerConstants.CLUSTER_FILTER, ServerDataHelper.getInstance()
+        .getColoFromGraphDataReq(filterValues));
+    filterMap
+        .put(ServerConstants.START_TIME_FILTER, ServerDataHelper.getInstance()
+            .getStartTimeFromGraphDataReq(filterValues));
+    filterMap
+        .put(ServerConstants.END_TIME_FILTER, ServerDataHelper.getInstance()
+            .getEndTimeFromGraphDataReq(filterValues));
+    return filterMap;
+  }
+
+  protected void createNode(Tuple tuple, Map<NodeKey, Node> nodeMap,
+                          Set<Float> percentileSet,
+                          Map<Float, Integer> tuplePercentileMap) {
+    LOG.info("Creating node from tuple :" + tuple);
+    String name, hostname = null;
+    if (tuple.getTier().equalsIgnoreCase(Tier.HDFS.toString())) {
+      name = tuple.getCluster();
+      hostname = tuple.getHostname();
+    } else {
+      name = tuple.getHostname();
+    }
+    MessageStats receivedMessageStat =
+        new MessageStats(tuple.getTopic(), tuple.getReceived(), hostname);
+    MessageStats sentMessageStat =
+        new MessageStats(tuple.getTopic(), tuple.getSent(), hostname);
+    NodeKey newNodeKey = new NodeKey(name, tuple.getCluster(), tuple.getTier());
+    List<MessageStats> receivedMessageStatsList = new ArrayList<MessageStats>(),
+        sentMessageStatsList = new ArrayList<MessageStats>();
+    receivedMessageStatsList.add(receivedMessageStat);
+    sentMessageStatsList.add(sentMessageStat);
+    Node node = nodeMap.get(newNodeKey);
+    if (node == null) {
+      node = new Node(name, tuple.getCluster(), tuple.getTier());
+    }
+    if (node.getReceivedMessagesList().size() > 0) {
+      receivedMessageStatsList.addAll(node.getReceivedMessagesList());
+    }
+    if (node.getSentMessagesList().size() > 0) {
+      sentMessageStatsList.addAll(node.getSentMessagesList());
+    }
+    node.setReceivedMessagesList(receivedMessageStatsList);
+    node.setSentMessagesList(sentMessageStatsList);
+    node.setPercentileSet(percentileSet);
+    node.addToTopicPercentileMap(tuple.getTopic(), tuplePercentileMap);
+    node.addToTopicCountMap(tuple.getTopic(), tuple.getLatencyCountMap());
+    nodeMap.put(newNodeKey, node);
+    LOG.debug("Node created: " + node);
+  }
+
+  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String feederPath,
+                                                            String endTime,
+                                                            String startTime,
+                                                            String
+                                                                filterString) {
+    ClientConfig config;
+    if (feederPath == null || feederPath.length() == 0) {
+      config =
+          ClientConfig.load(ServerConstants.FEEDER_PROPERTIES_DEFAULT_PATH);
+    } else {
+      config = ClientConfig.load(feederPath);
+    }
     AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
-        "TIER", TIMEZONE, VisualizationProperties.get(
-        VisualizationProperties.PropNames.PERCENTILE_FOR_SLA), config);
+        "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
+        .PERCENTILE_FOR_SLA), config);
     try {
       dbQuery.execute();
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Exception while executing query: ", e);
     }
     LOG.info("Audit query: " + dbQuery.toString());
-    dbQuery.displayResults();
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
     return dbQuery.getPercentile();
   }
 
-  private String setFilterString(String selectedStream,
-                                 String selectedCluster) {
+  protected String setFilterString(Map<String, String> filterMap) {
     String filterString;
+    String selectedStream = filterMap.get(ServerConstants.STREAM_FILTER);
+    String selectedCluster = filterMap.get(ServerConstants.CLUSTER_FILTER);
     if (selectedStream.compareTo("All") == 0) {
       filterString = null;
     } else {
@@ -192,11 +239,12 @@ public class DataServiceManager {
   }
 
   private void buildPercentileMapOfAllNodes(Map<NodeKey, Node> nodeMap) {
-    for (Node node: nodeMap.values())
+    for (Node node : nodeMap.values()) {
       node.buildPercentileMap();
+    }
   }
 
-  private void addVIPNodesToNodesList(Map<NodeKey, Node> nodeMap,
+  protected void addVIPNodesToNodesList(Map<NodeKey, Node> nodeMap,
                                       Set<Float> percentileSet) {
     Map<String, Node> vipNodeMap = new HashMap<String, Node>();
     for (Node node : nodeMap.values()) {
@@ -259,7 +307,7 @@ public class DataServiceManager {
 
   /**
    * If any node in the nodeList is a merge/mirror tier node, set the source
-   * node's names' list for it.
+   * node's names list for merge/mirror node.
    *
    * @param nodeMap map of all nodeKey::nodes returned by the query
    */
@@ -274,5 +322,9 @@ public class DataServiceManager {
         }
       }
     }
+  }
+
+  public List<DatabusConfig> getDataBusConfig() {
+    return Collections.unmodifiableList(dataBusConfig);
   }
 }

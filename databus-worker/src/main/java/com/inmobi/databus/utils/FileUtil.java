@@ -55,6 +55,7 @@ public class FileUtil {
           incrementReceived(decodedMsg, received);
         }
         compressedOut.write(msg);
+        compressedOut.write("\n".getBytes());
         compressedOut.flush();
         
       }
@@ -79,7 +80,7 @@ public class FileUtil {
     long window = getWindow(timestamp);
     if (timestamp != -1) {
       if (received.containsKey(window)) {
-        received.put(window, received.get(timestamp) + 1);
+        received.put(window, received.get(window) + 1);
       } else {
         received.put(window, new Long(1));
       }

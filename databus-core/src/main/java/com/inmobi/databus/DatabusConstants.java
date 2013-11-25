@@ -37,5 +37,7 @@ public interface DatabusConstants {
       + "dirsPerStream";
   public static final String PERGER_ENABLED = "com.inmobi.databus.purgerEnabled";
   public static final String NUM_RETRIES = "com.inmobi.databus.retries";
-
+  public static final String AUDIT_ENABLED_KEY = "audit.enabled";
+  public static final String AUDIT_COUNTER_GROUP = "audit";
+  public static final String AUDIT_COUNTER_NAME_DELIMITER = "#";
 }

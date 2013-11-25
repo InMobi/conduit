@@ -9,7 +9,7 @@ import com.inmobi.databus.visualization.client.DataService;
 public class DataServiceImpl extends RemoteServiceServlet
     implements DataService {
   private static final long serialVersionUID = 1L;
-  DataServiceManager serviceManager = DataServiceManager.get();
+  DataServiceManager serviceManager = DataServiceManager.get(true);
 
 
   public String getData(String filterValues) {

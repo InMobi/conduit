@@ -44,6 +44,29 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   }
 
   @Test
+  public void testAuditForWorker() throws Exception {
+    Set<TestLocalStreamService> localStreamServices = new HashSet<TestLocalStreamService>();
+    Set<TestMergedStreamService> mergedStreamServices = new HashSet<TestMergedStreamService>();
+    Set<TestMirrorStreamService> mirrorStreamServices = new HashSet<TestMirrorStreamService>();
+
+    initializeDatabus("test-mss-databus.xml", null, null, true,
+        localStreamServices, mergedStreamServices, mirrorStreamServices);
+    Path localStreamlFile = new Path("file:/tmp/mergeservicetest/testcluster1/mergeservice/" +
+        "streams_local/test1/2013/10/07/16/56/testcluster2-test1-2013-10-07-16-55_00002.gz");
+    Path mergeStreamFile = new Path("file:/tmp/mergeservicetest/testcluster1/mergeservice/" +
+    		"streams/test1/2013/10/07/16/56/testcluster2-test1-2013-10-07-16-55_00002.gz");
+    for (TestLocalStreamService service : localStreamServices) {
+      Assert.assertEquals("test1", service.getTopicNameFromDestnPath(localStreamlFile));
+      break;
+    }
+
+    for (TestMergedStreamService service : mergedStreamServices) {
+      Assert.assertEquals("test1", service.getTopicNameFromDestnPath(mergeStreamFile));
+      break;
+    }
+  }
+
+  @Test
   public void testMergeMirrorStreamWithMultipleStreams() throws Exception {
     testMergeMirrorStream("test-mss-databus1.xml", null, null);
   }
@@ -115,6 +138,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   public void setup() throws Exception {
     // clean up the test data if any thing is left in the previous runs
     cleanup();
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     super.setup(2, 6, 1);
   }
 
@@ -134,6 +158,57 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       String currentClusterName, Set<String> additionalClustersToProcess,
       boolean addAllSourceClusters) throws Exception {
 
+    Set<TestLocalStreamService> localStreamServices = new HashSet<TestLocalStreamService>();
+    Set<TestMergedStreamService> mergedStreamServices = new HashSet<TestMergedStreamService>();
+    Set<TestMirrorStreamService> mirrorStreamServices = new HashSet<TestMirrorStreamService>();
+
+    initializeDatabus(filename, currentClusterName, additionalClustersToProcess,
+        addAllSourceClusters, localStreamServices, mergedStreamServices,
+        mirrorStreamServices);
+
+    LOG.info("Running LocalStream Service");
+
+    for (TestLocalStreamService service : localStreamServices) {
+      Thread.currentThread().setName(service.getName());
+      service.runPreExecute();
+      service.runExecute();
+      service.runPostExecute();
+    }
+
+    LOG.info("Running MergedStream Service");
+
+    for (TestMergedStreamService service : mergedStreamServices) {
+      Thread.currentThread().setName(service.getName());
+      service.runPreExecute();
+      service.runExecute();
+      service.runPostExecute();
+
+    }
+
+    LOG.info("Running MirrorStreamService Service");
+
+    for (TestMirrorStreamService service : mirrorStreamServices) {
+      Thread.currentThread().setName(service.getName());
+      service.runPreExecute();
+      service.runExecute();
+      service.runPostExecute();
+
+    }
+
+    LOG.info("Cleaning up leftovers");
+
+    for (TestLocalStreamService service : localStreamServices) {
+      service.getFileSystem().delete(
+          new Path(service.getCluster().getRootDir()), true);
+    }
+  }
+
+  private void initializeDatabus(String filename, String currentClusterName,
+      Set<String> additionalClustersToProcess, boolean addAllSourceClusters,
+      Set<TestLocalStreamService> localStreamServices,
+      Set<TestMergedStreamService> mergedStreamServices,
+      Set<TestMirrorStreamService> mirrorStreamServices)
+          throws Exception {
     DatabusConfigParser parser = new DatabusConfigParser(filename);
     DatabusConfig config = parser.getConfig();
 
@@ -151,7 +226,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Set<String> clustersToProcess = new HashSet<String>();
     if (additionalClustersToProcess != null)
       clustersToProcess.addAll(additionalClustersToProcess);
-    Set<TestLocalStreamService> localStreamServices = new HashSet<TestLocalStreamService>();
 
     if (addAllSourceClusters) {
       for (SourceStream sStream : config.getSourceStreams().values()) {
@@ -173,18 +247,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
     }
-
-    LOG.info("Running LocalStream Service");
-
-    for (TestLocalStreamService service : localStreamServices) {
-      Thread.currentThread().setName(service.getName());
-      service.runPreExecute();
-      service.runExecute();
-      service.runPostExecute();
-    }
-
-    Set<TestMergedStreamService> mergedStreamServices = new HashSet<TestMergedStreamService>();
-    Set<TestMirrorStreamService> mirrorStreamServices = new HashSet<TestMirrorStreamService>();
 
     for (String clusterString : clustersToProcess) {
       Cluster cluster = config.getClusters().get(clusterString);
@@ -256,33 +318,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
         else
           Assert.assertEquals(remoteMirrorService.getCurrentCluster(), cluster);
       }
-    }
-
-    LOG.info("Running MergedStream Service");
-
-    for (TestMergedStreamService service : mergedStreamServices) {
-      Thread.currentThread().setName(service.getName());
-      service.runPreExecute();
-      service.runExecute();
-      service.runPostExecute();
-
-    }
-
-    LOG.info("Running MirrorStreamService Service");
-
-    for (TestMirrorStreamService service : mirrorStreamServices) {
-      Thread.currentThread().setName(service.getName());
-      service.runPreExecute();
-      service.runExecute();
-      service.runPostExecute();
-
-    }
-
-    LOG.info("Cleaning up leftovers");
-
-    for (TestLocalStreamService service : localStreamServices) {
-      service.getFileSystem().delete(
-          new Path(service.getCluster().getRootDir()), true);
     }
   }
 }

@@ -34,13 +34,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.thrift.TException;
+import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.databus.local.CopyMapper;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
@@ -57,7 +56,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected Thread thread;
   protected volatile boolean stopped = false;
   protected CheckpointProvider checkpointProvider = null;
-  protected String hostname;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   protected final MessagePublisher publisher;
   protected final static char TOPIC_SEPARATOR_FILENAME = '-';
@@ -71,6 +69,17 @@ public abstract class AbstractService implements Service, Runnable {
   private int numOfRetries;
   protected Path tmpCounterOutputPath;
 
+  protected static String hostname;
+  static {
+    try {
+      hostname = InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException e) {
+      LOG.error("Unable to find the hostanme of the worker box,audit packets"
+          + " won't contain hostname");
+      hostname = "";
+    }
+  }
+
 
   public AbstractService(String name, DatabusConfig config,
       Set<String> streamsToProcess,MessagePublisher publisher) {
@@ -82,13 +91,6 @@ public abstract class AbstractService implements Service, Runnable {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
-    try {
-      hostname = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      LOG.error("Unable to find the hostanme of the worker box,audit packets"
-          + " won't contain hostname");
-      hostname = "";
-    }
     this.publisher = publisher;
     String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
@@ -515,6 +517,8 @@ public abstract class AbstractService implements Service, Runnable {
               + counterName + "..skipping the line", e);
         }
       }
+
+
     }
     return result;
 
@@ -531,11 +535,10 @@ public abstract class AbstractService implements Service, Runnable {
 
   abstract protected String getTopicNameFromDestnPath(Path destnPath);
 
-
   abstract protected String getTier();
 
-  protected void generateAndPublishAudit(String streamName, String fileName,
-      Table<String, Long, Long> parsedCounters) {
+  protected void generateAuditMsgs(String streamName, String fileName,
+      Table<String, Long, Long> parsedCounters, List<AuditMessage> auditMsgList) {
     if (publisher == null) {
       LOG.info("Not generating audit messages as publisher is null");
       return;
@@ -545,33 +548,31 @@ public abstract class AbstractService implements Service, Runnable {
       return;
     }
     if (streamName.equals(AuditUtil.AUDIT_STREAM_TOPIC_NAME)) {
-      LOG.debug("Not generation audit for audit stream");
+      LOG.debug("Not generating audit for audit stream");
       return;
     }
-    String streamFileNameCombo = streamName + CopyMapper.DELIMITER + fileName;
+    String streamFileNameCombo = streamName + DatabusConstants.
+        AUDIT_COUNTER_NAME_DELIMITER + fileName;
     Map<Long, Long> received = parsedCounters.row(streamFileNameCombo);
     if (!received.isEmpty()) {
       // create audit message
       AuditMessage auditMsg = createAuditMessage(streamName, received);
-      if (auditMsg == null)
-        return;
-      publishAuditMessage(auditMsg);
+      auditMsgList.add(auditMsg);
     } else {
       LOG.info("Not publishing audit packet as counters are empty");
     }
   }
 
-  private void publishAuditMessage(AuditMessage auditMsg) {
-    try {
-      LOG.debug("Publishing audit message from local stream service "
-          + auditMsg);
-      publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
-          ByteBuffer.wrap(serializer.serialize(auditMsg))));
-    } catch (TException e) {
-      LOG.error("Publishing of audit message failed", e);
+  protected void publishAuditMessages(List<AuditMessage> auditMsgList){
+    for (AuditMessage auditMsg : auditMsgList) {
+      try {
+        LOG.debug("Publishing audit message from local stream service "
+            + auditMsg);
+        publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME, new Message(
+            ByteBuffer.wrap(serializer.serialize(auditMsg))));
+      } catch (Exception e) {
+        LOG.error("Publishing of audit message" + auditMsg.toString() + "failed ", e);
+      }
     }
   }
 } 
-
-
-

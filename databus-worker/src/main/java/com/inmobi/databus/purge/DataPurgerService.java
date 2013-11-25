@@ -153,10 +153,6 @@ public class DataPurgerService extends AbstractService {
     return retentionInHours;
   }
 
-  private long getMsecInDay() {
-    return 1000 * 60 * 60 * 24; // 1 day
-  }
-
   @Override
   protected void execute() throws Exception {
     try {
@@ -364,16 +360,15 @@ public class DataPurgerService extends AbstractService {
     return files;
   }
 
-
   @Override
   protected String getTier() {
-    // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException(" requested method is not" +
+        " implemented in purger service");
   }
 
   @Override
   protected String getTopicNameFromDestnPath(Path destnPath) {
-    // TODO Auto-generated method stub
-    return null;
+    throw new UnsupportedOperationException(" requested method is not" +
+        " implemented in purger service");
   }
 }

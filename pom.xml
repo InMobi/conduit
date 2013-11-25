@@ -4,12 +4,12 @@
 
   <properties>
     <excluded.testng.groups>integration</excluded.testng.groups>
-    <messaging-client-version>3.3.0-SNAPSHOT</messaging-client-version>
+    <messaging-client-version>4.0.1</messaging-client-version>
   </properties>
 
   <groupId>com.inmobi.databus</groupId>
   <artifactId>databus-parent</artifactId>
-  <version>2.0.3-SNAPSHOT</version>
+  <version>2.0.5-SNAPSHOT</version>
   <name>Databus</name>
   <packaging>pom</packaging>
 
@@ -47,7 +47,6 @@
       </activation>
       <properties>
         <hadoop.version>0.20.2-cdh3u5</hadoop.version>
-        <hadoop-distcp.version>0.8</hadoop-distcp.version>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -62,13 +61,6 @@
             <artifactId>hadoop-test</artifactId>
             <version>${hadoop.version}</version>
             <scope>test</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop.inmobi.tools</groupId>
-            <artifactId>hadoop-distcp</artifactId>
-            <version>${hadoop-distcp.version}</version>
-            <classifier>cdh3</classifier>
-            <scope>provided</scope>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -86,7 +78,6 @@
       <properties>
         <hadoop.version>2.0.0-cdh4.3.0</hadoop.version>
         <hadoop2mr1.version>2.0.0-mr1-cdh4.3.0</hadoop2mr1.version>
-        <hadoop-distcp.version>0.8-SNAPSHOT</hadoop-distcp.version>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -126,13 +117,7 @@
             <version>${hadoop2mr1.version}</version>
             <scope>test</scope>
           </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop.inmobi.tools</groupId>
-            <artifactId>hadoop-distcp</artifactId>
-            <version>${hadoop-distcp.version}</version>
-            <classifier>cdh4</classifier>
-            <scope>provided</scope>
-          </dependency>
+
           <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -146,6 +131,19 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.inmobi.messaging</groupId>
+        <artifactId>messaging-client-core</artifactId>
+        <version>${messaging-client-version}</version>
+        <type>jar</type>
+      </dependency>
+      <dependency>
+        <groupId>com.inmobi.messaging</groupId>
+        <artifactId>messaging-client-core</artifactId>
+        <version>${messaging-client-version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>

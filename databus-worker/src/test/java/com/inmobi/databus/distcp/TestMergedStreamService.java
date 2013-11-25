@@ -35,19 +35,18 @@ import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MockInMemoryPublisher;
 import com.inmobi.messaging.util.AuditUtil;
 
-
-public class TestMergedStreamService extends MergedStreamService
-    implements AbstractServiceTest {
+public class TestMergedStreamService extends MergedStreamService implements
+    AbstractServiceTest {
   private static final Log LOG = LogFactory
       .getLog(TestMergedStreamService.class);
-  
+
   private Cluster destinationCluster = null;
   private Cluster srcCluster = null;
   private FileSystem fs = null;
   private Map<String, List<String>> files = null;
   private Calendar behinddate = new GregorianCalendar();
   private Date todaysdate = null;
-  
+
   public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       Set<String> streamsToProcess, MessagePublisher publisher)
@@ -59,13 +58,12 @@ public class TestMergedStreamService extends MergedStreamService
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());
   }
-  
+
   /*
    * Returns the last file path
    */
   public static FileStatus getAllFiles(Path listPath, FileSystem fs,
-      List<String> fileList) 
-          throws IOException {
+      List<String> fileList) throws IOException {
 
     FileStatus lastFile = null;
     DatePathComparator comparator = new DatePathComparator();
@@ -77,10 +75,10 @@ public class TestMergedStreamService extends MergedStreamService
     if (fileStatuses == null || fileStatuses.length == 0) {
       LOG.debug("No files in directory:" + listPath);
       if (fs.exists(listPath))
-      lastFile = fs.getFileStatus(listPath);
+        lastFile = fs.getFileStatus(listPath);
     } else {
 
-      for (FileStatus file : fileStatuses) { 
+      for (FileStatus file : fileStatuses) {
         if (file.isDir()) {
           lastFile = getAllFiles(file.getPath(), fs, fileList);
         } else {
@@ -90,11 +88,11 @@ public class TestMergedStreamService extends MergedStreamService
             lastFile = file;
           fileList.add(file.getPath().getName());
         }
-      } 
+      }
     }
     return lastFile;
   }
-  
+
   @Override
   protected void preExecute() throws Exception {
     try {
@@ -105,14 +103,14 @@ public class TestMergedStreamService extends MergedStreamService
       behinddate.add(Calendar.HOUR_OF_DAY, -2);
       for (Map.Entry<String, SourceStream> sstream : getConfig()
           .getSourceStreams().entrySet()) {
-        
+
         LOG.debug("Working for Stream in Merged Stream Service "
             + sstream.getValue().getName());
 
-        List<String> filesList = new ArrayList<String>();        
+        List<String> filesList = new ArrayList<String>();
         String listPath = srcCluster.getLocalFinalDestDirRoot()
             + sstream.getValue().getName();
-          
+
         LOG.debug("Getting List of Files from Path: " + listPath);
         getAllFiles(new Path(listPath), fs, filesList);
         files.put(sstream.getValue().getName(), filesList);
@@ -122,7 +120,7 @@ public class TestMergedStreamService extends MergedStreamService
             + Cluster.getDateAsYYYYMMDDHHMNPath(behinddate.getTime());
         fs.mkdirs(new Path(dummycommitpath));
       }
-      
+
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("Error in MergedStreamService Test PreExecute");
@@ -132,12 +130,13 @@ public class TestMergedStreamService extends MergedStreamService
     }
     todaysdate = null;
     todaysdate = new Date();
-    
+
   }
-  
+
   @Override
   protected void postExecute() throws Exception {
     try {
+      int totalFileProcessedInRun = 0;
       for (String sstream : getConfig().getClusters().
           get(destinationCluster.getName()).getPrimaryDestinationStreams()) {
         if (srcCluster.getSourceStreams().contains(sstream)) {
@@ -164,19 +163,23 @@ public class TestMergedStreamService extends MergedStreamService
               LOG.debug("Checking in Path for Merged mapred Output, No. of files: "
                   + commitPaths.size());
 
-              for (int j = 0; j < filesList.size() - 1; ++j) {
+              /*
+               * Last minute files wont be processed by MergedStreamService
+               * Here MergedStreamService process all files as last minute dir
+               * is empty.
+               */
+              for (int j = 0; j < filesList.size(); ++j) {
                 String checkpath = filesList.get(j);
                 LOG.debug("Merged Checking file: " + checkpath);
                 Assert.assertTrue(commitPaths.contains(checkpath));
+                totalFileProcessedInRun++;
               }
             } catch (NumberFormatException e) {
             }
 
           }
         }
-
       }
-
       // verfying audit is generated for all the messages
       MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) publisher;
       BlockingQueue<Message> auditQueue = mPublisher.source
@@ -190,6 +193,12 @@ public class TestMergedStreamService extends MergedStreamService
         deserializer.deserialize(msg, auditData);
         auditReceived += msg.getReceivedSize();
       }
+      /*
+       * Number of counters for each file is 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file.
+       * Counter name is func(streamname, filename, timestamp)
+       */
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(
@@ -200,27 +209,35 @@ public class TestMergedStreamService extends MergedStreamService
           "Error in MergedStreamService Test PostExecute");
     }
   }
-  
+
   public void runExecute() throws Exception {
     super.execute();
   }
-  
+
   public void runPreExecute() throws Exception {
     preExecute();
   }
-  
+
   public void runPostExecute() throws Exception {
     postExecute();
+  }
+
+  public void testRequalification() throws Exception {
+    Path p = new Path("hdfs://xxxx:1000/abc/abc");
+    String readUrl = srcCluster.getReadUrl();
+    Path expectedPath = new Path(readUrl, "/abc/abc");
+    Path path = this.fullyQualifyCheckPointWithReadURL(p, srcCluster);
+    LOG.info("Expected Requalified path is " + expectedPath);
+    Assert.assertEquals(expectedPath, path);
   }
 
   @Override
   public Cluster getCluster() {
     return destinationCluster;
   }
-  
+
   public FileSystem getFileSystem() {
     return fs;
   }
 
 }
-
