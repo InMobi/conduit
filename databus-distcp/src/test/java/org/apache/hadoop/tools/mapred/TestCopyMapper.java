@@ -49,7 +49,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.inmobi.databus.DatabusConstants;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -60,15 +59,14 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class TestCopyMapper {
   private static final Log LOG = LogFactory.getLog(TestCopyMapper.class);
   private static List<Path> pathList = new ArrayList<Path>();
   private static int nFiles = 0;
   private static final int FILE_SIZE = 1024;
+  private static final long NUMBER_OF_MESSAGES_PER_FILE = 3;
 
   private static MiniDFSCluster cluster;
 
@@ -282,7 +280,6 @@ public class TestCopyMapper {
         copyMapper.map(new Text(DistCpUtils.getRelativePath(new Path(SOURCE_PATH), path)),
                 fs.getFileStatus(path), context);
       }
-
       // Check that the maps worked.
       for (Path path : pathList) {
         final Path targetPath = new Path(path.toString()
@@ -296,27 +293,10 @@ public class TestCopyMapper {
         Assert.assertTrue(!fs.isFile(targetPath) ||
                 fs.getFileChecksum(targetPath).equals(
                         fs.getFileChecksum(path)));
-        if (fs.isFile(path)) {
-          String counterName = "test1" +
-              DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + path.getName() +
-              DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
-              (currentTimestamp - (currentTimestamp % 60000));
-          Counter counter = reporter.getCounter(DatabusConstants.AUDIT_COUNTER_GROUP,
-              counterName);
-          Assert.assertEquals(2, counter.getValue());
-          counterName = "test1" + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
-              path.getName() + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
-              (nextMinuteTimeStamp - (nextMinuteTimeStamp % 60000));
-          counter = reporter.getCounter(DatabusConstants.AUDIT_COUNTER_GROUP,
-              counterName);
-          Assert.assertEquals(1, counter.getValue());
-        }
       }
 
       Assert.assertEquals(pathList.size(),
               reporter.getCounter(CopyMapper.Counter.PATHS_COPIED).getValue());
-      /*Assert.assertEquals(nFiles * FILE_SIZE,
-              reporter.getCounter(CopyMapper.Counter.BYTES_COPIED).getValue());*/
       // Here file is compressed file. So, we should compare the file length
       // with the number of bytes read
       long totalSize = 0;
@@ -325,11 +305,12 @@ public class TestCopyMapper {
       }
       Assert.assertEquals(totalSize,
           reporter.getCounter(CopyMapper.Counter.BYTES_COPIED).getValue());
-
-      testCopyingExistingFiles(fs, copyMapper, context);
+      long totalCounterValue = 0;
       for (Text value : writer.values()) {
-        Assert.assertTrue(value.toString() + " is not skipped", value.toString().startsWith("SKIP:"));
+        totalCounterValue += Long.valueOf(value.toString());
       }
+      Assert.assertEquals(nFiles * NUMBER_OF_MESSAGES_PER_FILE, totalCounterValue);
+      testCopyingExistingFiles(fs, copyMapper, context);
     }
     catch (Exception e) {
       LOG.error("Unexpected exception: ", e);

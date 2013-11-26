@@ -55,6 +55,7 @@ public class TestDistCp {
 
   private static final String SOURCE_PATH = "/tmp/source";
   private static final String TARGET_PATH = "/tmp/target";
+  private static final Path counterOutputPath = new Path("counters");
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -155,6 +156,7 @@ public class TestDistCp {
       Path targetPath = new Path(TARGET_PATH)
               .makeQualified(cluster.getFileSystem());
       DistCpOptions options = new DistCpOptions(sources, targetPath);
+      options.setOutPutDirectory(counterOutputPath);
       options.setAtomicCommit(true);
       options.setBlocking(false);
       Job job = new DistCp(configuration, options).execute();
@@ -190,6 +192,7 @@ public class TestDistCp {
       Path targetPath = new Path(TARGET_PATH)
               .makeQualified(cluster.getFileSystem());
       DistCpOptions options = new DistCpOptions(sources, targetPath);
+      options.setOutPutDirectory(counterOutputPath);
 
       Path stagingDir = JobSubmissionFiles.getStagingDir(
               new JobClient(new JobConf(configuration)), configuration);
@@ -222,6 +225,7 @@ public class TestDistCp {
       Path targetPath = new Path("/c")
               .makeQualified(cluster.getFileSystem());
       DistCpOptions options = new DistCpOptions(sources, targetPath);
+      options.setOutPutDirectory(counterOutputPath);
       new DistCp(configuration, options).execute();
       Assert.assertTrue(cluster.getFileSystem().exists(new Path("/c/a/a.gz")));
       Assert.assertTrue(cluster.getFileSystem().exists(new Path("/c/b/b.gz")));
@@ -245,6 +249,7 @@ public class TestDistCp {
               .makeQualified(cluster.getFileSystem());
       DistCpOptions options = new DistCpOptions(sources, targetPath);
       options.setCopyStrategy("dynamic");
+      options.setOutPutDirectory(counterOutputPath);
 
       options.setAtomicCommit(true);
       options.setAtomicWorkPath(new Path("/work"));
