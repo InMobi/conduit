@@ -234,7 +234,6 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
         LOG.info("Skipping copy of " + sourceCurrStatus.getPath()
             + " to " + target);
         updateSkipCounters(context, sourceCurrStatus);
-        context.write(null, new Text("SKIP: " + sourceCurrStatus.getPath()));
       }
       else {
         String streamName = null;
