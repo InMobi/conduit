@@ -89,7 +89,14 @@ public class AuditDbQuery {
     LOG.debug("To time:" + toTime);
     LOG.debug("From time:" + fromTime);
     AuditDBHelper dbHelper = new AuditDBHelper(config);
-    tupleSet.addAll(dbHelper.retrieve(toTime, fromTime, filter, groupBy));
+    Set<Tuple> tuples = dbHelper.retrieve(toTime, fromTime, filter, groupBy);
+    if (tuples != null) {
+      tupleSet.addAll(dbHelper.retrieve(toTime, fromTime, filter, groupBy));
+    } else {
+      LOG.error("Tupleset retrieved is null, error in helper retireve() " +
+          "method");
+      return;
+    }
     LOG.debug("Tuple set retrieved from DB: " + tupleSet);
     setReceivedAndSentStats();
     if (percentileSet != null) {
