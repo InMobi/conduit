@@ -252,10 +252,12 @@ public class AuditRollUpService extends AuditDBService {
 
         try {
           if (!isStop) {
-            createDailyTable(connection);
-            Date markTime = rollupTables(connection);
-            if (markTime != null) {
-              mark(getFirstMilliOfDay(markTime));
+            boolean isCreated = createDailyTable(connection);
+            if (isCreated) {
+              Date markTime = rollupTables(connection);
+              if (markTime != null) {
+                mark(getFirstMilliOfDay(markTime));
+              }
             }
           }
         } catch (SQLException e) {
@@ -276,14 +278,15 @@ public class AuditRollUpService extends AuditDBService {
     }
   }
 
-  private void createDailyTable(Connection connection) {
+  private boolean createDailyTable(Connection connection) {
     if (!isStop) {
       Date fromDate = new Date();
       Date todate = addDaysToCurrentDate(config.getInteger(AuditDBConstants
           .NUM_DAYS_AHEAD_TABLE_CREATION));
       LOG.info("Creating daily table from:" + fromDate + " till:" + todate);
-      createDailyTable(fromDate, todate, connection);
+      return createDailyTable(fromDate, todate, connection);
     }
+    return false;
   }
 
   /**
