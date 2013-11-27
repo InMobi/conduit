@@ -91,7 +91,7 @@ public class AuditDbQuery {
     AuditDBHelper dbHelper = new AuditDBHelper(config);
     Set<Tuple> tuples = dbHelper.retrieve(toTime, fromTime, filter, groupBy);
     if (tuples != null) {
-      tupleSet.addAll(dbHelper.retrieve(toTime, fromTime, filter, groupBy));
+      tupleSet.addAll(tuples);
     } else {
       LOG.error("Tupleset retrieved is null, error in helper retireve() " +
           "method");
