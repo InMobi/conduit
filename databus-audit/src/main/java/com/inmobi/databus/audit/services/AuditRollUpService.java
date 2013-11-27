@@ -101,6 +101,7 @@ public class AuditRollUpService extends AuditDBService {
     } catch (SQLException e) {
       AuditDBHelper.logNextException("SQLException while getting first/last time interval" +
           " from db:", e);
+      return null;
     } finally {
       try {
         if (rs != null)
@@ -149,15 +150,19 @@ public class AuditRollUpService extends AuditDBService {
         (connection, true)));
     Date lastDate = new Date(getFirstMilliOfDay(getTimeEnrtyDailyTable
         (connection, false)));
-    LOG.debug("Table dates corresponding to first entry:" + dayChkFormat
-        .format(firstDate) + " and last entry:" + dayChkFormat.format(lastDate));
-    Date currentDate = lastDate;
-    while (!currentDate.before(firstDate)) {
-      if (checkTableExists(connection, createTableName(currentDate, true)))
-        return addDaysToGivenDate(currentDate, 1);
-      currentDate = addDaysToGivenDate(currentDate, -1);
+    if (firstDate != null && lastDate != null) {
+      LOG.debug("Table dates corresponding to first entry:" + dayChkFormat
+          .format(firstDate) + " and last entry:" + dayChkFormat.format(lastDate));
+      Date currentDate = lastDate;
+      while (!currentDate.before(firstDate)) {
+        if (checkTableExists(connection, createTableName(currentDate, true)))
+          return addDaysToGivenDate(currentDate, 1);
+        currentDate = addDaysToGivenDate(currentDate, -1);
+      }
+      return firstDate;
+    } else {
+      return null;
     }
-    return firstDate;
   }
 
   /**
@@ -380,11 +385,11 @@ public class AuditRollUpService extends AuditDBService {
     if (!isStop) {
       Date fromTime = getFromTime(connection);
       Date toDate = addDaysToCurrentDate(-tilldays);
-      if (!fromTime.after(toDate)) {
+      if (fromTime != null && !fromTime.after(toDate)) {
         return rollupTables(fromTime, toDate, connection);
       } else {
         LOG.error("Start time[" + fromTime +"] is after end time[" + toDate
-            + "] for rollup");
+            + "] for rollup or start time is null");
       }
     }
     return null;
