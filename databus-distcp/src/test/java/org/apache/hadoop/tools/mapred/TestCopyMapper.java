@@ -594,10 +594,6 @@ public class TestCopyMapper {
             copyMapper.map(new Text("/src/file.gz"),
                 tmpFS.getFileStatus(new Path(SOURCE_PATH + "/src/file.gz")),
                 context);
-            Assert.assertEquals(writer.values().size(), 1);
-            Assert.assertTrue(writer.values().get(0).toString().startsWith("SKIP"));
-            Assert.assertTrue(writer.values().get(0).toString().
-                contains(SOURCE_PATH + "/src/file.gz"));
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
