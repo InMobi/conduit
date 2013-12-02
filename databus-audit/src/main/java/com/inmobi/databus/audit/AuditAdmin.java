@@ -54,6 +54,7 @@ public class AuditAdmin {
 
     Date currentDate = getDate(date);
     if (currentDate == null) {
+      System.out.println("Incorrect date argument, pass correct date");
       printUsage();
       System.exit(-1);
     }
@@ -238,6 +239,12 @@ public class AuditAdmin {
         return false;
       }
       Date toDate = service.addDaysToGivenDate(fromDate, numDays);
+      if (!toDate.before(upperLimitDate)) {
+        System.out.println("ToDate[" + formatter.format(toDate) + "] is after" +
+            " upper limit date[" + formatter.format(upperLimitDate) + "], " +
+            "rolling up till upper limit date");
+        toDate = upperLimitDate;
+      }
       Date date = service.rollupTables(fromDate, toDate, connection);
       if (date.equals(fromDate))
         return false;
@@ -254,6 +261,7 @@ public class AuditAdmin {
   }
 
   private static Date getDate(String date) {
+    formatter.setLenient(false);
     Date currentDate;
     try {
       currentDate = formatter.parse(date);

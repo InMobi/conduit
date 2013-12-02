@@ -128,18 +128,23 @@ public class AuditRollUpService extends AuditDBService {
   }
 
   protected Date getFromTime(Connection connection) {
-    byte[] value = provider.read(checkpointKey);
-    if (value != null) {
-      Long timestamp;
-      try {
-        timestamp = Long.parseLong(new String(value));
-      } catch (NumberFormatException e) {
-        LOG.error("Unparseable timestamp value from checkpoint:" + value, e);
-        return getFromTimeFromDB(connection);
+    try {
+      byte[] value = provider.read(checkpointKey);
+      if (value != null) {
+        Long timestamp;
+        try {
+          timestamp = Long.parseLong(new String(value));
+        } catch (NumberFormatException e) {
+          LOG.error("Unparseable timestamp value from checkpoint:" + value, e);
+          return getFromTimeFromDB(connection);
+        }
+        LOG.info("Get fromTime from checkpoint:"+timestamp);
+        if (checkLongValOfDateValid(timestamp))
+          return new Date(timestamp);
       }
-      LOG.info("Get fromTime from checkpoint:"+timestamp);
-      if (checkLongValOfDateValid(timestamp))
-        return new Date(timestamp);
+    } catch (Exception e) {
+      LOG.error("Exception while reading from checkpoint", e);
+      return getFromTimeFromDB(connection);
     }
     return getFromTimeFromDB(connection);
   }
@@ -220,6 +225,8 @@ public class AuditRollUpService extends AuditDBService {
    * @param toTime time to mark
    */
   public void mark(Long toTime) {
+    LOG.info("Clearing the interrupted status of thread before marking");
+    Thread.interrupted();
     try {
       provider.checkpoint(checkpointKey, toTime.toString().getBytes());
       LOG.info("Marked checkpoint to the date at which to start next run:"
@@ -317,18 +324,21 @@ public class AuditRollUpService extends AuditDBService {
           createDailyTableStmt.setString(index++, currentDateString);
           createDailyTableStmt.setString(index++, nextDayString);
           createDailyTableStmt.addBatch();
-          LOG.info("Daily table added to batch for day:" + currentDateString
+          LOG.debug("Daily table added to batch for day:" + currentDateString
               + " with table name as:" + dayTable + " and parent is :" +
               masterTable);
           addedToBatch++;
           fromDate = addDaysToGivenDate(fromDate, 1);
         }
-        int[] retVal = createDailyTableStmt.executeBatch();
-        if (retVal.length != addedToBatch) {
-          LOG.error("Mismatch in number of tables added to batch[" +
-              addedToBatch + "] and rolledup tables[" + retVal.length + "]");
+        if (!isStop) {
+          LOG.info("Executing batch update for creating daily tables");
+          int[] retVal = createDailyTableStmt.executeBatch();
+          if (retVal.length != addedToBatch) {
+            LOG.error("Mismatch in number of tables added to batch[" +
+                addedToBatch + "] and rolledup tables[" + retVal.length + "]");
+          }
+          connection.commit();
         }
-        connection.commit();
       }
     } catch (SQLException e) {
       AuditDBHelper.logNextException("SQLException while creating daily " +
@@ -374,9 +384,9 @@ public class AuditRollUpService extends AuditDBService {
   private void sleepTillNextRun() {
     // sleep till next roll up hour
     long waitTime = getTimeToSleep();
-    LOG.info("Sleeping for "+waitTime+"ms");
     try {
       if (!isStop) {
+        LOG.info("Sleeping for "+waitTime+"ms");
         Thread.sleep(waitTime);
       }
     } catch (InterruptedException e) {
@@ -406,8 +416,7 @@ public class AuditRollUpService extends AuditDBService {
    * @param fromTime start date of tables to be rolled up
    * @param toDate date of tables at which to stop roll up
    * @param connection Connection to audit db
-   * @return date at which to checkpoint and start next rollup run if current
-   * rollup was successful for all tables
+   * @return date at which to checkpoint and start next rollup run
    * @throws SQLException
    */
   public Date rollupTables(Date fromTime, Date toDate,
@@ -418,7 +427,6 @@ public class AuditRollUpService extends AuditDBService {
       if (!isStop) {
         String statement = getRollUpQuery();
         rollupStmt = connection.prepareCall(statement);
-        int addedToBatch = 0;
         LOG.info("Starting roll up of tables from:"+currentDate+" till:"+toDate);
         while (currentDate.before(toDate) && !isStop) {
           Date nextDay = addDaysToGivenDate(currentDate, 1);
@@ -433,17 +441,17 @@ public class AuditRollUpService extends AuditDBService {
           rollupStmt.setLong(index++, firstMillisOfDay);
           rollupStmt.setLong(index++, firstMillisOfNextDay);
           rollupStmt.setLong(index++, intervalLength);
-          LOG.info(
-              "Adding rollup of table to batch for day:" + currentDate + "" +
-                  " and query:" + rollupStmt);
-          rollupStmt.addBatch();
-          addedToBatch++;
+          LOG.debug("Executing rollup of table for day:" + currentDate + " " +
+              "and query:" + rollupStmt);
+          try {
+            rollupStmt.executeUpdate();
+            LOG.debug("Rolled up table for day:" + currentDate);
+          } catch (SQLException e) {
+            AuditDBHelper.logNextException("SQLException while executing " +
+                "rollup transaction for date" + currentDate, e);
+            break;
+          }
           currentDate = nextDay;
-        }
-        int[] retVal = rollupStmt.executeBatch();
-        if (retVal.length != addedToBatch) {
-          LOG.error("Mismatch in number of tables added to batch[" +
-              addedToBatch + "] and rolledup tables[" + retVal.length + "]");
         }
         connection.commit();
       }
