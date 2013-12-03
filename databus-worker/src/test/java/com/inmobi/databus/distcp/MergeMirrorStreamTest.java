@@ -65,7 +65,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getCount(), 120);
+    Assert.assertTrue(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getCount() >= 120);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
@@ -85,7 +85,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"stream2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"stream2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"stream2").getCount() , 120);
+    Assert.assertTrue(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"stream2").getCount() >= 120);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getCount() , 9);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_RENAME,"stream2").getCount() , 0);
