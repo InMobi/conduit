@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -33,10 +34,12 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
@@ -62,7 +65,7 @@ import com.inmobi.messaging.util.AuditUtil;
 
 public class LocalStreamServiceTest extends TestMiniClusterUtil {
   private static Logger LOG = Logger.getLogger(LocalStreamServiceTest.class);
-  private final static int number_files = 9;
+  private final static int NUMBER_OF_FILES = 9;
   public static final String FS_DEFAULT_NAME_KEY = "fs.default.name";
   public static final String SRC_FS_DEFAULT_NAME_KEY = "src.fs.default.name";
 
@@ -157,19 +160,19 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     FileStatus[] stream1 = createTestData(2, "/databus/data/stream1/collector",
         true);
 
-    FileStatus[] stream3 = createTestData(number_files,
+    FileStatus[] stream3 = createTestData(NUMBER_OF_FILES,
         "/databus/data/stream1/collector1/file", true);
 
-    FileStatus[] stream4 = createTestData(number_files,
+    FileStatus[] stream4 = createTestData(NUMBER_OF_FILES,
         "/databus/data/stream1/collector2/file", true);
 
     FileStatus[] stream2 = createTestData(2, "/databus/data/stream2/collector",
         true);
 
-    FileStatus[] stream5 = createTestData(number_files,
+    FileStatus[] stream5 = createTestData(NUMBER_OF_FILES,
         "/databus/data/stream2/collector1/file", true);
 
-    FileStatus[] stream6 = createTestData(number_files,
+    FileStatus[] stream6 = createTestData(NUMBER_OF_FILES,
         "/databus/data/stream2/collector2/file", true);
 
     when(fs.getWorkingDirectory()).thenReturn(new Path("/tmp/"));
@@ -496,6 +499,7 @@ cluster.getCheckpointDir()),
     }
 
     for (TestLocalStreamService service : services) {
+      FileSystem fs = service.getFileSystem();
       service.preExecute();
       if (currentClusterName != null)
         Assert.assertEquals(service.getCurrentCluster().getName(),
@@ -511,19 +515,37 @@ cluster.getCheckpointDir()),
       Job testJobConf = service.createJob(tmpJobInputPath, 1000);
       testJobConf.waitForCompletion(true);
 
-      CounterGroup counterGrp = testJobConf.getCounters().getGroup(
-          DatabusConstants.AUDIT_COUNTER_GROUP);
-      Assert.assertEquals(counterGrp.size(), number_files * 2);
-      Assert.assertEquals(counterGrp.getName(), "audit");
-      int totalSize = 0;
-      for (Counter counter : counterGrp) {
-        totalSize += counter.getValue();
+      int numberOfCountersPerFile = 0;
+      long sumOfCounterValues = 0;
+      Path outputCounterPath = new Path(new Path(service.getCluster().getTmpPath(),
+          service.getName()), "counters");
+      FileStatus[] statuses = fs.listStatus(outputCounterPath, new PathFilter() {
+        public boolean accept(Path path) {
+          return path.toString().contains("part");
+        }
+      });
+      for (FileStatus fileSt : statuses) {
+        Scanner scanner = new Scanner(fs.open(fileSt.getPath()));
+        while (scanner.hasNext()) {
+          String counterName = null;
+          try {
+            counterName = scanner.next();
+            String tmp[] = counterName.split(CopyMapper.DELIMITER);
+            Assert.assertEquals(3, tmp.length);
+            Long numOfMsgs = scanner.nextLong();
+            numberOfCountersPerFile++;
+            sumOfCounterValues += numOfMsgs;
+          } catch (Exception e) {
+            LOG.error("Counters file has malformed line with counter name ="
+                + counterName + "..skipping the line", e);
+          }
+        }
       }
-      /* sum of all the counter values must equal to total number of messages
-       * in all files. Here each file contains 3 messages.
-       * Total number of messages are (number_files * 3)
-       */
-      Assert.assertEquals(totalSize, number_files * 3);
+      // Should have 2 counters for each file
+      Assert.assertEquals(NUMBER_OF_FILES * 2, numberOfCountersPerFile);
+      // sum of all counter values should be equal to total number of messages
+      Assert.assertEquals(NUMBER_OF_FILES * 3, sumOfCounterValues);
+
       Assert.assertEquals(
           testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY), service
               .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
