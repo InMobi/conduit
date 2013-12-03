@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 
 #hadoop home path
 HADOOP_HOME=/usr/lib/hadoop-all
