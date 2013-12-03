@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #hadoop home path
-HADOOP_HOME=/usr/lib/hadoop-all
+HADOOP_HOME=<path to hadoop>
 for f in $HADOOP_HOME/lib/*.jar;
 do
   if echo "$f" | grep 'guava';
