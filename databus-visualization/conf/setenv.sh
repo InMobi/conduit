@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #hadoop home path
-HADOOP_HOME=/usr/lib/hadoop-all
+HADOOP_HOME=<path to hadoop jars>
 count=$(ls $HADOOP_HOME/lib/guava-[0-9]*jar | wc -l )
 if test $count -gt 1
 then
