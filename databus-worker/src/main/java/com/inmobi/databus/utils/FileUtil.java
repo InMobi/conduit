@@ -75,6 +75,7 @@ public class FileUtil {
     Long window = timestamp - (timestamp % (windowSize * 1000));
     return window;
   }
+
   private static void incrementReceived(byte[] msg, Map<Long, Long> received) {
     long timestamp = AuditUtil.getTimestamp(msg);
     long window = getWindow(timestamp);
