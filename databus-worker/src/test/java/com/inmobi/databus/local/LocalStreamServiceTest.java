@@ -577,6 +577,12 @@ cluster.getCheckpointDir()),
             currentClusterName);
       // creating a job with empty input path
       Path tmpJobInputPath = new Path("/tmp/job/input/path");
+      Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
+      Set<FileStatus> trashSet = new HashSet<FileStatus>();
+      // checkpointKey, CheckPointPath
+      Table<String, String, String>  checkpointPaths = HashBasedTable.create();
+      service.createMRInput(tmpJobInputPath, fileListing, trashSet,
+          checkpointPaths);
       Job testJobConf = service.createJob(tmpJobInputPath, 1000);
       testJobConf.waitForCompletion(true);
 
