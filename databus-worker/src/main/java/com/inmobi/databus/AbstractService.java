@@ -34,7 +34,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
@@ -493,29 +492,29 @@ public abstract class AbstractService implements Service, Runnable {
       try {
         scanner = new Scanner(fs.open(filePath));
       } catch (IOException e1) {
-        LOG.error("Error while opening file " + filePath + "Skipping");
+        LOG.error("Error while opening file " + filePath + " Skipping");
         continue;
       }
       while (scanner.hasNext()) {
         String counterName = null;
         try {
           counterName = scanner.next();
-          String tmp[] = counterName.split(CopyMapper.DELIMITER);
+          String tmp[] = counterName.split(DatabusConstants.
+              AUDIT_COUNTER_NAME_DELIMITER);
           if (tmp.length < 3) {
             LOG.error("Malformed counter name,skipping " + counterName);
             continue;
           }
-          String streamFileNameCombo = tmp[0] + CopyMapper.DELIMITER + tmp[1];
+          String streamFileNameCombo = tmp[0]
+              + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
           Long publishTimeWindow = Long.parseLong(tmp[2]);
           Long numOfMsgs = scanner.nextLong();
           result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
         } catch (Exception e) {
-          LOG.error("Counters file has malformed line with counter name ="
-              + counterName + "..skipping the line", e);
+          LOG.error("Counters file has malformed line with counter name = "
+              + counterName + " ..skipping the line", e);
         }
       }
-
-
     }
     return result;
 
@@ -565,8 +564,8 @@ public abstract class AbstractService implements Service, Runnable {
   protected void publishAuditMessages(List<AuditMessage> auditMsgList){
     for (AuditMessage auditMsg : auditMsgList) {
       try {
-        LOG.debug("Publishing audit message from local stream service "
-            + auditMsg);
+        LOG.debug("Publishing audit message " + auditMsg.toString() + " from "
+            + this.getClass().getSimpleName() + " service");
         MessagePublisher publisher = Databus.getPublisher();
         publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME,
             new Message(ByteBuffer.wrap(serializer.serialize(auditMsg))));

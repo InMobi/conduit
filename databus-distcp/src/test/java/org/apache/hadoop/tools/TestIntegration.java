@@ -30,13 +30,13 @@ import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.hadoop.tools.util.TestDistCpUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -96,7 +96,7 @@ public class TestIntegration {
           String counterName = null;
           try {
             counterName = scanner.next();
-            String tmp[] = counterName.split(CopyMapper.DELIMITER);
+            String tmp[] = counterName.split(DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER);
             Assert.assertEquals(3, tmp.length);
             Long numOfMsgs = scanner.nextLong();
             numberOfCountersPerFile++;
