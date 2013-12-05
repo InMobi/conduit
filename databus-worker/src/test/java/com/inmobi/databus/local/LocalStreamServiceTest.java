@@ -38,7 +38,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -596,7 +595,8 @@ cluster.getCheckpointDir()),
           String counterName = null;
           try {
             counterName = scanner.next();
-            String tmp[] = counterName.split(CopyMapper.DELIMITER);
+            String tmp[] = counterName.split(DatabusConstants.
+                AUDIT_COUNTER_NAME_DELIMITER);
             Assert.assertEquals(3, tmp.length);
             Long numOfMsgs = scanner.nextLong();
             numberOfCountersPerFile++;
