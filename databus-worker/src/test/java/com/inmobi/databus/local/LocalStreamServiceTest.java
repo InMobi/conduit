@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
@@ -36,16 +37,20 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.ClusterTest;
@@ -59,8 +64,6 @@ import com.inmobi.databus.TestMiniClusterUtil;
 import com.inmobi.databus.local.LocalStreamService.CollectorPathFilter;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
-import com.inmobi.messaging.publisher.MessagePublisher;
-import com.inmobi.messaging.publisher.MessagePublisherFactory;
 import com.inmobi.messaging.util.AuditUtil;
 
 public class LocalStreamServiceTest extends TestMiniClusterUtil {
@@ -72,6 +75,19 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   Set<String> expectedResults = new LinkedHashSet<String>();
   Set<String> expectedTrashPaths = new LinkedHashSet<String>();
   Map<String, String> expectedCheckPointPaths = new HashMap<String, String>();
+
+  @BeforeMethod
+  public void beforeTest() throws Exception{
+    Properties prop = new Properties();
+    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    ConduitMetrics.init(prop);
+    ConduitMetrics.startAll();
+  }
+  @AfterMethod
+  public void afterTest() throws Exception{
+    ConduitMetrics.stopAll();;
+  }
+
 
   @BeforeSuite
   public void setup() throws Exception {
@@ -207,7 +223,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
       Map<FileStatus, String> results = new TreeMap<FileStatus, java.lang.String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
-      Map<String, FileStatus> checkpointPaths = new HashMap<String, FileStatus>();
+      Table<String, String, String> checkpointPaths = HashBasedTable.create();
       fs.delete(cluster.getDataDir(), true);
       FileStatus dataDir = new FileStatus(20, false, 3, 23823, 2438232,
           cluster.getDataDir());
@@ -238,12 +254,16 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       }
 
       Map<String, String> tmpCheckPointPaths = new TreeMap<String, String>();
-      // print checkPointPaths
-      for (String key : checkpointPaths.keySet()) {
-        tmpCheckPointPaths.put(key, checkpointPaths.get(key).getPath()
-            .getName());
-        LOG.debug("CheckPoint key [" + key + "] value ["
-            + checkpointPaths.get(key).getPath().getName() + "]");
+      Set<String> streams = checkpointPaths.rowKeySet();
+      for (String streamName : streams) {
+        Map<String, String> collectorCheckpointValueMap = checkpointPaths.row(streamName);
+        for (String collector : collectorCheckpointValueMap.keySet()) {
+          String checkpointKey = AbstractService.getCheckPointKey(service.getName(), streamName, collector);
+          LOG.debug("Check Pointing Key [" + checkpointKey + "] with value ["
+              +  collectorCheckpointValueMap.get(collector) + "]");
+          tmpCheckPointPaths.put(checkpointKey,
+              collectorCheckpointValueMap.get(collector));
+        }
       }
       validateExpectedOutput(tmpResults, tmpTrashPaths, tmpCheckPointPaths);
       fs.delete(new Path(cluster.getRootDir() + "/databus-checkpoint"), true);
@@ -395,24 +415,60 @@ cluster.getCheckpointDir()),
 
       i++;
     }
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getCount() , 0);
   }
 
   @Test
   public void testMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-databus.xml");
     testMapReduce("test-lss-databus.xml", 1);
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() ,9 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() ,0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() ,0 );
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() ,0 );
   }
 
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml");
     testMapReduce("test-lss-multiple-databus.xml", 1);
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test2").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test3").getCount() , 9);
   }
 
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduceWithMultipleRuns() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml, Running Twice");
     testMapReduce("test-lss-multiple-databus1.xml", 2);
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test2").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test3").getCount() , 19);
   }
 
   private static class NullCheckPointProvider implements CheckpointProvider {
@@ -459,16 +515,32 @@ cluster.getCheckpointDir()),
     for (TestLocalStreamService service : services) {
       Assert.assertEquals(service.getMapperClass(), S3NCopyMapper.class);
     }
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 0);
   }
 
   @Test
   public void testWithOutClusterName() throws Exception {
     testClusterName("test-lss-databus.xml", null);
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 0);
   }
 
   @Test
   public void testWithClusterName() throws Exception {
     testClusterName("test-lss-databus.xml", "testcluster2");
+
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 0);
   }
 
   private void testClusterName(String configName, String currentClusterName)
@@ -506,12 +578,6 @@ cluster.getCheckpointDir()),
             currentClusterName);
       // creating a job with empty input path
       Path tmpJobInputPath = new Path("/tmp/job/input/path");
-      Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
-      Set<FileStatus> trashSet = new HashSet<FileStatus>();
-      // checkpointKey, CheckPointPath
-      Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
-      service.createMRInput(tmpJobInputPath, fileListing, trashSet,
-          checkpointPaths);
       Job testJobConf = service.createJob(tmpJobInputPath, 1000);
       testJobConf.waitForCompletion(true);
 
@@ -548,10 +614,10 @@ cluster.getCheckpointDir()),
 
       Assert.assertEquals(
           testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY), service
-              .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+          .getCurrentCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
       Assert.assertEquals(
           testJobConf.getConfiguration().get(SRC_FS_DEFAULT_NAME_KEY), service
-              .getCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
+          .getCluster().getHadoopConf().get(FS_DEFAULT_NAME_KEY));
       if (currentCluster == null)
         Assert.assertEquals(
             testJobConf.getConfiguration().get(FS_DEFAULT_NAME_KEY),

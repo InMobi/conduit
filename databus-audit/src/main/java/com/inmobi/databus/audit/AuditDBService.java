@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 
 public abstract class AuditDBService implements Runnable {
   protected Thread thread;
+  protected volatile boolean isStop = false;
   private static final Log LOG = LogFactory.getLog(AuditDBService.class);
 
   @Override

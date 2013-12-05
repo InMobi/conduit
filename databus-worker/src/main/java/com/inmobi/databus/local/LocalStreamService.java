@@ -46,8 +46,10 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -104,6 +106,15 @@ ConfigConstants {
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
     auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+	
+    //register metrics
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerCounter(getServiceType(), FILES_COPIED_COUNT, eachStream);
+    }
   }
 
   private void cleanUpTmp(FileSystem fs) throws Exception {
@@ -132,8 +143,9 @@ ConfigConstants {
           srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
-      // checkpointKey, CheckPointPath
-      Map<String, FileStatus> checkpointPaths = new TreeMap<String, FileStatus>();
+      /* checkpointPaths table contains streamaname as rowkey,
+      source(collector) name as column key and checkpoint value as value */
+      Table<String, String, String> checkpointPaths = HashBasedTable.create();
 
       long totalSize = createMRInput(tmpJobInputPath, fileListing, trashSet,
           checkpointPaths);
@@ -147,10 +159,11 @@ ConfigConstants {
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
-        commit(prepareForCommit(commitTime), true, auditMsgList);
+
+        commit(prepareForCommit(commitTime), false,auditMsgList);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
-        commit(populateTrashCommitPaths(trashSet), false, null);
+        commit(populateTrashCommitPaths(trashSet), true, null);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
 
       }
@@ -162,15 +175,20 @@ ConfigConstants {
     }
   }
 
-  private void checkPoint(Map<String, FileStatus> checkPointPaths)
+  private void checkPoint(Table<String, String, String> checkPointPaths)
       throws Exception {
-    Set<Entry<String, FileStatus>> entries = checkPointPaths.entrySet();
-    for (Entry<String, FileStatus> entry : entries) {
-      String value = entry.getValue().getPath().getName();
-      LOG.debug("Check Pointing Key [" + entry.getKey() + "] with value ["
-          + value + "]");
-      retriableCheckPoint(checkpointProvider, entry.getKey(), value.getBytes());
+    Set<String> streams = checkPointPaths.rowKeySet();
+    for (String streamName : streams) {
+      Map<String, String> collectorCheckpointValueMap = checkPointPaths.row(streamName);
+      for (String collector : collectorCheckpointValueMap.keySet()) {
+        String checkpointKey = getCheckPointKey(getClass().getSimpleName(), streamName, collector);
+        LOG.debug("Check Pointing Key [" + checkpointKey + "] with value ["
+            +  collectorCheckpointValueMap.get(collector) + "]");
+        retriableCheckPoint(checkpointProvider, checkpointKey,
+            collectorCheckpointValueMap.get(collector).getBytes(), streamName);
+      }
     }
+    checkPointPaths.clear();
   }
 
   Map<Path, Path> prepareForCommit(long commitTime) throws Exception {
@@ -221,32 +239,57 @@ ConfigConstants {
     return trashPaths;
   }
 
-  private void commit(Map<Path, Path> commitPaths, boolean generateAudit,
-      List<AuditMessage> auditMsgList) throws Exception {
+  /*
+   * Trash paths: srcPath:  hdfsUri/databus/data/<streamname>/<collectorname>/<fileName>
+   *              destPath: hdfsUri/databus/system/trash/yyyy-MM-dd/HH/<filename>
+   *
+   * local stream Paths:
+   *  srcPath: hdfsUri/databus/system/tmp/<localStreamservicename>/jobout/<streamName>/<fileName>
+   *  destPath: hdfsUri/databus/streams_local/<streamName>/yyyy/MM/dd/HH/mm/<fileName>
+   */
+  private void commit(Map<Path, Path> commitPaths, boolean isTrashData, List<AuditMessage> auditMsgList)
+      throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    long startTime = System.currentTimeMillis();
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
     Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
-      retriableMkDirs(fs, entry.getValue().getParent());
-      if (retriableRename(fs, entry.getKey(), entry.getValue()) == false) {
+      String streamName = null;
+      /*
+       * finding streamname from srcPaths for committing trash paths as we don't
+       * have streamname in destPath.
+       * finding streamname from dest path for other paths
+       */
+      if (!isTrashData) {
+        streamName = getTopicNameFromDestnPath(entry.getValue());
+      } else {
+        streamName = getCategoryFromSrcPath(entry.getKey());
+      }
+      retriableMkDirs(fs, entry.getValue().getParent(), streamName);
+      if (retriableRename(fs, entry.getKey(), entry.getValue(), streamName) == false) {
         LOG.warn("Rename failed, aborting transaction COMMIT to avoid "
             + "dataloss. Partial data replay could happen in next run");
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
-      if (generateAudit) {
+      if (!isTrashData) {
         String filename = entry.getKey().getName();
-        String streamName = getTopicNameFromDestnPath(entry.getValue());
         generateAuditMsgs(streamName, filename, parsedCounters, auditMsgList);
+        ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
+            streamName, 1);
       }
     }
+    long elapsedTime = System.currentTimeMillis() - startTime;
+    LOG.debug("Committed " + commitPaths.size() + " paths.");
+    ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
+        Thread.currentThread().getName(), elapsedTime);
 
   }
 
-  protected long createMRInput(Path inputPath,
-      Map<FileStatus, String> fileListing, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths) throws IOException {
+  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
+      Set<FileStatus> trashSet,Table<String, String, String> checkpointPaths)
+          throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
 
     createListing(fs, fs.getFileStatus(srcCluster.getDataDir()), fileListing,
@@ -294,7 +337,8 @@ ConfigConstants {
 
   public void createListing(FileSystem fs, FileStatus fileStatus,
       Map<FileStatus, String> results, Set<FileStatus> trashSet,
-      Map<String, FileStatus> checkpointPaths) throws IOException {
+      Table<String, String, String> checkpointPaths)
+          throws IOException {
     List<FileStatus> streamsFileStatus = new ArrayList<FileStatus>();
     FileSystem srcFs = FileSystem.get(srcCluster.getHadoopConf());
     for (String stream : streamsToProcess) {
@@ -349,8 +393,7 @@ ConfigConstants {
               collectorPaths);
         }
         populateTrash(collectorPaths, trashSet);
-        populateCheckpointPathForCollector(checkpointPaths, collectorPaths,
-            checkPointKey);
+        populateCheckpointPathForCollector(checkpointPaths, collectorPaths);
       } // all files in a collector
     }
   }
@@ -411,13 +454,17 @@ ConfigConstants {
   }
 
   private void populateCheckpointPathForCollector(
-      Map<String, FileStatus> checkpointPaths,
-      TreeMap<String, FileStatus> collectorPaths, String checkpointKey) {
+      Table<String, String, String> checkpointPaths,
+      TreeMap<String, FileStatus> collectorPaths) {
     // Last file in sorted ascending order to be check-pointed for this
     // collector
     if (collectorPaths != null && collectorPaths.size() > 0) {
       Entry<String, FileStatus> entry = collectorPaths.lastEntry();
-      checkpointPaths.put(checkpointKey, entry.getValue());
+      Path filePath = entry.getValue().getPath();
+      String streamName = getCategoryFromSrcPath(filePath);
+      String collectorName = filePath.getParent().getName();
+      String checkpointPath = filePath.getName();
+      checkpointPaths.put(streamName, collectorName, checkpointPath);
     }
   }
 
@@ -599,5 +646,10 @@ ConfigConstants {
     while (tmpPath.depth() != 1)
       tmpPath = tmpPath.getParent();
     return tmpPath.getName();
+  }
+
+  @Override
+  public String getServiceType() {
+    return "LocalStreamService";
   }
 }
