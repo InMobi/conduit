@@ -105,8 +105,6 @@ public abstract class DistcpBaseService extends AbstractService {
     return destFs;
   }
 
-
-
   protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
           throws Exception {
@@ -297,8 +295,6 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getName());
   }
 
-
-
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
       retriableCheckPoint(provider, getCheckPointKey(entry.getKey()), entry
@@ -311,7 +307,6 @@ public abstract class DistcpBaseService extends AbstractService {
     // for tests
     return currentCluster;
   }
-
 
   public static void createListing(FileSystem fs, FileStatus fileStatus,
       List<FileStatus> results) throws IOException {

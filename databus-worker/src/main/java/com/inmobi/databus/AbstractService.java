@@ -603,7 +603,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected void generateAuditMsgs(String streamName, String fileName,
       Table<String, Long, Long> parsedCounters, List<AuditMessage> auditMsgList) {
     if (Databus.getPublisher() == null) {
-      LOG.info("Not generating audit messages as publisher is null");
+      LOG.debug("Not generating audit messages as publisher is null");
       return;
     }
     if (parsedCounters == null) {
