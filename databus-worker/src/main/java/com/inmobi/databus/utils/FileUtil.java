@@ -83,7 +83,7 @@ public class FileUtil {
       if (received.containsKey(window)) {
         received.put(window, received.get(window) + 1);
       } else {
-        received.put(window, new Long(1));
+        received.put(window, Long.valueOf(1));
       }
     }
   }

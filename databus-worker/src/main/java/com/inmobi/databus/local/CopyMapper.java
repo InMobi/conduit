@@ -82,6 +82,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
     return streamName + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + filename
         + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow;
   }
+
   private Path getTempPath(Context context, Path src, String category,
       String collector) {
     Path tempPath = new Path(getTaskAttemptTmpDir(context), category + "-"
