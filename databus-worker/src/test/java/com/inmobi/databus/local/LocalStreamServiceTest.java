@@ -36,10 +36,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.tools.mapred.CopyMapper;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
@@ -59,8 +56,6 @@ import com.inmobi.databus.TestMiniClusterUtil;
 import com.inmobi.databus.local.LocalStreamService.CollectorPathFilter;
 import com.inmobi.databus.utils.FileUtil;
 import com.inmobi.messaging.Message;
-import com.inmobi.messaging.publisher.MessagePublisher;
-import com.inmobi.messaging.publisher.MessagePublisherFactory;
 import com.inmobi.messaging.util.AuditUtil;
 
 public class LocalStreamServiceTest extends TestMiniClusterUtil {
@@ -530,7 +525,8 @@ cluster.getCheckpointDir()),
           String counterName = null;
           try {
             counterName = scanner.next();
-            String tmp[] = counterName.split(CopyMapper.DELIMITER);
+            String tmp[] = counterName.split(DatabusConstants.
+                AUDIT_COUNTER_NAME_DELIMITER);
             Assert.assertEquals(3, tmp.length);
             Long numOfMsgs = scanner.nextLong();
             numberOfCountersPerFile++;

@@ -505,8 +505,8 @@ ConfigConstants {
     job.setJobName(jobName);
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
     // job.getConfiguration());
-    job.getConfiguration().set(
-        "tmpjars", inputFormatJarDestPath.toString() + "," + auditUtilJarDestPath.toString());
+    job.getConfiguration().set("tmpjars",
+        inputFormatJarDestPath.toString() + "," + auditUtilJarDestPath.toString());
     LOG.debug("Adding file [" + inputFormatJarDestPath
         + "] to distributed cache");
     job.setInputFormatClass(UniformSizeInputFormat.class);
@@ -520,11 +520,9 @@ ConfigConstants {
     job.setOutputValueClass(Text.class);
     // setting identity reducer
     job.setReducerClass(Reducer.class);
-    // job.setNumReduceTasks(0);
     job.setNumReduceTasks(1);
     job.setOutputFormatClass(TextOutputFormat.class);
     TextOutputFormat.setOutputPath(job, tmpCounterOutputPath);
-    // job.setOutputFormatClass(NullOutputFormat.class);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution",
         "false");
     job.getConfiguration().set(LOCALSTREAM_TMP_PATH, tmpPath.toString());

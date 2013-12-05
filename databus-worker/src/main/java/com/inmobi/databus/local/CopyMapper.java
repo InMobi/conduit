@@ -39,12 +39,10 @@ import com.inmobi.databus.utils.FileUtil;
 public class CopyMapper extends Mapper<Text, FileStatus, Text,
     Text> implements ConfigConstants{
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
-  private static final String AUDIT_ENABLED_KEY = "audit.enabled";
-  public static final String DELIMITER = "#";
 
   @Override
-  public void map(Text key, FileStatus value, Context context) throws IOException,
-      InterruptedException {
+  public void map(Text key, FileStatus value, Context context)
+      throws IOException, InterruptedException {
     Path src = value.getPath();
     String dest = key.toString();
     String collector = src.getParent().getName();
