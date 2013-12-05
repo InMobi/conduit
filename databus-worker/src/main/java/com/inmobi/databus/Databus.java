@@ -35,6 +35,7 @@ import org.apache.log4j.PropertyConfigurator;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.distcp.MergedStreamService;
 import com.inmobi.databus.distcp.MirrorStreamService;
 import com.inmobi.databus.local.LocalStreamService;
@@ -58,9 +59,10 @@ public class Databus implements Service, DatabusConstants {
   private final Set<String> clustersToProcess;
   private final List<AbstractService> services = new ArrayList<AbstractService>();
   private volatile boolean stopRequested = false;
+  private volatile boolean initFailed = false;
   private CuratorLeaderManager curatorLeaderManager = null;
   private volatile boolean databusStarted = false;
-  
+
   public Databus(DatabusConfig config, Set<String> clustersToProcess,
       String currentCluster) {
     this(config, clustersToProcess);
@@ -103,7 +105,6 @@ public class Databus implements Service, DatabusConstants {
     String auditUtilSrcJar = FileUtil.findContainingJar(
         com.inmobi.messaging.util.AuditUtil.class);
     LOG.debug("Jar containing AuditUtil [" + auditUtilSrcJar + "]");
-
     for (Cluster cluster : config.getClusters().values()) {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
@@ -323,12 +324,13 @@ public class Databus implements Service, DatabusConstants {
         }
       }
       databusStarted = true;
-    } catch (Exception e) {
-      LOG.warn("Error in initializing databus", e);
+    } catch (Throwable e) {
+      initFailed = true;
+      LOG.warn("Stopping databus because of error in initializing databus ", e);
     }
 
     // if there is any outstanding stop request meanwhile, handle it here
-    if (stopRequested) {
+    if (stopRequested || initFailed) {
       stop();
     }
     // Block this method to avoid losing leadership of current work
@@ -439,6 +441,16 @@ public class Databus implements Service, DatabusConstants {
         System.setProperty(NUM_RETRIES, numRetries);
       }
 
+      //Init Conduit metrics
+      try {
+        ConduitMetrics.init(prop);
+        ConduitMetrics.startAll();
+      } catch (IOException e) {
+        LOG.error("Exception during initialization of metrics" + e.getMessage());
+      }
+
+      prop = null;
+
       if (UserGroupInformation.isSecurityEnabled()) {
         LOG.info("Security enabled, trying kerberoes login principal ["
             + principal + "] keytab [" + keytab + "]");
@@ -497,6 +509,7 @@ public class Databus implements Service, DatabusConstants {
           try {
             LOG.info("Starting to stop databus...");
             databus.stop();
+            ConduitMetrics.stopAll();
           }
           catch (Exception e) {
             LOG.warn("Error in shutting down databus", e);

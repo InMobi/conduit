@@ -48,7 +48,7 @@ public class AuditDBHelper {
       connection = DriverManager.getConnection(url, username, password);
       connection.setAutoCommit(false);
     } catch (SQLException e) {
-      LOG.error("Exception while creating db connection ", e);
+      logNextException("Exception while creating db connection ", e);
     }
     return connection;
   }
@@ -95,7 +95,7 @@ public class AuditDBHelper {
         insertPreparedStatement.executeBatch();
       connection.commit();
     } catch (SQLException e) {
-      LOG.error("SQLException thrown ", e);
+      logNextException("SQLException while updating daily table", e);
       return false;
     } finally {
       try {
@@ -107,7 +107,7 @@ public class AuditDBHelper {
         updatePreparedStatement.close();
         connection.close();
       } catch (SQLException e) {
-        LOG.warn("Exception while closing ", e);
+        logNextException("Exception while closing ", e);
       }
     }
     return true;
@@ -125,7 +125,7 @@ public class AuditDBHelper {
       selectPreparedStatement.setString(i++, tuple.getCluster());
       rs = selectPreparedStatement.executeQuery();
     } catch (SQLException e) {
-      LOG.error("Exception encountered ", e);
+      logNextException("Exception encountered ", e);
       return null;
     }
     return rs;
@@ -191,7 +191,7 @@ public class AuditDBHelper {
           + insertPreparedStatement.toString());
       insertPreparedStatement.addBatch();
     } catch (SQLException e) {
-      LOG.error("Exception thrown while adding to insert statement batch", e);
+      logNextException("Exception thrown while adding to insert statement batch", e);
       return false;
     }
     return true;
@@ -229,7 +229,7 @@ public class AuditDBHelper {
           + updatePreparedStatement.toString());
       updatePreparedStatement.addBatch();
     } catch (SQLException e) {
-      LOG.error("Exception thrown while adding to batch of update statement", e);
+      logNextException("Exception thrown while adding to batch of update statement", e);
       return false;
     }
     return true;
@@ -283,7 +283,7 @@ public class AuditDBHelper {
       }
       connection.commit();
     } catch (SQLException e) {
-      LOG.error("SQLException encountered", e);
+      logNextException("SQLException encountered", e);
     } finally {
       try {
         if (rs != null)
@@ -292,7 +292,7 @@ public class AuditDBHelper {
           preparedstatement.close();
         connection.close();
       } catch (SQLException e) {
-        LOG.warn("Exception while closing ", e);
+        logNextException("Exception while closing ", e);
       }
     }
     return tupleSet;
@@ -317,7 +317,7 @@ public class AuditDBHelper {
           columnValuesInTuple.get(Column.TOPIC), latencyCountMap,
           rs.getLong(AuditDBConstants.SENT));
     } catch (SQLException e) {
-      LOG.error("Exception thrown while creating new tuple ", e);
+      logNextException("SException thrown while creating new tuple ", e);
       return null;
     }
     return tuple;
@@ -355,5 +355,12 @@ public class AuditDBHelper {
     }
     LOG.debug("Select statement " + statement);
     return statement;
+  }
+
+  public static void logNextException(String message, SQLException e) {
+    while (e != null) {
+      LOG.error(message, e);
+      e = e.getNextException();
+    }
   }
 }

@@ -22,13 +22,13 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
-import org.apache.hadoop.mapred.Counters.Counter;
-import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.util.TestDistCpUtils;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -43,6 +43,7 @@ import com.inmobi.messaging.util.AuditUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Scanner;
 
 public class TestIntegration {
   private static final Log LOG = LogFactory.getLog(TestIntegration.class);
@@ -52,6 +53,7 @@ public class TestIntegration {
   private static Path listFile;
   private static Path target;
   private static String root;
+  private static final Path counterOutputPath = new Path("counters");
 
   private static Configuration getConf() {
     Configuration conf = new Configuration();
@@ -80,27 +82,33 @@ public class TestIntegration {
       Path listFile = new Path("target/tmp1/listing").makeQualified(fs);
       addEntries(listFile, "*");
       createFileForAudit("/databus/streams/test1/2013/10/10/10/10/file1.gz");
-
-      Job job = runTest(listFile, target, true);
-      int numberOfCountersForFile = 0;
-      int sumOfCounterValues = 0;
-      for (CounterGroup counterGrp : job.getCounters()) {
-        if (counterGrp.getName().equals(DatabusConstants.AUDIT_COUNTER_GROUP)) {
-          for (org.apache.hadoop.mapreduce.Counter counter : counterGrp) {
-            numberOfCountersForFile++;
-            String counterName = counter.getName();
-            String tmp[] = counterName.split(
-                DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER);
+      runTest(listFile, target, true);
+      int numberOfCountersPerFile = 0;
+      long sumOfCounterValues = 0;
+      FileStatus[] statuses = fs.listStatus(counterOutputPath, new PathFilter() {
+        public boolean accept(Path path) {
+          return path.toString().contains("part");
+        }
+      });
+      for (FileStatus status : statuses) {
+        Scanner scanner = new Scanner(fs.open(status.getPath()));
+        while (scanner.hasNext()) {
+          String counterName = null;
+          try {
+            counterName = scanner.next();
+            String tmp[] = counterName.split(DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER);
             Assert.assertEquals(3, tmp.length);
-            // stream name is test1
-            Assert.assertEquals("test1", tmp[0]);
-            Assert.assertEquals("file1.gz", tmp[1]);
-            sumOfCounterValues += counter.getValue();
+            Long numOfMsgs = scanner.nextLong();
+            numberOfCountersPerFile++;
+            sumOfCounterValues += numOfMsgs;
+          } catch (Exception e) {
+            LOG.error("Counters file has malformed line with counter name = "
+                + counterName + " ..skipping the line ", e);
           }
         }
       }
-      // file should have 2 counters
-      Assert.assertEquals(2, numberOfCountersForFile);
+      // should have 2 conters per file
+      Assert.assertEquals(2, numberOfCountersPerFile);
       // sum of all counter values should equal to total number of messages
       Assert.assertEquals(3, sumOfCounterValues);
       checkResult(target, 1);
@@ -531,6 +539,7 @@ public class TestIntegration {
 
   private Job runTest(Path listFile, Path target, boolean sync) throws IOException {
     DistCpOptions options = new DistCpOptions(listFile, target);
+    options.setOutPutDirectory(counterOutputPath);
     options.setSyncFolder(sync);
     try {
       Job job = new DistCp(getConf(), options).execute();

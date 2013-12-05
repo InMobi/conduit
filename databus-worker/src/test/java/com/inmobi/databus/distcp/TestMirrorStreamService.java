@@ -122,10 +122,6 @@ public class TestMirrorStreamService extends MirrorStreamService
       int totalFileProcessedInRun = 0;
       for (Map.Entry<String, SourceStream> sstream : getConfig()
           .getSourceStreams().entrySet()) {
-        // checking from next minute of behind time because the dummy commitpath 
-        // can not be mirrored to dest cluster as it was created before merge 
-        // stream service run.
-        behinddate.add(Calendar.MINUTE, 1);
         PublishMissingPathsTest.VerifyMissingPublishPaths(fs, mergeCommitTime,
             behinddate, this.destinationCluster.getFinalDestDirRoot()
                 + sstream.getValue().getName());

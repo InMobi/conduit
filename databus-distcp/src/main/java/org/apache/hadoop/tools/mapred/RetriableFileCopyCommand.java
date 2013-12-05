@@ -56,7 +56,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
 
   private static final Log LOG = LogFactory.getLog(RetriableFileCopyCommand.class);
   private static final int BUFFER_SIZE = 8 * 1024;
-  private static final int windowSize = 60;
+  private static final int WINDOW_SIZE = 60;
   private CompressionCodecFactory compressionCodecs = null;
 
   /**
@@ -231,7 +231,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private static Long getWindow(Long timestamp) {
-    Long window = timestamp - (timestamp % (windowSize * 1000));
+    Long window = timestamp - (timestamp % (WINDOW_SIZE * 1000));
     return window;
   }
 
@@ -242,7 +242,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       if (received.containsKey(window)) {
         received.put(window, received.get(window) + 1);
       } else {
-        received.put(window, new Long(1));
+        received.put(window, Long.valueOf(1));
       }
     }
   }

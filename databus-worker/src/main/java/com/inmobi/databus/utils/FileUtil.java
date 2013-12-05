@@ -33,7 +33,7 @@ import com.inmobi.messaging.util.AuditUtil;
 
 public class FileUtil {
   private static final Log LOG = LogFactory.getLog(FileUtil.class);
-  private static final int windowSize = 60;
+  private static final int WINDOW_SIZE = 60;
 
   public static void gzip(Path src, Path target, Configuration conf,
       Map<Long, Long> received) throws IOException {
@@ -72,9 +72,10 @@ public class FileUtil {
   }
 
   private static Long getWindow(Long timestamp) {
-    Long window = timestamp - (timestamp % (windowSize * 1000));
+    Long window = timestamp - (timestamp % (WINDOW_SIZE * 1000));
     return window;
   }
+
   private static void incrementReceived(byte[] msg, Map<Long, Long> received) {
     long timestamp = AuditUtil.getTimestamp(msg);
     long window = getWindow(timestamp);
@@ -82,7 +83,7 @@ public class FileUtil {
       if (received.containsKey(window)) {
         received.put(window, received.get(window) + 1);
       } else {
-        received.put(window, new Long(1));
+        received.put(window, Long.valueOf(1));
       }
     }
   }

@@ -105,8 +105,6 @@ public abstract class DistcpBaseService extends AbstractService {
     return destFs;
   }
 
-
-
   protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
           throws Exception {
@@ -186,7 +184,7 @@ public abstract class DistcpBaseService extends AbstractService {
           lastCheckPointPath = new Path(checkPointValue);
         }
         lastCheckPointPath = fullyQualifyCheckPointWithReadURL
-          (lastCheckPointPath, srcCluster);
+            (lastCheckPointPath, srcCluster);
         if (lastCheckPointPath == null
             || !getSrcFs().exists(lastCheckPointPath)) {
           LOG.warn("Invalid checkpoint found [" + lastCheckPointPath
@@ -226,12 +224,11 @@ public abstract class DistcpBaseService extends AbstractService {
       Path nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
           inputPath);
       Path lastPathAdded = null;
-      FileStatus[] nextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs, nextPath);
-      FileStatus[] nextToNextPathFileStatus;
+      FileStatus[] nextPathFileStatus;
       while (pathsAlreadyAdded <= numOfDirPerDistcpPerStream
-          && nextPathFileStatus != null
-          && (nextToNextPathFileStatus = FileUtil.listStatusAsPerHDFS(srcFs,
-              nextToNextPath)) != null) {
+          && srcFs.exists(nextToNextPath)
+          && (nextPathFileStatus = FileUtil
+          .listStatusAsPerHDFS(srcFs, nextPath)) != null) {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
           FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
@@ -256,8 +253,6 @@ public abstract class DistcpBaseService extends AbstractService {
         nextDate = CalendarHelper.addAMinute(nextDate);
         nextToNextPath = CalendarHelper.getNextMinutePathFromDate(nextDate,
             inputPath);
-        nextPathFileStatus=nextToNextPathFileStatus;
-        nextToNextPathFileStatus=null;
       }
       if (lastPathAdded != null) {
         checkPointPaths.put(stream, lastPathAdded);
@@ -280,7 +275,7 @@ public abstract class DistcpBaseService extends AbstractService {
    * @return path which is re-qualified.
    */
   protected Path fullyQualifyCheckPointWithReadURL(Path lastCheckPointPath,
-                                           Cluster srcCluster) {
+      Cluster srcCluster) {
     //if checkpoint value was empty or null just fall thro' let the service
     // determine the new path.
     if(lastCheckPointPath == null) {
@@ -300,13 +295,10 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getName());
   }
 
-
-
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {
       retriableCheckPoint(provider, getCheckPointKey(entry.getKey()), entry
-          .getValue()
-          .toString().getBytes());
+          .getValue().toString().getBytes(), entry.getKey());
     }
     checkPointPaths.clear();
   }
@@ -315,7 +307,6 @@ public abstract class DistcpBaseService extends AbstractService {
     // for tests
     return currentCluster;
   }
-
 
   public static void createListing(FileSystem fs, FileStatus fileStatus,
       List<FileStatus> results) throws IOException {

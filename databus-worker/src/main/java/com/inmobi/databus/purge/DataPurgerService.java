@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
@@ -55,6 +56,8 @@ public class DataPurgerService extends AbstractService {
   private Set<Path> streamsToPurge;
   private DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
   private static long MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
+  private final static String PURGEPATHS_COUNT = "purgePaths.count";
+  private final static String DELETE_FAILURES_COUNT = "deleteFailures.count";
 
   public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
       throws Exception {
@@ -64,10 +67,12 @@ public class DataPurgerService extends AbstractService {
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig
-        .getDefaults().get(DatabusConfigParser.TRASH_RETENTION_IN_HOURS)));
+            .getDefaults().get(DatabusConfigParser.TRASH_RETENTION_IN_HOURS)));
     this.defaultstreamPathRetentioninHours = new Integer(
         Integer.parseInt(databusConfig.getDefaults().get(
             DatabusConfigParser.RETENTION_IN_HOURS)));
+    ConduitMetrics.registerCounter(getServiceType(), PURGEPATHS_COUNT, getName());
+    ConduitMetrics.registerCounter(getServiceType(), DELETE_FAILURES_COUNT, getName());
   }
 
   @Override
@@ -343,8 +348,10 @@ public class DataPurgerService extends AbstractService {
         purgePath = (Path) it.next();
         fs.delete(purgePath, true);
         LOG.info("Purging [" + purgePath + "]");
+        ConduitMetrics.incCounter(getServiceType(), PURGEPATHS_COUNT, getName(), 1);
       } catch (Exception e) {
         LOG.warn("Cannot delete path " + purgePath, e);
+        ConduitMetrics.incCounter(getServiceType(), DELETE_FAILURES_COUNT, getName(), 1);
       }
     }
   }
@@ -360,6 +367,7 @@ public class DataPurgerService extends AbstractService {
     return files;
   }
 
+
   @Override
   protected String getTier() {
     throw new UnsupportedOperationException(" requested method is not" +
@@ -370,5 +378,11 @@ public class DataPurgerService extends AbstractService {
   protected String getTopicNameFromDestnPath(Path destnPath) {
     throw new UnsupportedOperationException(" requested method is not" +
         " implemented in purger service");
+  }
+  /**
+   * Get the service name 
+   */
+  public String getServiceType(){
+    return "DataPurgerService";
   }
 }
