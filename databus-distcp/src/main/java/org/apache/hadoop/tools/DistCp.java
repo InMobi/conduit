@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
@@ -173,10 +174,9 @@ public class DistCp extends Configured implements Tool {
 
     job.setMapperClass(CopyMapper.class);
     job.setReducerClass(Reducer.class);
-    job.setNumReduceTasks(1);
-    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputKeyClass(NullWritable.class);
     job.setMapOutputValueClass(Text.class);
-    job.setOutputKeyClass(Text.class);
+    job.setOutputKeyClass(NullWritable.class);
     job.setOutputValueClass(Text.class);
     job.setOutputFormatClass(CopyOutputFormat.class);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution", "false");

@@ -128,6 +128,8 @@ public class MergedStreamService extends DistcpBaseService {
       // if success
       if (!skipCommit) {
         Map<String, List<Path>> categoriesToCommit = prepareForCommit(tmpOut);
+        FileSystem fs = getDestFs();
+        Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
         synchronized (getDestCluster()) {
           long commitTime = getDestCluster().getCommitTime();
           // between the last addPublishMissinPaths and this call,distcp is
@@ -137,7 +139,7 @@ public class MergedStreamService extends DistcpBaseService {
           commitPaths = createLocalCommitPaths(tmpOut, commitTime,
               categoriesToCommit);
           // category, Set of Paths to commit
-          doLocalCommit(commitPaths, auditMsgList);
+          doLocalCommit(commitPaths, auditMsgList, parsedCounters);
         }
         finalizeCheckPoints();
       }
@@ -216,10 +218,10 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   private void doLocalCommit(Map<Path, Path> commitPaths,
-      List<AuditMessage> auditMsgList) throws Exception {
+      List<AuditMessage> auditMsgList, Table<String, Long, Long> parsedCounters)
+          throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = getDestFs();
-    Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
     long startTime = System.currentTimeMillis();
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());

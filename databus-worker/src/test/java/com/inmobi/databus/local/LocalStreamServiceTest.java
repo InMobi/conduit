@@ -577,6 +577,12 @@ cluster.getCheckpointDir()),
             currentClusterName);
       // creating a job with empty input path
       Path tmpJobInputPath = new Path("/tmp/job/input/path");
+      Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
+      Set<FileStatus> trashSet = new HashSet<FileStatus>();
+      // checkpointKey, CheckPointPath
+      Table<String, String, String>  checkpointPaths = HashBasedTable.create();
+      service.createMRInput(tmpJobInputPath, fileListing, trashSet,
+          checkpointPaths);
       Job testJobConf = service.createJob(tmpJobInputPath, 1000);
       testJobConf.waitForCompletion(true);
 
@@ -592,18 +598,18 @@ cluster.getCheckpointDir()),
       for (FileStatus fileSt : statuses) {
         Scanner scanner = new Scanner(fs.open(fileSt.getPath()));
         while (scanner.hasNext()) {
-          String counterName = null;
+          String counterNameValue = null;
           try {
-            counterName = scanner.next();
-            String tmp[] = counterName.split(DatabusConstants.
+            counterNameValue = scanner.next();
+            String tmp[] = counterNameValue.split(DatabusConstants.
                 AUDIT_COUNTER_NAME_DELIMITER);
-            Assert.assertEquals(3, tmp.length);
-            Long numOfMsgs = scanner.nextLong();
+            Assert.assertEquals(4, tmp.length);
+            Long numOfMsgs = Long.parseLong(tmp[3]);
             numberOfCountersPerFile++;
             sumOfCounterValues += numOfMsgs;
           } catch (Exception e) {
             LOG.error("Counters file has malformed line with counter name ="
-                + counterName + "..skipping the line", e);
+                + counterNameValue + "..skipping the line", e);
           }
         }
       }

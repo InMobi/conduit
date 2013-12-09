@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -36,7 +37,7 @@ import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.FileUtil;
 
 
-public class CopyMapper extends Mapper<Text, FileStatus, Text,
+public class CopyMapper extends Mapper<Text, FileStatus, NullWritable,
     Text> implements ConfigConstants{
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
 
@@ -68,19 +69,19 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
     if (received != null) {
 
       for (Entry<Long, Long> entry : received.entrySet()) {
-        String counterName = getCounterName(category, destnFilename,
-            entry.getKey());
-        context.write(new Text(counterName), new Text(entry.getValue()
-            .toString()));
+        String counterNameValue = getCounterNameValue(category, destnFilename,
+            entry.getKey(), entry.getValue());
+        context.write(NullWritable.get(), new Text(counterNameValue));
       }
     }
 
   }
 
-  private String getCounterName(String streamName, String filename,
-      Long timeWindow) {
+  private String getCounterNameValue(String streamName, String filename,
+      Long timeWindow, Long value) {
     return streamName + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + filename
-        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow;
+        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow
+        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + value;
   }
 
   private Path getTempPath(Context context, Path src, String category,

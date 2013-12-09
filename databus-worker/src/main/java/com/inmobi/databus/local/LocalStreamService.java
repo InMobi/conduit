@@ -37,6 +37,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.DataInputBuffer;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -287,7 +288,7 @@ ConfigConstants {
 
   }
 
-  private long createMRInput(Path inputPath,Map<FileStatus, String> fileListing, 
+  protected long createMRInput(Path inputPath,Map<FileStatus, String> fileListing,
       Set<FileStatus> trashSet,Table<String, String, String> checkpointPaths)
           throws IOException {
     FileSystem fs = FileSystem.get(srcCluster.getHadoopConf());
@@ -557,17 +558,16 @@ ConfigConstants {
     LOG.debug("Adding file [" + inputFormatJarDestPath
         + "] to distributed cache");
     job.setInputFormatClass(UniformSizeInputFormat.class);
-    Class<? extends Mapper<Text, FileStatus, Text, Text>> mapperClass = getMapperClass();
+    Class<? extends Mapper<Text, FileStatus, NullWritable, Text>> mapperClass = getMapperClass();
     job.setJarByClass(mapperClass);
 
     job.setMapperClass(mapperClass);
-    job.setMapOutputKeyClass(Text.class);
+    job.setMapOutputKeyClass(NullWritable.class);
     job.setMapOutputValueClass(Text.class);
-    job.setOutputKeyClass(Text.class);
+    job.setOutputKeyClass(NullWritable.class);
     job.setOutputValueClass(Text.class);
     // setting identity reducer
     job.setReducerClass(Reducer.class);
-    job.setNumReduceTasks(1);
     job.setOutputFormatClass(TextOutputFormat.class);
     TextOutputFormat.setOutputPath(job, tmpCounterOutputPath);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution",
@@ -606,13 +606,13 @@ ConfigConstants {
    * The visiblity of method is set to protected to enable unit testing
    */
   @SuppressWarnings("unchecked")
-  protected Class<? extends Mapper<Text, FileStatus, Text, Text>> getMapperClass() {
+  protected Class<? extends Mapper<Text, FileStatus, NullWritable, Text>> getMapperClass() {
     String className = srcCluster.getCopyMapperImpl();
     if (className == null || className.isEmpty()) {
       return CopyMapper.class;
     } else {
       try {
-        return (Class<? extends Mapper<Text, FileStatus, Text, Text>>) Class
+        return (Class<? extends Mapper<Text, FileStatus, NullWritable, Text>>) Class
             .forName(className);
       } catch (ClassNotFoundException e) {
         throw new IllegalArgumentException("Copy mapper Impl " + className
