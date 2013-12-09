@@ -50,6 +50,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -206,7 +207,7 @@ public class TestCopyMapper {
       @Override
       public Object answer(InvocationOnMock invocationOnMock) throws
         Throwable {
-        writer.write((Text)invocationOnMock.getArguments()[0],
+        writer.write((NullWritable)invocationOnMock.getArguments()[0],
           (Text)invocationOnMock.getArguments()[1]);
         return null;
       }
@@ -240,12 +241,12 @@ public class TestCopyMapper {
   }
 
 
-  private static class InMemoryWriter extends RecordWriter<Text, Text> {
-    List<Text> keys = new ArrayList<Text>();
+  private static class InMemoryWriter extends RecordWriter<NullWritable, Text> {
+    List<NullWritable> keys = new ArrayList<NullWritable>();
     List<Text> values = new ArrayList<Text>();
 
     @Override
-    public void write(Text key, Text value) throws IOException, InterruptedException {
+    public void write(NullWritable key, Text value) throws IOException, InterruptedException {
       keys.add(key);
       values.add(value);
     }
@@ -254,7 +255,7 @@ public class TestCopyMapper {
     public void close(TaskAttemptContext context) throws IOException, InterruptedException {
     }
 
-    public List<Text> keys() {
+    public List<NullWritable> keys() {
       return keys;
     }
 
@@ -308,7 +309,11 @@ public class TestCopyMapper {
           reporter.getCounter(CopyMapper.Counter.BYTES_COPIED).getValue());
       long totalCounterValue = 0;
       for (Text value : writer.values()) {
-        totalCounterValue += Long.valueOf(value.toString());
+        String tmp[] = value.toString().split(DatabusConstants.
+            AUDIT_COUNTER_NAME_DELIMITER);
+        Assert.assertEquals(4, tmp.length);
+        Long numOfMsgs = Long.parseLong(tmp[3]);
+        totalCounterValue += numOfMsgs;
       }
       Assert.assertEquals(nFiles * NUMBER_OF_MESSAGES_PER_FILE, totalCounterValue);
       testCopyingExistingFiles(fs, copyMapper, context);
