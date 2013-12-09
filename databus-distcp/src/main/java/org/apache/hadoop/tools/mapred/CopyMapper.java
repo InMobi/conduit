@@ -35,6 +35,7 @@ import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.tools.DistCpConstants;
@@ -51,7 +52,7 @@ import com.inmobi.databus.DatabusConstants;
  * Mapper class that executes the DistCp copy operation.
  * Implements the o.a.h.mapreduce.Mapper<> interface.
  */
-public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
+public class CopyMapper extends Mapper<Text, FileStatus, NullWritable, Text> {
 
   /**
    * Hadoop counters for the DistCp CopyMapper.
@@ -256,7 +257,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
           for (Entry<Long, Long> entry : received.entrySet()) {
             String counterNameValue = getCounterNameValue(streamName,
                 sourcePath.getName(), entry.getKey(), entry.getValue());
-            context.write(null, new Text(counterNameValue));
+            context.write(NullWritable.get(), new Text(counterNameValue));
           }
         }
       }

@@ -29,6 +29,7 @@ import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.Compressor;
@@ -195,7 +196,7 @@ public class TestCopyMapper {
     public void setStatus(String status) {}
   }
 
-  private static Mapper<Text, FileStatus, Text, Text>.Context
+  private static Mapper<Text, FileStatus, NullWritable, Text>.Context
   getMapperContext(CopyMapper copyMapper, final StatusReporter reporter,
                    final InMemoryWriter writer)
           throws IOException, InterruptedException {
@@ -272,7 +273,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
       copyMapper.setup(context);
 
@@ -319,7 +320,7 @@ public class TestCopyMapper {
   }
 
   private void testCopyingExistingFiles(FileSystem fs, CopyMapper copyMapper,
-                                        Mapper<Text, FileStatus, Text, Text>.Context context) {
+                                        Mapper<Text, FileStatus, NullWritable, Text>.Context context) {
 
     try {
       for (Path path : pathList) {
@@ -346,7 +347,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
 
       Configuration configuration = context.getConfiguration();
@@ -381,7 +382,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
 
       mkdirs(SOURCE_PATH + "/src/file");
@@ -410,10 +411,10 @@ public class TestCopyMapper {
 
       final CopyMapper copyMapper = new CopyMapper();
       
-      final Mapper<Text, FileStatus, Text, Text>.Context context =  tmpUser.
-          doAs(new PrivilegedAction<Mapper<Text, FileStatus, Text, Text>.Context>() {
+      final Mapper<Text, FileStatus, NullWritable, Text>.Context context =  tmpUser.
+          doAs(new PrivilegedAction<Mapper<Text, FileStatus, NullWritable, Text>.Context>() {
         @Override
-        public Mapper<Text, FileStatus, Text, Text>.Context run() {
+        public Mapper<Text, FileStatus, NullWritable, Text>.Context run() {
           try {
             StatusReporter reporter = new StubStatusReporter();
             InMemoryWriter writer = new InMemoryWriter();
@@ -481,10 +482,10 @@ public class TestCopyMapper {
 
       final CopyMapper copyMapper = new CopyMapper();
 
-      final Mapper<Text, FileStatus, Text, Text>.Context context =  tmpUser.
-          doAs(new PrivilegedAction<Mapper<Text, FileStatus, Text, Text>.Context>() {
+      final Mapper<Text, FileStatus, NullWritable, Text>.Context context =  tmpUser.
+          doAs(new PrivilegedAction<Mapper<Text, FileStatus, NullWritable, Text>.Context>() {
         @Override
-        public Mapper<Text, FileStatus, Text, Text>.Context run() {
+        public Mapper<Text, FileStatus, NullWritable, Text>.Context run() {
           try {
             StatusReporter reporter = new StubStatusReporter();
             InMemoryWriter writer = new InMemoryWriter();
@@ -546,10 +547,10 @@ public class TestCopyMapper {
 
       final CopyMapper copyMapper = new CopyMapper();
 
-      final Mapper<Text, FileStatus, Text, Text>.Context context =  tmpUser.
-          doAs(new PrivilegedAction<Mapper<Text, FileStatus, Text, Text>.Context>() {
+      final Mapper<Text, FileStatus, NullWritable, Text>.Context context =  tmpUser.
+          doAs(new PrivilegedAction<Mapper<Text, FileStatus, NullWritable, Text>.Context>() {
         @Override
-        public Mapper<Text, FileStatus, Text, Text>.Context run() {
+        public Mapper<Text, FileStatus, NullWritable, Text>.Context run() {
           try {
             StatusReporter reporter = new StubStatusReporter();
             return getMapperContext(copyMapper, reporter, writer);
@@ -617,10 +618,10 @@ public class TestCopyMapper {
 
       final CopyMapper copyMapper = new CopyMapper();
 
-      final Mapper<Text, FileStatus, Text, Text>.Context context =  tmpUser.
-          doAs(new PrivilegedAction<Mapper<Text, FileStatus, Text, Text>.Context>() {
+      final Mapper<Text, FileStatus, NullWritable, Text>.Context context =  tmpUser.
+          doAs(new PrivilegedAction<Mapper<Text, FileStatus, NullWritable, Text>.Context>() {
         @Override
-        public Mapper<Text, FileStatus, Text, Text>.Context run() {
+        public Mapper<Text, FileStatus, NullWritable, Text>.Context run() {
           try {
             StatusReporter reporter = new StubStatusReporter();
             return getMapperContext(copyMapper, reporter, writer);
@@ -693,7 +694,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
 
       touchFile(SOURCE_PATH + "/src/file");
@@ -721,7 +722,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
 
       Configuration configuration = context.getConfiguration();
@@ -778,7 +779,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
 
       Configuration configuration = context.getConfiguration();
@@ -854,7 +855,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
 
       context.getConfiguration().set(
@@ -907,7 +908,7 @@ public class TestCopyMapper {
       CopyMapper copyMapper = new CopyMapper();
       StatusReporter reporter = new StubStatusReporter();
       InMemoryWriter writer = new InMemoryWriter();
-      Mapper<Text, FileStatus, Text, Text>.Context context
+      Mapper<Text, FileStatus, NullWritable, Text>.Context context
               = getMapperContext(copyMapper, reporter, writer);
 
       Configuration configuration = context.getConfiguration();

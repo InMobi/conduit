@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -36,7 +37,7 @@ import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.FileUtil;
 
 
-public class CopyMapper extends Mapper<Text, FileStatus, Text,
+public class CopyMapper extends Mapper<Text, FileStatus, NullWritable,
     Text> implements ConfigConstants{
   private static final Log LOG = LogFactory.getLog(CopyMapper.class);
 
@@ -70,7 +71,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
       for (Entry<Long, Long> entry : received.entrySet()) {
         String counterNameValue = getCounterNameValue(category, destnFilename,
             entry.getKey(), entry.getValue());
-        context.write(null, new Text(counterNameValue));
+        context.write(NullWritable.get(), new Text(counterNameValue));
       }
     }
 
