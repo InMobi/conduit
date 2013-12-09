@@ -1,6 +1,7 @@
 package com.inmobi.databus.validator;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -8,12 +9,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.CodecPool;
+import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
 
 public class AbstractTestStreamValidator {
@@ -21,6 +29,8 @@ public class AbstractTestStreamValidator {
   protected static final NumberFormat idFormat = NumberFormat.getInstance();
   protected List<Path> missingPaths = new ArrayList<Path>();
   protected List<Path> duplicateFiles = new ArrayList<Path>();
+  protected Path auditUtilJarDestPath;
+  protected Path jarsPath;
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
@@ -32,6 +42,7 @@ public class AbstractTestStreamValidator {
   }
 
   protected DatabusConfig setup(String configFile) throws Exception {
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     DatabusConfigParser configParser;
     DatabusConfig config = null;
     configParser = new DatabusConfigParser(configFile);
@@ -49,10 +60,20 @@ public class AbstractTestStreamValidator {
     String fileNameStr = new String(clusterName + "-" + streamName + "-" +
         getDateAsYYYYMMDDHHmm(date)+ "_" + idFormat.format(i));
     Path file = new Path(path, fileNameStr + ".gz");
+    Compressor gzipCompressor = null;
     try {
-      fs.create(file);
+      GzipCodec gzipCodec = ReflectionUtils.newInstance(GzipCodec.class,
+          new Configuration());
+      gzipCompressor = CodecPool.getCompressor(gzipCodec);
+      FSDataOutputStream out = fs.create(file);
+      OutputStream compressedOut = gzipCodec.createOutputStream(out,
+          gzipCompressor);
+      compressedOut.close();
     } catch (IOException e) {
       e.printStackTrace();
+    } finally {
+      if (gzipCompressor != null)
+        CodecPool.returnCompressor(gzipCompressor);
     }
     return file;
   }

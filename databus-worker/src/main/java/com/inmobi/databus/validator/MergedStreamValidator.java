@@ -233,7 +233,8 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     public MergedStreamFixService(DatabusConfig config, Cluster srcCluster,
         Cluster destinationCluster, Set<String> streamsToProcess)
             throws Exception {
-      super(config, srcCluster, destinationCluster, null, null, streamsToProcess);
+      super(config, srcCluster, destinationCluster, null, null,
+          streamsToProcess);
     }
 
     @Override

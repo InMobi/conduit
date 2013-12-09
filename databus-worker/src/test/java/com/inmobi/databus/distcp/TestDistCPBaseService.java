@@ -68,6 +68,7 @@ public class TestDistCPBaseService  {
     mergeService = new MergedStreamService(null, cluster, cluster, null,
         new FSCheckpointProvider(cluster.getCheckpointDir()),
         new HashSet<String>());
+
     // create data
     createValidData();
 
@@ -143,9 +144,7 @@ public class TestDistCPBaseService  {
     assert fileCopyListMap.size() == 0;
 
   }
-  
 
-  
    private void createDataWithDuplicateFileNames(DistcpBaseService service)
        throws IOException {
      Path dataRoot = new Path(testRoot, service.getInputPath());

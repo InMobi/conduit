@@ -42,6 +42,7 @@ import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.FileUtil;
 
+
 public abstract class DistcpBaseService extends AbstractService {
 
   protected final Cluster srcCluster;
@@ -55,6 +56,8 @@ public abstract class DistcpBaseService extends AbstractService {
 
   protected static final Log LOG = LogFactory.getLog(DistcpBaseService.class);
   private final int numOfDirPerDistcpPerStream;
+  protected final Path jarsPath;
+  protected final Path auditUtilJarDestPath;
 
   public DistcpBaseService(DatabusConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
@@ -73,6 +76,8 @@ public abstract class DistcpBaseService extends AbstractService {
         srcCluster.getHadoopConf());
     destFs = FileSystem.get(new URI(destCluster.getHdfsUrl()),
         destCluster.getHadoopConf());
+    Path tmpPath = new Path(destCluster.getTmpPath(), getName());
+    this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     this.provider = provider;
     String tmp;
     if ((tmp = System.getProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM)) != null) {
@@ -80,6 +85,8 @@ public abstract class DistcpBaseService extends AbstractService {
     } else
       numOfDirPerDistcpPerStream = DEFAULT_NUM_DIR_PER_DISTCP_STREAM;
 
+    jarsPath = new Path(destCluster.getTmpPath(), "jars");
+    auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
   }
 
   protected Cluster getSrcCluster() {
@@ -98,20 +105,21 @@ public abstract class DistcpBaseService extends AbstractService {
     return destFs;
   }
 
-
-
   protected Boolean executeDistCp(String serviceName, 
       Map<String, FileStatus> fileListingMap, Path targetPath)
           throws Exception {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
+    conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
+        System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
     conf.set("mapred.job.name", serviceName);
-
+    conf.set("tmpjars", auditUtilJarDestPath.toString());
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
     // since DatabusDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
     DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
+    options.setOutPutDirectory(tmpCounterOutputPath);
     DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
     try {
       distCp.execute();
@@ -152,8 +160,8 @@ public abstract class DistcpBaseService extends AbstractService {
 
   /*
    * Return a map of destination path,source path file status Since the map uses
-   * destination path as the key,no conflicting duplicates paths would be passed
-   * on to distcp
+   * destination path as the key,no conflicting duplicates paths would be
+   * passed on to distcp
    * 
    * @return
    */
@@ -224,7 +232,7 @@ public abstract class DistcpBaseService extends AbstractService {
         if(nextPathFileStatus.length==0){
           LOG.info(nextPath + " is an empty directory");
           FileStatus srcFileStatus = srcFs.getFileStatus(nextPath); 
-          String destnPath= getFinalDestinationPath(srcFileStatus);
+          String destnPath = getFinalDestinationPath(srcFileStatus);
           if(destnPath!=null){
             LOG.info("Adding to input of Distcp.Move ["+nextPath+"] to "+destnPath);
             result.put(destnPath,srcFileStatus);
@@ -286,8 +294,6 @@ public abstract class DistcpBaseService extends AbstractService {
     return getCheckPointKey(getClass().getSimpleName(), stream,
         srcCluster.getName());
   }
-
-
 
   protected void finalizeCheckPoints() throws Exception {
     for (Entry<String, Path> entry : checkPointPaths.entrySet()) {

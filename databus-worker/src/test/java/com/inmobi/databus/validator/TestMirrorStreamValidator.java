@@ -21,6 +21,7 @@ import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
+import com.inmobi.databus.utils.FileUtil;
 
 public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
 
@@ -103,9 +104,16 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     cleanUp(config);
     createMergeData(config, date);
     Set<String> streamsSet = config.getSourceStreams().keySet();
+    FileSystem fs = FileSystem.getLocal(new Configuration());
+    String auditSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
     for (String streamName : streamsSet) {
       for (Cluster cluster : config.getClusters().values()) {
         if (cluster.getMirroredStreams().contains(streamName)) {
+          jarsPath = new Path(cluster.getTmpPath(), "jars");
+          auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+          // Copy AuditUtil src jar to FS
+          fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
           createMirrorData(config, streamName, cluster, date);
           //check whether given start time is valid
           testStartTimeBeyondRetention(config,streamName, cluster.getName(),date,

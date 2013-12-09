@@ -31,6 +31,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
@@ -56,7 +58,6 @@ public class MirrorStreamService extends DistcpBaseService {
     super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
-
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
       ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
@@ -83,6 +84,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected void execute() throws Exception {
+    List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     try {
       boolean skipCommit = false;
@@ -118,7 +120,7 @@ public class MirrorStreamService extends DistcpBaseService {
       }
       if (!skipCommit) {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
-        doLocalCommit(commitPaths);
+        doLocalCommit(commitPaths, auditMsgList);
         finalizeCheckPoints();
       }
       getDestFs().delete(tmpOut, true);
@@ -126,11 +128,15 @@ public class MirrorStreamService extends DistcpBaseService {
     } catch (Exception e) {
       LOG.warn("Error in MirrorStream Service..skipping RUN ", e);
       throw new Exception(e);
+    } finally {
+      publishAuditMessages(auditMsgList);
     }
   }
 
-  void doLocalCommit(Map<FileStatus, Path> commitPaths) throws Exception {
+  void doLocalCommit(Map<FileStatus, Path> commitPaths,
+      List<AuditMessage> auditMsgList) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    Table<String, Long, Long> parsedCounters = parseCountersFile(getDestFs());
     long startTime = System.currentTimeMillis();
     for (Map.Entry<FileStatus, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming [" + entry.getKey().getPath() + "] to ["
@@ -154,6 +160,8 @@ public class MirrorStreamService extends DistcpBaseService {
           throw new Exception("Rename failed from [" + entry.getKey().getPath()
               + "] to [" + entry.getValue() + "]");
         }
+        generateAuditMsgs(streamName, entry.getKey().getPath().getName(),
+            parsedCounters, auditMsgList);
         ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
             streamName, 1);
       }
@@ -175,7 +183,7 @@ public class MirrorStreamService extends DistcpBaseService {
      * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/ After
      * distcp paths inside tmpOut would be eg:
      *
-     * /databus/system/distcp_mirror_ua1_uj1
+     * /databus/system/distcp_mirror_<srcCluster>_<destCluster>
      * /databus/streams/<streamName>/2012/1/13/15/7/
      * <hostname>-<streamName>-2012-01-16-07-21_00000.gz
      *
@@ -389,6 +397,11 @@ public class MirrorStreamService extends DistcpBaseService {
 
   }
 
+
+  @Override
+  protected String getTier() {
+    return "mirror";
+  }
   /*
    * Full path needs to be preserved for mirror stream
    */

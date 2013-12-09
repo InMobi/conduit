@@ -63,8 +63,8 @@ public class TestMirrorStreamPrepForCommit {
     Cluster cluster = new Cluster(clusterConf, rootDir.toString(), null, sourceNames);
 
     //create service
-    service = new MirrorStreamService(null, cluster,
- cluster, null,
+
+    service = new MirrorStreamService(null, cluster, cluster, null,
         new FSCheckpointProvider(cluster.getCheckpointDir()),
         new HashSet<String>());
 

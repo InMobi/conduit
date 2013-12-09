@@ -1,6 +1,7 @@
 package com.inmobi.databus.distcp;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -17,9 +18,14 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.CodecPool;
+import org.apache.hadoop.io.compress.Compressor;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -30,16 +36,20 @@ import com.inmobi.databus.AbstractService;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.DatabusConfigParser;
+import com.inmobi.databus.DatabusConstants;
 import com.inmobi.databus.DestinationStream;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
 
 public class MirrorCheckPointTest {
 
   private static final Log LOG = LogFactory.getLog(MirrorCheckPointTest.class);
   private static final NumberFormat idFormat = NumberFormat.getInstance();
+  private Path auditUtilJarDestPath;
+  private Path jarsPath;
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
@@ -75,12 +85,25 @@ public class MirrorCheckPointTest {
     Path file2 = new Path(path, filenameStr2 + ".gz");
     paths.add(file1);
     paths.add(file2);
+    Compressor gzipCompressor = null;
     try {
-      fs.create(file1);
-      fs.create(file2);
+      GzipCodec gzipCodec = ReflectionUtils.newInstance(GzipCodec.class,
+          new Configuration());
+      gzipCompressor = CodecPool.getCompressor(gzipCodec);
+      FSDataOutputStream out = fs.create(file1);
+      OutputStream compressedOut = gzipCodec.createOutputStream(out,
+          gzipCompressor);
+      compressedOut.close();
+
+      out = fs.create(file2);
+      compressedOut = gzipCodec.createOutputStream(out, gzipCompressor);
+      compressedOut.close();
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
+    } finally {
+      if (gzipCompressor != null)
+        CodecPool.returnCompressor(gzipCompressor);
     }
     return paths;
   }
@@ -115,6 +138,7 @@ public class MirrorCheckPointTest {
   }
 
   private DatabusConfig setup(String configFile) throws Exception {
+    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
     DatabusConfigParser configParser;
     DatabusConfig config = null;
     configParser = new DatabusConfigParser(configFile);
@@ -129,21 +153,28 @@ public class MirrorCheckPointTest {
 
   private Map<String, List<String>> launchMirrorServices(DatabusConfig config)
       throws Exception {
+    FileSystem fs = FileSystem.getLocal(new Configuration());
+    String auditSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
     Map<String, List<String>> srcRemoteMirrorMap = new HashMap<String, List<String>>();
     Map<String, Set<String>> mirrorSrcClusterToStreamsMap = new HashMap<String, Set<String>>();
     for (Cluster cluster : config.getClusters().values()) {
       for(DestinationStream stream:cluster.getDestinationStreams().values()){
         if(!stream.isPrimary()){
-          Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
-          if(remote!=null){
-            if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
-              mirrorSrcClusterToStreamsMap.get(remote.getName()).add(stream.getName());
-            }else {
-              Set<String> tmp = new HashSet<String>();
-              tmp.add(stream.getName());
-              mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
-            }  
-          }
+          jarsPath = new Path(cluster.getTmpPath(), "jars");
+          auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+          // Copy AuditUtil src jar to FS
+          fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
+         Cluster remote = config.getPrimaryClusterForDestinationStream(stream.getName());
+         if(remote!=null){
+           if(mirrorSrcClusterToStreamsMap.get(remote.getName())!=null){
+             mirrorSrcClusterToStreamsMap.get(remote.getName()).add(stream.getName());
+           }else {
+             Set<String> tmp = new HashSet<String>();
+             tmp.add(stream.getName());
+             mirrorSrcClusterToStreamsMap.put(remote.getName(), tmp);
+           }  
+         }
         }
       }
       for(String remote:mirrorSrcClusterToStreamsMap.keySet()){

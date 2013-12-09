@@ -33,14 +33,16 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
+import com.google.common.collect.Table;
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
-
 import com.inmobi.databus.CheckpointProvider;
 import com.inmobi.databus.Cluster;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
 import com.inmobi.databus.utils.FileUtil;
+
 
 /*
  * Handles MergedStreams for a Cluster
@@ -79,6 +81,7 @@ public class MergedStreamService extends DistcpBaseService {
 
   @Override
   public void execute() throws Exception {
+    List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     try {
       boolean skipCommit = false;
@@ -125,6 +128,8 @@ public class MergedStreamService extends DistcpBaseService {
       // if success
       if (!skipCommit) {
         Map<String, List<Path>> categoriesToCommit = prepareForCommit(tmpOut);
+        FileSystem fs = getDestFs();
+        Table<String, Long, Long> parsedCounters = parseCountersFile(fs);
         synchronized (getDestCluster()) {
           long commitTime = getDestCluster().getCommitTime();
           // between the last addPublishMissinPaths and this call,distcp is
@@ -134,7 +139,7 @@ public class MergedStreamService extends DistcpBaseService {
           commitPaths = createLocalCommitPaths(tmpOut, commitTime,
               categoriesToCommit);
           // category, Set of Paths to commit
-          doLocalCommit(commitPaths);
+          doLocalCommit(commitPaths, auditMsgList, parsedCounters);
         }
         finalizeCheckPoints();
       }
@@ -144,6 +149,8 @@ public class MergedStreamService extends DistcpBaseService {
     } catch (Exception e) {
       LOG.warn("Error in run ", e);
       throw new Exception(e);
+    } finally {
+      publishAuditMessages(auditMsgList);
     }
   }
 
@@ -210,10 +217,12 @@ public class MergedStreamService extends DistcpBaseService {
     return mvPaths;
   }
 
-  private void doLocalCommit(Map<Path, Path> commitPaths) throws Exception {
+  private void doLocalCommit(Map<Path, Path> commitPaths,
+      List<AuditMessage> auditMsgList, Table<String, Long, Long> parsedCounters)
+          throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
+    FileSystem fs = getDestFs();
     long startTime = System.currentTimeMillis();
-    FileSystem fs = FileSystem.get(getDestCluster().getHadoopConf());
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       String streamName = getTopicNameFromDestnPath(entry.getValue());
@@ -224,6 +233,8 @@ public class MergedStreamService extends DistcpBaseService {
         throw new Exception("Abort transaction Commit. Rename failed from ["
             + entry.getKey() + "] to [" + entry.getValue() + "]");
       }
+      String filename = entry.getKey().getName();
+      generateAuditMsgs(streamName, filename, parsedCounters, auditMsgList);
       ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
           streamName, 1);
     }
@@ -239,8 +250,6 @@ public class MergedStreamService extends DistcpBaseService {
     return new Path(finalDestDir);
 
   }
-
-
 
   private boolean isValidYYMMDDHHMMPath(Path prefix, Path path) {
     if (path.depth() < prefix.depth() + 5)
@@ -406,7 +415,7 @@ public class MergedStreamService extends DistcpBaseService {
 
   /*
    * srcPath is the FileStatus of minute directory in streams_local directory
-   * eg: /databus/streams_local/adroit_report_obj_ua2/2013/09/28/15/04
+   * eg: /databus/streams_local/<streamName>/2013/09/28/15/04
    */
   @Override
   protected String getFinalDestinationPath(FileStatus srcPath) {
@@ -422,6 +431,11 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   @Override
+
+  protected String getTier() {
+    return "merged";
+  }
+
   public String getServiceType() {
     return "MergedStreamService";
   }

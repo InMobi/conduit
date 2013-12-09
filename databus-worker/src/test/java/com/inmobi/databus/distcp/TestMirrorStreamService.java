@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,16 +17,25 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.thrift.TDeserializer;
 import org.testng.Assert;
 
+import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.databus.AbstractServiceTest;
 import com.inmobi.databus.Cluster;
+import com.inmobi.databus.Databus;
 import com.inmobi.databus.DatabusConfig;
 import com.inmobi.databus.FSCheckpointProvider;
 import com.inmobi.databus.PublishMissingPathsTest;
 import com.inmobi.databus.SourceStream;
 import com.inmobi.databus.utils.CalendarHelper;
 import com.inmobi.databus.utils.DatePathComparator;
+import com.inmobi.databus.utils.FileUtil;
+import com.inmobi.messaging.Message;
+import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
+import com.inmobi.messaging.publisher.MockInMemoryPublisher;
+import com.inmobi.messaging.util.AuditUtil;
 
 public class TestMirrorStreamService extends MirrorStreamService
     implements AbstractServiceTest {
@@ -45,6 +55,8 @@ public class TestMirrorStreamService extends MirrorStreamService
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
         streamsToProcess);
+    MessagePublisher publisher = MessagePublisherFactory.create();
+    Databus.setPublisher(publisher);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -89,6 +101,10 @@ public class TestMirrorStreamService extends MirrorStreamService
           fs.mkdirs(nextPath);
         }
       }
+      // Copy AuditUtil src jar to FS
+      String auditSrcJar = FileUtil.findContainingJar(
+          com.inmobi.messaging.util.AuditUtil.class);
+      fs.copyFromLocalFile(new Path(auditSrcJar), auditUtilJarDestPath);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);
@@ -103,6 +119,7 @@ public class TestMirrorStreamService extends MirrorStreamService
   @Override
   protected void postExecute() throws Exception {
     try {
+      int totalFileProcessedInRun = 0;
       for (Map.Entry<String, SourceStream> sstream : getConfig()
           .getSourceStreams().entrySet()) {
         PublishMissingPathsTest.VerifyMissingPublishPaths(fs, mergeCommitTime,
@@ -118,14 +135,34 @@ public class TestMirrorStreamService extends MirrorStreamService
           LOG.debug("Checking in Path for Mirror mapred Output, No. of files: "
               + commitPaths.size());
           
-          for (int j = 0; j < filesList.size() - 1; ++j) {
+          for (int j = 0; j < filesList.size(); ++j) {
             String checkpath = filesList.get(j);
             LOG.debug("Mirror Checking file: " + checkpath);
             Assert.assertTrue(commitPaths.contains(checkpath));
+            totalFileProcessedInRun++;
           }
         } catch (NumberFormatException e) {
         }
       }
+      // verfying audit is generated for all the messages
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
+      BlockingQueue<Message> auditQueue = mPublisher.source
+          .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
+      Message tmpMsg;
+      int auditReceived = 0;
+      while ((tmpMsg = auditQueue.poll()) != null) {
+        byte[] auditData = tmpMsg.getData().array();
+        TDeserializer deserializer = new TDeserializer();
+        AuditMessage msg = new AuditMessage();
+        deserializer.deserialize(msg, auditData);
+        auditReceived += msg.getReceivedSize();
+      }
+      /*
+       * Number of counters for each file is 2 as we have created the messages
+       * with two different timestamps(falls in different window) in the file.
+       * Counter name is func(streamname, filename, timestamp)
+       */
+      Assert.assertEquals(auditReceived, totalFileProcessedInRun * 2);
     } catch (Exception e) {
       e.printStackTrace();
       Assert.assertFalse(true);

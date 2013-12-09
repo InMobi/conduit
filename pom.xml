@@ -4,7 +4,7 @@
 
   <properties>
     <excluded.testng.groups>integration</excluded.testng.groups>
-    <hadoop-distcp.version>0.9</hadoop-distcp.version>
+    <messaging-client-version>4.0.3</messaging-client-version>
   </properties>
 
   <groupId>com.inmobi.databus</groupId>
@@ -131,6 +131,25 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.inmobi.messaging</groupId>
+        <artifactId>messaging-client-core</artifactId>
+        <version>${messaging-client-version}</version>
+        <type>jar</type>
+      </dependency>
+     <dependency>
+      <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-scribe</artifactId>
+      <version>${messaging-client-version}</version>
+      <scope>runtime</scope>
+    </dependency>
+      <dependency>
+        <groupId>com.inmobi.messaging</groupId>
+        <artifactId>messaging-client-core</artifactId>
+        <version>${messaging-client-version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>
@@ -286,6 +305,7 @@
     <module>databus-dist</module>
     <module>databus-audit</module>
     <module>databus-visualization</module>
+    <module>databus-distcp</module>
   </modules>
 
 </project>
