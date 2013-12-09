@@ -567,7 +567,6 @@ ConfigConstants {
     job.setOutputValueClass(Text.class);
     // setting identity reducer
     job.setReducerClass(Reducer.class);
-    job.setNumReduceTasks(1);
     job.setOutputFormatClass(TextOutputFormat.class);
     TextOutputFormat.setOutputPath(job, tmpCounterOutputPath);
     job.getConfiguration().set("mapred.map.tasks.speculative.execution",

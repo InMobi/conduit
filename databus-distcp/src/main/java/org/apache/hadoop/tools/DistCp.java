@@ -173,7 +173,6 @@ public class DistCp extends Configured implements Tool {
 
     job.setMapperClass(CopyMapper.class);
     job.setReducerClass(Reducer.class);
-    job.setNumReduceTasks(1);
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(Text.class);
     job.setOutputKeyClass(Text.class);
