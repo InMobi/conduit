@@ -563,23 +563,23 @@ public abstract class AbstractService implements Service, Runnable {
         continue;
       }
       while (scanner.hasNext()) {
-        String counterName = null;
+        String counterNameValue = null;
         try {
-          counterName = scanner.next();
-          String tmp[] = counterName.split(DatabusConstants.
+          counterNameValue = scanner.next();
+          String tmp[] = counterNameValue.split(DatabusConstants.
               AUDIT_COUNTER_NAME_DELIMITER);
-          if (tmp.length < 3) {
-            LOG.error("Malformed counter name,skipping " + counterName);
+          if (tmp.length < 4) {
+            LOG.error("Malformed counter name,skipping " + counterNameValue);
             continue;
           }
           String streamFileNameCombo = tmp[0]
               + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
           Long publishTimeWindow = Long.parseLong(tmp[2]);
-          Long numOfMsgs = scanner.nextLong();
+          Long numOfMsgs = Long.parseLong(tmp[3]);
           result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
         } catch (Exception e) {
           LOG.error("Counters file has malformed line with counter name = "
-              + counterName + " ..skipping the line", e);
+              + counterNameValue + " ..skipping the line", e);
         }
       }
     }

@@ -68,19 +68,19 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text,
     if (received != null) {
 
       for (Entry<Long, Long> entry : received.entrySet()) {
-        String counterName = getCounterName(category, destnFilename,
-            entry.getKey());
-        context.write(new Text(counterName), new Text(entry.getValue()
-            .toString()));
+        String counterNameValue = getCounterNameValue(category, destnFilename,
+            entry.getKey(), entry.getValue());
+        context.write(null, new Text(counterNameValue));
       }
     }
 
   }
 
-  private String getCounterName(String streamName, String filename,
-      Long timeWindow) {
+  private String getCounterNameValue(String streamName, String filename,
+      Long timeWindow, Long value) {
     return streamName + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + filename
-        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow;
+        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow
+        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + value;
   }
 
   private Path getTempPath(Context context, Path src, String category,
