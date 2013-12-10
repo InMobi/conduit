@@ -433,7 +433,7 @@ public class MergedStreamService extends DistcpBaseService {
   @Override
 
   protected String getTier() {
-    return "merged";
+    return "MERGE";
   }
 
   public String getServiceType() {
