@@ -82,7 +82,6 @@ function buildNodeList() {
         node.streamSourceList.push(obj);
       });
       node.source = n.source;
-      });
     }
     n.overallLatency.forEach(function (l) {
       node.overallLatency.push(new PercentileLatency(l.percentile,

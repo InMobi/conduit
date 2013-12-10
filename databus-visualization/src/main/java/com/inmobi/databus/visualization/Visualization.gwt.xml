@@ -20,6 +20,11 @@
 
     <!-- Other module inherits                                      -->
 
+    <!-- To speed up the compilation, instead of 6 browser combinations to -->
+    <!-- build, build only for the browser you need, for fast developement -->
+    <!-- only build for Chrome -->
+    <set-property name="user.agent" value="safari" />
+
     <!-- Specify the app entry point class.                         -->
     <entry-point class='com.inmobi.databus.visualization.client.Visualization'/>
 

@@ -108,6 +108,8 @@ public class ClientDataHelper {
         .getClientConfig().getMaxTimeRangeInt());
     configMap.put(ClientConstants.LOSS_WARN_THRESHOLD_DIFF, response.getLoadMainPanelResponse()
         .getClientConfig().getWarnLossThresholdDiff());
+    configMap.put(ClientConstants.ROLLEDUP_TILL_DAYS, response.getLoadMainPanelResponse()
+        .getClientConfig().getRolleduptilldays());
     return configMap;
   }
 

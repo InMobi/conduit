@@ -1989,6 +1989,14 @@ public final class RequestResponse {
     public boolean hasMirrorSla() { return hasMirrorSla; }
     public java.lang.String getMirrorSla() { return mirrorSla_; }
     
+    // optional string rolleduptilldays = 15;
+    public static final int ROLLEDUPTILLDAYS_FIELD_NUMBER = 15;
+    private boolean hasRolleduptilldays;
+    @com.google.protobuf.gwt.shared.FieldNumber(15)
+    private java.lang.String rolleduptilldays_ = "";
+    public boolean hasRolleduptilldays() { return hasRolleduptilldays; }
+    public java.lang.String getRolleduptilldays() { return rolleduptilldays_; }
+    
     private void initFields() {
     }
     
@@ -2053,6 +2061,10 @@ public final class RequestResponse {
       
       if (hasMirrorSla()) {
         output.writeString(14, "mirrorSla", getMirrorSla());
+      }
+      
+      if (hasRolleduptilldays()) {
+        output.writeString(15, "rolleduptilldays", getRolleduptilldays());
       }
     }
     
@@ -2194,6 +2206,10 @@ public final class RequestResponse {
         if (other.hasMirrorSla()) {
           setMirrorSla(other.getMirrorSla());
         }
+        
+        if (other.hasRolleduptilldays()) {
+          setRolleduptilldays(other.getRolleduptilldays());
+        }
       
         return this;
       }
@@ -2269,6 +2285,11 @@ public final class RequestResponse {
         java.lang.String mirrorSla = input.readString(14);
         if (mirrorSla != null) {
           setMirrorSla(mirrorSla);
+        }
+        
+        java.lang.String rolleduptilldays = input.readString(15);
+        if (rolleduptilldays != null) {
+          setRolleduptilldays(rolleduptilldays);
         }
         
         return this;
@@ -2649,6 +2670,33 @@ public final class RequestResponse {
       public Builder clearMirrorSla() {
         result.hasMirrorSla = false;
         result.mirrorSla_ = getDefaultInstance().getMirrorSla();
+        return this;
+      }
+      
+      // optional string rolleduptilldays = 15;
+      public boolean hasRolleduptilldays() {
+        return result.hasRolleduptilldays();
+      }
+      public java.lang.String getRolleduptilldays() {
+        return result.getRolleduptilldays();
+      }
+      public Builder setRolleduptilldaysIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setRolleduptilldays(value);
+        }
+        return this;
+      }
+      public Builder setRolleduptilldays(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasRolleduptilldays = true;
+        result.rolleduptilldays_ = value;
+        return this;
+      }
+      public Builder clearRolleduptilldays() {
+        result.hasRolleduptilldays = false;
+        result.rolleduptilldays_ = getDefaultInstance().getRolleduptilldays();
         return this;
       }
       

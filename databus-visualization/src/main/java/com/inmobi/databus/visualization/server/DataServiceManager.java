@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
 
+import com.inmobi.databus.Cluster;
+import com.inmobi.databus.DestinationStream;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
 
@@ -20,7 +22,7 @@ public class DataServiceManager {
   private static DataServiceManager instance = null;
   private List<DatabusConfig> dataBusConfig;
   private VisualizationProperties properties;
-  private String feederPropertiesPath;
+  private final ClientConfig feederConfig;
 
   protected DataServiceManager(boolean init) {
     this(init, null, null);
@@ -32,7 +34,7 @@ public class DataServiceManager {
     if (feederPropertiesPath == null || feederPropertiesPath.length() == 0) {
       feederPropertiesPath = ServerConstants.FEEDER_PROPERTIES_DEFAULT_PATH;
     }
-    this.feederPropertiesPath = feederPropertiesPath;
+    feederConfig = ClientConfig.load(feederPropertiesPath);
     properties = new VisualizationProperties(visualizationPropertiesPath);
     if (init) {
       String folderPath = properties.get(ServerConstants.DATABUS_XML_PATH);
@@ -88,7 +90,7 @@ public class DataServiceManager {
         clusterList);
     String serverJson =
         ServerDataHelper.getInstance().setLoadMainPanelResponse(streamList,
-            clusterList, properties);
+            clusterList, properties, feederConfig);
     return serverJson;
   }
 
@@ -96,12 +98,11 @@ public class DataServiceManager {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
-    ClientConfig config = ClientConfig.load(feederPropertiesPath);
     AuditDbQuery dbQuery =
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_STRING, ServerConstants.TIMEZONE,
-            properties.get(ServerConstants.PERCENTILE_STRING), config);
+            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig);
     try {
       dbQuery.execute();
     } catch (Exception e) {
@@ -124,13 +125,12 @@ public class DataServiceManager {
     }
     buildPercentileMapOfAllNodes(nodeMap);
     addVIPNodesToNodesList(nodeMap, percentileSet);
-    checkAndSetSourceListForMergeMirror(nodeMap);
     LOG.debug("Printing node list");
     for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
     Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
-        (feederPropertiesPath, filterMap.get(ServerConstants.END_TIME_FILTER),
+        (filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
     return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
         tierLatencyMap, properties);
@@ -181,6 +181,11 @@ public class DataServiceManager {
     if (node.getSentMessagesList().size() > 0) {
       sentMessageStatsList.addAll(node.getSentMessagesList());
     }
+    if (tuple.getTier().equalsIgnoreCase(Tier.MERGE.toString()) || tuple
+        .getTier().equalsIgnoreCase(Tier.MIRROR.toString())) {
+      Set<String> sourceList = getSourceListForTuple(tuple);
+      node.setSourceListForTopic(tuple.getTopic(), sourceList);
+    }
     node.setReceivedMessagesList(receivedMessageStatsList);
     node.setSentMessagesList(sentMessageStatsList);
     node.setPercentileSet(percentileSet);
@@ -190,21 +195,47 @@ public class DataServiceManager {
     LOG.debug("Node created: " + node);
   }
 
-  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String feederPath,
-                                                            String endTime,
+  private Set<String> getSourceListForTuple(Tuple tuple) {
+    LOG.info("Setting source list for tuple:" + tuple);
+    Set<String> sourceList = new HashSet<String>();
+    String clusterName = tuple.getCluster();
+    for (DatabusConfig config : dataBusConfig) {
+      Map<String, Cluster> clusterMap = config.getClusters();
+      Cluster cluster = clusterMap.get(clusterName);
+      if (cluster == null)
+        continue;
+      if (tuple.getTier().equalsIgnoreCase(Tier.MERGE.toString())) {
+        Set<String> mergeStreams = cluster.getPrimaryDestinationStreams();
+        for (Map.Entry<String, Cluster> entry: clusterMap.entrySet()) {
+          for (String stream: mergeStreams) {
+            if (entry.getValue().getSourceStreams().contains(stream)) {
+              sourceList.add(entry.getKey());
+            }
+          }
+        }
+      } else if (tuple.getTier().equalsIgnoreCase(Tier.MIRROR.toString())) {
+        Set<String> mirroredStreams = cluster.getMirroredStreams();
+        for (Map.Entry<String, Cluster> entry: clusterMap.entrySet()) {
+          for (String stream: mirroredStreams) {
+            if (entry.getValue().getPrimaryDestinationStreams().contains(stream)) {
+              sourceList.add(entry.getKey());
+            }
+          }
+        }
+
+      }
+    }
+    LOG.info("Set source list as:"+sourceList);
+    return sourceList;
+  }
+
+  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
                                                             String startTime,
                                                             String
                                                                 filterString) {
-    ClientConfig config;
-    if (feederPath == null || feederPath.length() == 0) {
-      config =
-          ClientConfig.load(ServerConstants.FEEDER_PROPERTIES_DEFAULT_PATH);
-    } else {
-      config = ClientConfig.load(feederPath);
-    }
     AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
         "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
-        .PERCENTILE_FOR_SLA), config);
+        .PERCENTILE_FOR_SLA), feederConfig);
     try {
       dbQuery.execute();
     } catch (Exception e) {
@@ -299,29 +330,9 @@ public class DataServiceManager {
         }
       }
     }
-    LOG.debug("List1: " + list1);
-    LOG.debug("List2: " + list2);
-    LOG.debug("MERGRED LIST : " + mergedList);
+    LOG.debug("List1: " + list1 + " List2: " + list2 + " MERGRED LIST : " +
+        mergedList);
     return mergedList;
-  }
-
-  /**
-   * If any node in the nodeList is a merge/mirror tier node, set the source
-   * node's names list for merge/mirror node.
-   *
-   * @param nodeMap map of all nodeKey::nodes returned by the query
-   */
-  private void checkAndSetSourceListForMergeMirror(Map<NodeKey, Node> nodeMap) {
-    for (Node node : nodeMap.values()) {
-      if (node.getTier().equalsIgnoreCase("merge") ||
-          node.getTier().equalsIgnoreCase("mirror")) {
-        for (DatabusConfig config : dataBusConfig) {
-          node.setSourceList(
-              config.getClusters().get(node.getClusterName())
-                  .getDestinationStreams().keySet());
-        }
-      }
-    }
   }
 
   public List<DatabusConfig> getDataBusConfig() {

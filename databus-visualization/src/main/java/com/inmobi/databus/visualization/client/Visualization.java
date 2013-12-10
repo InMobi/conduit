@@ -70,8 +70,8 @@ public class Visualization implements EntryPoint, ClickHandler {
             ClientDataHelper.getInstance()
                 .getStreamsListFromLoadMainPanelResponse(result));
         clusters.addAll(
-            ClientDataHelper.getInstance().getClusterListFromLoadMainPanelResponse
-                (result));
+            ClientDataHelper.getInstance()
+                .getClusterListFromLoadMainPanelResponse(result));
         clientConfig = ClientDataHelper.getInstance()
             .getClientConfigLoadMainPanelResponse(result);
         loadMainPanel();
@@ -116,7 +116,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     setSelectedInListBox(stTimeHour, DateUtils.getHourFromAuditDateFormatString(stTime));
     setSelectedInListBox(stTimeMinute,
         DateUtils.getMinuteFromAuditDateFormatString(stTime));
-    setSelectedInListBox(edTimeHour, DateUtils.getHourFromAuditDateFormatString(endTime));
+    setSelectedInListBox(edTimeHour,
+        DateUtils.getHourFromAuditDateFormatString(endTime));
     setSelectedInListBox(edTimeMinute,
         DateUtils.getMinuteFromAuditDateFormatString(endTime));
     setSelectedInListBox(clusterList, cluster);
@@ -202,18 +203,30 @@ public class Visualization implements EntryPoint, ClickHandler {
     stDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.BASE_DATE_FORMAT);
-        String selectedDateString = fmt.format(selectedDate);
+        String selectedDateString = DateUtils.baseDateFormatter.format(selectedDate);
         startTime.setText(selectedDateString);
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
+            Integer.parseInt(clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
+          stTimeMinute.setSelectedIndex(1);
+          stTimeMinute.setEnabled(false);
+        } else {
+          stTimeMinute.setEnabled(true);
+        }
         stcalendarPopup.hide();
       }
     });
     endDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.BASE_DATE_FORMAT);
-        String selectedDateString = fmt.format(selectedDate);
+        String selectedDateString = DateUtils.baseDateFormatter.format(selectedDate);
         endtime.setText(selectedDateString);
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
+            Integer.parseInt(clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
+          edTimeMinute.setSelectedIndex(1);
+          edTimeMinute.setEnabled(false);
+        } else {
+          edTimeMinute.setEnabled(true);
+        }
         etcalendarPopup.hide();
       }
     });
@@ -416,13 +429,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   }-*/;
 
   private boolean validateParameters(String stTime, String edTime) {
-    if (!DateUtils.checkTimeStringFormat(stTime)) {
-      Window.alert("Incorrect format of startTime");
-      return false;
-    } else if (!DateUtils.checkTimeStringFormat(edTime)) {
-      Window.alert("Incorrect format of endTime");
-      return false;
-    } else if (DateUtils.checkIfFutureDate(stTime)) {
+    if (DateUtils.checkIfFutureDate(stTime)) {
       Window.alert("Future start time is not allowed");
       return false;
     } else if (DateUtils.checkIfFutureDate(edTime)) {

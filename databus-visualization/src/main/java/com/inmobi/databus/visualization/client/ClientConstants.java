@@ -22,4 +22,5 @@ public class ClientConstants {
   public static final String PERCENTILE_FOR_SLA = "percentileForSla";
   public static final String LOSS_WARN_THRESHOLD_DIFF =
       "lossWarnThresholdDiff";
+  public static final String ROLLEDUP_TILL_DAYS = "rollup.tilldays";
 }
