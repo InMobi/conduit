@@ -51,7 +51,7 @@ run_databus() {
   fi
 
   set -x
-  exec $JAVA_HOME/bin/java $JAVA_OPTS -cp "$DATABUS_CLASSPATH" \
+  exec $JAVA_HOME/bin/java $JAVA_OPTS -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -cp "$DATABUS_CLASSPATH" \
       "$DATABUS_UTILITY_CLASS" $*
 
 }
