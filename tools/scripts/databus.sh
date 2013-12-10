@@ -104,7 +104,7 @@ case $startStop in
 
     echo starting DATABUS
 
-   nohup java $DATABUS_OPTS -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
+   nohup java $DATABUS_OPTS  -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -cp "$CLASSPATH" com.inmobi.databus.Databus $configFile 2>&1 &
    if [ $? -eq 0 ]
     then
       if /bin/echo -n $! > "$_DATABUS_DAEMON_PIDFILE"
