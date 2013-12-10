@@ -2,6 +2,7 @@ package com.inmobi.databus.visualization.client.util;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.TimeZone;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 
 import java.util.Date;
@@ -103,6 +104,18 @@ public class DateUtils {
         ONE_MINUTE_IN_MILLIS))
       return true;
     return false;
+  }
+
+  public static boolean checkSelectedDateRolledUp(String selectedDate,
+                                                  int rolledUpTillDayas,
+                                                  boolean isAudit) {
+    Date date;
+    if (isAudit) {
+      date = auditDateFormatter.parse(selectedDate);
+    } else {
+      date = baseDateFormatter.parse(selectedDate);
+    }
+    return checkSelectedDateRolledUp(date, rolledUpTillDayas);
   }
 
   public static boolean checkSelectedDateRolledUp(Date selectedDate, int rolledUpTillDayas) {

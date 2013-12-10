@@ -38,6 +38,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
   private Map<String, String> clientConfig;
+  private int rolledUpTillDays;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
   public void onModuleLoad() {
@@ -74,6 +75,8 @@ public class Visualization implements EntryPoint, ClickHandler {
                 .getClusterListFromLoadMainPanelResponse(result));
         clientConfig = ClientDataHelper.getInstance()
             .getClientConfigLoadMainPanelResponse(result);
+        rolledUpTillDays = Integer.parseInt(clientConfig.get(ClientConstants
+            .ROLLEDUP_TILL_DAYS));
         loadMainPanel();
       }
     });
@@ -120,6 +123,16 @@ public class Visualization implements EntryPoint, ClickHandler {
         DateUtils.getHourFromAuditDateFormatString(endTime));
     setSelectedInListBox(edTimeMinute,
         DateUtils.getMinuteFromAuditDateFormatString(endTime));
+    if (DateUtils.checkSelectedDateRolledUp(stTime, rolledUpTillDays, true)) {
+      stTimeMinute.setEnabled(false);
+    } else {
+      stTimeMinute.setEnabled(true);
+    }
+    if (DateUtils.checkSelectedDateRolledUp(endTime, rolledUpTillDays, true)) {
+      edTimeMinute.setEnabled(false);
+    } else {
+      edTimeMinute.setEnabled(true);
+    }
     setSelectedInListBox(clusterList, cluster);
     setSelectedInListBox(streamsList, stream);
   }
@@ -220,8 +233,7 @@ public class Visualization implements EntryPoint, ClickHandler {
         Date selectedDate = event.getValue();
         String selectedDateString = DateUtils.baseDateFormatter.format(selectedDate);
         endtime.setText(selectedDateString);
-        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
-            Integer.parseInt(clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate, rolledUpTillDays)) {
           edTimeMinute.setSelectedIndex(1);
           edTimeMinute.setEnabled(false);
         } else {
@@ -334,6 +346,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     if (!validateParameters(stTime, edTime)) {
       return;
     }
+    disableFilterSelection();
     sendRequest(stTime, edTime, clusterList.getItemText(clusterList
         .getSelectedIndex()), streamsList.getItemText(streamsList
         .getSelectedIndex()), null);
@@ -406,8 +419,46 @@ public class Visualization implements EntryPoint, ClickHandler {
                 .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
             (ClientConstants.PERCENTAGE_FOR_WARN)),
             Integer.parseInt(clientConfig.get(ClientConstants.LOSS_WARN_THRESHOLD_DIFF)));
+        enableFilterSelection();
       }
     });
+  }
+
+  private void enableFilterSelection() {
+    startTime.setEnabled(true);
+    stTimeHour.setEnabled(true);
+    if (DateUtils.checkSelectedDateRolledUp(startTime.getText(),
+        rolledUpTillDays, false)) {
+      stTimeMinute.setEnabled(false);
+    } else {
+      stTimeMinute.setEnabled(true);
+    }
+
+    endtime.setEnabled(true);
+    edTimeHour.setEnabled(true);
+    if (DateUtils.checkSelectedDateRolledUp(endtime.getText(),
+        rolledUpTillDays, false)) {
+      edTimeMinute.setEnabled(false);
+    } else {
+      edTimeMinute.setEnabled(true);
+    }
+
+    streamsList.setEnabled(true);
+    clusterList.setEnabled(true);
+
+  }
+
+  private void disableFilterSelection() {
+    startTime.setEnabled(false);
+    stTimeHour.setEnabled(false);
+    stTimeMinute.setEnabled(false);
+
+    endtime.setEnabled(false);
+    edTimeHour.setEnabled(false);
+    edTimeMinute.setEnabled(false);
+
+    streamsList.setEnabled(false);
+    clusterList.setEnabled(false);
   }
 
   private native void saveHistory(String stTime, String edTime,
