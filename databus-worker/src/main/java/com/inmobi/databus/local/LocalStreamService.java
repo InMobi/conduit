@@ -626,7 +626,7 @@ ConfigConstants {
   }
 
   protected String getTier() {
-    return "local";
+    return "LOCAL";
   }
 
   /*
