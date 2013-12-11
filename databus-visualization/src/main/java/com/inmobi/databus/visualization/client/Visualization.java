@@ -90,6 +90,14 @@ public class Visualization implements EntryPoint, ClickHandler {
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
+    /*
+     Here, we can check if the app is run in GWT development mode by checking
+     if value of url paramter gwt.codesvr is not null and is 127.0.0.1:9997
+     which is the default host:port of running in development mode. If true,
+     then pass a boolean check or something to the js and set it as a global
+     varibale in the js file. This boolean can be checked every time we make
+     a change to url and gwt.codesvr paramater can be saved.
+    */
     String stream, cluster, startTime, endTime, selectedTab;
     if (checkParametersNull()) {
       System.out.println("Loading default settings");
@@ -140,7 +148,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private void setSelectedInListBox(ListBox listBox, String selectedString) {
     int selectedIndex = 0;
     for (int i = 0; i < listBox.getItemCount(); i++) {
-      if (listBox.getItemText(i).equals(selectedString)) {
+      if (listBox.getItemText(i).equalsIgnoreCase(selectedString)) {
         selectedIndex = i;
         break;
       }

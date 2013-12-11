@@ -12,7 +12,19 @@ var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla, mergeSla, m
   percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
 var publisherLatency, agentLatency, collectorLatency, hdfsLatency, localLatency, mergeLatency, mirrorLatency;
 var qStream, qCluster, qstart, qend;
-var allClusterDestnList = [];
+
+/*
+When creating the full graph, 3 different types of trees are created.
+1) First tree is till LOCAL tier. In this tree, dummy nodes of VIP tier are
+created (i.e. with empty children array) because more than one collector can
+have same VIP as child
+2) Second tree consists of only MERGE-LOCAL tiers. In this tree,
+LOCAL nodes are dummy, because LOCAL tier node for each cluster are already
+created in tree type 1
+3) Second tree consists of only MIRROR-MERGE tiers. In this tree, MERGE
+nodes are dummy, because MERGE tier node for all possible clusters are already
+created in tree type 2
+*/
 
 function TopicStats(topic, messages, hostname) {
   this.topic = topic;
@@ -43,6 +55,9 @@ function Node(name, clusterName, tier, aggregatemessagesreceived, aggregatemessa
   this.streamSourceList = []; //for merge and mirror tier nodes
   this.overallLatency = [];
   this.allTopicsLatency = [];
+  /*
+  xcoord and ycoord can be removed and in place, a Point var can be used.
+  */
   this.xcoord = 0;
   this.ycoord = 0;
 }
@@ -123,6 +138,93 @@ function isLoss(count1, count2) {
 
 function highlightChildNodes(n) {
   if (n.tier.toLowerCase() == "hdfs") {
+  	highlightHDFSNode(n);
+  } else {
+    var totalaggregatechild = 0;
+    var totalaggregateparent = 0;
+    totalaggregateparent = n.aggregatemessagesreceived;
+    n.children.forEach(function (c) {
+      totalaggregatechild += parseInt(c.aggregatemessagesreceived, 10);
+    });
+    if (n.tier.toLowerCase() == "vip" || n.tier.toLowerCase() == "local" || n.tier.toLowerCase() == "merge") {
+    	/*
+    	VIP, LOCAL and MERGE nodes can be dummy nodes if picked up from type1,
+    	type2 and type3 graphs respectively i.e they have no children. So
+    	to find the child nodes of these nodes, to complete traversal,
+    	filter and find the node with child nodes.
+    	*/
+      if (n.children.length === 0) {
+        var arr = d3.selectAll("g.node")
+          .filter(function (d) {
+            return d.tier == n.tier && d.clusterName == n.clusterName && (d.children.length > 0);
+          })
+          .data();
+        n = arr[0];
+      }
+      /*
+       n == undefined can happen when there is no node in the graph with
+       same tier and cluster and which has children. One scenario this can
+       happen is when we drill down on cluster which has a mirror node. When
+       creating a partial treeList, only dummy merge nodes of corresponding
+       source clusters of mirror node are added i.e type 3 trees. The sources
+       of the source merge nodes i.e type 2 trees are not added to treeList
+       So no merge nodes would be present in the treeList with number of
+       children > 0
+      */
+      if (n == undefined)
+      	return;
+
+      n.children.forEach(function (c) {
+        totalaggregatechild += parseInt(c.aggregatemessagessent, 10);
+      });
+    } else if (n.tier.toLowerCase() == "collector") {
+      /*
+      VIP sends messages to all collectors in cluster and it is not possible
+      to decipher which collector a message is sent to. Hence,
+      all collector stats for a cluster are aggregated to be compared with
+      vip node. If there is a message loss between collectors and vip,
+      then links between vip and each collector, will be red.
+      */
+      totalaggregateparent = 0;
+      var nodesInCluster = d3.selectAll("g.node")
+        .filter(function (d) {
+          return d.clusterName == n.clusterName && d.tier.toLowerCase() == "collector";
+        })
+        .data();
+      nodesInCluster.forEach(function (c) {
+        totalaggregateparent += parseInt(c.aggregatemessagesreceived, 10);
+      });
+    }
+    n.children.forEach(function (c) {
+      var currentLink = d3.selectAll("line.link")
+												.filter(function (d) {
+													return d.source.clusterName == n.clusterName && d.source.name ==
+														n.name &&
+														d.source.tier == n.tier && d.target.name == c.name;
+												})
+												.transition()
+												.duration(100);
+      if (n.allreceivedtopicstats.length === 0 || ((c.tier == "agent" || c.tier == "collector") && c.allsenttopicstats.length === 0) || c.allreceivedtopicstats.length === 0) {
+        currentLink.style("fill", "none")
+          				 .style("stroke", "#dedede");
+      }
+      else if (isLoss(totalaggregateparent, totalaggregatechild)) {
+        currentLink.style("fill", "none")
+    	   					 .style("stroke", "#ff0000");
+      }
+      else {
+        currentLink.style("fill", "none")
+           				 .style("stroke", "#00ff00");
+      }
+    });
+  }
+
+  n.children.forEach(function (c) {
+    highlightChildNodes(c);
+  });
+}
+
+function highlightHDFSNode(n) {
     n.children.forEach(function (c) {
       var aggregateparent = 0;
       var aggregatechild = 0;
@@ -158,78 +260,6 @@ function highlightChildNodes(n) {
             .style("stroke", "#00ff00");
       }
     });
-  } else {
-    var totalaggregatechild = 0;
-    var totalaggregateparent = 0;
-    n.children.forEach(function (c) {
-      totalaggregatechild += parseInt(c.aggregatemessagesreceived, 10);
-    });
-    if (n.tier.toLowerCase() == "vip" || n.tier.toLowerCase() == "local" || n.tier.toLowerCase() == "merge") {
-      if (n.children.length === 0) {
-        var arr = d3.selectAll("g.node")
-          .filter(function (d) {
-            return d.tier == n.tier && d.clusterName == n.clusterName && (d.children.length > 0);
-          })
-          .data();
-        n = arr[0];
-      }
-      if (n != undefined) {
-        //this case can happen when a drill down on cluster with a mirror node is selected. In this scenario only merge nodes of corresponding source clusters of mirror node are added but the sources of the source merge nodes are not added to treeList, so no merge nodes would be present in the treeList with number of children > 0
-        n.children.forEach(function (c) {
-          totalaggregatechild += parseInt(c.aggregatemessagessent, 10);
-        });
-      }
-    } else if (n.tier.toLowerCase() == "collector") {
-      var nodesInCluster = d3.selectAll("g.node")
-        .filter(function (d) {
-          return d.clusterName == n.clusterName && d.tier.toLowerCase() == "collector";
-        })
-        .data();
-      nodesInCluster.forEach(function (c) {
-        totalaggregateparent += parseInt(c.aggregatemessagesreceived, 10);
-      });
-    } else {
-      totalaggregateparent = n.aggregatemessagesreceived;
-    }
-    if (n != undefined) {
-      n.children.forEach(function (c) {
-        var currentLink = d3.selectAll("line.link")
-          .filter(function (d) {
-            return d.source.clusterName == n.clusterName && d.source.name ==
-              n.name &&
-              d.source.tier == n.tier && d.target.name == c.name;
-          })
-          .transition()
-          .duration(100);
-        if (n.allreceivedtopicstats.length === 0)
-          currentLink.style("fill", "none")
-            .style("stroke",
-              "#dedede");
-        else if ((c.tier == "agent" || c.tier == "collector") && c.allsenttopicstats
-          .length === 0)
-          currentLink.style("fill", "none")
-            .style("stroke",
-              "#dedede");
-        else if (c.allreceivedtopicstats.length === 0)
-          currentLink.style("fill", "none")
-            .style("stroke",
-              "#dedede");
-        else if (isLoss(totalaggregateparent, totalaggregatechild))
-          currentLink.style("fill", "none")
-            .style("stroke",
-              "#ff0000");
-        else
-          currentLink.style("fill", "none")
-            .style("stroke",
-              "#00ff00");
-      });
-    }
-  }
-  if (n != undefined) {
-    n.children.forEach(function (c) {
-      highlightChildNodes(c);
-    });
-  }
 }
 
 function nodeover(n, isCountView, clear) {
@@ -247,7 +277,7 @@ function nodeover(n, isCountView, clear) {
 }
 
 function latencyhighlightChildNodes(n) {
-  if (n.children.length === 0 && n.tier.toLowerCase() == "vip") {
+  if (n.children.length === 0 && (n.tier.toLowerCase() == "vip" || n.tier.toLowerCase() == "local" || n.tier.toLowerCase() == "merge")) {
     var arr = d3.selectAll("g.node")
       .filter(function (d) {
         return d.tier == n.tier && d.clusterName == n.clusterName && (d.children
@@ -341,7 +371,7 @@ function addListToInfoPanel(n, isCountView) {
   c = r.insertCell(1);
   if (isCountView) {
     c.innerHTML =
-      "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+      "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" +
       n.clusterName +
       "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
       n.clusterName + "</button>";
@@ -363,7 +393,7 @@ function addListToInfoPanel(n, isCountView) {
     c.style.fontWeight = "bold";
   } else {
     c.innerHTML =
-      "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+      "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" +
       n.clusterName +
       "', 2)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
       n.clusterName + "</button>";
@@ -675,7 +705,7 @@ function linkclick(l) {
   c.innerHTML = "Source cluster:";
   c = r.insertCell(1);
   c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" +
     l.target
     .clusterName +
     "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
@@ -695,7 +725,7 @@ function linkclick(l) {
   c.innerHTML = "Target Cluster:";
   c = r.insertCell(1);
   c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('all', '" +
+    "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" +
     l.source
     .clusterName +
     "', 1)\" style=\"cursor: pointer; cursor: hand;color:#00f;display:block;width:100%;height:100%;text-decoration:none;text-align:left;background:#d8eaf3;border:#d8eaf3;padding:0px;margin:0px\">" +
@@ -757,6 +787,30 @@ function createNewObjectForTree(c, clusterNodeList, root) {
     collectorIndex++;
   } else
     h.children = travelTree(c, clusterNodeList);
+  return h;
+}
+
+function createNewObjectForMergeMirrorTree(c) {
+	/*
+		Why did we define two functions for createNewObject? Can't same code be
+		reused? And why are setting the children for merge/mirror nodes as an empty
+		array? Is it since we are finding out children by filtering d3 node
+	 	objects in the window directly? We are not creating tree for merge/mirror
+	 	nodes like other tiers for the reason that, a merge node can have multiple
+	  local sources and when creating tree for this node, from local,
+	  the same tree can be created multiple times.
+	*/
+  var h = {};
+  h.name = c.name;
+  h.tier = c.tier;
+  h.clusterName = c.clusterName;
+  h.aggregatemessagesreceived = c.aggregatemessagesreceived;
+  h.allreceivedtopicstats = c.allreceivedtopicstats;
+  h.aggregatemessagesent = c.aggregatemessagesent;
+  h.allsenttopicstats = c.allsenttopicstats;
+  h.overallLatency = c.overallLatency;
+  h.allTopicsLatency = c.allTopicsLatency;
+  h.children = [];
   return h;
 }
 
@@ -840,6 +894,10 @@ function setNodesAngles(angle, diff, nodes) {
 }
 
 function drawLinesToMarkDifferentClusters(graphsvg, divisions, r) {
+	/*
+	  Thought: Can we make this lines as collapsible so that we can change the
+	  angle of cluster dynamically instead of hardsetting it?
+	*/
   if (divisions != 1) {
     var angle = 2 * Math.PI / divisions;
     var radialPoints = [];
@@ -928,7 +986,7 @@ function addClusterName(clusterName, tree, angle, graphsvg, selectedTabID) {
     .style("cursor", "hand")
     .style("cursor", "pointer")
     .on("click", function (d) {
-      saveHistoryAndLoadGraph('all', d.name, selectedTabID);
+      saveHistoryAndLoadGraph('All', d.name, selectedTabID);
     });
 }
 
@@ -1085,7 +1143,63 @@ function addTierCountDetailsToSummary (div, currentRow, tier, received, sent, ch
   return currentRow;
 }
 
+function getComparableCountValue(sourceTier, targetTier, treeList) {
+	var count = 0;
+	console.log("sourceTier:"+sourceTier+" and targetTier:"+targetTier);
+	var targetNodes = d3.selectAll("g.node")
+										 .filter(function (d) {
+										 	return d.tier.toLowerCase() == targetTier && d.children.length > 0;
+										 })
+										 .data();
+	console.log("targetNodes:");
+	console.log(targetNodes);
+	if (targetNodes == undefined || targetNodes.length == 0) {
+		/*
+		There are no nodes in the graph with the targetTier(merge/mirror) with
+		number of children > 0, so calculating count is not applicable. Hence
+		returning -1
+		*/
+		console.log("returning coz of undefined target nodes")
+		return -1;
+	}
+	targetNodes.forEach(function (tnode) {
+  	tnode.streamSourceList.forEach(function (topicList) {
+  		var topic = topicList.topic;
+  		console.log("current topic"+topic);
+  		topicList.source.forEach(function (cluster) {
+  			console.log("searching in cluster:"+cluster)
+  			var sourceNodeList = d3.selectAll("g.node")
+  														.filter(function (d) {
+  															return d.tier.toLowerCase() == sourceTier && d.cluster == cluster;
+  														})
+  														.data();
+  			if (sourceNodeList == undefined || sourceNodeList.length == 0) {
+					/*
+						Error Condition. Shouldn't exist. return error value -1
+					*/
+					console.log("ERROR ERROR, returning");
+					return -1;
+  			}
+  			sourceNodeList.forEach(function (n) {
+  				n.receivedStatsList.forEach(function (stats) {
+  					if (stats.topic == topic) {
+  						count += stats.messages;
+  					}
+  				});
+  			});
+  		});
+  	});
+	});
+	console.log("final Count:"+count);
+  return count;
+}
+
 function loadCountSummary(treeList) {
+	/*
+		Thought: Can the whole row be changed to indicate the health status?
+		Something on the lines of tables and rows indicating health like in
+		bootstrap?
+	*/
   var publisherCount = 0,
     agentReceivedCount = 0,
     agentSentCount = 0,
@@ -1145,15 +1259,33 @@ function loadCountSummary(treeList) {
     hdfsCount, 0, collectorSentCount, false);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Local",
     localCount, 0, hdfsCount, false);
-  //MERGE and MIRROR tiers's numbers cannot be compared directly since not all LOCAL streams have to MERGE and not all MERGE streams are mirrored;
+  /*
+  	MERGE and MIRROR tiers's numbers cannot be compared directly since not all
+  	LOCAL streams have to MERGE and not all MERGE streams are mirrored;
+  	Also, one stream can be mirrored to multiple clusters, in this scenario,
+  	for the many mirrored clusters, each cluster number should match with
+  	merge numbers i.e if mirrored to n clusters, then sum(all mirrrored for
+  	that stream) == n * merge numbers for that stream.
+  */
+  var comparableLocalNum = getComparableCountValue("local", "merge", treeList);
+  console.log("comparableLocalNum:"+comparableLocalNum);
+  var comparableMergeNum = getComparableCountValue("merge", "mirror", treeList);
+  console.log("comparableMergeNum:"+comparableMergeNum);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Merge",
-    mergeCount, 0, localCount, true);
+    mergeCount, 0, comparableLocalNum, true);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Mirror",
-    mirrorCount, 0, mergeCount, true);
+    mirrorCount, 0, comparableMergeNum, true);
 }
 
 function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency, actualLatency) {
   var health;
+  /*
+    If expectedLatency = 1 and lossWarnThresholdDiff = 1 (minimum values),
+    then
+    	status = healthy for latency <= 0(diff)
+    	status = warn for 0(diff) < latency <= 1(expected)
+    	status = unhealthy for latency > 1(expected)
+  */
   if (actualLatency <= expectedLatency - lossWarnThresholdDiff)
     health = 0;
   if (actualLatency <= expectedLatency && actualLatency > expectedLatency -
@@ -1182,6 +1314,11 @@ function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency, 
 }
 
 function loadLatencySummary() {
+	/*
+		Thought: Can the whole row be changed to indicate the health status?
+		Something on the lines of tables and rows indicating health like in
+		bootstrap?
+	*/
   document.getElementById("summaryPanel")
     .innerHTML = "";
   var div = document.createElement('div');
@@ -1274,11 +1411,16 @@ function saveHistory(streamName, clusterName, selectedTabID, start, end) {
   var History = window.History;
   if (History.enabled) {
     var selectedTab = selectedTabID.toString();
+    /*
+    To run in GWT developement mode, The URL of the page should have an
+    additional parameter gwt.codesvr=127.0.0.1:9997
+    */
     History.pushState({
         qstream: streamName,
         qcluster: clusterName,
         selectedTab: selectedTab
-      }, "Databus Visualization", "?qstart=" + start + "&qend=" + end + "&qstream=" +
+      }, "Databus Visualization", "?qstart=" +
+      start + "&qend=" + end + "&qstream=" +
       streamName + "&qcluster=" + clusterName + "&selectedTab=" +
       selectedTabID);
   } else {
@@ -1397,6 +1539,10 @@ function cloneNode(n, cloneCoords) {
     });
     newNode.allTopicsLatency.push(topicLatency);
   });
+  /*
+  why do we need cloneCoords boolean check? We are not passing this check in
+  any of the cloneNode calls.
+  */
   if (cloneCoords != undefined && cloneCoords == true) {
     newNode.xcoord = n.xcoord;
     newNode.ycoord = n.ycoord;
@@ -1410,6 +1556,9 @@ function appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, starti
   if (getNumOfNodes(clusterNodeList, "collector") > 1) {
     travelTreeAndSetCollectorChildList(root);
   }
+  /*
+  var diagonal can be moved as a global variable
+  */
   var diagonal = d3.svg.diagonal.radial()
     .projection(function (d) {
       return [d.y, d.x / 180 * Math.PI];
@@ -1458,6 +1607,9 @@ function appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, starti
       "transform", function (d) {
         return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
       });
+  /*
+  can div be moved as a global variable??
+  */
   var div = d3.select("body")
     .append("div")
     .attr("class", "tooltip")
@@ -1482,27 +1634,17 @@ function appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, starti
         .style("opacity", 0);
       loadDefaultView(isCountView);
     });
+  /*
+  instead of passing isCountView to all functions, can we make it a global
+  varibale which is changed whenever we switch tabs i.e call tabSelected
+  function
+  */
   if (isCountView) {
     drawlink.style("cursor", "pointer")
       .on("click", linkclick);
     drawnode.on("click", nodeclick);
   } else
     drawnode.on("click", latencynodeclick);
-}
-
-function createNewObjectForMergeMirrorTree(c) {
-  var h = {};
-  h.name = c.name;
-  h.tier = c.tier;
-  h.clusterName = c.clusterName;
-  h.aggregatemessagesreceived = c.aggregatemessagesreceived;
-  h.allreceivedtopicstats = c.allreceivedtopicstats;
-  h.aggregatemessagesent = c.aggregatemessagesent;
-  h.allsenttopicstats = c.allsenttopicstats;
-  h.overallLatency = c.overallLatency;
-  h.allTopicsLatency = c.allTopicsLatency;
-  h.children = [];
-  return h;
 }
 
 function constructTreeForMergeMirror(root) {
@@ -1663,14 +1805,6 @@ function setCoordinatesOfNode(n) {
   n.ycoord = rad * Math.sin(yAngle * degToRadFactor);
 }
 
-function getAngleOfLink(sourcePoint, targetPoint) {
-  var dx = targetPoint.x - sourcePoint.x;
-  var dy = targetPoint.y - sourcePoint.y;
-  var slope = dy / dx;
-  var angleInRad = Math.atan(slope);
-  return angleInRad * radToDegFactor;
-}
-
 function getAngleOfLine(sourcePoint, targetPoint) {
   var dx = targetPoint.x - sourcePoint.x;
   var dy = targetPoint.y - sourcePoint.y;
@@ -1756,6 +1890,9 @@ function loadGraph(streamName, clusterName, selectedTabID) {
   }
   //first append all nodes till local to the svg so that when merge nodes are appended all local nodes are available when retrieving them from the svg using d3.selectAll(). Similarly append all merge nodes before appending mirror nodes
   angle = 360 / (2 * divisions);
+  if (divisions == 1) {
+    angle = 90;
+  }
   for (index = 0; index < treeList.length; index++) {
     var clusterNodeList = treeList[index];
     if (getNumOfNodes(clusterNodeList, "merge") != 0) {
@@ -1766,6 +1903,9 @@ function loadGraph(streamName, clusterName, selectedTabID) {
     angle += diff;
   }
   angle = 360 / (2 * divisions);
+  if (divisions == 1) {
+    angle = 90;
+  }
   for (index = 0; index < treeList.length; index++) {
     var clusterNodeList = treeList[index];
     if (getNumOfNodes(clusterNodeList, "mirror") != 0) {
