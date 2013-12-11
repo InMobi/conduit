@@ -52,7 +52,7 @@ public class Databus implements Service, DatabusConstants {
   private DatabusConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
-  private static volatile MessagePublisher publisher;
+  private static volatile MessagePublisher publisher = null;
   private static int numStreamsMergeService = 5;
   private static int numStreamsMirrorService = 1;
   private static boolean isPurgerEnabled = true;
@@ -301,7 +301,9 @@ public class Databus implements Service, DatabusConstants {
       LOG.info("Waiting for [" + service.getName() + "] to finish");
       service.join();
     }
-    publisher.close();
+    if (publisher != null) {
+      publisher.close();
+    }
     LOG.info("Databus Shutdown complete..");
   }
 
