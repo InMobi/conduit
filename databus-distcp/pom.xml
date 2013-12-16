@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.inmobi.databus</groupId>
     <artifactId>databus-parent</artifactId>
-    <version>2.2.0-SNAPSHOT</version>
+    <version>2.2.0</version>
   </parent>
   <artifactId>databus-distcp</artifactId>
   <packaging>jar</packaging>
