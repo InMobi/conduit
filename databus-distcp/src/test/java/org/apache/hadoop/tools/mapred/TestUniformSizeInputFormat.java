@@ -183,8 +183,7 @@ public class TestUniformSizeInputFormat {
     }
   }
 
-
-  @Test
+  //@Test
   public void testGetSplits() throws Exception {
     testGetSplits(9);
     for (int i=1; i<N_FILES; ++i)
