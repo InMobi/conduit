@@ -35,6 +35,7 @@ import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.tools.DistCpConstants;
@@ -51,7 +52,7 @@ import com.inmobi.databus.DatabusConstants;
  * Mapper class that executes the DistCp copy operation.
  * Implements the o.a.h.mapreduce.Mapper<> interface.
  */
-public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
+public class CopyMapper extends Mapper<Text, FileStatus, NullWritable, Text> {
 
   /**
    * Hadoop counters for the DistCp CopyMapper.
@@ -254,11 +255,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
         // generate audit counters
         if (received != null) {
           for (Entry<Long, Long> entry : received.entrySet()) {
-            String counterName = getCounterName(streamName,
-                sourcePath.getName(), entry.getKey());
-            context.write(new Text(counterName), new Text(entry.getValue()
-                .toString()));
-
+            String counterNameValue = getCounterNameValue(streamName,
+                sourcePath.getName(), entry.getKey(), entry.getValue());
+            context.write(NullWritable.get(), new Text(counterNameValue));
           }
         }
       }
@@ -271,10 +270,11 @@ public class CopyMapper extends Mapper<Text, FileStatus, Text, Text> {
     }
   }
 
-  private String getCounterName(String streamName, String filename,
-      Long timeWindow) {
+  private String getCounterNameValue(String streamName, String filename,
+      Long timeWindow, Long value) {
     return streamName + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
-        filename + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow;
+        filename + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow
+        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + value;
   }
 
   private String getFileType(FileStatus fileStatus) {

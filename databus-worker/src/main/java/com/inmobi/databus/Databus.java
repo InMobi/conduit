@@ -449,8 +449,6 @@ public class Databus implements Service, DatabusConstants {
         LOG.error("Exception during initialization of metrics" + e.getMessage());
       }
 
-      prop = null;
-
       if (UserGroupInformation.isSecurityEnabled()) {
         LOG.info("Security enabled, trying kerberoes login principal ["
             + principal + "] keytab [" + keytab + "]");
