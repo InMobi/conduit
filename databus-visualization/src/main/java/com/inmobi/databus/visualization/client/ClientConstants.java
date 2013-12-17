@@ -6,6 +6,7 @@ public class ClientConstants {
   public static final String QUERY_FROM_TIME = "qstart";
   public static final String QUERY_TO_TIME = "qend";
   public static final String SELECTED_TAB = "selectedTab";
+  public static final String GWT_DEVLOPMENT_MODE = "gwt.codesvr";
 
   public static final String PUBLISHER = "publisher";
   public static final String AGENT = "agent";

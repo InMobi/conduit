@@ -34,6 +34,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private Label stTimeLabel, etTimeLabel, streamLabel, clusterLabel,
       currentTimeLabel;
   private PopupPanel stcalendarPopup, etcalendarPopup;
+  private boolean isDevMode = false;
 
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
@@ -90,14 +91,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
-    /*
-     Here, we can check if the app is run in GWT development mode by checking
-     if value of url paramter gwt.codesvr is not null and is 127.0.0.1:9997
-     which is the default host:port of running in development mode. If true,
-     then pass a boolean check or something to the js and set it as a global
-     varibale in the js file. This boolean can be checked every time we make
-     a change to url and gwt.codesvr paramater can be saved.
-    */
+    checkIfGWTDevMode();
     String stream, cluster, startTime, endTime, selectedTab;
     if (checkParametersNull()) {
       System.out.println("Loading default settings");
@@ -116,6 +110,15 @@ public class Visualization implements EntryPoint, ClickHandler {
     }
     setSelectedParameterValues(startTime, endTime, cluster, stream);
     sendRequest(startTime, endTime, cluster, stream, selectedTab);
+  }
+
+  private void checkIfGWTDevMode() {
+    String host = Window.Location.getParameter(ClientConstants
+        .GWT_DEVLOPMENT_MODE);
+    if (host == null || host.length() == 0)
+      isDevMode = false;
+    else
+      isDevMode = true;
   }
 
   private void setSelectedParameterValues(String stTime, String endTime,
@@ -426,7 +429,8 @@ public class Visualization implements EntryPoint, ClickHandler {
             Float.parseFloat(clientConfig.get(ClientConstants
                 .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
             (ClientConstants.PERCENTAGE_FOR_WARN)),
-            Integer.parseInt(clientConfig.get(ClientConstants.LOSS_WARN_THRESHOLD_DIFF)));
+            Integer.parseInt(clientConfig.get(ClientConstants
+                .LOSS_WARN_THRESHOLD_DIFF)), isDevMode);
         enableFilterSelection();
       }
     });
@@ -527,10 +531,11 @@ public class Visualization implements EntryPoint, ClickHandler {
                                 Integer mirrorSla, Float percentileForSla,
                                 Float percentageForLoss,
                                 Float percentageForWarn,
-                                Integer lossWarnThresholdDiff)/*-{
+                                Integer lossWarnThresholdDiff,
+                                boolean isDevMode)/*-{
     $wnd.drawGraph(result, cluster, stream, start, end, selectedTabID,
     publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla,
     mergeSla, mirrorSla, percentileForSla, percentageForLoss,
-    percentageForWarn, lossWarnThresholdDiff);
+    percentageForWarn, lossWarnThresholdDiff, isDevMode);
   }-*/;
 }

@@ -19,6 +19,7 @@ var publisherLatency = 0,
   mergeLatency = 0,
   mirrorLatency = 0;
 var qStream, qCluster, qstart, qend;
+var isGWTDevMode;
 
 /*
 When creating the full graph, 3 different types of trees are created.
@@ -1384,18 +1385,18 @@ function saveHistory(streamName, clusterName, selectedTabID, start, end) {
   var History = window.History;
   if (History.enabled) {
     var selectedTab = selectedTabID.toString();
-    /*
-    To run in GWT developement mode, The URL of the page should have an
-    additional parameter gwt.codesvr=127.0.0.1:9997
-    */
+    var url = "?";
+    if (isGWTDevMode) {
+      url += "gwt.codesvr=127.0.0.1:9997&";
+    }
+    url += "qstart=" + start + "&qend=" + end + "&qstream=" + streamName +
+    "&qcluster=" + clusterName + "&selectedTab=" + selectedTabID;
+
     History.pushState({
         qstream: streamName,
         qcluster: clusterName,
         selectedTab: selectedTab
-      }, "Databus Visualization", "?qstart=" +
-      start + "&qend=" + end + "&qstream=" +
-      streamName + "&qcluster=" + clusterName + "&selectedTab=" +
-      selectedTabID);
+      }, "Databus Visualization", url);
   } else {
     console.log("History not enabled");
   }
@@ -1968,7 +1969,7 @@ function loadGraph(streamName, clusterName, selectedTabID) {
 
 function drawGraph(result, cluster, stream, start, end, selectedTab, publisher,
   agent, vip, collector, hdfs, local, merge, mirror, percentileFrSla,
-  percentageFrLoss, percentageFrWarn, lWThresholdDiff) {
+  percentageFrLoss, percentageFrWarn, lWThresholdDiff, isDevMode) {
   publisherSla = publisher;
   agentSla = agent;
   vipSla = vip;
@@ -1981,6 +1982,7 @@ function drawGraph(result, cluster, stream, start, end, selectedTab, publisher,
   percentageForLoss = percentageFrLoss;
   percentageForWarn = percentageFrWarn;
   lossWarnThresholdDiff = lWThresholdDiff;
+  isGWTDevMode = isDevMode;
   document.getElementById("tabs")
     .style.display = "block";
   qStream = stream;
