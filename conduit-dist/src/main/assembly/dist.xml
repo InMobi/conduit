@@ -26,7 +26,7 @@
     <format>dir</format>
   </formats>
 
-  <baseDirectory>databus-${project.version}</baseDirectory>
+  <baseDirectory>conduit-${project.version}</baseDirectory>
   <includeBaseDirectory>false</includeBaseDirectory>
 
   <dependencySets>
@@ -41,7 +41,7 @@
     <moduleSet>
 
       <includes>
-        <include>com.inmobi.databus:databus-worker</include>
+        <include>com.inmobi.conduit:conduit-worker</include>
       </includes>
 
       <binaries>

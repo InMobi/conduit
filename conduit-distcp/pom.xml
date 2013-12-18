@@ -1,11 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.inmobi.databus</groupId>
-    <artifactId>databus-parent</artifactId>
+    <groupId>com.inmobi.conduit</groupId>
+    <artifactId>conduit-parent</artifactId>
     <version>2.2.2-SNAPSHOT</version>
   </parent>
-  <artifactId>databus-distcp</artifactId>
+  <artifactId>conduit-distcp</artifactId>
+  <name>Conduit Distcp</name>
   <packaging>jar</packaging>
    <properties>
     <file.encoding>UTF-8</file.encoding>
@@ -17,13 +18,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.inmobi.databus</groupId>
-      <artifactId>databus-core</artifactId>
+      <groupId>com.inmobi.conduit</groupId>
+      <artifactId>conduit-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.inmobi.databus</groupId>
-      <artifactId>databus-core</artifactId>
+      <groupId>com.inmobi.conduit</groupId>
+      <artifactId>conduit-core</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>

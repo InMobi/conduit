@@ -8,14 +8,14 @@
         <format>dir</format>
     </formats>
 
-    <baseDirectory>databus-visualization-${project.version}</baseDirectory>
+    <baseDirectory>conduit-visualization-${project.version}</baseDirectory>
     <includeBaseDirectory>false</includeBaseDirectory>
 
     <moduleSets>
         <moduleSet>
 
             <includes>
-                <include>com.inmobi.databus:databus-visualisation
+                <include>com.inmobi.conduit:conduit-visualisation
                 </include>
             </includes>
 
@@ -28,7 +28,7 @@
     <fileSets>
            <fileSet>
             <directory>../conduit-visualization/conf</directory>
-            <outputDirectory>/usr/local/databus-visualization-${project.version}/conf/</outputDirectory>
+            <outputDirectory>/usr/local/conduit-visualization-${project.version}/conf/</outputDirectory>
             <includes>
                 <include>**/audit-feeder.properties</include>
                 <include>**/visualization.properties</include>
@@ -46,7 +46,7 @@
             <directory>../conduit-visualization/target/</directory>
             <outputDirectory>/var/lib/tomcat6/webapps</outputDirectory>
             <includes>
-                <include>**/databus-visualization.war</include>
+                <include>**/conduit-visualization.war</include>
             </includes>
         </fileSet>
     </fileSets>

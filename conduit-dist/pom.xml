@@ -3,13 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>databus-parent</artifactId>
-    <groupId>com.inmobi.databus</groupId>
+    <artifactId>conduit-parent</artifactId>
+    <groupId>com.inmobi.conduit</groupId>
     <version>2.2.2-SNAPSHOT</version>
   </parent>
 
-  <artifactId>databus-dist</artifactId>
-  <name>Databus distribution</name>
+  <artifactId>conduit-dist</artifactId>
+  <name>Conduit Distribution</name>
   <packaging>pom</packaging>
 
   <repositories>
@@ -68,7 +68,7 @@
               <deb>${project.build.directory}/${artifactId}_${version}.deb</deb>
               <dataSet>
                 <data>
-                  <src>target/databus-dist-${project.version}-pkg/</src>
+                  <src>target/conduit-dist-${project.version}-pkg/</src>
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
@@ -76,7 +76,7 @@
                   </mapper>
                 </data>
                 <data>
-                  <src>target/databus-dist-${project.version}-pkg/bin/</src>
+                  <src>target/conduit-dist-${project.version}-pkg/bin/</src>
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
@@ -95,8 +95,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.inmobi.databus</groupId>
-      <artifactId>databus-worker</artifactId>
+      <groupId>com.inmobi.conduit</groupId>
+      <artifactId>conduit-worker</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

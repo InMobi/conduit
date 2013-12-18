@@ -3,13 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <artifactId>databus-parent</artifactId>
-    <groupId>com.inmobi.databus</groupId>
+    <artifactId>conduit-parent</artifactId>
+    <groupId>com.inmobi.conduit</groupId>
     <version>2.2.2-SNAPSHOT</version>
 
   </parent>
 
-  <artifactId>databus-worker</artifactId>
+  <artifactId>conduit-worker</artifactId>
+  <name>Conduit Worker</name>
   <packaging>jar</packaging>
 
   <profiles>
@@ -89,13 +90,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.inmobi.databus</groupId>
-      <artifactId>databus-core</artifactId>
+      <groupId>com.inmobi.conduit</groupId>
+      <artifactId>conduit-core</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.inmobi.databus</groupId>
-      <artifactId>databus-core</artifactId>
+      <groupId>com.inmobi.conduit</groupId>
+      <artifactId>conduit-core</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
@@ -164,8 +165,8 @@
       <type>test-jar</type>
     </dependency>
     <dependency>
-    <groupId>com.inmobi.databus</groupId>
-    <artifactId>databus-distcp</artifactId>
+    <groupId>com.inmobi.conduit</groupId>
+    <artifactId>conduit-distcp</artifactId>
     <version>${project.version}</version>
     <type>jar</type>
     </dependency>

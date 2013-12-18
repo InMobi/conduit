@@ -3,14 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>databus-parent</artifactId>
-        <groupId>com.inmobi.databus</groupId>
+        <artifactId>conduit-parent</artifactId>
+        <groupId>com.inmobi.conduit</groupId>
         <version>2.2.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>databus-visualization</artifactId>
+    <artifactId>conduit-visualization</artifactId>
     <packaging>war</packaging>
-    <name>Databus Visualization</name>
+    <name>Conduit Visualization</name>
 
     <properties>
         <gwtVersion>2.5.1</gwtVersion>
@@ -141,8 +141,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-        	<groupId>com.inmobi.databus</groupId>
-        	<artifactId>databus-audit</artifactId>
+        	<groupId>com.inmobi.conduit</groupId>
+        	<artifactId>conduit-audit</artifactId>
         	<version>${project.version}</version>
           <exclusions>
             <exclusion>
@@ -209,7 +209,7 @@
                 </executions>
                 <configuration>
                     <webappDirectory>${webappDirectory}</webappDirectory>
-                    <warName>databus-visualization</warName>
+                    <warName>conduit-visualization</warName>
                 </configuration>
             </plugin>
 

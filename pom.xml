@@ -7,10 +7,10 @@
     <messaging-client-version>4.0.3</messaging-client-version>
   </properties>
 
-  <groupId>com.inmobi.databus</groupId>
-  <artifactId>databus-parent</artifactId>
+  <groupId>com.inmobi.conduit</groupId>
+  <artifactId>conduit-parent</artifactId>
   <version>2.2.2-SNAPSHOT</version>
-  <name>Databus</name>
+  <name>Conduit</name>
   <packaging>pom</packaging>
 
   <parent>
