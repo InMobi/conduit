@@ -8,7 +8,7 @@
     <!-- Servlets -->
     <servlet>
         <servlet-name>graphServlet</servlet-name>
-        <servlet-class>com.inmobi.databus.visualization.server.DataServiceImpl
+        <servlet-class>com.inmobi.conduit.visualization.server.DataServiceImpl
         </servlet-class>
     </servlet>
 

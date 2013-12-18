@@ -46,7 +46,7 @@ import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.tools.util.HadoopCompat;
 import org.apache.hadoop.util.StringUtils;
 
-import com.inmobi.databus.DatabusConstants;
+import com.inmobi.conduit.DatabusConstants;
 
 /**
  * Mapper class that executes the DistCp copy operation.

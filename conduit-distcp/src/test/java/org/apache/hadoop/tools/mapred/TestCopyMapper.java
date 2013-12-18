@@ -40,7 +40,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.DistCpOptionSwitch;
 import org.apache.hadoop.tools.DistCpOptions;
-import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.junit.Assert;
@@ -50,7 +49,7 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.inmobi.databus.DatabusConstants;
+import com.inmobi.conduit.DatabusConstants;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
