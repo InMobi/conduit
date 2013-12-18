@@ -19,12 +19,12 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.distcp.MergedStreamService;
 
 public class MergedStreamValidator extends AbstractStreamValidator {
   private static final Log LOG = LogFactory.getLog(MergedStreamValidator.class);
-  private DatabusConfig databusConfig = null;
+  private ConduitConfig conduitConfig = null;
   private String streamName = null;
   private boolean fix = false;
   List<Path> duplicateFiles = new ArrayList<Path>();
@@ -38,18 +38,18 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   private Date stopTime = null;
   private int numThreads;
 
-  public MergedStreamValidator(DatabusConfig databusConfig, String streamName,
+  public MergedStreamValidator(ConduitConfig conduitConfig, String streamName,
       String clusterName, boolean fix, Date startTime, Date stopTime,
       int numThreads) {
-    this.databusConfig = databusConfig;
+    this.conduitConfig = conduitConfig;
     this.streamName = streamName;
     this.fix = fix;
-    for (Cluster cluster : databusConfig.getClusters().values()) {
+    for (Cluster cluster : conduitConfig.getClusters().values()) {
       if (cluster.getSourceStreams().contains(streamName)) {
         srcClusterList.add(cluster);
       }
     }
-    mergeCluster = databusConfig.getClusters().get(clusterName);
+    mergeCluster = conduitConfig.getClusters().get(clusterName);
     this.startTime = startTime;
     this.stopTime = stopTime;
     this.numThreads = numThreads;
@@ -183,7 +183,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   }
 
   private void validateStartTime(Cluster srcCluster) {
-    int retentionHours = databusConfig.getSourceStreams().
+    int retentionHours = conduitConfig.getSourceStreams().
         get(streamName).getRetentionInHours(srcCluster.getName());
     Calendar cal = Calendar.getInstance();
     cal.add(Calendar.HOUR_OF_DAY, -retentionHours);
@@ -200,7 +200,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
     Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.add(streamName);
     MergedStreamFixService mergeFixService = new MergedStreamFixService(
-        databusConfig, srcCluster, mergeCluster, streamsToProcess);
+        conduitConfig, srcCluster, mergeCluster, streamsToProcess);
     // copy the missing paths through distcp and commit the copied paths
     mergeFixService.execute();
   }
@@ -230,7 +230,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
   }
 
   class MergedStreamFixService extends MergedStreamService {
-    public MergedStreamFixService(DatabusConfig config, Cluster srcCluster,
+    public MergedStreamFixService(ConduitConfig config, Cluster srcCluster,
         Cluster destinationCluster, Set<String> streamsToProcess)
             throws Exception {
       super(config, srcCluster, destinationCluster, null, null,

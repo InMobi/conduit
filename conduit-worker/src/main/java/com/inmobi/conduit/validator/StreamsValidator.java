@@ -5,14 +5,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.ConduitConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.inmobi.conduit.DatabusConfig;
-
 public class StreamsValidator {
   private static final Log LOG = LogFactory.getLog(StreamsValidator.class);
-  private DatabusConfig databusConfig = null;
+  private ConduitConfig conduitConfig = null;
   private Set<String> streams = new HashSet<String>();
   private Set<String> modes = new HashSet<String>();
   private Set<String> clusters = new HashSet<String>();
@@ -20,14 +19,14 @@ public class StreamsValidator {
   private Date stopTime;
   private int numThreads;
 
-  public StreamsValidator(DatabusConfig databusConfig, String streamNames, 
+  public StreamsValidator(ConduitConfig conduitConfig, String streamNames,
       String modeNames, String clusterNames, Date startTime, Date stopTime,
       int numThreads) {
-    this.databusConfig = databusConfig;
+    this.conduitConfig = conduitConfig;
 
     if (streamNames == null || streamNames.isEmpty()) {
       // add ALL streams from databus config
-      for (String stream : databusConfig.getSourceStreams().keySet()) {
+      for (String stream : conduitConfig.getSourceStreams().keySet()) {
         streams.add(stream);
       }
     } else {
@@ -49,7 +48,7 @@ public class StreamsValidator {
 
     if (clusterNames == null || clusterNames.isEmpty()) {
       //add ALL clusters from databus config
-      for (String cluster : databusConfig.getClusters().keySet()) {
+      for (String cluster : conduitConfig.getClusters().keySet()) {
         clusters.add(cluster);
       }
     } else {
@@ -81,7 +80,7 @@ public class StreamsValidator {
   private void validateLocalStream(String stream, boolean fix) throws Exception {
     // for each cluster, check whether stream runs in local mode
     for (String clusterName: clusters) {
-      Cluster cluster = databusConfig.getClusters().get(clusterName);
+      Cluster cluster = conduitConfig.getClusters().get(clusterName);
       if (!cluster.getSourceStreams().contains(stream)) {
         System.out.println("ERROR: The stream [" + stream +
             "] is not running in [LOCAL] mode on cluster [" + clusterName + "]");
@@ -95,7 +94,7 @@ public class StreamsValidator {
   private void validateMergeStream(String stream, boolean fix) throws Exception {
     // for each cluster, check whether stream runs in merge mode
     for (String clusterName: clusters) {
-      Cluster cluster = databusConfig.getClusters().get(clusterName);
+      Cluster cluster = conduitConfig.getClusters().get(clusterName);
       if (!cluster.getPrimaryDestinationStreams().contains(stream)) {
         System.out.println("ERROR: The stream [" + stream +
             "] is not running in [MERGE] mode on cluster [" + clusterName + "]");
@@ -103,7 +102,7 @@ public class StreamsValidator {
       }
       
       MergedStreamValidator mergeValidator = new MergedStreamValidator(
-          databusConfig, stream, clusterName, fix, startTime, stopTime,
+          conduitConfig, stream, clusterName, fix, startTime, stopTime,
           numThreads);
       mergeValidator.execute();
     }
@@ -112,7 +111,7 @@ public class StreamsValidator {
   private void validateMirrorStream(String stream, boolean fix) throws Exception {
     // for each cluster, check whether stream runs in mirror mode
     for (String clusterName: clusters) {
-      Cluster cluster = databusConfig.getClusters().get(clusterName);
+      Cluster cluster = conduitConfig.getClusters().get(clusterName);
       if (!cluster.getMirroredStreams().contains(stream)) {
         System.out.println("ERROR: The stream [" + stream +
             "] is not running in [MIRROR] mode on cluster [" + clusterName + "]");
@@ -120,7 +119,7 @@ public class StreamsValidator {
       }
       // add start time and stop time
       MirrorStreamValidator mirrorValidator = new MirrorStreamValidator(
-          databusConfig, stream, clusterName, fix, startTime, stopTime,
+          conduitConfig, stream, clusterName, fix, startTime, stopTime,
           numThreads);
       mirrorValidator.execute();
     }

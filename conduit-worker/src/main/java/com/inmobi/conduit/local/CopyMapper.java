@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.ConfigConstants;
 import com.inmobi.conduit.utils.FileUtil;
 import org.apache.commons.logging.Log;
@@ -33,8 +34,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-
-import com.inmobi.conduit.DatabusConstants;
 
 
 public class CopyMapper extends Mapper<Text, FileStatus, NullWritable,
@@ -50,7 +49,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, NullWritable,
     String category = src.getParent().getParent().getName();
     Map<Long,Long> received = null;
     if (context.getConfiguration().
-        getBoolean(DatabusConstants.AUDIT_ENABLED_KEY, true)) {
+        getBoolean(ConduitConstants.AUDIT_ENABLED_KEY, true)) {
       received = new HashMap<Long, Long>();
     }
     Configuration srcConf = new Configuration();
@@ -79,9 +78,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, NullWritable,
 
   private String getCounterNameValue(String streamName, String filename,
       Long timeWindow, Long value) {
-    return streamName + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + filename
-        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow
-        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + value;
+    return streamName + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + filename
+        + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow
+        + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + value;
   }
 
   private Path getTempPath(Context context, Path src, String category,

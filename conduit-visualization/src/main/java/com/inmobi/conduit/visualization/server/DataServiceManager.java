@@ -4,12 +4,12 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
 
+import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
 
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.audit.Tier;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
@@ -18,7 +18,7 @@ public class DataServiceManager {
 
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
   private static DataServiceManager instance = null;
-  private List<DatabusConfig> dataBusConfig;
+  private List<ConduitConfig> dataBusConfig;
   private VisualizationProperties properties;
   private String feederPropertiesPath;
 
@@ -52,12 +52,12 @@ public class DataServiceManager {
       }
     });
     LOG.info("Databus xmls included in the conf folder:");
-    dataBusConfig = new ArrayList<DatabusConfig>();
+    dataBusConfig = new ArrayList<ConduitConfig>();
     for (File file : xmlFiles) {
       String fullPath = file.getAbsolutePath();
       LOG.info("File:" + fullPath);
       try {
-        DatabusConfigParser parser = new DatabusConfigParser(fullPath);
+        ConduitConfigParser parser = new ConduitConfigParser(fullPath);
         dataBusConfig.add(parser.getConfig());
       } catch (Exception e) {
         LOG.error("Exception while intializing DatabusConfigParser: ", e);
@@ -75,7 +75,7 @@ public class DataServiceManager {
   public String getStreamAndClusterList() {
     Set<String> streamSet = new TreeSet<String>();
     Set<String> clusterSet = new TreeSet<String>();
-    for (DatabusConfig config : dataBusConfig) {
+    for (ConduitConfig config : dataBusConfig) {
       streamSet.addAll(config.getSourceStreams().keySet());
       clusterSet.addAll(config.getClusters().keySet());
     }
@@ -315,7 +315,7 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       if (node.getTier().equalsIgnoreCase("merge") ||
           node.getTier().equalsIgnoreCase("mirror")) {
-        for (DatabusConfig config : dataBusConfig) {
+        for (ConduitConfig config : dataBusConfig) {
           node.setSourceList(
               config.getClusters().get(node.getClusterName())
                   .getDestinationStreams().keySet());
@@ -324,7 +324,7 @@ public class DataServiceManager {
     }
   }
 
-  public List<DatabusConfig> getDataBusConfig() {
+  public List<ConduitConfig> getDataBusConfig() {
     return Collections.unmodifiableList(dataBusConfig);
   }
 }

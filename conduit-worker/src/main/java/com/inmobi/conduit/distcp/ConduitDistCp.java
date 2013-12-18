@@ -37,7 +37,7 @@ import com.inmobi.conduit.utils.FileUtil;
  * method that writes the listing file directly using the file listing map
  * passed by merge/mirror stream service.
  */
-public class DatabusDistCp extends DistCp {
+public class ConduitDistCp extends DistCp {
   
   private static final Log LOG = LogFactory.getLog(DistCp.class);
   
@@ -51,8 +51,8 @@ public class DatabusDistCp extends DistCp {
   private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
   private DataInputBuffer in = new DataInputBuffer();
 
-  public DatabusDistCp(Configuration configuration, DistCpOptions inputOptions,
-      Map<String, FileStatus> fileListingMap)
+  public ConduitDistCp(Configuration configuration, DistCpOptions inputOptions,
+                       Map<String, FileStatus> fileListingMap)
       throws Exception {
     super(configuration, inputOptions);
     this.fileListingMap = fileListingMap;

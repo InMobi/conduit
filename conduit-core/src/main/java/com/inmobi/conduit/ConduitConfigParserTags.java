@@ -1,6 +1,6 @@
 package com.inmobi.conduit;
 
-public interface DatabusConfigParserTags {
+public interface ConduitConfigParserTags {
 
   public static final String DEFAULTS = "defaults";
   public static final String ROOTDIR = "rootdir";

@@ -47,9 +47,9 @@ import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MessagePublisherFactory;
 
-public class Databus implements Service, DatabusConstants {
-  private static Logger LOG = Logger.getLogger(Databus.class);
-  private DatabusConfig config;
+public class Conduit implements Service, ConduitConstants {
+  private static Logger LOG = Logger.getLogger(Conduit.class);
+  private ConduitConfig config;
   private String currentClusterName = null;
   private static int numStreamsLocalService = 5;
   private static volatile MessagePublisher publisher = null;
@@ -63,8 +63,8 @@ public class Databus implements Service, DatabusConstants {
   private CuratorLeaderManager curatorLeaderManager = null;
   private volatile boolean databusStarted = false;
 
-  public Databus(DatabusConfig config, Set<String> clustersToProcess,
-      String currentCluster) {
+  public Conduit(ConduitConfig config, Set<String> clustersToProcess,
+                 String currentCluster) {
     this(config, clustersToProcess);
     this.currentClusterName = currentCluster;
   }
@@ -73,17 +73,17 @@ public class Databus implements Service, DatabusConstants {
     return clustersToProcess;
   }
 
-  public Databus(DatabusConfig config, Set<String> clustersToProcess) {
+  public Conduit(ConduitConfig config, Set<String> clustersToProcess) {
     this.config = config;
     this.clustersToProcess = clustersToProcess;
   }
 
-  public DatabusConfig getConfig() {
+  public ConduitConfig getConfig() {
     return config;
   }
 
   public static void setPublisher(MessagePublisher publisher) {
-    Databus.publisher = publisher;
+    Conduit.publisher = publisher;
   }
 
   public static MessagePublisher getPublisher() {
@@ -251,14 +251,14 @@ public class Databus implements Service, DatabusConstants {
     }
   }
 
-  protected LocalStreamService getLocalStreamService(DatabusConfig config,
+  protected LocalStreamService getLocalStreamService(ConduitConfig config,
       Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
           throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
         new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
 
-  protected MergedStreamService getMergedStreamService(DatabusConfig config,
+  protected MergedStreamService getMergedStreamService(ConduitConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
       Set<String>  streamsToProcess)
           throws Exception {
@@ -268,7 +268,7 @@ public class Databus implements Service, DatabusConstants {
         streamsToProcess);
   }
 
-  protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
+  protected MirrorStreamService getMirrorStreamService(ConduitConfig config,
       Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
       Set<String> streamsToProcess)
           throws Exception {
@@ -466,9 +466,9 @@ public class Databus implements Service, DatabusConstants {
         }
       }
 
-      DatabusConfigParser configParser =
-          new DatabusConfigParser(databusConfigFile);
-      DatabusConfig config = configParser.getConfig();
+      ConduitConfigParser configParser =
+          new ConduitConfigParser(databusConfigFile);
+      ConduitConfig config = configParser.getConfig();
       StringBuffer databusClusterId = new StringBuffer();
       Set<String> clustersToProcess = new HashSet<String>();
       if (clusters.length == 1 && "ALL".equalsIgnoreCase(clusters[0])) {
@@ -486,7 +486,7 @@ public class Databus implements Service, DatabusConstants {
           databusClusterId.append("_");
         }
       }
-      final Databus databus = new Databus(config, clustersToProcess,
+      final Conduit databus = new Conduit(config, clustersToProcess,
           currentCluster);
 
       MessagePublisher msgPublisher = createMessagePublisher(prop);
@@ -532,7 +532,7 @@ public class Databus implements Service, DatabusConstants {
 
   private void startCuratorLeaderManager(
       String zkConnectString, StringBuffer databusClusterId,
-      final Databus databus) throws Exception {
+      final Conduit databus) throws Exception {
     curatorLeaderManager = new CuratorLeaderManager(
         databus, databusClusterId.toString(), zkConnectString);
     curatorLeaderManager.start();

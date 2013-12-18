@@ -36,7 +36,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.inmobi.conduit.DatabusConstants;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -96,7 +96,7 @@ public class TestIntegration {
           String counterNameValue = null;
           try {
             counterNameValue = scanner.next();
-            String tmp[] = counterNameValue.split(DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER);
+            String tmp[] = counterNameValue.split(ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER);
             Assert.assertEquals(4, tmp.length);
             Long numOfMsgs = Long.parseLong(tmp[3]);
             numberOfCountersPerFile++;

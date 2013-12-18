@@ -18,10 +18,10 @@ public class TestCluster {
 
   @Test
   public void testBasicCluster() throws Exception {
-    DatabusConfigParser databusConfigParser = new DatabusConfigParser(
-      "test-databus.xml");
+    ConduitConfigParser conduitConfigParser = new ConduitConfigParser(
+        "test-conduit.xml");
 
-    DatabusConfig config = databusConfigParser.getConfig();
+    ConduitConfig config = conduitConfigParser.getConfig();
 
     Map<String, Cluster> clusterMap = config.getClusters();
 

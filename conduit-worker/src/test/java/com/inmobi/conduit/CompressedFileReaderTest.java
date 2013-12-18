@@ -26,7 +26,7 @@ import org.apache.hadoop.io.compress.CompressionInputStream;
 import org.apache.log4j.Logger;
 
 public class CompressedFileReaderTest {
-  private static Logger LOG = Logger.getLogger(Databus.class);
+  private static Logger LOG = Logger.getLogger(Conduit.class);
 
   private void uncompress(String fileName) throws Exception{
     Configuration conf = new Configuration();

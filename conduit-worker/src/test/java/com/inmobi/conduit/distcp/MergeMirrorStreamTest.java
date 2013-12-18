@@ -8,7 +8,8 @@ import java.util.Set;
 
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfigParser;
+import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
@@ -24,8 +25,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConstants;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.local.TestLocalStreamService;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MessagePublisherFactory;
@@ -58,7 +58,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
    */
   @Test
   public void testMergeMirrorStream() throws Exception {
-    testMergeMirrorStream("test-mss-databus.xml", null, null);
+    testMergeMirrorStream("test-mss-conduit.xml", null, null);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService", AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18);
@@ -81,7 +81,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Set<TestMergedStreamService> mergedStreamServices = new HashSet<TestMergedStreamService>();
     Set<TestMirrorStreamService> mirrorStreamServices = new HashSet<TestMirrorStreamService>();
 
-    initializeDatabus("test-mss-databus.xml", null, null, true,
+    initializeDatabus("test-mss-conduit.xml", null, null, true,
         localStreamServices, mergedStreamServices, mirrorStreamServices);
     Path localStreamlFile = new Path("file:/tmp/mergeservicetest/testcluster1/mergeservice/" +
         "streams_local/test1/2013/10/07/16/56/testcluster2-test1-2013-10-07-16-55_00002.gz");
@@ -100,7 +100,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   @Test
   public void testMergeMirrorStreamWithMultipleStreams() throws Exception {
-    testMergeMirrorStream("test-mss-databus1.xml", null, null);
+    testMergeMirrorStream("test-mss-conduit1.xml", null, null);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"stream1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"stream1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"stream2").getCount() , 0);
@@ -130,7 +130,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   @Test
   public void testMergeMirrorStreamWithMirror() throws Exception {
     // Test with 2 mirror sites
-    testMergeMirrorStream("test-mss-databus_mirror.xml", null, null);
+    testMergeMirrorStream("test-mss-conduit_mirror.xml", null, null);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
@@ -153,7 +153,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     String clusterName = "testcluster5";
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster4");
-    testMergeMirrorStream("testDatabusWithClusterName.xml", clusterName,
+    testMergeMirrorStream("testConduitWithClusterName.xml", clusterName,
         clustersToProcess);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
@@ -176,27 +176,27 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     // start LocalStreamService on cluster2
     clustersToProcess.clear();
     clustersToProcess.add("testcluster2");
-    testMergeMirrorStream("testDatabusWithClusterNameParallel.xml",
+    testMergeMirrorStream("testConduitWithClusterNameParallel.xml",
         currentClusterName, clustersToProcess, false);
 
     // start LocalStreamService on cluster3
     clustersToProcess.clear();
     clustersToProcess.add("testcluster3");
-    testMergeMirrorStream("testDatabusWithClusterNameParallel.xml",
+    testMergeMirrorStream("testConduitWithClusterNameParallel.xml",
         currentClusterName, clustersToProcess, false);
 
     clustersToProcess.clear();
     // start LocalStreamService on cluster1 and currentClusterName is set to
     // null as both source and current cluster are same
     clustersToProcess.add("testcluster1");
-    testMergeMirrorStream("testDatabusWithClusterNameParallel.xml",
+    testMergeMirrorStream("testConduitWithClusterNameParallel.xml",
         currentClusterName, clustersToProcess, false);
 
     // start MergedStreamService of cluster4 on cluster5
     currentClusterName = "testcluster5";
     clustersToProcess.clear();
     clustersToProcess.add("testcluster4");
-    testMergeMirrorStream("testDatabusWithClusterNameParallel.xml",
+    testMergeMirrorStream("testConduitWithClusterNameParallel.xml",
         currentClusterName, clustersToProcess, false);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
@@ -212,7 +212,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   @Test(groups = { "integration" })
   public void testAllComboMergeMirrorStream() throws Exception {
     // Test with 1 merged stream only
-    testMergeMirrorStream("test-mergedss-databus.xml", null, null);
+    testMergeMirrorStream("test-mergedss-conduit.xml", null, null);
 
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0 );
     Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0 );
@@ -228,7 +228,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   @Test(groups = { "integration" })
   public void testAllServices() throws Exception {
     // Test with 1 source and 1 merged stream only
-    testMergeMirrorStream("test-mergedss-databus_2.xml", null, null);
+    testMergeMirrorStream("test-mergedss-conduit_2.xml", null, null);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
@@ -239,7 +239,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   public void setup() throws Exception {
     // clean up the test data if any thing is left in the previous runs
     cleanup();
-    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
+    System.setProperty(ConduitConstants.AUDIT_ENABLED_KEY, "true");
     super.setup(2, 6, 1);
   }
 
@@ -311,12 +311,12 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       Set<TestMergedStreamService> mergedStreamServices,
       Set<TestMirrorStreamService> mirrorStreamServices)
           throws Exception {
-    DatabusConfigParser parser = new DatabusConfigParser(filename);
-    DatabusConfig config = parser.getConfig();
+    ConduitConfigParser parser = new ConduitConfigParser(filename);
+    ConduitConfig config = parser.getConfig();
 
     Set<String> streamsToProcessLocal = new HashSet<String>();
     streamsToProcessLocal.addAll(config.getSourceStreams().keySet());
-    System.setProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM, "200");
+    System.setProperty(ConduitConstants.DIR_PER_DISTCP_PER_STREAM, "200");
     MessagePublisher publisher = MessagePublisherFactory.create();
     Cluster currentCluster = null;
     if (currentClusterName != null) {

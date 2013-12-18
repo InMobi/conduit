@@ -29,6 +29,9 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.utils.FileUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
@@ -54,9 +57,6 @@ import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ClusterTest;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
-import com.inmobi.conduit.DatabusConstants;
 import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
@@ -92,7 +92,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     // clean up the test data if any thing is left in the previous runs
     cleanup();
     super.setup(2, 6, 1);
-    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
+    System.setProperty(ConduitConstants.AUDIT_ENABLED_KEY, "true");
     createExpectedOutput();
   }
 
@@ -286,13 +286,13 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     return createTestData(count, path, false);
   }
 
-  private DatabusConfig buildTestDatabusConfig() throws Exception {
+  private ConduitConfig buildTestDatabusConfig() throws Exception {
     JobConf conf = super.CreateJobConf();
     return buildTestDatabusConfig(conf.get("mapred.job.tracker"),
         "file:///tmp", "databus", "48", "24");
   }
 
-  public static DatabusConfig buildTestDatabusConfig(String jturl,
+  public static ConduitConfig buildTestDatabusConfig(String jturl,
       String hdfsurl, String rootdir, String retentioninhours,
       String trashretentioninhours) throws Exception {
 
@@ -329,9 +329,9 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
     Map<String, String> defaults = new HashMap<String, String>();
 
-    defaults.put(DatabusConfigParser.ROOTDIR, rootdir);
-    defaults.put(DatabusConfigParser.RETENTION_IN_HOURS, retentioninhours);
-    defaults.put(DatabusConfigParser.TRASH_RETENTION_IN_HOURS,
+    defaults.put(ConduitConfigParser.ROOTDIR, rootdir);
+    defaults.put(ConduitConfigParser.RETENTION_IN_HOURS, retentioninhours);
+    defaults.put(ConduitConfigParser.TRASH_RETENTION_IN_HOURS,
         trashretentioninhours);
 
     /*
@@ -339,7 +339,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
      * "file:///tmp", conf.get("mapred.job.tracker")));
      */
 
-    return new DatabusConfig(streamMap, clusterMap, defaults);
+    return new ConduitConfig(streamMap, clusterMap, defaults);
   }
 
   @Test
@@ -386,12 +386,12 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       trashSet.add(status[i]);
     }
 
-    DatabusConfig databusConfig = buildTestDatabusConfig();
+    ConduitConfig conduitConfig = buildTestDatabusConfig();
     Cluster cluster = ClusterTest.buildLocalCluster();
     Set<String> streamsToProcess = new HashSet<String>();
-    streamsToProcess.addAll(databusConfig.getSourceStreams().keySet());
+    streamsToProcess.addAll(conduitConfig.getSourceStreams().keySet());
     TestLocalStreamService service = new TestLocalStreamService(
-        databusConfig, cluster, null, new FSCheckpointProvider(
+        conduitConfig, cluster, null, new FSCheckpointProvider(
 cluster.getCheckpointDir()),
         streamsToProcess);
 
@@ -423,7 +423,7 @@ cluster.getCheckpointDir()),
   @Test
   public void testMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-databus.xml");
-    testMapReduce("test-lss-databus.xml", 1);
+    testMapReduce("test-lss-conduit.xml", 1);
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() ,9 );
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() ,0 );
@@ -434,7 +434,7 @@ cluster.getCheckpointDir()),
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml");
-    testMapReduce("test-lss-multiple-databus.xml", 1);
+    testMapReduce("test-lss-multiple-conduit.xml", 1);
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
@@ -453,7 +453,7 @@ cluster.getCheckpointDir()),
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduceWithMultipleRuns() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml, Running Twice");
-    testMapReduce("test-lss-multiple-databus1.xml", 2);
+    testMapReduce("test-lss-multiple-conduit1.xml", 2);
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
@@ -487,10 +487,10 @@ cluster.getCheckpointDir()),
 
   @Test
   public void testCopyMapperImplMethod() throws Exception {
-    DatabusConfigParser parser = new DatabusConfigParser(
-        "test-lss-databus-s3n.xml");
+    ConduitConfigParser parser = new ConduitConfigParser(
+        "test-lss-conduit-s3n.xml");
     Set<String> streamsToProcess = new HashSet<String>();
-    DatabusConfig config = parser.getConfig();
+    ConduitConfig config = parser.getConfig();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
 
     Set<String> clustersToProcess = new HashSet<String>();
@@ -523,7 +523,7 @@ cluster.getCheckpointDir()),
 
   @Test
   public void testWithOutClusterName() throws Exception {
-    testClusterName("test-lss-databus.xml", null);
+    testClusterName("test-lss-conduit.xml", null);
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
@@ -533,7 +533,7 @@ cluster.getCheckpointDir()),
 
   @Test
   public void testWithClusterName() throws Exception {
-    testClusterName("test-lss-databus.xml", "testcluster2");
+    testClusterName("test-lss-conduit.xml", "testcluster2");
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
@@ -543,8 +543,8 @@ cluster.getCheckpointDir()),
 
   private void testClusterName(String configName, String currentClusterName)
       throws Exception {
-    DatabusConfigParser parser = new DatabusConfigParser(configName);
-    DatabusConfig config = parser.getConfig();
+    ConduitConfigParser parser = new ConduitConfigParser(configName);
+    ConduitConfig config = parser.getConfig();
     Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
     Set<String> clustersToProcess = new HashSet<String>();
@@ -600,7 +600,7 @@ cluster.getCheckpointDir()),
           String counterNameValue = null;
           try {
             counterNameValue = scanner.next();
-            String tmp[] = counterNameValue.split(DatabusConstants.
+            String tmp[] = counterNameValue.split(ConduitConstants.
                 AUDIT_COUNTER_NAME_DELIMITER);
             Assert.assertEquals(4, tmp.length);
             Long numOfMsgs = Long.parseLong(tmp[3]);
@@ -635,8 +635,8 @@ cluster.getCheckpointDir()),
 
   private void testMapReduce(String fileName, int timesToRun) throws Exception {
 
-    DatabusConfigParser parser = new DatabusConfigParser(fileName);
-    DatabusConfig config = parser.getConfig();
+    ConduitConfigParser parser = new ConduitConfigParser(fileName);
+    ConduitConfig config = parser.getConfig();
     Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
     Set<String> clustersToProcess = new HashSet<String>();

@@ -9,13 +9,13 @@ import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class TestDatabusConfigParser {
+public class TestConduitConfigParser {
 
   @Test
   public void testNullPath() throws Exception {
-    DatabusConfigParser databusConfigParser = new DatabusConfigParser(null);
+    ConduitConfigParser conduitConfigParser = new ConduitConfigParser(null);
 
-    DatabusConfig config = databusConfigParser.getConfig();
+    ConduitConfig config = conduitConfigParser.getConfig();
 
     Map<String, Cluster> clusterMap = config.getClusters();
     Assert.assertEquals(clusterMap.size(), 1);
@@ -50,10 +50,10 @@ public class TestDatabusConfigParser {
 
   @Test
   public void testNonNullPathFromClasspath() throws Exception {
-    DatabusConfigParser databusConfigParser = 
-        new DatabusConfigParser("test-databus.xml");
+    ConduitConfigParser conduitConfigParser =
+        new ConduitConfigParser("test-conduit.xml");
 
-    DatabusConfig config = databusConfigParser.getConfig();
+    ConduitConfig config = conduitConfigParser.getConfig();
 
     Map<String, Cluster> clusterMap = config.getClusters();
     Assert.assertEquals(clusterMap.size(), 1);
@@ -127,13 +127,13 @@ public class TestDatabusConfigParser {
   
   @Test
   public void testAbsolutePath() throws Exception {
-    String path = "/tmp/tmp-databus.xml";
+    String path = "/tmp/tmp-conduit.xml";
     File file = new File(path);
     createTmpDatabusXml(file);
-    DatabusConfigParser databusConfigParser = 
-        new DatabusConfigParser(path);
+    ConduitConfigParser conduitConfigParser =
+        new ConduitConfigParser(path);
 
-    DatabusConfig config = databusConfigParser.getConfig();
+    ConduitConfig config = conduitConfigParser.getConfig();
 
     Map<String, Cluster> clusterMap = config.getClusters();
     Assert.assertEquals(clusterMap.size(), 2);

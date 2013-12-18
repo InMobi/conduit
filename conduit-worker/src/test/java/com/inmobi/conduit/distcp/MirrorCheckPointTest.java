@@ -17,8 +17,9 @@ import java.util.Set;
 
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfigParser;
-import com.inmobi.conduit.DatabusConstants;
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
@@ -42,7 +43,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.DatabusConfig;
 
 public class MirrorCheckPointTest {
 
@@ -108,7 +108,7 @@ public class MirrorCheckPointTest {
     return paths;
   }
 
-  private Map<String, List<Path>> createMergeData(DatabusConfig config)
+  private Map<String, List<Path>> createMergeData(ConduitConfig config)
       throws IOException {
     Date date = new Date();
     Map<String, Cluster> primaryClusters = new HashMap<String, Cluster>();
@@ -137,11 +137,11 @@ public class MirrorCheckPointTest {
     return srcClusterToPathMap;
   }
 
-  private DatabusConfig setup(String configFile) throws Exception {
-    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
-    DatabusConfigParser configParser;
-    DatabusConfig config = null;
-    configParser = new DatabusConfigParser(configFile);
+  private ConduitConfig setup(String configFile) throws Exception {
+    System.setProperty(ConduitConstants.AUDIT_ENABLED_KEY, "true");
+    ConduitConfigParser configParser;
+    ConduitConfig config = null;
+    configParser = new ConduitConfigParser(configFile);
     config = configParser.getConfig();
 
     for (Cluster cluster : config.getClusters().values()) {
@@ -151,7 +151,7 @@ public class MirrorCheckPointTest {
     return config;
   }
 
-  private Map<String, List<String>> launchMirrorServices(DatabusConfig config)
+  private Map<String, List<String>> launchMirrorServices(ConduitConfig config)
       throws Exception {
     FileSystem fs = FileSystem.getLocal(new Configuration());
     String auditSrcJar = FileUtil.findContainingJar(
@@ -199,7 +199,7 @@ public class MirrorCheckPointTest {
 
   private void assertAllPathsOnSrcPresentOnDest(
       Map<String, List<Path>> srcPathList,
-      Map<String, List<String>> srcToRemote, DatabusConfig config)
+      Map<String, List<String>> srcToRemote, ConduitConfig config)
           throws IOException {
     for (String src : srcPathList.keySet()) {
       for (String remote : srcToRemote.get(src)) {
@@ -240,7 +240,7 @@ public class MirrorCheckPointTest {
 
   @Test
   public void testMirrorNoCheckPointNoDataOnDest() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Map<String, List<Path>> srcPathList = createMergeData(config);
     Map<String, List<String>> srcToRemote = launchMirrorServices(config);
     assertAllPathsOnSrcPresentOnDest(srcPathList, srcToRemote, config);
@@ -272,7 +272,7 @@ public class MirrorCheckPointTest {
    */
   @Test
   public void testMirrorNoCheckPointWithDataOnDest() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Map<String, List<Path>> srcPathList = createMergeData(config);
     // create one of the files which has been created on source ;on the
     // destination;than merge should only pull data from next directory of
@@ -321,7 +321,7 @@ public class MirrorCheckPointTest {
    */
   @Test
   public void testMirrorNoCheckPointNoDataOnSourceAndDest() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     launchMirrorServices(config);
     Cluster destnCluster = config.getClusters().get("testcluster2");
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
@@ -335,7 +335,7 @@ public class MirrorCheckPointTest {
 
   @Test
   public void testMirrorDataOnDestnNoDataOnSrc() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Cluster destnCluster = config.getClusters().get("testcluster2");
     String streamLevelDir = destnCluster.getFinalDestDirRoot() + "test1";
     FileSystem destFs = FileSystem.get(destnCluster.getHadoopConf());
@@ -356,7 +356,7 @@ public class MirrorCheckPointTest {
 
   @Test
   public void testMirrorWithCheckPoint() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Map<String, List<Path>> srcPathList = createMergeData(config);
     Cluster destnCluster = config.getClusters().get("testcluster2");
     List<Path> pathsCreated1 = srcPathList.get("testcluster1");
@@ -391,7 +391,7 @@ public class MirrorCheckPointTest {
 
   @Test
   public void testMirrorNoChkPointEmptyDirAtDestination() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Cluster destnCluster = config.getClusters().get("testcluster2");
     FileSystem remoteFs2 = FileSystem.get(destnCluster.getHadoopConf());
     Path emptyPath = new Path(destnCluster.getFinalDestDirRoot() + "test1");

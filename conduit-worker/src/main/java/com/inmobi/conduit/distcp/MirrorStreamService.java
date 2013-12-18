@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
 import org.apache.commons.logging.Log;
@@ -38,7 +39,6 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
 import com.inmobi.conduit.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
@@ -51,7 +51,7 @@ import com.inmobi.conduit.utils.DatePathComparator;
 public class MirrorStreamService extends DistcpBaseService {
   private static final Log LOG = LogFactory.getLog(MirrorStreamService.class);
 
-  public MirrorStreamService(DatabusConfig config, Cluster srcCluster,
+  public MirrorStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
           throws Exception {

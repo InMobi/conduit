@@ -35,8 +35,8 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.SourceStream;
 
@@ -59,18 +59,18 @@ public class DataPurgerService extends AbstractService {
   private final static String PURGEPATHS_COUNT = "purgePaths.count";
   private final static String DELETE_FAILURES_COUNT = "deleteFailures.count";
 
-  public DataPurgerService(DatabusConfig databusConfig, Cluster cluster)
+  public DataPurgerService(ConduitConfig conduitConfig, Cluster cluster)
       throws Exception {
-    super(DataPurgerService.class.getName(), databusConfig, 60000 * 60, null,
+    super(DataPurgerService.class.getName(), conduitConfig, 60000 * 60, null,
         new HashSet<String>());
     this.cluster = cluster;
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
-        Integer.parseInt(databusConfig
-            .getDefaults().get(DatabusConfigParser.TRASH_RETENTION_IN_HOURS)));
+        Integer.parseInt(conduitConfig
+            .getDefaults().get(ConduitConfigParser.TRASH_RETENTION_IN_HOURS)));
     this.defaultstreamPathRetentioninHours = new Integer(
-        Integer.parseInt(databusConfig.getDefaults().get(
-            DatabusConfigParser.RETENTION_IN_HOURS)));
+        Integer.parseInt(conduitConfig.getDefaults().get(
+            ConduitConfigParser.RETENTION_IN_HOURS)));
     ConduitMetrics.registerCounter(getServiceType(), PURGEPATHS_COUNT, getName());
     ConduitMetrics.registerCounter(getServiceType(), DELETE_FAILURES_COUNT, getName());
   }

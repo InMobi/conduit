@@ -1,5 +1,7 @@
 package com.inmobi.conduit.audit;
 
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.audit.services.AuditRollUpService;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
@@ -18,8 +20,6 @@ import com.codahale.metrics.CsvReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ganglia.GangliaReporter;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
 import com.inmobi.conduit.audit.services.AuditFeederService;
 import com.inmobi.conduit.audit.util.AuditDBConstants;
 import com.inmobi.messaging.ClientConfig;
@@ -35,7 +35,7 @@ public class AuditStats {
 
   final List<AuditDBService> dbServices = new ArrayList<AuditDBService>();
   private final ClientConfig config;
-  private List<DatabusConfig> databusConfigList;
+  private List<ConduitConfig> conduitConfigList;
   private Map<String, Cluster> clusterMap;
 
   public AuditStats() throws Exception {
@@ -58,7 +58,7 @@ public class AuditStats {
 
   private void createClusterMap() {
     clusterMap = new HashMap<String, Cluster>();
-    for (DatabusConfig dataBusConfig : databusConfigList) {
+    for (ConduitConfig dataBusConfig : conduitConfigList) {
       clusterMap.putAll(dataBusConfig.getClusters());
     }
   }
@@ -74,7 +74,7 @@ public class AuditStats {
         return false;
       }
     });
-    databusConfigList = new ArrayList<DatabusConfig>();
+    conduitConfigList = new ArrayList<ConduitConfig>();
     if (xmlFiles.length == 0) {
       LOG.error("No xml files found in the conf folder:"+databusConfFolder);
       return;
@@ -84,8 +84,8 @@ public class AuditStats {
       String fullPath = file.getAbsolutePath();
       LOG.info("File:"+fullPath);
       try {
-        DatabusConfigParser parser = new DatabusConfigParser(fullPath);
-        databusConfigList.add(parser.getConfig());
+        ConduitConfigParser parser = new ConduitConfigParser(fullPath);
+        conduitConfigList.add(parser.getConfig());
       } catch (Exception e) {
         e.printStackTrace();
       }

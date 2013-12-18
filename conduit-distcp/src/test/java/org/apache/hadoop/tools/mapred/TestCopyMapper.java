@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.tools.mapred;
 
+import com.inmobi.conduit.ConduitConstants;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,7 +50,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.inmobi.conduit.DatabusConstants;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -308,7 +308,7 @@ public class TestCopyMapper {
           reporter.getCounter(CopyMapper.Counter.BYTES_COPIED).getValue());
       long totalCounterValue = 0;
       for (Text value : writer.values()) {
-        String tmp[] = value.toString().split(DatabusConstants.
+        String tmp[] = value.toString().split(ConduitConstants.
             AUDIT_COUNTER_NAME_DELIMITER);
         Assert.assertEquals(4, tmp.length);
         Long numOfMsgs = Long.parseLong(tmp[3]);

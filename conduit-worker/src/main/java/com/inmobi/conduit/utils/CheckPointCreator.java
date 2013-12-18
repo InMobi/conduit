@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.inmobi.conduit.ConduitConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
@@ -12,13 +13,12 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
 
 public class CheckPointCreator {
 
-  private final DatabusConfig config;
+  private final ConduitConfig config;
   private final String srcCluster;
   private final String destnCluster;
   private final String stream;
@@ -26,7 +26,7 @@ public class CheckPointCreator {
   private final Set<String> sourceClusters = new HashSet<String>();
   private Date date;
 
-  public CheckPointCreator(DatabusConfig config, String sourceCluster,
+  public CheckPointCreator(ConduitConfig config, String sourceCluster,
       String destinationCluster, String stream, Date date) {
     this.config = config;
     srcCluster = sourceCluster;

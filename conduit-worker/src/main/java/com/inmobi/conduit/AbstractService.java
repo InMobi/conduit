@@ -52,7 +52,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final long DEFAULT_RUN_INTERVAL = 60000;
 
   private final String name;
-  protected final DatabusConfig config;
+  protected final ConduitConfig config;
   protected final long runIntervalInMsec;
   protected Thread thread;
   protected volatile boolean stopped = false;
@@ -90,17 +90,17 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
 
-  public AbstractService(String name, DatabusConfig config,
+  public AbstractService(String name, ConduitConfig config,
       Set<String> streamsToProcess) {
     this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
   }
 
-  public AbstractService(String name, DatabusConfig config,
+  public AbstractService(String name, ConduitConfig config,
       long runIntervalInMsec, Set<String> streamsToProcess) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
-    String retries = System.getProperty(DatabusConstants.NUM_RETRIES);
+    String retries = System.getProperty(ConduitConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
     if (retries == null) {
       numOfRetries = Integer.MAX_VALUE;
@@ -109,7 +109,7 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
-  public AbstractService(String name, DatabusConfig config,
+  public AbstractService(String name, ConduitConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
       Set<String> streamsToProcess) {
     this(name, config, runIntervalInMsec, streamsToProcess);
@@ -124,7 +124,7 @@ public abstract class AbstractService implements Service, Runnable {
     return serviceName.toString();
   }
 
-  public DatabusConfig getConfig() {
+  public ConduitConfig getConfig() {
     return config;
   }
 
@@ -566,14 +566,14 @@ public abstract class AbstractService implements Service, Runnable {
         String counterNameValue = null;
         try {
           counterNameValue = scanner.next();
-          String tmp[] = counterNameValue.split(DatabusConstants.
+          String tmp[] = counterNameValue.split(ConduitConstants.
               AUDIT_COUNTER_NAME_DELIMITER);
           if (tmp.length < 4) {
             LOG.error("Malformed counter name,skipping " + counterNameValue);
             continue;
           }
           String streamFileNameCombo = tmp[0]
-              + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
+              + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
           Long publishTimeWindow = Long.parseLong(tmp[2]);
           Long numOfMsgs = Long.parseLong(tmp[3]);
           result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
@@ -602,7 +602,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected void generateAuditMsgs(String streamName, String fileName,
       Table<String, Long, Long> parsedCounters, List<AuditMessage> auditMsgList) {
-    if (Databus.getPublisher() == null) {
+    if (Conduit.getPublisher() == null) {
       LOG.debug("Not generating audit messages as publisher is null");
       return;
     }
@@ -615,7 +615,7 @@ public abstract class AbstractService implements Service, Runnable {
       LOG.debug("Not generating audit for audit stream");
       return;
     }
-    String streamFileNameCombo = streamName + DatabusConstants.
+    String streamFileNameCombo = streamName + ConduitConstants.
         AUDIT_COUNTER_NAME_DELIMITER + fileName;
     Map<Long, Long> received = parsedCounters.row(streamFileNameCombo);
     if (!received.isEmpty()) {
@@ -633,7 +633,7 @@ public abstract class AbstractService implements Service, Runnable {
       try {
         LOG.debug("Publishing audit message " + auditMsg.toString() + " from "
             + this.getClass().getSimpleName() + " service");
-        MessagePublisher publisher = Databus.getPublisher();
+        MessagePublisher publisher = Conduit.getPublisher();
         publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME,
             new Message(ByteBuffer.wrap(serializer.serialize(auditMsg))));
       } catch (Exception e) {

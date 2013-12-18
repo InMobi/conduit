@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import com.inmobi.conduit.AbstractServiceTest;
-import com.inmobi.conduit.Databus;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.PublishMissingPathsTest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,7 +27,7 @@ import org.testng.Assert;
 
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.DatePathComparator;
@@ -50,7 +50,7 @@ public class TestMergedStreamService extends MergedStreamService implements
   private Calendar behinddate = new GregorianCalendar();
   private Date todaysdate = null;
 
-  public TestMergedStreamService(DatabusConfig config, Cluster srcCluster,
+  public TestMergedStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       Set<String> streamsToProcess)
       throws Exception {
@@ -58,7 +58,7 @@ public class TestMergedStreamService extends MergedStreamService implements
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
         streamsToProcess);
     MessagePublisher publisher = MessagePublisherFactory.create();
-    Databus.setPublisher(publisher);
+    Conduit.setPublisher(publisher);
     this.srcCluster = srcCluster;
     this.destinationCluster = destinationCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -190,7 +190,7 @@ public class TestMergedStreamService extends MergedStreamService implements
         }
       }
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Conduit.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;

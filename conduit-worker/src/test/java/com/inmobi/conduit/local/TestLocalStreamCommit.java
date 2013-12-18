@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.inmobi.conduit.ConduitConfigParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -15,7 +16,6 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfigParser;
 import com.inmobi.conduit.FSCheckpointProvider;
 
 public class TestLocalStreamCommit {
@@ -54,8 +54,8 @@ public class TestLocalStreamCommit {
 
   @Test
   public void testPrepareForCommit() throws Exception {
-    DatabusConfigParser parser = new DatabusConfigParser(
-        "src/test/resources/test-merge-mirror-databus1.xml");
+    ConduitConfigParser parser = new ConduitConfigParser(
+        "src/test/resources/test-merge-mirror-conduit1.xml");
 
     Cluster cluster1 = parser.getConfig().getClusters().get("testcluster1");
     LocalStreamService service = new LocalStreamService(parser.getConfig(),

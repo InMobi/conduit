@@ -13,13 +13,13 @@ import org.testng.annotations.Test;
 
 import com.inmobi.conduit.distcp.MergedStreamService;
 
-public class TestDatabusInitialization {
+public class TestConduitInitialization {
 
   public void setUP(String filename, Set<String> clustersToProcess, 
       List<AbstractService> listOfServices) throws Exception {
-    DatabusConfigParser configParser = new DatabusConfigParser(filename);
-    DatabusConfig config = configParser.getConfig();
-    Databus databus = new Databus(config, clustersToProcess);
+    ConduitConfigParser configParser = new ConduitConfigParser(filename);
+    ConduitConfig config = configParser.getConfig();
+    Conduit databus = new Conduit(config, clustersToProcess);
     listOfServices.addAll(databus.init());
   }
   
@@ -49,7 +49,7 @@ public class TestDatabusInitialization {
   public void testCluser1() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 6, 1, 6,
+    testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 6, 1, 6,
         0);
   }
   
@@ -62,7 +62,7 @@ public class TestDatabusInitialization {
   public void testCluster2() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster2");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 6, 1, 4,
+    testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 6, 1, 4,
         3);
   }
   
@@ -75,7 +75,7 @@ public class TestDatabusInitialization {
   public void testCluster3() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster3");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 4, 1, 4,
+    testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 4, 1, 4,
         3);
   }
   
@@ -88,7 +88,7 @@ public class TestDatabusInitialization {
   public void testCluster4() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster4");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 0, 1, 4, 0);
+    testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 0, 1, 4, 0);
   }
   
   /*
@@ -100,7 +100,7 @@ public class TestDatabusInitialization {
   public void testCluster5() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster5");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 4, 1, 4,
+    testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 4, 1, 4,
         0);
   }
   
@@ -148,7 +148,7 @@ public class TestDatabusInitialization {
     clustersToProcess.add("testcluster3");
     clustersToProcess.add("testcluster4");
     clustersToProcess.add("testcluster5");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 20, 5,
+    testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 20, 5,
         22, 6);
   }
   
@@ -158,7 +158,7 @@ public class TestDatabusInitialization {
     clustersToProcess.add("testcluster1");
     clustersToProcess.add("testcluster2");
     clustersToProcess.add("testcluster4");
-    testServicesOnCluster("test-combo-databus.xml", clustersToProcess, 12, 3,
+    testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 12, 3,
         14, 3);
   }
   
@@ -169,7 +169,7 @@ public class TestDatabusInitialization {
   public void testLocalStreamService() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
-    testServicesOnCluster("test-lss-databus.xml", clustersToProcess, 1, 1, 0, 0);
+    testServicesOnCluster("test-lss-conduit.xml", clustersToProcess, 1, 1, 0, 0);
   }
 
   /*
@@ -180,11 +180,11 @@ public class TestDatabusInitialization {
   public void testLocalMergeServices() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
-    testServicesOnCluster("test-mergedss-databus.xml", clustersToProcess, 1, 1, 2, 
+    testServicesOnCluster("test-mergedss-conduit.xml", clustersToProcess, 1, 1, 2,
         0);
     clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster2");
-    testServicesOnCluster("test-mergedss-databus.xml", clustersToProcess, 1, 1, 0, 
+    testServicesOnCluster("test-mergedss-conduit.xml", clustersToProcess, 1, 1, 0,
         0);
   }
   
@@ -196,7 +196,7 @@ public class TestDatabusInitialization {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
     clustersToProcess.add("testcluster2");
-    testServicesOnCluster("test-xinclude-mergedss-databus.xml", 
+    testServicesOnCluster("test-xinclude-mergedss-conduit.xml",
         clustersToProcess, 2, 2, 2, 0);
   }
 
@@ -210,15 +210,15 @@ public class TestDatabusInitialization {
   public void testDatabusAllServices() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
-    testServicesOnCluster("test-merge-mirror-databus.xml", clustersToProcess, 1, 1,
+    testServicesOnCluster("test-merge-mirror-conduit.xml", clustersToProcess, 1, 1,
         1, 0);
     clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster2");
-    testServicesOnCluster("test-merge-mirror-databus.xml", clustersToProcess, 0, 1,
+    testServicesOnCluster("test-merge-mirror-conduit.xml", clustersToProcess, 0, 1,
         1, 1);
     clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster3");
-    testServicesOnCluster("test-merge-mirror-databus.xml", clustersToProcess, 0, 1,
+    testServicesOnCluster("test-merge-mirror-conduit.xml", clustersToProcess, 0, 1,
         0, 0);
   }
 

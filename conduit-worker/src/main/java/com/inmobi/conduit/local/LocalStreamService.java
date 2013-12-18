@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.ConfigConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,8 +57,6 @@ import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConstants;
 import com.inmobi.conduit.utils.FileUtil;
 
 /*
@@ -88,7 +88,7 @@ public class LocalStreamService extends AbstractService implements
   final Path inputFormatJarDestPath;
   final Path auditUtilJarDestPath;
 
-  public LocalStreamService(DatabusConfig config, Cluster srcCluster,
+  public LocalStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
       Set<String> streamsToProcess)
           throws IOException {
@@ -550,8 +550,8 @@ public class LocalStreamService extends AbstractService implements
   protected Job createJob(Path inputPath, long totalSize) throws IOException {
     String jobName = getName();
     Configuration conf = currentCluster.getHadoopConf();
-    conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
-        System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
+    conf.set(ConduitConstants.AUDIT_ENABLED_KEY,
+        System.getProperty(ConduitConstants.AUDIT_ENABLED_KEY));
     Job job = new Job(conf);
     job.setJobName(jobName);
     // DistributedCache.addFileToClassPath(inputFormatJarDestPath,
@@ -593,7 +593,7 @@ public class LocalStreamService extends AbstractService implements
   }
 
   private int getNumMapsForJob(long totalSize) {
-    String mbPerMapper = System.getProperty(DatabusConstants.MB_PER_MAPPER);
+    String mbPerMapper = System.getProperty(ConduitConstants.MB_PER_MAPPER);
     if (mbPerMapper != null) {
       BYTES_PER_MAPPER = Long.parseLong(mbPerMapper) * 1024 * 1024;
     }

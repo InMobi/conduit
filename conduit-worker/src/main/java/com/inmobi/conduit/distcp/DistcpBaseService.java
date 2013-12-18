@@ -39,8 +39,8 @@ import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConstants;
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConstants;
 
 
 public abstract class DistcpBaseService extends AbstractService {
@@ -59,7 +59,7 @@ public abstract class DistcpBaseService extends AbstractService {
   protected final Path jarsPath;
   protected final Path auditUtilJarDestPath;
 
-  public DistcpBaseService(DatabusConfig config, String name,
+  public DistcpBaseService(ConduitConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
           throws Exception {
@@ -80,7 +80,7 @@ public abstract class DistcpBaseService extends AbstractService {
     this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     this.provider = provider;
     String tmp;
-    if ((tmp = System.getProperty(DatabusConstants.DIR_PER_DISTCP_PER_STREAM)) != null) {
+    if ((tmp = System.getProperty(ConduitConstants.DIR_PER_DISTCP_PER_STREAM)) != null) {
       numOfDirPerDistcpPerStream = Integer.parseInt(tmp);
     } else
       numOfDirPerDistcpPerStream = DEFAULT_NUM_DIR_PER_DISTCP_STREAM;
@@ -111,8 +111,8 @@ public abstract class DistcpBaseService extends AbstractService {
     //Add Additional Default arguments to the array below which gets merged
     //with the arguments as sent in by the Derived Service
     Configuration conf = currentCluster.getHadoopConf();
-    conf.set(DatabusConstants.AUDIT_ENABLED_KEY,
-        System.getProperty(DatabusConstants.AUDIT_ENABLED_KEY));
+    conf.set(ConduitConstants.AUDIT_ENABLED_KEY,
+        System.getProperty(ConduitConstants.AUDIT_ENABLED_KEY));
     conf.set("mapred.job.name", serviceName);
     conf.set("tmpjars", auditUtilJarDestPath.toString());
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
@@ -120,7 +120,7 @@ public abstract class DistcpBaseService extends AbstractService {
     // relying on sourceFileListing path. Passing a dummy value.
     DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
     options.setOutPutDirectory(tmpCounterOutputPath);
-    DistCp distCp = new DatabusDistCp(conf, options, fileListingMap);
+    DistCp distCp = new ConduitDistCp(conf, options, fileListingMap);
     try {
       distCp.execute();
     } catch (Exception e) {

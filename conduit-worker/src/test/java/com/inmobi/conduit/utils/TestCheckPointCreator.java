@@ -5,14 +5,14 @@ import java.util.Date;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.distcp.MirrorStreamService;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.distcp.MergedStreamService;
 
@@ -21,14 +21,14 @@ public class TestCheckPointCreator {
   public static final String CLUSTER2 = "testcluster2";
   public static final String STREAM1 = "stream1";
   public static final String STREAM2 = "stream2";
-  private DatabusConfigParser configParser;
-  private DatabusConfig config;
+  private ConduitConfigParser configParser;
+  private ConduitConfig config;
   private Cluster cluster1, cluster2;
   private FileSystem fs1, fs2;
 
   @BeforeMethod
   public void setup() throws Exception {
-    configParser = new DatabusConfigParser("test-mss-databus1.xml");
+    configParser = new ConduitConfigParser("test-mss-conduit1.xml");
     config = configParser.getConfig();
     cluster1 = config.getClusters().get(CLUSTER1);
     fs1 = FileSystem.get(cluster1.getHadoopConf());

@@ -3,19 +3,19 @@ package com.inmobi.conduit.validator;
 import java.util.Calendar;
 import java.util.Date;
 
+import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.utils.CalendarHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.utils.CheckPointCreator;
 
-public class DatabusValidator {
-  private static final Log LOG = LogFactory.getLog(DatabusValidator.class);
+public class ConduitValidator {
+  private static final Log LOG = LogFactory.getLog(ConduitValidator.class);
   private static int minArgs = 4;
 
-  public DatabusValidator() {
+  public ConduitValidator() {
   }
 
   private static void printUsage() {
@@ -137,9 +137,9 @@ public class DatabusValidator {
       System.exit(-1);
     }
     // parse databus.xml
-    DatabusConfigParser configParser =
-        new DatabusConfigParser(databusXmlFile);
-    DatabusConfig config = configParser.getConfig();
+    ConduitConfigParser configParser =
+        new ConduitConfigParser(databusXmlFile);
+    ConduitConfig config = configParser.getConfig();
     if (createCheckpoint) {
       date = CalendarHelper.minDirFormat.get().parse(dateString);
       new CheckPointCreator(config, srcCluster, destnCluster, streams, date)

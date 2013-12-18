@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.distcp.MirrorStreamService;
 import com.inmobi.conduit.utils.ParallelRecursiveListing;
@@ -21,11 +22,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import com.inmobi.conduit.DatabusConfig;
-
 public class MirrorStreamValidator extends AbstractStreamValidator {
   private static final Log LOG = LogFactory.getLog(MirrorStreamValidator.class);
-  private DatabusConfig databusConfig = null;
+  private ConduitConfig conduitConfig = null;
   private String streamName = null;
   private boolean fix = false;
   List<Path> holesInMerge = new ArrayList<Path>();
@@ -37,16 +36,16 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   private Date stopTime = null;
   private int numThreads;
 
-  public MirrorStreamValidator(DatabusConfig databusConfig, 
+  public MirrorStreamValidator(ConduitConfig conduitConfig,
       String streamName, String clusterName, boolean fix, Date startTime,
       Date stopTime, int numThreads) {
-    this.databusConfig = databusConfig;
+    this.conduitConfig = conduitConfig;
     this.streamName = streamName;
     this.fix = fix;  
     // get the source cluster where merge stream service is running
-    mergedCluster = databusConfig.getPrimaryClusterForDestinationStream(streamName);
+    mergedCluster = conduitConfig.getPrimaryClusterForDestinationStream(streamName);
     // get the dest cluster where mirror stream service is running
-    mirrorCluster = databusConfig.getClusters().get(clusterName);
+    mirrorCluster = conduitConfig.getClusters().get(clusterName);
     this.startTime = startTime;
     this.stopTime = stopTime;
     this.numThreads = numThreads;
@@ -190,7 +189,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     // create an instance of MirrorStreamFixService and invoke its execute()
     Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.add(streamName);
-    MirrorStreamFixService mirrorFixService = new MirrorStreamFixService(databusConfig,
+    MirrorStreamFixService mirrorFixService = new MirrorStreamFixService(conduitConfig,
         mergedCluster, mirrorCluster, streamsToProcess);
 
     // copy the missing paths through distcp and commit the copied paths
@@ -214,9 +213,9 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
   }
 
   class MirrorStreamFixService extends MirrorStreamService {
-    public MirrorStreamFixService(DatabusConfig databusConfig, Cluster srcCluster,
+    public MirrorStreamFixService(ConduitConfig conduitConfig, Cluster srcCluster,
         Cluster destCluster, Set<String> streamsToProcess) throws Exception {
-      super(databusConfig, srcCluster, destCluster, null, null,
+      super(conduitConfig, srcCluster, destCluster, null, null,
           streamsToProcess);
     }
 

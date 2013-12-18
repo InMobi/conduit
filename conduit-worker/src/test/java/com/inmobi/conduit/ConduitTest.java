@@ -23,7 +23,7 @@ import org.apache.hadoop.fs.Path;
 import com.inmobi.conduit.distcp.MergedStreamService;
 import com.inmobi.conduit.local.TestLocalStreamService;
 
-public class DatabusTest extends TestMiniClusterUtil {
+public class ConduitTest extends TestMiniClusterUtil {
 
   private static final Log LOG = LogFactory.getLog(MergeMirrorStreamTest.class);
 
@@ -39,14 +39,14 @@ public class DatabusTest extends TestMiniClusterUtil {
     super.cleanup();
   }
 
-  public static class DatabusServiceTest extends Databus {
-    public DatabusServiceTest(DatabusConfig config,
-        Set<String> clustersToProcess) {
+  public static class ConduitServiceTest extends Conduit {
+    public ConduitServiceTest(ConduitConfig config,
+                              Set<String> clustersToProcess) {
       super(config, clustersToProcess);
     }
 
     @Override
-    protected LocalStreamService getLocalStreamService(DatabusConfig config,
+    protected LocalStreamService getLocalStreamService(ConduitConfig config,
         Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess) throws IOException {
       return new TestLocalStreamService(config, cluster, currentCluster,
           new FSCheckpointProvider(cluster.getCheckpointDir()),
@@ -54,7 +54,7 @@ public class DatabusTest extends TestMiniClusterUtil {
     }
 
     @Override
-    protected MergedStreamService getMergedStreamService(DatabusConfig config,
+    protected MergedStreamService getMergedStreamService(ConduitConfig config,
         Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
         Set<String> streamsToProcess)
         throws Exception {
@@ -64,7 +64,7 @@ public class DatabusTest extends TestMiniClusterUtil {
     }
 
     @Override
-    protected MirrorStreamService getMirrorStreamService(DatabusConfig config,
+    protected MirrorStreamService getMirrorStreamService(ConduitConfig config,
         Cluster srcCluster, Cluster dstCluster, Cluster currentCluster,
         Set<String> streamsToProcess)
         throws Exception {
@@ -74,16 +74,16 @@ public class DatabusTest extends TestMiniClusterUtil {
 
   }
 
-  private static DatabusServiceTest testService = null;
+  private static ConduitServiceTest testService = null;
 
   // @Test
   public void testDatabus() throws Exception {
-    testDatabus("testDatabusService_simple.xml");
+    testDatabus("testConduitService_simple.xml");
   }
 
   private void testDatabus(String filename) throws Exception {
-    DatabusConfigParser configParser = new DatabusConfigParser(filename);
-    DatabusConfig config = configParser.getConfig();
+    ConduitConfigParser configParser = new ConduitConfigParser(filename);
+    ConduitConfig config = configParser.getConfig();
     Set<String> clustersToProcess = new HashSet<String>();
     FileSystem fs = FileSystem.getLocal(new Configuration());
 
@@ -97,7 +97,7 @@ public class DatabusTest extends TestMiniClusterUtil {
       clustersToProcess.addAll(sstream.getValue().getSourceClusters());
     }
 
-    testService = new DatabusServiceTest(config, clustersToProcess);
+    testService = new ConduitServiceTest(config, clustersToProcess);
 
     Timer timer = new Timer();
     Calendar calendar = new GregorianCalendar();

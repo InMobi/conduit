@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
 import org.apache.commons.logging.Log;
@@ -18,14 +19,12 @@ import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.inmobi.conduit.DatabusConfig;
-
 public class TestMergeStreamValidator extends AbstractTestStreamValidator {
   private static final Log LOG = LogFactory.getLog(TestMergeStreamValidator.class);
   List<Path> holesInLocal = new ArrayList<Path>();
   List<Path> holesInMerge = new ArrayList<Path>();
 
-  private void createLocalData(DatabusConfig config,
+  private void createLocalData(ConduitConfig config,
       Date date, Cluster cluster, String stream) throws IOException {
     FileSystem fs = FileSystem.getLocal(new Configuration());
     Path streamLevelDir = new Path(cluster.getLocalFinalDestDirRoot()
@@ -47,7 +46,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     fs.mkdirs(CalendarHelper.getPathFromDate(lastDate, streamLevelDir));
   }
 
-  private void createMergeData(DatabusConfig config, Date date,
+  private void createMergeData(ConduitConfig config, Date date,
       Cluster primaryCluster, String stream)
           throws IOException {
     Path streamLevelDir = null;
@@ -84,7 +83,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
     Date nextDate = cal.getTime();
     cal.add(Calendar.MINUTE, 4);
     Date stopDate = cal.getTime();
-    DatabusConfig config = setup("test-merge-validator-databus.xml");
+    ConduitConfig config = setup("test-merge-validator-conduit.xml");
     // clean up root dir before generating test data
     cleanUp(config);
     FileSystem fs = FileSystem.getLocal(new Configuration());
@@ -123,7 +122,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
   }
 
   private void testStartDateBeyondRetention(Date date, Date stopDate,
-      DatabusConfig config, String streamName, Cluster mergedCluster)
+      ConduitConfig config, String streamName, Cluster mergedCluster)
           throws Exception {
     Calendar cal = Calendar.getInstance();
     cal.setTime(date);
@@ -142,7 +141,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
   }
 
   private void testMergeValidatorFix(Date date, Date stopDate,
-      DatabusConfig config, String streamName, Cluster mergedCluster)
+      ConduitConfig config, String streamName, Cluster mergedCluster)
           throws Exception {
     MergedStreamValidator mergeStreamValidator =
         new MergedStreamValidator(config, streamName,
@@ -151,7 +150,7 @@ public class TestMergeStreamValidator extends AbstractTestStreamValidator {
   }
 
   private void testMergeStreamValidatorVerify(Date date, Date stopDate,
-      DatabusConfig config, String streamName, Cluster mergeCluster,
+      ConduitConfig config, String streamName, Cluster mergeCluster,
       boolean reverify, boolean listedAllFiles)
           throws Exception {
     MergedStreamValidator mergeStreamValidator =

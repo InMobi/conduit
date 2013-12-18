@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.utils.CalendarHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,9 +38,8 @@ import org.testng.annotations.Test;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
-import com.inmobi.conduit.DatabusConstants;
+import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.DatePathComparator;
@@ -112,7 +112,7 @@ public class MergeCheckpointTest {
     return paths;
   }
 
-  private Map<String, List<Path>> createLocalData(DatabusConfig config)
+  private Map<String, List<Path>> createLocalData(ConduitConfig config)
       throws IOException {
     Date date = new Date();
     Map<String, Set<String>> sourceClusters = new HashMap<String, Set<String>>();
@@ -140,11 +140,11 @@ public class MergeCheckpointTest {
     return srcClusterToPathMap;
   }
 
-  private DatabusConfig setup(String configFile) throws Exception {
-    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
-    DatabusConfigParser configParser;
-    DatabusConfig config = null;
-    configParser = new DatabusConfigParser(configFile);
+  private ConduitConfig setup(String configFile) throws Exception {
+    System.setProperty(ConduitConstants.AUDIT_ENABLED_KEY, "true");
+    ConduitConfigParser configParser;
+    ConduitConfig config = null;
+    configParser = new ConduitConfigParser(configFile);
     config = configParser.getConfig();
 
     for (Cluster cluster : config.getClusters().values()) {
@@ -154,7 +154,7 @@ public class MergeCheckpointTest {
     return config;
   }
 
-  private Map<String, List<String>> launchMergeServices(DatabusConfig config)
+  private Map<String, List<String>> launchMergeServices(ConduitConfig config)
       throws Exception {
     FileSystem fs = FileSystem.getLocal(new Configuration());
     String auditSrcJar = FileUtil.findContainingJar(
@@ -205,7 +205,7 @@ public class MergeCheckpointTest {
 
   private void assertAllPathsOnSrcPresentOnDest(
       Map<String, List<Path>> srcPathList,
-      Map<String, List<String>> srcToRemote, DatabusConfig config)
+      Map<String, List<String>> srcToRemote, ConduitConfig config)
           throws IOException {
     for (String src : srcPathList.keySet()) {
       for (String remote : srcToRemote.get(src)) {
@@ -235,7 +235,7 @@ public class MergeCheckpointTest {
 
   @Test
   public void testMergeNoCheckPointNoDataOnDest() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Map<String, List<Path>> srcPathList = createLocalData(config);
     Map<String, List<String>> srcToRemote = launchMergeServices(config);
     assertAllPathsOnSrcPresentOnDest(srcPathList, srcToRemote, config);
@@ -274,7 +274,7 @@ public class MergeCheckpointTest {
    */
   @Test
   public void testMergeNoCheckPointWithDataOnDest() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Map<String, List<Path>> srcPathList = createLocalData(config);
     // create one of the files which has been created on source on the
     // destination;than merge should only pull data from next directory of
@@ -319,7 +319,7 @@ public class MergeCheckpointTest {
    */
   @Test
   public void testMergeNoCheckPointNoDataOnSource() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     launchMergeServices(config);
     Cluster destnCluster = config.getClusters().get("testcluster1");
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
@@ -336,7 +336,7 @@ public class MergeCheckpointTest {
   public void testMergeNoCheckPointSourceDataPresentInDiffDirOnDest()
       throws Exception {
 
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Map<String, List<Path>> srcPathList = createLocalData(config);
     // create one of the files which has been created on source on the
     // destination;than merge should only pull data from next directory of
@@ -388,7 +388,7 @@ public class MergeCheckpointTest {
 
   @Test
   public void testMergeWithCheckPoint() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Map<String, List<Path>> srcPathList = createLocalData(config);
     Cluster destnCluster1 = config.getClusters().get("testcluster1");
     List<Path> pathsCreated1 = srcPathList.get("testcluster1");
@@ -434,7 +434,7 @@ public class MergeCheckpointTest {
 
   @Test
   public void testMergetNoChkPointEmptyDirAtSource() throws Exception {
-    DatabusConfig config = setup("test-mss-databus.xml");
+    ConduitConfig config = setup("test-mss-conduit.xml");
     Cluster destnCluster1 = config.getClusters().get("testcluster1");
     FileSystem remoteFs1 = FileSystem.get(destnCluster1.getHadoopConf());
     Cluster destnCluster2 = config.getClusters().get("testcluster2");

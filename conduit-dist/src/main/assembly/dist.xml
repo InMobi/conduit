@@ -75,8 +75,8 @@
       <directory>../tools/scripts</directory>
       <outputDirectory>/bin/</outputDirectory>
       <includes>
-        <include>**/databus.sh</include>
-        <include>**/databus-utils.sh</include>
+        <include>**/conduit.sh</include>
+        <include>**/conduit-utils.sh</include>
       </includes>
     </fileSet>
    
@@ -84,8 +84,8 @@
       <directory>../tools/scripts</directory>
       <outputDirectory>/conf/</outputDirectory>
       <includes>
-        <include>**/databus.cfg</include>
-        <include>**/databus.env</include>
+        <include>**/conduit.cfg</include>
+        <include>**/conduit.env</include>
       </includes>
     </fileSet>
   </fileSets>

@@ -20,9 +20,9 @@ import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
-import com.inmobi.conduit.DatabusConfigParser;
-import com.inmobi.conduit.DatabusConstants;
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
 
 public class AbstractTestStreamValidator {
 
@@ -41,11 +41,11 @@ public class AbstractTestStreamValidator {
     return dateFormat.format(date);
   }
 
-  protected DatabusConfig setup(String configFile) throws Exception {
-    System.setProperty(DatabusConstants.AUDIT_ENABLED_KEY, "true");
-    DatabusConfigParser configParser;
-    DatabusConfig config = null;
-    configParser = new DatabusConfigParser(configFile);
+  protected ConduitConfig setup(String configFile) throws Exception {
+    System.setProperty(ConduitConstants.AUDIT_ENABLED_KEY, "true");
+    ConduitConfigParser configParser;
+    ConduitConfig config = null;
+    configParser = new ConduitConfigParser(configFile);
     config = configParser.getConfig();
 
     for (Cluster cluster : config.getClusters().values()) {
@@ -103,7 +103,7 @@ public class AbstractTestStreamValidator {
     }
   }
 
-  protected void cleanUp(DatabusConfig config) throws IOException {
+  protected void cleanUp(ConduitConfig config) throws IOException {
     for (Cluster cluster : config.getClusters().values()) {
       FileSystem fs = FileSystem.get(cluster.getHadoopConf());
       fs.delete(new Path(cluster.getRootDir()), true);

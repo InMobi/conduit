@@ -23,7 +23,7 @@ import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.AbstractServiceTest;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.Databus;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.PublishMissingPathsTest;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
@@ -39,7 +39,7 @@ import org.apache.thrift.TDeserializer;
 import org.testng.Assert;
 
 import com.inmobi.audit.thrift.AuditMessage;
-import com.inmobi.conduit.DatabusConfig;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MessagePublisherFactory;
@@ -346,7 +346,7 @@ public class TestLocalStreamService extends LocalStreamService implements
       }
       fs.delete(srcCluster.getTrashPathWithDateHour(), true);
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Conduit.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;
@@ -374,7 +374,7 @@ public class TestLocalStreamService extends LocalStreamService implements
     
   }
   
-  public TestLocalStreamService(DatabusConfig config,
+  public TestLocalStreamService(ConduitConfig config,
                                 Cluster srcCluster, Cluster currentCluster,
  CheckpointProvider provider,
       Set<String> streamsToProcess)
@@ -383,7 +383,7 @@ public class TestLocalStreamService extends LocalStreamService implements
     this.srcCluster = srcCluster;
     this.provider = provider;
     MessagePublisher publisher = MessagePublisherFactory.create();
-    Databus.setPublisher(publisher);
+    Conduit.setPublisher(publisher);
     try {
       this.fs = FileSystem.getLocal(new Configuration());
     } catch (IOException e) {

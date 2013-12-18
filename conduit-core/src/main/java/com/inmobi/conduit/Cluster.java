@@ -49,38 +49,38 @@ public class Cluster {
       Map<String, DestinationStream> consumeStreams, Set<String> sourceStreams)
       throws Exception {
     this.rootDir = rootDir;
-    this.clustername = clusterElementsMap.get(DatabusConfigParser.NAME);
+    this.clustername = clusterElementsMap.get(ConduitConfigParser.NAME);
     if (clustername == null)
       throw new ParseException(
           "Cluster Name element not found in cluster configuration", 0);
-    this.hdfsUrl = clusterElementsMap.get(DatabusConfigParser.HDFS_URL);
+    this.hdfsUrl = clusterElementsMap.get(ConduitConfigParser.HDFS_URL);
     if (hdfsUrl == null)
       throw new ParseException(
           "hdfsurl element not found in cluster configuration " + clustername,
           0);
     this.clusterjobqueuename = clusterElementsMap
-        .get(DatabusConfigParser.JOB_QUEUE_NAME);
+        .get(ConduitConfigParser.JOB_QUEUE_NAME);
     if (clusterjobqueuename == null)
       throw new ParseException(
           "Cluster jobqueuename element not found in cluster configuration "
               + clustername, 0);
-    if (clusterElementsMap.get(DatabusConfigParser.JT_URL) == null)
+    if (clusterElementsMap.get(ConduitConfigParser.JT_URL) == null)
       throw new ParseException(
           "jturl element not found in cluster configuration " + clustername, 0);
     this.hadoopConf = new Configuration();
     this.hadoopConf.set("mapred.job.tracker",
-        clusterElementsMap.get(DatabusConfigParser.JT_URL));
+        clusterElementsMap.get(ConduitConfigParser.JT_URL));
     this.hadoopConf.set("databus.tmp.path", getTmpPath().toString());
     this.consumeStreams = consumeStreams;
     this.sourceStreams = sourceStreams;
     this.hadoopConf.set("fs.default.name", hdfsUrl);
     this.hadoopConf.set("mapred.job.queue.name",
     		clusterjobqueuename);
-    this.copyMapperImpl = clusterElementsMap.get(DatabusConfigParser
+    this.copyMapperImpl = clusterElementsMap.get(ConduitConfigParser
       .COPYMAPPER_IMPL);
 
     //Sets the readurl which is used in the Mirror amd Merge Stream.
-    String tempreadUrl = clusterElementsMap.get(DatabusConfigParser
+    String tempreadUrl = clusterElementsMap.get(ConduitConfigParser
       .CLUSTER_READ_URL);
     if (tempreadUrl == null) {
       this.readUrl = this.hdfsUrl;

@@ -12,7 +12,8 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import com.inmobi.conduit.AbstractServiceTest;
-import com.inmobi.conduit.Databus;
+import com.inmobi.conduit.Conduit;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.PublishMissingPathsTest;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
@@ -27,7 +28,6 @@ import org.testng.Assert;
 
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.DatabusConfig;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.DatePathComparator;
@@ -49,14 +49,14 @@ public class TestMirrorStreamService extends MirrorStreamService
   private Calendar behinddate = new GregorianCalendar();
   private long mergeCommitTime = 0;
   
-  public TestMirrorStreamService(DatabusConfig config, Cluster srcCluster,
+  public TestMirrorStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       Set<String> streamsToProcess) throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
         streamsToProcess);
     MessagePublisher publisher = MessagePublisherFactory.create();
-    Databus.setPublisher(publisher);
+    Conduit.setPublisher(publisher);
     this.destinationCluster = destinationCluster;
     this.srcCluster = srcCluster;
     this.fs = FileSystem.getLocal(new Configuration());
@@ -145,7 +145,7 @@ public class TestMirrorStreamService extends MirrorStreamService
         }
       }
       // verfying audit is generated for all the messages
-      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Databus.getPublisher();
+      MockInMemoryPublisher mPublisher = (MockInMemoryPublisher) Conduit.getPublisher();
       BlockingQueue<Message> auditQueue = mPublisher.source
           .get(AuditUtil.AUDIT_STREAM_TOPIC_NAME);
       Message tmpMsg;

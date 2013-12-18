@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.inmobi.conduit.ConduitConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -45,8 +46,6 @@ import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.util.DistCpUtils;
 import org.apache.hadoop.tools.util.HadoopCompat;
 import org.apache.hadoop.util.StringUtils;
-
-import com.inmobi.conduit.DatabusConstants;
 
 /**
  * Mapper class that executes the DistCp copy operation.
@@ -185,7 +184,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, NullWritable, Text> {
     Path sourcePath = sourceFileStatus.getPath();
     Map<Long, Long> received = null;
     if (context.getConfiguration().
-        getBoolean(DatabusConstants.AUDIT_ENABLED_KEY, true)) {
+        getBoolean(ConduitConstants.AUDIT_ENABLED_KEY, true)) {
       received = new HashMap<Long, Long>();
     }
     if (LOG.isDebugEnabled())
@@ -272,9 +271,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, NullWritable, Text> {
 
   private String getCounterNameValue(String streamName, String filename,
       Long timeWindow, Long value) {
-    return streamName + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER +
-        filename + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow
-        + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + value;
+    return streamName + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER +
+        filename + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + timeWindow
+        + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + value;
   }
 
   private String getFileType(FileStatus fileStatus) {

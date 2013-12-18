@@ -15,13 +15,13 @@ package com.inmobi.conduit;
 
 import java.util.Map;
 
-public class DatabusConfig {
+public class ConduitConfig {
 
   private final Map<String, Cluster> clusters;
   private final Map<String, SourceStream> streams;
   private final Map<String, String> defaults;
   
-  public DatabusConfig( 
+  public ConduitConfig(
       Map<String, SourceStream> streams,
       Map<String, Cluster> clusterMap, Map<String, String> defaults) {
     this.streams = streams;

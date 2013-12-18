@@ -13,7 +13,7 @@
 */
 package com.inmobi.conduit;
 
-public interface DatabusConstants {
+public interface ConduitConstants {
   public static final String CLUSTERS_TO_PROCESS = "com.inmobi.conduit" +
   ".clusters";
   public static final String ZK_ADDR = "com.inmobi.conduit.zkconnect";

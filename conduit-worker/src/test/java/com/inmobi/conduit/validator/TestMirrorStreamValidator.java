@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
@@ -21,8 +22,6 @@ import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.inmobi.conduit.DatabusConfig;
-
 public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
 
   private static final Log LOG = LogFactory.getLog(TestMirrorStreamValidator.class);
@@ -33,7 +32,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
   public TestMirrorStreamValidator() {
   }
 
-  private void createMergeData(DatabusConfig config, Date date)
+  private void createMergeData(ConduitConfig config, Date date)
       throws IOException {
     Map<String, Cluster> primaryClusters = new HashMap<String, Cluster>();
     for (SourceStream stream : config.getSourceStreams().values()) {
@@ -72,7 +71,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     return holes;
   }
 
-  private void createMirrorData(DatabusConfig config,
+  private void createMirrorData(ConduitConfig config,
       String streamName, Cluster mirrorCluster, Date date) throws IOException {
     Set<String> sourceClusters = config.getSourceStreams().get(streamName).
         getSourceClusters();
@@ -99,7 +98,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     Date nextDate = cal.getTime();
     cal.add(Calendar.MINUTE, 4);
     Date stopDate = cal.getTime();
-    DatabusConfig config = setup("test-mirror-validator-databus.xml");
+    ConduitConfig config = setup("test-mirror-validator-conduit.xml");
     // clean up all root dir before generating test data
     cleanUp(config);
     createMergeData(config, date);
@@ -139,7 +138,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     cleanUp(config);
   }
 
-  private void testStartTimeBeyondRetention(DatabusConfig config,
+  private void testStartTimeBeyondRetention(ConduitConfig config,
       String streamName, String mirrorClusterName, Date startTime,
       Date stopTime)
           throws Exception {
@@ -159,7 +158,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     Assert.assertTrue(th instanceof IllegalArgumentException);
   }
 
-  private void testMirrorValidatorVerify(DatabusConfig config,
+  private void testMirrorValidatorVerify(ConduitConfig config,
       String streamName, String mirrorClusterName, Date startTime,
       Date stopTime, boolean reverify, boolean listedAllFiles)
           throws Exception {
@@ -181,7 +180,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     }
   }
 
-  private void testMirrorValidatorFixWithHolesInSource(DatabusConfig config,
+  private void testMirrorValidatorFixWithHolesInSource(ConduitConfig config,
       String streamName, String mirrorClusterName, Date startTime, Date stopTime)
           throws Exception {
     MirrorStreamValidator mirrorStreamValidator = new MirrorStreamValidator(
@@ -195,7 +194,7 @@ public class TestMirrorStreamValidator extends AbstractTestStreamValidator {
     Assert.assertTrue(th instanceof IllegalStateException);
   }
   
-  private void testMirrorValidatorFix(DatabusConfig config,
+  private void testMirrorValidatorFix(ConduitConfig config,
       String streamName, String mirrorClusterName, Date startTime, Date stopTime)
           throws Exception {
     MirrorStreamValidator mirrorStreamValidator = new MirrorStreamValidator(

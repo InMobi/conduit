@@ -33,9 +33,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
-public class DatabusConfigParser implements DatabusConfigParserTags {
+public class ConduitConfigParser implements ConduitConfigParserTags {
 
-  private static Logger logger = Logger.getLogger(DatabusConfigParser.class);
+  private static Logger logger = Logger.getLogger(ConduitConfigParser.class);
   private Map<String, SourceStream> streamMap = new HashMap<String, SourceStream>();
   private Map<String, Cluster> clusterMap = new HashMap<String, Cluster>();
   private Map<String, List<DestinationStream>> clusterConsumeStreams = new HashMap<String, List<DestinationStream>>();
@@ -44,12 +44,12 @@ public class DatabusConfigParser implements DatabusConfigParserTags {
   private int defaultRetentionInHours = 48;
   private int defaultTrashRetentionInHours = 24;
 
-  public DatabusConfigParser(String fileName) throws Exception {
+  public ConduitConfigParser(String fileName) throws Exception {
     parseXmlFile(fileName);
   }
 
-  public DatabusConfig getConfig() {
-    DatabusConfig config = new DatabusConfig(streamMap, clusterMap, defaults);
+  public ConduitConfig getConfig() {
+    ConduitConfig config = new ConduitConfig(streamMap, clusterMap, defaults);
     return config;
   }
 
@@ -60,7 +60,7 @@ public class DatabusConfigParser implements DatabusConfigParserTags {
     DocumentBuilder db = dbf.newDocumentBuilder();
     Document dom;
     if (fileName == null) {
-      fileName = "databus.xml";
+      fileName = "conduit.xml";
     }
     File file = new File(fileName);
     // see if file exists in cwd or is an absolute path
@@ -271,13 +271,13 @@ public class DatabusConfigParser implements DatabusConfigParserTags {
 
   public static void main(String[] args) {
     try {
-      DatabusConfigParser databusConfigParser;
+      ConduitConfigParser conduitConfigParser;
       if (args.length >= 1)
-        databusConfigParser = new DatabusConfigParser(args[0]);
+        conduitConfigParser = new ConduitConfigParser(args[0]);
       else
-        databusConfigParser = new DatabusConfigParser(null);
+        conduitConfigParser = new ConduitConfigParser(null);
 
-      DatabusConfig config = databusConfigParser.getConfig();
+      ConduitConfig config = conduitConfigParser.getConfig();
 
       Map<String, Cluster> clustermap = config.getClusters();
 

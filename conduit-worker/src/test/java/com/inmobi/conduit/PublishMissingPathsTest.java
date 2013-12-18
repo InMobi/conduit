@@ -51,10 +51,10 @@ public class PublishMissingPathsTest {
 
   @Test
   public void testPublishMissingPaths() throws Exception {
-    DatabusConfigParser configParser = new DatabusConfigParser(
-        "test-lss-pub-databus.xml");
+    ConduitConfigParser configParser = new ConduitConfigParser(
+        "test-lss-pub-conduit.xml");
     Set<String> streamsToProcess = new HashSet<String>();
-    DatabusConfig config = configParser.getConfig();
+    ConduitConfig config = configParser.getConfig();
     streamsToProcess.addAll(config.getSourceStreams().keySet());
     FileSystem fs = FileSystem.getLocal(new Configuration());
 
