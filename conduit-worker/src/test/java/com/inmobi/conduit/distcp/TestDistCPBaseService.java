@@ -33,9 +33,9 @@ public class TestDistCPBaseService  {
   MergedStreamService mergeService = null;
   MergedStreamService mergedService1 = null;
   FileSystem srcFs = null;
-  String expectedFileName1 = "/tmp/com.inmobi.databus.distcp"
+  String expectedFileName1 = "/tmp/com.inmobi.conduit.distcp"
       + ".TestDistCPBaseService/data-file1";
-  String expectedFileName2 = "/tmp/com.inmobi.databus.distcp"
+  String expectedFileName2 = "/tmp/com.inmobi.conduit.distcp"
       + ".TestDistCPBaseService/data-file2";
   String expectedFileName3 = "/tmp/sample-test/data-file1";
   Set<String> expectedConsumePaths = new HashSet<String>();
@@ -73,11 +73,11 @@ public class TestDistCPBaseService  {
     createValidData();
 
     //expectedConsumePaths
-    expectedConsumePaths.add("file:/tmp/com.inmobi.databus.distcp" +
+    expectedConsumePaths.add("file:/tmp/com.inmobi.conduit.distcp" +
         ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-valid-data");
-    expectedConsumePaths.add("file:/tmp/com.inmobi.databus.distcp" +
+    expectedConsumePaths.add("file:/tmp/com.inmobi.conduit.distcp" +
         ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-junk-data");
-    expectedConsumePaths.add("file:/tmp/com.inmobi.databus.distcp" +
+    expectedConsumePaths.add("file:/tmp/com.inmobi.conduit.distcp" +
         ".TestDistCPBaseService/system/mirrors/databusCluster/file1-empty");
 
   }

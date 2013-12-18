@@ -23,7 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class CheckpointProviderFactory {
-  private static final String DEFAULT_PROVIDER = "com.inmobi.databus" +
+  private static final String DEFAULT_PROVIDER = "com.inmobi.conduit" +
   ".FSCheckpointProvider";
   private static final String CHECKPOINT_PROVIDER_DIR = "checkpointprovider" +
   ".dir";

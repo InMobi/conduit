@@ -368,8 +368,8 @@ public class Databus implements Service, DatabusConstants {
   public static void main(String[] args) throws Exception {
     try {
       if (args.length != 1 ) {
-        LOG.error("Usage: com.inmobi.databus.Databus <databus.cfg>");
-        throw new RuntimeException("Usage: com.inmobi.databus.Databus " +
+        LOG.error("Usage: com.inmobi.conduit.Databus <databus.cfg>");
+        throw new RuntimeException("Usage: com.inmobi.conduit.Databus " +
             "<databus.cfg>");
       }
       String cfgFile = args[0].trim();

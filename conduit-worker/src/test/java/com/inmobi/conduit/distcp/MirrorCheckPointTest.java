@@ -58,7 +58,7 @@ public class MirrorCheckPointTest {
   @BeforeMethod
   public void beforeTest() throws Exception{
     Properties prop = new Properties();
-    prop.setProperty("com.inmobi.databus.metrics.enabled", "true");
+    prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
     ConduitMetrics.init(prop);
     ConduitMetrics.startAll();
   }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module>
     <!-- Inherit our applications main module.                      -->
-    <inherits name='com.inmobi.databus.visualization.Visualization'/>
+    <inherits name='com.inmobi.conduit.visualization.Visualization'/>
 
     <!-- Specify the path to any remote services.                   -->
     <servlet path="/Visualization/greet"

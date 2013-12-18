@@ -4,7 +4,7 @@
     <classes>
       <class name="com.inmobi.conduit.ClusterTest" />
       <class name="com.inmobi.conduit.CompressedFileReaderTest"/>
-      <class name="com.inmobi.databus.DataPurgerServiceTest"/>
+      <class name="com.inmobi.conduit.DataPurgerServiceTest"/>
     </classes>
   </test>
 </suite>

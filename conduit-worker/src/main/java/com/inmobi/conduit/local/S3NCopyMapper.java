@@ -19,14 +19,14 @@ import java.io.IOException;
  * mapper operations.
  *
  * In order to use the class, in databus.xml for the specific S3N hdfs url set
- * copyMapperClass = com.inmobi.databus.local.S3NCopyMapper
+ * copyMapperClass = com.inmobi.conduit.local.S3NCopyMapper
  *
  * Example
  * <code>
  *   <cluster name="testcluster1" hdfsurl="s3n:///"
               jturl="local"
               jobqueuename="default"
-              copyMapperClass = "com.inmobi.databus.local.S3NCopyMapper"/>
+              copyMapperClass = "com.inmobi.conduit.local.S3NCopyMapper"/>
  * </code>
  */
 

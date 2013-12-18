@@ -14,30 +14,30 @@
 package com.inmobi.conduit;
 
 public interface DatabusConstants {
-  public static final String CLUSTERS_TO_PROCESS = "com.inmobi.databus" +
+  public static final String CLUSTERS_TO_PROCESS = "com.inmobi.conduit" +
   ".clusters";
-  public static final String ZK_ADDR = "com.inmobi.databus.zkconnect";
-  public static final String DATABUS_XML = "com.inmobi.databus.cfg";
-  public static final String LOG4J_FILE = "com.inmobi.databus.log4j";
-  public static final String KRB_PRINCIPAL = "com.inmobi.databus.krb" +
+  public static final String ZK_ADDR = "com.inmobi.conduit.zkconnect";
+  public static final String DATABUS_XML = "com.inmobi.conduit.cfg";
+  public static final String LOG4J_FILE = "com.inmobi.conduit.log4j";
+  public static final String KRB_PRINCIPAL = "com.inmobi.conduit.krb" +
   ".principal";
-  public static final String KEY_TAB_FILE = "com.inmobi.databus.keytab";
-  public static final String ENABLE_ZOOKEEPER = "com.inmobi.databus.enablezk";
-  public static final String CLUSTER_NAME = "com.inmobi.databus.current" +
+  public static final String KEY_TAB_FILE = "com.inmobi.conduit.keytab";
+  public static final String ENABLE_ZOOKEEPER = "com.inmobi.conduit.enablezk";
+  public static final String CLUSTER_NAME = "com.inmobi.conduit.current" +
       ".cluster";
-  public static final String MB_PER_MAPPER = "com.inmobi.databus.MBPerMapper";
-  public static final String STREAMS_PER_LOCALSERVICE = "com.inmobi.databus."
+  public static final String MB_PER_MAPPER = "com.inmobi.conduit.MBPerMapper";
+  public static final String STREAMS_PER_LOCALSERVICE = "com.inmobi.conduit."
       + "streamsPerLocal";
-  public static final String AUDIT_PUBLISHER_CONFIG_FILE = "com.inmobi.databus." +
+  public static final String AUDIT_PUBLISHER_CONFIG_FILE = "com.inmobi.conduit." +
   		"audit.publisher.config";
-  public static final String STREAMS_PER_MERGE = "com.inmobi.databus."
+  public static final String STREAMS_PER_MERGE = "com.inmobi.conduit."
       + "streamsPerMerge";
-  public static final String STREAMS_PER_MIRROR = "com.inmobi.databus."
+  public static final String STREAMS_PER_MIRROR = "com.inmobi.conduit."
       + "streamsPerMirror";
-  public static final String DIR_PER_DISTCP_PER_STREAM = "com.inmobi.databus.distcp."
+  public static final String DIR_PER_DISTCP_PER_STREAM = "com.inmobi.conduit.distcp."
       + "dirsPerStream";
-  public static final String PERGER_ENABLED = "com.inmobi.databus.purgerEnabled";
-  public static final String NUM_RETRIES = "com.inmobi.databus.retries";
+  public static final String PERGER_ENABLED = "com.inmobi.conduit.purgerEnabled";
+  public static final String NUM_RETRIES = "com.inmobi.conduit.retries";
   public static final String AUDIT_ENABLED_KEY = "audit.enabled";
   public static final String AUDIT_COUNTER_GROUP = "audit";
   public static final String AUDIT_COUNTER_NAME_DELIMITER = "#";

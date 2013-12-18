@@ -1,4 +1,4 @@
-option gwt_package = "com.inmobi.databus.visualization.shared";
+option gwt_package = "com.inmobi.conduit.visualization.shared";
 
 message Request {
 	optional GraphDataRequest graphDataRequest = 1;

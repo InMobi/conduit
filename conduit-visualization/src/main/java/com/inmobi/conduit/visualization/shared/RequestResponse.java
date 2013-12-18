@@ -61,7 +61,7 @@ public final class RequestResponse {
       
       private RequestResponse.Request result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.Request.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.Request.newBuilder()
       private Builder() {}
       
       private static Builder create() {
@@ -293,7 +293,7 @@ public final class RequestResponse {
       
       private RequestResponse.GraphDataRequest result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.GraphDataRequest.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataRequest.newBuilder()
       private Builder() {}
       
       private static Builder create() {
@@ -596,7 +596,7 @@ public final class RequestResponse {
       
       private RequestResponse.Response result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.Response.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.Response.newBuilder()
       private Builder() {}
       
       private static Builder create() {
@@ -856,7 +856,7 @@ public final class RequestResponse {
       
       private RequestResponse.GraphDataResponse result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.newBuilder()
       private Builder() {}
       
       private static Builder create() {
@@ -1092,7 +1092,7 @@ public final class RequestResponse {
       
       private RequestResponse.TierLatencyResponse result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder()
       private Builder() {}
       
       private static Builder create() {
@@ -1320,7 +1320,7 @@ public final class RequestResponse {
       
       private RequestResponse.TierLatencyObj result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.TierLatencyObj.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyObj.newBuilder()
       private Builder() {}
       
       private static Builder create() {
@@ -1567,7 +1567,7 @@ public final class RequestResponse {
       
       private RequestResponse.LoadMainPanelResponse result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.LoadMainPanelResponse.newBuilder()
       private Builder() {}
       
       private static Builder create() {
@@ -2033,7 +2033,7 @@ public final class RequestResponse {
       
       private RequestResponse.ClientConfiguration result;
       
-      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.ClientConfiguration.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.ClientConfiguration.newBuilder()
       private Builder() {}
       
       private static Builder create() {

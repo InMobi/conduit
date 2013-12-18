@@ -17,7 +17,7 @@ public class TestConduitMetrics {
   @BeforeTest
   public void init() throws IOException {
     Properties prop = new Properties();
-    prop.put("com.inmobi.databus.metrics.enabled", "true");
+    prop.put("com.inmobi.conduit.metrics.enabled", "true");
     ConduitMetrics.init(prop);
 
   }

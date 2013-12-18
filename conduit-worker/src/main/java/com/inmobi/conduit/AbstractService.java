@@ -326,7 +326,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   /*
    * Retries renaming a file to a given num of times defined by
-   * "com.inmobi.databus.retries" system property Returns the outcome of last
+   * "com.inmobi.conduit.retries" system property Returns the outcome of last
    * retry;throws exception in case last retry threw an exception
    */
   protected boolean retriableRename(FileSystem fs, Path src, Path dst,

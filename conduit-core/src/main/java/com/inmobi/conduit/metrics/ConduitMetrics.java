@@ -31,12 +31,12 @@ public class ConduitMetrics {
 
   private static MetricRegistry registry;
 
-  private final static String GANGLIA = "com.inmobi.databus.metrics.ganglia";
-  private final static String CONSOLE = "com.inmobi.databus.metrics.console";
-  private final static String GANGLIA_SERVERNAME = "com.inmobi.databus.metrics.ganglia.serverName";
-  private final static String GANGLIA_PORT = "com.inmobi.databus.metrics.ganglia.port";
-  private final static String REPORTING_PERIOD = "com.inmobi.databus.metrics.period";
-  private final static String IS_ENABLED_PROPERTY="com.inmobi.databus.metrics.enabled";
+  private final static String GANGLIA = "com.inmobi.conduit.metrics.ganglia";
+  private final static String CONSOLE = "com.inmobi.conduit.metrics.console";
+  private final static String GANGLIA_SERVERNAME = "com.inmobi.conduit.metrics.ganglia.serverName";
+  private final static String GANGLIA_PORT = "com.inmobi.conduit.metrics.ganglia.port";
+  private final static String REPORTING_PERIOD = "com.inmobi.conduit.metrics.period";
+  private final static String IS_ENABLED_PROPERTY="com.inmobi.conduit.metrics.enabled";
   private final static String LOCAL_SERVICE = "LocalStreamService";
   private final static String MERGED_SERVICE = "MergedStreamService";
   private final static String MIRROR_SERVICE = "MirrorStreamService";

@@ -1,9 +1,9 @@
 # constants
-DATABUS_MIRROR_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.MirrorStreamDataConsistencyValidation"
-DATABUS_ORDERLY_CREATION_FILES_CLASS="com.inmobi.databus.utils.OrderlyCreationOfDirs"
-DATABUS_MERGE_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.MergeStreamDataConsistency"
-DATABUS_LOCAL_STREAM_VALIDATION_CLASS="com.inmobi.databus.utils.LocalStreamDataConsistency"
-DATABUS_VALIDATION_CLASS="com.inmobi.databus.validator.DatabusValidator"
+DATABUS_MIRROR_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.MirrorStreamDataConsistencyValidation"
+DATABUS_ORDERLY_CREATION_FILES_CLASS="com.inmobi.conduit.utils.OrderlyCreationOfDirs"
+DATABUS_MERGE_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.MergeStreamDataConsistency"
+DATABUS_LOCAL_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.LocalStreamDataConsistency"
+DATABUS_VALIDATION_CLASS="com.inmobi.conduit.validator.DatabusValidator"
 #functions
 info() {
   local msg=$1
