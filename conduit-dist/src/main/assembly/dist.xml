@@ -64,7 +64,7 @@
     </fileSet>
 
     <fileSet>
-      <directory>../databus-worker/src/main/resources</directory>
+      <directory>../conduit-worker/src/main/resources</directory>
       <outputDirectory>/conf/</outputDirectory>
       <includes>
       <include>**</include>

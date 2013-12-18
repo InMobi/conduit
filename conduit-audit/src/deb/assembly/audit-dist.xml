@@ -52,21 +52,21 @@
 
   <fileSets>
   <fileSet>
-      <directory>../databus-audit/conf</directory>
+      <directory>../conduit-audit/conf</directory>
       <outputDirectory>/conf/</outputDirectory>
       <includes>
       <include>**</include>
       </includes>
     </fileSet>
         <fileSet>
-      <directory>../databus-audit/bin</directory>
+      <directory>../conduit-audit/bin</directory>
       <outputDirectory>/bin/</outputDirectory>
       <includes>
         <include>**</include>
       </includes>
     </fileSet>
       <fileSet>
-      <directory>../databus-audit/audit-db-sql</directory>
+      <directory>../conduit-audit/audit-db-sql</directory>
       <outputDirectory>/sql/</outputDirectory>
       <includes>
         <include>**</include>

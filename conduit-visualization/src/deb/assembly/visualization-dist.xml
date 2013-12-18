@@ -27,7 +27,7 @@
 
     <fileSets>
            <fileSet>
-            <directory>../databus-visualization/conf</directory>
+            <directory>../conduit-visualization/conf</directory>
             <outputDirectory>/usr/local/databus-visualization-${project.version}/conf/</outputDirectory>
             <includes>
                 <include>**/audit-feeder.properties</include>
@@ -35,7 +35,7 @@
             </includes>
         </fileSet>
       <fileSet>
-        <directory>../databus-visualization/conf</directory>
+        <directory>../conduit-visualization/conf</directory>
         <outputDirectory>/var/lib/tomcat6/bin</outputDirectory>
         <includes>
           <include>**/setenv.sh</include>
@@ -43,7 +43,7 @@
       </fileSet>
 
         <fileSet>
-            <directory>../databus-visualization/target/</directory>
+            <directory>../conduit-visualization/target/</directory>
             <outputDirectory>/var/lib/tomcat6/webapps</outputDirectory>
             <includes>
                 <include>**/databus-visualization.war</include>
