@@ -1,6 +1,6 @@
-<databus>
+<conduit>
   <defaults>
-    <rootdir>/databus</rootdir>
+    <rootdir>/conduit</rootdir>
     <retentioninhours>48</retentioninhours>
     <trashretentioninhours>24</trashretentioninhours>
   </defaults>
@@ -47,4 +47,4 @@
     </cluster>
 
   </clusters>
-</databus>
+</conduit>

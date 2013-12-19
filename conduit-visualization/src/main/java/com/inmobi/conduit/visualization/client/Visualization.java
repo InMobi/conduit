@@ -137,7 +137,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private void loadHeader() {
     headerVPanel = new VerticalPanel();
     currentTimeLabel = new Label(DateUtils.getCurrentTimeStringInGMT());
-    HTML heading = new HTML("<h1>Databus Dashboard</h1>");
+    HTML heading = new HTML("<h1>Conduit Dashboard</h1>");
     heading.getElement().setId("heading");
     currentTimeLabel.getElement().setId("currentTimeLabel");
     headerVPanel.getElement().setId("header");

@@ -52,7 +52,7 @@ public class AuditStatsQuery {
   int cutoffTime;
   long timeout = 60000;
   private static final String MESSAGE_CLIENT_CONF_FILE = "audit-consumer-conf.properties";
-  public static final String ROOT_DIR_KEY = "databus.consumer.rootdirs";
+  public static final String ROOT_DIR_KEY = "conduit.consumer.rootdirs";
   public static final String CONSUMER_CLASS_KEY = "consumer.classname";
   boolean isTimeOut = false;
   private boolean isMaxMsgsProcessed = false;
@@ -67,7 +67,7 @@ public class AuditStatsQuery {
   private long messageCount = 0;
   private Tier cutoffTier = null;
   private String timezone;
-  public static final String CONSUMER_CLASSNAME = "com.inmobi.messaging.consumer.databus.DatabusConsumer";
+  public static final String CONSUMER_CLASSNAME = "com.inmobi.messaging.consumer.conduit.ConduitConsumer";
   public static final String CONSUMER_NAME = "audit-consumer";
   private static final int DEFAULT_CUTOFF_HRS = 1;
   private static final String CONFIG_STOP_TIME = "messaging.consumer.absolute.stoptime";

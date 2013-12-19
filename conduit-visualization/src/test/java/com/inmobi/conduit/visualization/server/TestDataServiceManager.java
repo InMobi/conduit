@@ -30,7 +30,7 @@ public class TestDataServiceManager {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder1",
         "./src/test/resources/visualization2.properties", null);
-    assert serviceManager.getDataBusConfig().size() == 2;
+    assert serviceManager.getConduitConfig().size() == 2;
     String response = serviceManager.getStreamAndClusterList();
     List<String> streamList = TestUtil.getStreamsListFromResponse(response);
     List<String> clusterList = TestUtil.getClustersListFromResponse(response);

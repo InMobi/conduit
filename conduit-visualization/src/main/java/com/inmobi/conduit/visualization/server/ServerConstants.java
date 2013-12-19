@@ -2,7 +2,7 @@ package com.inmobi.conduit.visualization.server;
 
 public class ServerConstants {
   public static final String FEEDER_PROPERTIES_DEFAULT_PATH =
-      "/usr/local/databus-visualization/conf/audit-feeder.properties";
+      "/usr/local/conduit-visualization/conf/audit-feeder.properties";
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String TIMEZONE = "GMT";
   public static final String AUDIT_STREAM = "_audit";
@@ -11,9 +11,9 @@ public class ServerConstants {
   public static final String START_TIME_FILTER = "startTime";
   public static final String END_TIME_FILTER = "endTime";
   public static final String VISUALIZATION_PROPERTIES_DEFAULT_PATH =
-      "/usr/local/databus-visualization/conf/visualization.properties";
+      "/usr/local/conduit-visualization/conf/visualization.properties";
 
-  public static final String DATABUS_XML_PATH = "xmlPath";
+  public static final String CONDUIT_XML_PATH = "xmlPath";
   public static final String PERCENTILE_STRING = "percentileString";
   public static final String PUBLISHER_SLA = "publisherSla";
   public static final String AGENT_SLA = "agentSla";

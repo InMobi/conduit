@@ -191,7 +191,7 @@
               <goal>jdeb</goal>
             </goals>
             <configuration>
-              <installDir>/usr/local/databus-audit-${version}</installDir>
+              <installDir>/usr/local/conduit-audit-${version}</installDir>
               <deb>${project.build.directory}/${artifactId}-${version}.deb</deb>
               <dataSet>
                 <data>
@@ -199,7 +199,7 @@
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
-                    <prefix>/usr/local/databus-audit-${version}</prefix>
+                    <prefix>/usr/local/conduit-audit-${version}</prefix>
                   </mapper>
                 </data>
                 <data>
@@ -207,7 +207,7 @@
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
-                    <prefix>/usr/local/databus-audit-${version}/bin</prefix>
+                    <prefix>/usr/local/conduit-audit-${version}/bin</prefix>
                     <filemode>755</filemode>
                   </mapper>
                 </data>
@@ -216,7 +216,7 @@
                   <type>directory</type>
                   <mapper>
                     <type>perm</type>
-                    <prefix>/usr/local/databus-audit-${version}/sql</prefix>
+                    <prefix>/usr/local/conduit-audit-${version}/sql</prefix>
                   </mapper>
                 </data>
               </dataSet>

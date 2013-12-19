@@ -1,4 +1,4 @@
-Package: databus-visualization
+Package: conduit-visualization
 Version: [[project.version]]
 Section:  misc
 Priority: optional

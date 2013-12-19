@@ -1246,7 +1246,7 @@ function saveHistory(streamName, clusterName, selectedTabID, start, end) {
           qstream: streamName,
           qcluster: clusterName,
           selectedTab: selectedTab
-        }, "Databus Visualization", "?qstart="+ start + "&qend=" + end + "&qstream=" +
+        }, "Conduit Visualization", "?qstart="+ start + "&qend=" + end + "&qstream=" +
         streamName + "&qcluster=" + clusterName + "&selectedTab=" +
         selectedTabID);
   } else {

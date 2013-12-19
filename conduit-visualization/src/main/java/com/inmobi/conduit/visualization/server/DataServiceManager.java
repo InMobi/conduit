@@ -18,7 +18,7 @@ public class DataServiceManager {
 
   private static Logger LOG = Logger.getLogger(DataServiceManager.class);
   private static DataServiceManager instance = null;
-  private List<ConduitConfig> dataBusConfig;
+  private List<ConduitConfig> conduitConfig;
   private VisualizationProperties properties;
   private String feederPropertiesPath;
 
@@ -35,7 +35,7 @@ public class DataServiceManager {
     this.feederPropertiesPath = feederPropertiesPath;
     properties = new VisualizationProperties(visualizationPropertiesPath);
     if (init) {
-      String folderPath = properties.get(ServerConstants.DATABUS_XML_PATH);
+      String folderPath = properties.get(ServerConstants.CONDUIT_XML_PATH);
       initConfig(folderPath);
     }
   }
@@ -51,16 +51,16 @@ public class DataServiceManager {
         return false;
       }
     });
-    LOG.info("Databus xmls included in the conf folder:");
-    dataBusConfig = new ArrayList<ConduitConfig>();
+    LOG.info("Conduit xmls included in the conf folder:");
+    conduitConfig = new ArrayList<ConduitConfig>();
     for (File file : xmlFiles) {
       String fullPath = file.getAbsolutePath();
       LOG.info("File:" + fullPath);
       try {
         ConduitConfigParser parser = new ConduitConfigParser(fullPath);
-        dataBusConfig.add(parser.getConfig());
+        conduitConfig.add(parser.getConfig());
       } catch (Exception e) {
-        LOG.error("Exception while intializing DatabusConfigParser: ", e);
+        LOG.error("Exception while intializing ConduitConfigParser: ", e);
       }
     }
   }
@@ -75,7 +75,7 @@ public class DataServiceManager {
   public String getStreamAndClusterList() {
     Set<String> streamSet = new TreeSet<String>();
     Set<String> clusterSet = new TreeSet<String>();
-    for (ConduitConfig config : dataBusConfig) {
+    for (ConduitConfig config : conduitConfig) {
       streamSet.addAll(config.getSourceStreams().keySet());
       clusterSet.addAll(config.getClusters().keySet());
     }
@@ -315,7 +315,7 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       if (node.getTier().equalsIgnoreCase("merge") ||
           node.getTier().equalsIgnoreCase("mirror")) {
-        for (ConduitConfig config : dataBusConfig) {
+        for (ConduitConfig config : conduitConfig) {
           node.setSourceList(
               config.getClusters().get(node.getClusterName())
                   .getDestinationStreams().keySet());
@@ -324,7 +324,7 @@ public class DataServiceManager {
     }
   }
 
-  public List<ConduitConfig> getDataBusConfig() {
-    return Collections.unmodifiableList(dataBusConfig);
+  public List<ConduitConfig> getConduitConfig() {
+    return Collections.unmodifiableList(conduitConfig);
   }
 }

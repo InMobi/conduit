@@ -17,7 +17,7 @@ public interface AuditDBConstants {
   public static final String GANGLIA_PORT = "feeder.ganglia.port";
   public static final String CSV_REPORT_DIR = "feeder.csv.report.dir";
   public static final String MESSAGES_PER_BATCH = "messages.batch.num";
-  public static final String DATABUS_CONF_FILE_KEY = "feeder.databus.conf";
+  public static final String CONDUIT_CONF_FILE_KEY = "feeder.conduit.conf";
 
   public static final String ROLLUP_HOUR_KEY = "rollup.hour";
   public static final String INTERVAL_LENGTH_KEY = "rollup.intervallength.millis";

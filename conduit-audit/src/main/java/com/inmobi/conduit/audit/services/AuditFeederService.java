@@ -154,7 +154,7 @@ public class AuditFeederService extends AuditDBService {
    * 
    * @param clusterName
    * @param rootDir
-   *          path of _audit stream till /databus
+   *          path of _audit stream till /conduit
    * @param config
    * @throws IOException
    */

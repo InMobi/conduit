@@ -42,9 +42,9 @@ public class AuditStats {
     config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     config.set(MessagingConsumerConfig.hadoopConfigFileKey,
         "audit-core-site.xml");
-    String databusConfFolder = config.getString(AuditDBConstants
-        .DATABUS_CONF_FILE_KEY);
-    loadConfigFiles(databusConfFolder);
+    String conduitConfFolder = config.getString(AuditDBConstants
+        .CONDUIT_CONF_FILE_KEY);
+    loadConfigFiles(conduitConfFolder);
     createClusterMap();
     for (Entry<String, Cluster> cluster : clusterMap.entrySet()) {
       String rootDir = cluster.getValue().getRootDir();
@@ -58,13 +58,13 @@ public class AuditStats {
 
   private void createClusterMap() {
     clusterMap = new HashMap<String, Cluster>();
-    for (ConduitConfig dataBusConfig : conduitConfigList) {
-      clusterMap.putAll(dataBusConfig.getClusters());
+    for (ConduitConfig conduitConfig : conduitConfigList) {
+      clusterMap.putAll(conduitConfig.getClusters());
     }
   }
 
-  private void loadConfigFiles(String databusConfFolder) {
-    File folder = new File(databusConfFolder);
+  private void loadConfigFiles(String conduitConfFolder) {
+    File folder = new File(conduitConfFolder);
     File[] xmlFiles = folder.listFiles(new FileFilter() {
       @Override
       public boolean accept(File file) {
@@ -76,10 +76,10 @@ public class AuditStats {
     });
     conduitConfigList = new ArrayList<ConduitConfig>();
     if (xmlFiles.length == 0) {
-      LOG.error("No xml files found in the conf folder:"+databusConfFolder);
+      LOG.error("No xml files found in the conf folder:"+conduitConfFolder);
       return;
     }
-    LOG.info("Databus xmls included in the conf folder:");
+    LOG.info("Conduit xmls included in the conf folder:");
     for (File file : xmlFiles) {
       String fullPath = file.getAbsolutePath();
       LOG.info("File:"+fullPath);
