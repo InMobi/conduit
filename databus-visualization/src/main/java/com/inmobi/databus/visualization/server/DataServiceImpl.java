@@ -20,4 +20,8 @@ public class DataServiceImpl extends RemoteServiceServlet
     return serviceManager.getStreamAndClusterList();
   }
 
+  public String getTimeLineData(String filterValues) {
+    return serviceManager.getTimeLineData(filterValues);
+  }
+
 }

@@ -336,4 +336,8 @@ public class DataServiceManager {
   public List<DatabusConfig> getDataBusConfig() {
     return Collections.unmodifiableList(dataBusConfig);
   }
+
+  public String getTimeLineData(String filterValues) {
+    return null;
+  }
 }

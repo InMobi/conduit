@@ -39,4 +39,17 @@ public class DataServiceWrapper {
       }
     });
   }
+
+  public void getTimeLineData(String clientJson, final AsyncCallback<String> callback) {
+    service.getTimeLineData(clientJson, new AsyncCallback<String>() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess(String result) {
+        callback.onSuccess(result);
+      }
+    });
+  }
 }

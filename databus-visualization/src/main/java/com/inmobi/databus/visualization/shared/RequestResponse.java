@@ -562,9 +562,18 @@ public final class RequestResponse {
     public boolean hasLoadMainPanelResponse() { return hasLoadMainPanelResponse; }
     public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse getLoadMainPanelResponse() { return loadMainPanelResponse_; }
     
+    // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+    public static final int TIMELINEGRAPHRESPONSE_FIELD_NUMBER = 3;
+    private boolean hasTimeLineGraphResponse;
+    @com.google.protobuf.gwt.shared.FieldNumber(3)
+    private com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse timeLineGraphResponse_;
+    public boolean hasTimeLineGraphResponse() { return hasTimeLineGraphResponse; }
+    public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() { return timeLineGraphResponse_; }
+    
     private void initFields() {
       graphDataResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
       loadMainPanelResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance();
+      timeLineGraphResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -580,6 +589,10 @@ public final class RequestResponse {
       
       if (hasLoadMainPanelResponse()) {
         output.writeMessage(2, "loadMainPanelResponse", getLoadMainPanelResponse());
+      }
+      
+      if (hasTimeLineGraphResponse()) {
+        output.writeMessage(3, "timeLineGraphResponse", getTimeLineGraphResponse());
       }
     }
     
@@ -673,6 +686,10 @@ public final class RequestResponse {
         if (other.hasLoadMainPanelResponse()) {
           mergeLoadMainPanelResponse(other.getLoadMainPanelResponse());
         }
+        
+        if (other.hasTimeLineGraphResponse()) {
+          mergeTimeLineGraphResponse(other.getTimeLineGraphResponse());
+        }
       
         return this;
       }
@@ -698,6 +715,16 @@ public final class RequestResponse {
           }
           loadMainPanelResponseBuilder.readFrom(loadMainPanelResponseJson);
           setLoadMainPanelResponse(loadMainPanelResponseBuilder.buildParsed());
+        }
+        
+        com.google.protobuf.gwt.shared.JsonStream timeLineGraphResponseJson = input.readStream(3);
+        if (timeLineGraphResponseJson != null) {
+          com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder timeLineGraphResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder();
+          if (hasTimeLineGraphResponse()) {
+            timeLineGraphResponseBuilder.mergeFrom(getTimeLineGraphResponse());
+          }
+          timeLineGraphResponseBuilder.readFrom(timeLineGraphResponseJson);
+          setTimeLineGraphResponse(timeLineGraphResponseBuilder.buildParsed());
         }
         
         return this;
@@ -777,6 +804,43 @@ public final class RequestResponse {
         return this;
       }
       
+      // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+      public boolean hasTimeLineGraphResponse() {
+        return result.hasTimeLineGraphResponse();
+      }
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() {
+        return result.getTimeLineGraphResponse();
+      }
+      public Builder setTimeLineGraphResponse(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
+        }
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = value;
+        return this;
+      }
+      public Builder setTimeLineGraphResponse(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder builderForValue) {
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeTimeLineGraphResponse(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
+        if (result.hasTimeLineGraphResponse() &&
+            result.timeLineGraphResponse_ != com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance()) {
+          result.timeLineGraphResponse_ =
+            com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder(result.timeLineGraphResponse_).mergeFrom(value).buildPartial();
+        } else {
+          result.timeLineGraphResponse_ = value;
+        }
+        result.hasTimeLineGraphResponse = true;
+        return this;
+      }
+      public Builder clearTimeLineGraphResponse() {
+        result.hasTimeLineGraphResponse = false;
+        result.timeLineGraphResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+        return this;
+      }
+      
       // @@protoc_insertion_point(builder_scope:Response)
     }
     
@@ -787,6 +851,187 @@ public final class RequestResponse {
     }
     
     // @@protoc_insertion_point(class_scope:Response)
+  }
+  
+  public static final class TimeLineGraphResponse extends
+      com.google.protobuf.gwt.shared.GeneratedMessage {
+    // Use TimeLineGraphResponse.newBuilder() to construct.
+    private TimeLineGraphResponse() {
+      initFields();
+    }
+    
+    private TimeLineGraphResponse(boolean noInit) {}
+    
+    private static final TimeLineGraphResponse defaultInstance;
+    public static TimeLineGraphResponse getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public TimeLineGraphResponse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    // optional string jsonString = 1;
+    public static final int JSONSTRING_FIELD_NUMBER = 1;
+    private boolean hasJsonString;
+    @com.google.protobuf.gwt.shared.FieldNumber(1)
+    private java.lang.String jsonString_ = "";
+    public boolean hasJsonString() { return hasJsonString; }
+    public java.lang.String getJsonString() { return jsonString_; }
+    
+    private void initFields() {
+    }
+    
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
+      throws java.io.IOException {
+      
+      if (hasJsonString()) {
+        output.writeString(1, "jsonString", getJsonString());
+      }
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
+          com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse, Builder> {
+      
+      private com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse result;
+      
+      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse();
+        return builder;
+      }
+      
+      protected com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse getDefaultInstanceForType() {
+        return com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse buildParsed()
+          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse buildPartial() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
+        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse) {
+          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse)other);
+        }
+        return this;
+      }
+      
+      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse other) {
+        if (other == com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance()) return this;
+        
+        if (other.hasJsonString()) {
+          setJsonString(other.getJsonString());
+        }
+      
+        return this;
+      }
+      
+      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
+        throws java.io.IOException {
+        
+        java.lang.String jsonString = input.readString(1);
+        if (jsonString != null) {
+          setJsonString(jsonString);
+        }
+        
+        return this;
+      }
+      
+      // optional string jsonString = 1;
+      public boolean hasJsonString() {
+        return result.hasJsonString();
+      }
+      public java.lang.String getJsonString() {
+        return result.getJsonString();
+      }
+      public Builder setJsonStringIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setJsonString(value);
+        }
+        return this;
+      }
+      public Builder setJsonString(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasJsonString = true;
+        result.jsonString_ = value;
+        return this;
+      }
+      public Builder clearJsonString() {
+        result.hasJsonString = false;
+        result.jsonString_ = getDefaultInstance().getJsonString();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:TimeLineGraphResponse)
+    }
+    
+    static {
+      defaultInstance = new TimeLineGraphResponse(true);
+      com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:TimeLineGraphResponse)
   }
   
   public static final class GraphDataResponse extends
@@ -1997,6 +2242,14 @@ public final class RequestResponse {
     public boolean hasRolleduptilldays() { return hasRolleduptilldays; }
     public java.lang.String getRolleduptilldays() { return rolleduptilldays_; }
     
+    // optional string timeTickInterval = 16;
+    public static final int TIMETICKINTERVAL_FIELD_NUMBER = 16;
+    private boolean hasTimeTickInterval;
+    @com.google.protobuf.gwt.shared.FieldNumber(16)
+    private java.lang.String timeTickInterval_ = "";
+    public boolean hasTimeTickInterval() { return hasTimeTickInterval; }
+    public java.lang.String getTimeTickInterval() { return timeTickInterval_; }
+    
     private void initFields() {
     }
     
@@ -2065,6 +2318,10 @@ public final class RequestResponse {
       
       if (hasRolleduptilldays()) {
         output.writeString(15, "rolleduptilldays", getRolleduptilldays());
+      }
+      
+      if (hasTimeTickInterval()) {
+        output.writeString(16, "timeTickInterval", getTimeTickInterval());
       }
     }
     
@@ -2210,6 +2467,10 @@ public final class RequestResponse {
         if (other.hasRolleduptilldays()) {
           setRolleduptilldays(other.getRolleduptilldays());
         }
+        
+        if (other.hasTimeTickInterval()) {
+          setTimeTickInterval(other.getTimeTickInterval());
+        }
       
         return this;
       }
@@ -2290,6 +2551,11 @@ public final class RequestResponse {
         java.lang.String rolleduptilldays = input.readString(15);
         if (rolleduptilldays != null) {
           setRolleduptilldays(rolleduptilldays);
+        }
+        
+        java.lang.String timeTickInterval = input.readString(16);
+        if (timeTickInterval != null) {
+          setTimeTickInterval(timeTickInterval);
         }
         
         return this;
@@ -2697,6 +2963,33 @@ public final class RequestResponse {
       public Builder clearRolleduptilldays() {
         result.hasRolleduptilldays = false;
         result.rolleduptilldays_ = getDefaultInstance().getRolleduptilldays();
+        return this;
+      }
+      
+      // optional string timeTickInterval = 16;
+      public boolean hasTimeTickInterval() {
+        return result.hasTimeTickInterval();
+      }
+      public java.lang.String getTimeTickInterval() {
+        return result.getTimeTickInterval();
+      }
+      public Builder setTimeTickIntervalIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setTimeTickInterval(value);
+        }
+        return this;
+      }
+      public Builder setTimeTickInterval(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasTimeTickInterval = true;
+        result.timeTickInterval_ = value;
+        return this;
+      }
+      public Builder clearTimeTickInterval() {
+        result.hasTimeTickInterval = false;
+        result.timeTickInterval_ = getDefaultInstance().getTimeTickInterval();
         return this;
       }
       

@@ -14,6 +14,11 @@ message GraphDataRequest {
 message Response {
 	optional GraphDataResponse graphDataResponse = 1;
 	optional LoadMainPanelResponse loadMainPanelResponse = 2;
+	optional TimeLineGraphResponse timeLineGraphResponse = 3;
+}
+
+message TimeLineGraphResponse {
+	optional string jsonString = 1;
 }
 
 message GraphDataResponse {
@@ -52,4 +57,5 @@ message ClientConfiguration {
 	optional string mergeSla = 13;
 	optional string mirrorSla = 14;
 	optional string rolleduptilldays = 15;
+	optional string timeTickInterval = 16;
 }
