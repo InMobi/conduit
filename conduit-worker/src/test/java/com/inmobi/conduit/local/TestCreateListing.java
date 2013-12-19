@@ -26,7 +26,7 @@ public class TestCreateListing {
 
   private static Logger LOG = Logger.getLogger(TestCreateListing.class);
   Path rootDir = new Path
-  ("/tmp/test-databus/databus/");
+  ("/tmp/test-conduit/conduit/");
 
   FileSystem localFs;
 
@@ -53,7 +53,7 @@ public class TestCreateListing {
     Map<String, String> clusterConf = new HashMap<String, String>();
     clusterConf.put("hdfsurl", localFs.getUri().toString());
     clusterConf.put("jturl", "local");
-    clusterConf.put("name", "databusCluster");
+    clusterConf.put("name", "conduitCluster");
     clusterConf.put("jobqueuename", "default");
     Set<String> sourceNames = new HashSet<String>();
     sourceNames.add("stream1");
@@ -64,7 +64,7 @@ public class TestCreateListing {
     Table<String, String, String> checkpointPaths = HashBasedTable.create();
 
     LocalStreamService service = new LocalStreamService(null, cluster, null,
-        new FSCheckpointProvider("/tmp/test-databus/databus/checkpoint"),
+        new FSCheckpointProvider("/tmp/test-conduit/conduit/checkpoint"),
         streamsToProcess);
     service.createListing(localFs, localFs.getFileStatus(new Path(rootDir,
     "data")), results, trashSet, checkpointPaths);

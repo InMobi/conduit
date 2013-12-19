@@ -1,4 +1,4 @@
-<databus>
+<conduit>
   <defaults>
     <rootdir>/localstreamcommit</rootdir>
     <retentioninhours>24</retentioninhours>
@@ -46,20 +46,20 @@
   </streams>
 
   <clusters>
-    <cluster name="testcluster1" hdfsurl="file:///tmp/databussimpleservice/testcluster1"
+    <cluster name="testcluster1" hdfsurl="file:///tmp/conduitsimpleservice/testcluster1"
              jturl="local"
              jobqueuename="default"
              >
     </cluster>
-    <cluster name="testcluster2" hdfsurl="file:////tmp/databussimpleservice/testcluster2"
+    <cluster name="testcluster2" hdfsurl="file:////tmp/conduitsimpleservice/testcluster2"
              jturl="local"
              jobqueuename="default"
              >
     </cluster>
-    <cluster name="testcluster3" hdfsurl="file:////tmp/databussimpleservice/testcluster3"
+    <cluster name="testcluster3" hdfsurl="file:////tmp/conduitsimpleservice/testcluster3"
              jturl="local"
              jobqueuename="default"
              >
     </cluster>
   </clusters>
-</databus>
+</conduit>

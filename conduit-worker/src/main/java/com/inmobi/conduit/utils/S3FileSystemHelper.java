@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 
 /**
- * Helper class to manage the S3 File operations which the databus lite mapper
+ * Helper class to manage the S3 File operations which the conduit lite mapper
  * performs
  */
 public class S3FileSystemHelper {

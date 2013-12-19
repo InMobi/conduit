@@ -162,7 +162,7 @@ public class DataPurgerServiceTest {
 
   public void testDefaultRetentionTimes() throws Exception {
 
-    LOG.info("Parsing XML test-retention-databus.xml");
+    LOG.info("Parsing XML test-retention-conduit.xml");
     ConduitConfigParser configparser = new ConduitConfigParser(
         "test-retention-conduit.xml");
     ConduitConfig config = configparser.getConfig();
@@ -340,10 +340,10 @@ public class DataPurgerServiceTest {
 
   public void testPurgerService() throws Exception {
 
-    LOG.info("Working for file test-dps-databus_X_1.xml");
+    LOG.info("Working for file test-dps-conduit_X_1.xml");
     testPurgerService("test-dps-conduit_X_1.xml", -3, false, false);
     testPurgerService("test-dps-conduit_X_1.xml", -1, true, false);
-    LOG.info("Working for file test-dps-databus_X_4.xml");
+    LOG.info("Working for file test-dps-conduit_X_4.xml");
     testPurgerService("test-dps-conduit_X_4.xml", -3, false, true);
     testPurgerService("test-dps-conduit_X_4.xml", -1, true, true);
 
@@ -476,7 +476,7 @@ public class DataPurgerServiceTest {
   private DataPurgerService buildPurgerService() {
     DataPurgerService service;
     try {
-      ConduitConfig config = LocalStreamServiceTest.buildTestDatabusConfig(
+      ConduitConfig config = LocalStreamServiceTest.buildTestConduitConfig(
           "local", "file:///tmp", "datapurger", "48", "24");
       service = new TestDataPurgerService(config, config.getClusters().get(
           "cluster1"));

@@ -115,49 +115,49 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   }
 
   private void createExpectedResults() {
-    expectedResults.add("/databus/data/stream1/collector2/file1");
-    expectedResults.add("/databus/data/stream1/collector2/file2");
-    expectedResults.add("/databus/data/stream1/collector2/file3");
-    expectedResults.add("/databus/data/stream1/collector2/file4");
-    expectedResults.add("/databus/data/stream1/collector2/file5");
-    expectedResults.add("/databus/data/stream1/collector2/file6");
-    expectedResults.add("/databus/data/stream1/collector2/file7");
-    expectedResults.add("/databus/data/stream1/collector2/file8");
-    expectedResults.add("/databus/data/stream2/collector1/file1");
-    expectedResults.add("/databus/data/stream2/collector1/file2");
-    expectedResults.add("/databus/data/stream2/collector1/file3");
-    expectedResults.add("/databus/data/stream2/collector1/file4");
-    expectedResults.add("/databus/data/stream2/collector1/file5");
-    expectedResults.add("/databus/data/stream2/collector1/file6");
-    expectedResults.add("/databus/data/stream2/collector1/file7");
-    expectedResults.add("/databus/data/stream2/collector1/file8");
-    expectedResults.add("/databus/data/stream2/collector2/file1");
-    expectedResults.add("/databus/data/stream2/collector2/file2");
-    expectedResults.add("/databus/data/stream2/collector2/file3");
-    expectedResults.add("/databus/data/stream2/collector2/file4");
-    expectedResults.add("/databus/data/stream2/collector2/file5");
-    expectedResults.add("/databus/data/stream2/collector2/file6");
-    expectedResults.add("/databus/data/stream2/collector2/file7");
-    expectedResults.add("/databus/data/stream2/collector2/file8");
-    expectedResults.add("/databus/data/stream1/collector1/file1");
-    expectedResults.add("/databus/data/stream1/collector1/file2");
-    expectedResults.add("/databus/data/stream1/collector1/file3");
-    expectedResults.add("/databus/data/stream1/collector1/file4");
-    expectedResults.add("/databus/data/stream1/collector1/file5");
-    expectedResults.add("/databus/data/stream1/collector1/file6");
-    expectedResults.add("/databus/data/stream1/collector1/file7");
-    expectedResults.add("/databus/data/stream1/collector1/file8");
+    expectedResults.add("/conduit/data/stream1/collector2/file1");
+    expectedResults.add("/conduit/data/stream1/collector2/file2");
+    expectedResults.add("/conduit/data/stream1/collector2/file3");
+    expectedResults.add("/conduit/data/stream1/collector2/file4");
+    expectedResults.add("/conduit/data/stream1/collector2/file5");
+    expectedResults.add("/conduit/data/stream1/collector2/file6");
+    expectedResults.add("/conduit/data/stream1/collector2/file7");
+    expectedResults.add("/conduit/data/stream1/collector2/file8");
+    expectedResults.add("/conduit/data/stream2/collector1/file1");
+    expectedResults.add("/conduit/data/stream2/collector1/file2");
+    expectedResults.add("/conduit/data/stream2/collector1/file3");
+    expectedResults.add("/conduit/data/stream2/collector1/file4");
+    expectedResults.add("/conduit/data/stream2/collector1/file5");
+    expectedResults.add("/conduit/data/stream2/collector1/file6");
+    expectedResults.add("/conduit/data/stream2/collector1/file7");
+    expectedResults.add("/conduit/data/stream2/collector1/file8");
+    expectedResults.add("/conduit/data/stream2/collector2/file1");
+    expectedResults.add("/conduit/data/stream2/collector2/file2");
+    expectedResults.add("/conduit/data/stream2/collector2/file3");
+    expectedResults.add("/conduit/data/stream2/collector2/file4");
+    expectedResults.add("/conduit/data/stream2/collector2/file5");
+    expectedResults.add("/conduit/data/stream2/collector2/file6");
+    expectedResults.add("/conduit/data/stream2/collector2/file7");
+    expectedResults.add("/conduit/data/stream2/collector2/file8");
+    expectedResults.add("/conduit/data/stream1/collector1/file1");
+    expectedResults.add("/conduit/data/stream1/collector1/file2");
+    expectedResults.add("/conduit/data/stream1/collector1/file3");
+    expectedResults.add("/conduit/data/stream1/collector1/file4");
+    expectedResults.add("/conduit/data/stream1/collector1/file5");
+    expectedResults.add("/conduit/data/stream1/collector1/file6");
+    expectedResults.add("/conduit/data/stream1/collector1/file7");
+    expectedResults.add("/conduit/data/stream1/collector1/file8");
   }
 
   private void createExpectedTrash() {
-    expectedTrashPaths.add("/databus/data/stream2/collector2/file2");
-    expectedTrashPaths.add("/databus/data/stream2/collector2/file1");
-    expectedTrashPaths.add("/databus/data/stream1/collector1/file1");
-    expectedTrashPaths.add("/databus/data/stream2/collector1/file1");
-    expectedTrashPaths.add("/databus/data/stream2/collector1/file2");
-    expectedTrashPaths.add("/databus/data/stream1/collector1/file2");
-    expectedTrashPaths.add("/databus/data/stream1/collector2/file1");
-    expectedTrashPaths.add("/databus/data/stream1/collector2/file2");
+    expectedTrashPaths.add("/conduit/data/stream2/collector2/file2");
+    expectedTrashPaths.add("/conduit/data/stream2/collector2/file1");
+    expectedTrashPaths.add("/conduit/data/stream1/collector1/file1");
+    expectedTrashPaths.add("/conduit/data/stream2/collector1/file1");
+    expectedTrashPaths.add("/conduit/data/stream2/collector1/file2");
+    expectedTrashPaths.add("/conduit/data/stream1/collector1/file2");
+    expectedTrashPaths.add("/conduit/data/stream1/collector2/file1");
+    expectedTrashPaths.add("/conduit/data/stream1/collector2/file2");
   }
 
   private void validateExpectedOutput(Set<String> results,
@@ -169,48 +169,48 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
 
   private void createMockForFileSystem(FileSystem fs, Cluster cluster)
       throws Exception {
-    FileStatus[] files = createTestData(2, "/databus/data/stream", true);
+    FileStatus[] files = createTestData(2, "/conduit/data/stream", true);
 
-    FileStatus[] stream1 = createTestData(2, "/databus/data/stream1/collector",
+    FileStatus[] stream1 = createTestData(2, "/conduit/data/stream1/collector",
         true);
 
     FileStatus[] stream3 = createTestData(NUMBER_OF_FILES,
-        "/databus/data/stream1/collector1/file", true);
+        "/conduit/data/stream1/collector1/file", true);
 
     FileStatus[] stream4 = createTestData(NUMBER_OF_FILES,
-        "/databus/data/stream1/collector2/file", true);
+        "/conduit/data/stream1/collector2/file", true);
 
-    FileStatus[] stream2 = createTestData(2, "/databus/data/stream2/collector",
+    FileStatus[] stream2 = createTestData(2, "/conduit/data/stream2/collector",
         true);
 
     FileStatus[] stream5 = createTestData(NUMBER_OF_FILES,
-        "/databus/data/stream2/collector1/file", true);
+        "/conduit/data/stream2/collector1/file", true);
 
     FileStatus[] stream6 = createTestData(NUMBER_OF_FILES,
-        "/databus/data/stream2/collector2/file", true);
+        "/conduit/data/stream2/collector2/file", true);
 
     when(fs.getWorkingDirectory()).thenReturn(new Path("/tmp/"));
     when(fs.getUri()).thenReturn(new URI("localhost"));
     when(fs.listStatus(cluster.getDataDir())).thenReturn(files);
-    when(fs.listStatus(new Path("/databus/data/stream1"))).thenReturn(stream1);
+    when(fs.listStatus(new Path("/conduit/data/stream1"))).thenReturn(stream1);
 
     when(
-        fs.listStatus(new Path("/databus/data/stream1/collector1"),
+        fs.listStatus(new Path("/conduit/data/stream1/collector1"),
             any(LocalStreamService.CollectorPathFilter.class))).thenReturn(stream3);
-    when(fs.listStatus(new Path("/databus/data/stream2"))).thenReturn(stream2);
+    when(fs.listStatus(new Path("/conduit/data/stream2"))).thenReturn(stream2);
     when(
-        fs.listStatus(new Path("/databus/data/stream1/collector2"),
+        fs.listStatus(new Path("/conduit/data/stream1/collector2"),
             any(LocalStreamService.CollectorPathFilter.class))).thenReturn(stream4);
     when(
-        fs.listStatus(new Path("/databus/data/stream2/collector1"),
+        fs.listStatus(new Path("/conduit/data/stream2/collector1"),
             any(LocalStreamService.CollectorPathFilter.class))).thenReturn(stream5);
     when(
-        fs.listStatus(new Path("/databus/data/stream2/collector2"),
+        fs.listStatus(new Path("/conduit/data/stream2/collector2"),
             any(LocalStreamService.CollectorPathFilter.class))).thenReturn(stream6);
 
     Path file = mock(Path.class);
     when(file.makeQualified(any(FileSystem.class))).thenReturn(
-        new Path("/databus/data/stream1/collector1/"));
+        new Path("/conduit/data/stream1/collector1/"));
   }
 
   private void testCreateListing() {
@@ -225,14 +225,14 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       fs.delete(cluster.getDataDir(), true);
       FileStatus dataDir = new FileStatus(20, false, 3, 23823, 2438232,
           cluster.getDataDir());
-      fs.delete(new Path(cluster.getRootDir() + "/databus-checkpoint"), true);
+      fs.delete(new Path(cluster.getRootDir() + "/conduit-checkpoint"), true);
 
       Set<String> streamsToProcess = new HashSet<String>();
       streamsToProcess.add("stream1");
       streamsToProcess.add("stream2");
       TestLocalStreamService service = new TestLocalStreamService(null,
           cluster, null, new FSCheckpointProvider(cluster.getRootDir()
-              + "/databus-checkpoint"), streamsToProcess);
+              + "/conduit-checkpoint"), streamsToProcess);
       service.createListing(fs, dataDir, results, trashSet, checkpointPaths);
 
       Set<String> tmpResults = new LinkedHashSet<String>();
@@ -264,7 +264,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
         }
       }
       validateExpectedOutput(tmpResults, tmpTrashPaths, tmpCheckPointPaths);
-      fs.delete(new Path(cluster.getRootDir() + "/databus-checkpoint"), true);
+      fs.delete(new Path(cluster.getRootDir() + "/conduit-checkpoint"), true);
       fs.delete(cluster.getDataDir(), true);
       fs.close();
     } catch (Exception e) {
@@ -286,13 +286,13 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     return createTestData(count, path, false);
   }
 
-  private ConduitConfig buildTestDatabusConfig() throws Exception {
+  private ConduitConfig buildTestConduitConfig() throws Exception {
     JobConf conf = super.CreateJobConf();
-    return buildTestDatabusConfig(conf.get("mapred.job.tracker"),
-        "file:///tmp", "databus", "48", "24");
+    return buildTestConduitConfig(conf.get("mapred.job.tracker"),
+        "file:///tmp", "conduit", "48", "24");
   }
 
-  public static ConduitConfig buildTestDatabusConfig(String jturl,
+  public static ConduitConfig buildTestConduitConfig(String jturl,
       String hdfsurl, String rootdir, String retentioninhours,
       String trashretentioninhours) throws Exception {
 
@@ -348,45 +348,45 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     String[] expectedstatus = new String[10];
 
     status[0] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster1/test1-2012-08-29-07-09_00000"));
+        "/conduit/data/test1/testcluster1/test1-2012-08-29-07-09_00000"));
     status[1] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster1/test1-2012-08-29-07-04_00000"));
+        "/conduit/data/test1/testcluster1/test1-2012-08-29-07-04_00000"));
     status[2] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test2/testcluster1/test2-2012-08-29-07-09_00003"));
+        "/conduit/data/test2/testcluster1/test2-2012-08-29-07-09_00003"));
     status[3] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster2/test1-2012-08-13-07-09_00000"));
+        "/conduit/data/test1/testcluster2/test1-2012-08-13-07-09_00000"));
     status[4] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster1/test1-2012-08-29-07-09_00009"));
+        "/conduit/data/test1/testcluster1/test1-2012-08-29-07-09_00009"));
     status[5] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster1/test1-2012-08-29-07-12_00000"));
+        "/conduit/data/test1/testcluster1/test1-2012-08-29-07-12_00000"));
     status[6] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster1/test1-2012-08-29-07-10_00000"));
+        "/conduit/data/test1/testcluster1/test1-2012-08-29-07-10_00000"));
     status[7] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test2/testcluster1/test2-2012-08-29-07-45_00000"));
+        "/conduit/data/test2/testcluster1/test2-2012-08-29-07-45_00000"));
     status[8] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster2/test1-2012-08-29-07-09_00078"));
+        "/conduit/data/test1/testcluster2/test1-2012-08-29-07-09_00078"));
     status[9] = new FileStatus(20, false, 3, 23823, 2438232, new Path(
-        "/databus/data/test1/testcluster2/test1-2012-08-29-07-04_00034"));
+        "/conduit/data/test1/testcluster2/test1-2012-08-29-07-04_00034"));
 
-    expectedstatus[0] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-04_00000";
-    expectedstatus[1] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-09_00000";
-    expectedstatus[2] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-09_00009";
-    expectedstatus[3] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-10_00000";
-    expectedstatus[4] = "/databus/data/test1/testcluster1/test1-2012-08-29-07-12_00000";
+    expectedstatus[0] = "/conduit/data/test1/testcluster1/test1-2012-08-29-07-04_00000";
+    expectedstatus[1] = "/conduit/data/test1/testcluster1/test1-2012-08-29-07-09_00000";
+    expectedstatus[2] = "/conduit/data/test1/testcluster1/test1-2012-08-29-07-09_00009";
+    expectedstatus[3] = "/conduit/data/test1/testcluster1/test1-2012-08-29-07-10_00000";
+    expectedstatus[4] = "/conduit/data/test1/testcluster1/test1-2012-08-29-07-12_00000";
 
-    expectedstatus[5] = "/databus/data/test1/testcluster2/test1-2012-08-13-07-09_00000";
-    expectedstatus[6] = "/databus/data/test1/testcluster2/test1-2012-08-29-07-04_00034";
-    expectedstatus[7] = "/databus/data/test1/testcluster2/test1-2012-08-29-07-09_00078";
+    expectedstatus[5] = "/conduit/data/test1/testcluster2/test1-2012-08-13-07-09_00000";
+    expectedstatus[6] = "/conduit/data/test1/testcluster2/test1-2012-08-29-07-04_00034";
+    expectedstatus[7] = "/conduit/data/test1/testcluster2/test1-2012-08-29-07-09_00078";
 
-    expectedstatus[8] = "/databus/data/test2/testcluster1/test2-2012-08-29-07-09_00003";
-    expectedstatus[9] = "/databus/data/test2/testcluster1/test2-2012-08-29-07-45_00000";
+    expectedstatus[8] = "/conduit/data/test2/testcluster1/test2-2012-08-29-07-09_00003";
+    expectedstatus[9] = "/conduit/data/test2/testcluster1/test2-2012-08-29-07-45_00000";
 
     Set<FileStatus> trashSet = new HashSet<FileStatus>();
     for (int i = 0; i < 10; ++i) {
       trashSet.add(status[i]);
     }
 
-    ConduitConfig conduitConfig = buildTestDatabusConfig();
+    ConduitConfig conduitConfig = buildTestConduitConfig();
     Cluster cluster = ClusterTest.buildLocalCluster();
     Set<String> streamsToProcess = new HashSet<String>();
     streamsToProcess.addAll(conduitConfig.getSourceStreams().keySet());
@@ -422,7 +422,7 @@ cluster.getCheckpointDir()),
 
   @Test
   public void testMapReduce() throws Exception {
-    LOG.info("Running LocalStreamIntegration for filename test-lss-databus.xml");
+    LOG.info("Running LocalStreamIntegration for filename test-lss-conduit.xml");
     testMapReduce("test-lss-conduit.xml", 1);
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() ,9 );
@@ -433,7 +433,7 @@ cluster.getCheckpointDir()),
 
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduce() throws Exception {
-    LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml");
+    LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-conduit.xml");
     testMapReduce("test-lss-multiple-conduit.xml", 1);
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
@@ -452,7 +452,7 @@ cluster.getCheckpointDir()),
 
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduceWithMultipleRuns() throws Exception {
-    LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-databus.xml, Running Twice");
+    LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-conduit.xml, Running Twice");
     testMapReduce("test-lss-multiple-conduit1.xml", 2);
 
     Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);

@@ -116,7 +116,7 @@ public abstract class DistcpBaseService extends AbstractService {
     conf.set("mapred.job.name", serviceName);
     conf.set("tmpjars", auditUtilJarDestPath.toString());
     // The first argument 'sourceFileListing' to DistCpOptions is not needed now 
-    // since DatabusDistCp writes listing file using fileListingMap instead of
+    // since ConduitDistCp writes listing file using fileListingMap instead of
     // relying on sourceFileListing path. Passing a dummy value.
     DistCpOptions options = new DistCpOptions(new Path("/tmp"), targetPath);
     options.setOutPutDirectory(tmpCounterOutputPath);
@@ -133,9 +133,9 @@ public abstract class DistcpBaseService extends AbstractService {
   /*
    * @return remote Path from where this consumer can consume eg:
    * MergedStreamConsumerService - Path eg:
-   * hdfs://remoteCluster/databus/system/consumers/<consumerName> eg:
+   * hdfs://remoteCluster/conduit/system/consumers/<consumerName> eg:
    * MirrorStreamConsumerService - Path eg:
-   * hdfs://remoteCluster/databus/system/mirrors/<consumerName>
+   * hdfs://remoteCluster/conduit/system/mirrors/<consumerName>
    */
   protected abstract Path getInputPath() throws IOException;
 
@@ -332,8 +332,8 @@ public abstract class DistcpBaseService extends AbstractService {
 
   /*
    * Find the topic name from path of format
-   * /databus/streams/<streamName>/2013/10/01/09/17 or
-   * /databus/streams/<streamName>/2013/10/
+   * /conduit/streams/<streamName>/2013/10/01/09/17 or
+   * /conduit/streams/<streamName>/2013/10/
    * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
    */
   protected String getTopicNameFromDestnPath(Path destnPath) {

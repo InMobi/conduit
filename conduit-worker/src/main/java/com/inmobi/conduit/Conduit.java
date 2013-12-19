@@ -61,7 +61,7 @@ public class Conduit implements Service, ConduitConstants {
   private volatile boolean stopRequested = false;
   private volatile boolean initFailed = false;
   private CuratorLeaderManager curatorLeaderManager = null;
-  private volatile boolean databusStarted = false;
+  private volatile boolean conduitStarted = false;
 
   public Conduit(ConduitConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -224,13 +224,13 @@ public class Conduit implements Service, ConduitConstants {
   private void copyInputFormatJarToClusterFS(Cluster cluster, 
       String inputFormatSrcJar) throws IOException {
     FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
-    // create jars path inside /databus/system/tmp path
+    // create jars path inside /conduit/system/tmp path
     Path jarsPath = new Path(cluster.getTmpPath(), "jars");
     if (!clusterFS.exists(jarsPath)) {
       clusterFS.mkdirs(jarsPath);
     }
-    // copy inputFormat source jar into /databus/system/tmp/jars path
-    Path inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
+    // copy inputFormat source jar into /conduit/system/tmp/jars path
+    Path inputFormatJarDestPath = new Path(jarsPath, "conduit-distcp-current.jar");
     if (!clusterFS.exists(inputFormatJarDestPath)) {
       clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
     }
@@ -239,12 +239,12 @@ public class Conduit implements Service, ConduitConstants {
   private void copyAuditUtilJarToClusterFs(Cluster cluster,
       String auditUtilSrcJar) throws IOException {
     FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
-    // create jars path inside /databus/system/tmp path
+    // create jars path inside /conduit/system/tmp path
     Path jarsPath = new Path(cluster.getTmpPath(), "jars");
     if (!clusterFS.exists(jarsPath)) {
       clusterFS.mkdirs(jarsPath);
     }
-    // copy AuditUtil source jar into /databus/system/tmp/jars path
+    // copy AuditUtil source jar into /conduit/system/tmp/jars path
     Path AuditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
     if (!clusterFS.exists(AuditUtilJarDestPath)) {
       clusterFS.copyFromLocalFile(new Path(auditUtilSrcJar), AuditUtilJarDestPath);
@@ -282,7 +282,7 @@ public class Conduit implements Service, ConduitConstants {
   @Override
   public void stop() throws Exception {
     stopRequested = true;
-    if (databusStarted) {
+    if (conduitStarted) {
       synchronized (services) {
         for (AbstractService service : services) {
           LOG.info("Stopping [" + service.getName() + "]");
@@ -304,17 +304,17 @@ public class Conduit implements Service, ConduitConstants {
     if (publisher != null) {
       publisher.close();
     }
-    LOG.info("Databus Shutdown complete..");
+    LOG.info("Conduit Shutdown complete..");
   }
 
   @Override
   public void start() throws Exception{
-    startDatabus();
+    startConduit();
     //If all threads are finished release leadership
     System.exit(0);
   }
 
-  public void startDatabus() throws Exception {
+  public void startConduit() throws Exception {
     try {
       synchronized (services) {
         if (stopRequested) {
@@ -325,10 +325,10 @@ public class Conduit implements Service, ConduitConstants {
           service.start();
         }
       }
-      databusStarted = true;
+      conduitStarted = true;
     } catch (Throwable e) {
       initFailed = true;
-      LOG.warn("Stopping databus because of error in initializing databus ", e);
+      LOG.warn("Stopping conduit because of error in initializing conduit ", e);
     }
 
     // if there is any outstanding stop request meanwhile, handle it here
@@ -368,9 +368,9 @@ public class Conduit implements Service, ConduitConstants {
   public static void main(String[] args) throws Exception {
     try {
       if (args.length != 1 ) {
-        LOG.error("Usage: com.inmobi.conduit.Databus <databus.cfg>");
-        throw new RuntimeException("Usage: com.inmobi.conduit.Databus " +
-            "<databus.cfg>");
+        LOG.error("Usage: com.inmobi.conduit.Conduit <conduit.cfg>");
+        throw new RuntimeException("Usage: com.inmobi.conduit.Conduit " +
+            "<conduit.cfg>");
       }
       String cfgFile = args[0].trim();
       Properties prop = new Properties();
@@ -411,10 +411,10 @@ public class Conduit implements Service, ConduitConstants {
         throw new RuntimeException("Insufficent information on cluster name");
       }
       String[] clusters = clustersStr.split(",");
-      String databusConfigFile = getProperty(prop, DATABUS_XML);
-      if (databusConfigFile == null)  {
-        LOG.error("Databus Configuration file doesn't exist..can't proceed");
-        throw new RuntimeException("Specified databus config file doesn't " +
+      String conduitConfigFile = getProperty(prop, CONDUIT_XML);
+      if (conduitConfigFile == null)  {
+        LOG.error("Conduit Configuration file doesn't exist..can't proceed");
+        throw new RuntimeException("Specified conduit config file doesn't " +
             "exist");
       }
       String zkConnectString = prop.getProperty(ZK_ADDR);
@@ -460,16 +460,16 @@ public class Conduit implements Service, ConduitConstants {
         }
         else  {
           LOG.error("Kerberoes principal/keytab not defined properly in " +
-              "databus.cfg");
+              "conduit.cfg");
           throw new RuntimeException("Kerberoes principal/keytab not defined " +
-              "properly in databus.cfg");
+              "properly in conduit.cfg");
         }
       }
 
       ConduitConfigParser configParser =
-          new ConduitConfigParser(databusConfigFile);
+          new ConduitConfigParser(conduitConfigFile);
       ConduitConfig config = configParser.getConfig();
-      StringBuffer databusClusterId = new StringBuffer();
+      StringBuffer conduitClusterId = new StringBuffer();
       Set<String> clustersToProcess = new HashSet<String>();
       if (clusters.length == 1 && "ALL".equalsIgnoreCase(clusters[0])) {
         for (Cluster c : config.getClusters().values()) {
@@ -482,11 +482,11 @@ public class Conduit implements Service, ConduitConstants {
             return;
           }
           clustersToProcess.add(c);
-          databusClusterId.append(c);
-          databusClusterId.append("_");
+          conduitClusterId.append(c);
+          conduitClusterId.append("_");
         }
       }
-      final Conduit databus = new Conduit(config, clustersToProcess,
+      final Conduit conduit = new Conduit(config, clustersToProcess,
           currentCluster);
 
       MessagePublisher msgPublisher = createMessagePublisher(prop);
@@ -500,41 +500,41 @@ public class Conduit implements Service, ConduitConstants {
          */
         System.setProperty(AUDIT_ENABLED_KEY, "false");
       }
-      databus.setPublisher(msgPublisher);
+      conduit.setPublisher(msgPublisher);
 
       Signal.handle(new Signal("TERM"), new SignalHandler() {
 
         @Override
         public void handle(Signal signal) {
           try {
-            LOG.info("Starting to stop databus...");
-            databus.stop();
+            LOG.info("Starting to stop conduit...");
+            conduit.stop();
             ConduitMetrics.stopAll();
           }
           catch (Exception e) {
-            LOG.warn("Error in shutting down databus", e);
+            LOG.warn("Error in shutting down conduit", e);
           }
         }
       });
       if (enableZookeeper) {
         LOG.info("Starting CuratorLeaderManager for leader election ");
-        databus.startCuratorLeaderManager(zkConnectString,
-            databusClusterId, databus);
+        conduit.startCuratorLeaderManager(zkConnectString,
+            conduitClusterId, conduit);
       } else {
-        databus.start();
+        conduit.start();
       }
     }
     catch (Exception e) {
-      LOG.warn("Error in starting Databus daemon", e);
+      LOG.warn("Error in starting Conduit daemon", e);
       throw new Exception(e);
     }
   }
 
   private void startCuratorLeaderManager(
-      String zkConnectString, StringBuffer databusClusterId,
-      final Conduit databus) throws Exception {
+      String zkConnectString, StringBuffer conduitClusterId,
+      final Conduit conduit) throws Exception {
     curatorLeaderManager = new CuratorLeaderManager(
-        databus, databusClusterId.toString(), zkConnectString);
+        conduit, conduitClusterId.toString(), zkConnectString);
     curatorLeaderManager.start();
   }
 

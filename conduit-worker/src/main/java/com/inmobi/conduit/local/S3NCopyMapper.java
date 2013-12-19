@@ -18,7 +18,7 @@ import java.io.IOException;
  * Top level S3N copy mapper class which uses the S3 Native copy for the copy
  * mapper operations.
  *
- * In order to use the class, in databus.xml for the specific S3N hdfs url set
+ * In order to use the class, in conduit.xml for the specific S3N hdfs url set
  * copyMapperClass = com.inmobi.conduit.local.S3NCopyMapper
  *
  * Example

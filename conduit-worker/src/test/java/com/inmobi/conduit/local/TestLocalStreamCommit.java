@@ -20,7 +20,7 @@ import com.inmobi.conduit.FSCheckpointProvider;
 
 public class TestLocalStreamCommit {
 
-  static Path rootDir = new Path("/tmp/test-databus/databus/");
+  static Path rootDir = new Path("/tmp/test-conduit/conduit/");
 
   static FileSystem localFs;
   private Set<String> streamsToProcess = new HashSet<String>();
@@ -60,7 +60,7 @@ public class TestLocalStreamCommit {
     Cluster cluster1 = parser.getConfig().getClusters().get("testcluster1");
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
         cluster1, null, new FSCheckpointProvider(
-            "/tmp/test-databus/databus/checkpoint"), streamsToProcess);
+            "/tmp/test-conduit/conduit/checkpoint"), streamsToProcess);
     createData(cluster1);
     service.prepareForCommit(System.currentTimeMillis());
     Path tmpPath = new Path(cluster1.getTmpPath(),

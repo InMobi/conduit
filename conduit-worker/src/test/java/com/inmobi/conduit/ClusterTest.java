@@ -33,7 +33,7 @@ public class ClusterTest {
     try {
       Cluster cluster = buildCluster();
       LOG.debug("getLocalDestDir ::");
-      String expectedPath = "hdfs://localhost:8020/databus/streams_local"
+      String expectedPath = "hdfs://localhost:8020/conduit/streams_local"
           + "/testCategory/1970/02/07/18/18/";
       Calendar calendar = new GregorianCalendar(1970, 1, 7, 18, 18); // month
                                                                      // starts
@@ -72,7 +72,7 @@ public class ClusterTest {
     try {
       Cluster cluster = buildCluster();
       String path = null;
-      String expectedPath = "hdfs://localhost:8020/databus/streams/testCategory/1970/09/05/16/43/";
+      String expectedPath = "hdfs://localhost:8020/conduit/streams/testCategory/1970/09/05/16/43/";
       Calendar calendar = new GregorianCalendar(1970, 8, 5, 16, 43);
       path = cluster
           .getFinalDestDir("testCategory", calendar.getTimeInMillis());
@@ -91,7 +91,7 @@ public class ClusterTest {
     try {
       Cluster cluster = buildCluster();
       String path = null;
-      String expectedPath = "hdfs://localhost:8020/databus/streams/testCategory/1970/09/05/16/";
+      String expectedPath = "hdfs://localhost:8020/conduit/streams/testCategory/1970/09/05/16/";
       Calendar calendar = new GregorianCalendar(1970, 8, 5, 16, 0);
       path = cluster.getFinalDestDirTillHour("testCategory",
           calendar.getTimeInMillis());
@@ -110,7 +110,7 @@ public class ClusterTest {
     clusterElementsMap.put("hdfsurl", "hdfs://localhost:8020");
     clusterElementsMap.put("jturl", "http://localhost:8021");
     clusterElementsMap.put("jobqueuename", "default");
-    return new Cluster(clusterElementsMap, "databus", null, null);
+    return new Cluster(clusterElementsMap, "conduit", null, null);
   }
 
   public static Cluster buildLocalCluster() throws Exception {
@@ -143,6 +143,6 @@ public class ClusterTest {
 
   public static Cluster buildLocalCluster(String clusterName, String hdfsUrl,
       String jtUrl) throws Exception {
-    return buildLocalCluster("databus", clusterName, hdfsUrl, jtUrl, null, null);
+    return buildLocalCluster("conduit", clusterName, hdfsUrl, jtUrl, null, null);
   }
 }

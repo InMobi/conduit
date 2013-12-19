@@ -28,21 +28,21 @@ import com.netflix.curator.retry.RetryOneTime;
 
 public class CuratorLeaderManager implements LeaderSelectorListener {
   private static final Log LOG = LogFactory.getLog(CuratorLeaderManager.class);
-  private final Service databus;
-  private final String databusClusterId;
+  private final Service conduit;
+  private final String conduitClusterId;
   private final String zkConnectString;
   private CuratorFramework client;
   private LeaderSelector leaderSelector;
 
-  public CuratorLeaderManager(Service databus, String databusClusterId,
+  public CuratorLeaderManager(Service conduit, String conduitClusterId,
       String zkConnectString){
-    this.databus = databus;
-    this.databusClusterId = databusClusterId;
+    this.conduit = conduit;
+    this.conduitClusterId = conduitClusterId;
     this.zkConnectString = zkConnectString;
   }
 
   public void start() throws Exception {
-    String zkPath = "/databus/" + databusClusterId; 
+    String zkPath = "/conduit/" + conduitClusterId; 
     this.client = CuratorFrameworkFactory.newClient(zkConnectString,
         new RetryOneTime(3));
     this.leaderSelector = new LeaderSelector(client, zkPath, this);
@@ -62,7 +62,7 @@ public class CuratorLeaderManager implements LeaderSelectorListener {
       throws Exception {
     LOG.info("Became Leader..starting to do work");
  // This method shouldn't return till you want to release leadership
-    databus.start();
+    conduit.start();
   }
 
   @Override
@@ -70,9 +70,9 @@ public class CuratorLeaderManager implements LeaderSelectorListener {
       ConnectionState connectionState) {
     if (connectionState == ConnectionState.LOST) {
       try {
-        databus.stop();
+        conduit.stop();
       } catch (Exception e1) {
-        LOG.warn("Error while stopping databus service", e1);
+        LOG.warn("Error while stopping conduit service", e1);
       }
       LOG.info("Releasing leadership..connection LOST");
       try {

@@ -25,7 +25,7 @@ public class StreamsValidator {
     this.conduitConfig = conduitConfig;
 
     if (streamNames == null || streamNames.isEmpty()) {
-      // add ALL streams from databus config
+      // add ALL streams from conduit config
       for (String stream : conduitConfig.getSourceStreams().keySet()) {
         streams.add(stream);
       }
@@ -47,7 +47,7 @@ public class StreamsValidator {
     }
 
     if (clusterNames == null || clusterNames.isEmpty()) {
-      //add ALL clusters from databus config
+      //add ALL clusters from conduit config
       for (String cluster : conduitConfig.getClusters().keySet()) {
         clusters.add(cluster);
       }

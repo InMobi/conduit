@@ -28,7 +28,7 @@ public class CheckpointProviderFactory {
   private static final String CHECKPOINT_PROVIDER_DIR = "checkpointprovider" +
   ".dir";
   private static final String CHECKPOINT_PROVIDER = "checkpointprovider";
-  private static final String DATABUS_CONFIG = "databus.cfg";
+  private static final String CONDUIT_CONFIG = "conduit.cfg";
 
   private static final Log LOG = LogFactory.getLog
   (CheckpointProviderFactory.class);

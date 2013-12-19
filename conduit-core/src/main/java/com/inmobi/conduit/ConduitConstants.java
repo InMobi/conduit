@@ -17,7 +17,7 @@ public interface ConduitConstants {
   public static final String CLUSTERS_TO_PROCESS = "com.inmobi.conduit" +
   ".clusters";
   public static final String ZK_ADDR = "com.inmobi.conduit.zkconnect";
-  public static final String DATABUS_XML = "com.inmobi.conduit.cfg";
+  public static final String CONDUIT_XML = "com.inmobi.conduit.cfg";
   public static final String LOG4J_FILE = "com.inmobi.conduit.log4j";
   public static final String KRB_PRINCIPAL = "com.inmobi.conduit.krb" +
   ".principal";

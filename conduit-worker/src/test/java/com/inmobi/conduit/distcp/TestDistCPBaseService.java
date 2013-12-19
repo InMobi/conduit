@@ -52,7 +52,7 @@ public class TestDistCPBaseService  {
     Map<String, String> clusterConf = new HashMap<String, String>();
     clusterConf.put("hdfsurl", localFs.getUri().toString());
     clusterConf.put("jturl", "local");
-    clusterConf.put("name", "databusCluster");
+    clusterConf.put("name", "conduitCluster");
     clusterConf.put("jobqueuename", "default");
     Set<String> sourceNames = new HashSet<String>();
     sourceNames.add("stream1");
@@ -74,11 +74,11 @@ public class TestDistCPBaseService  {
 
     //expectedConsumePaths
     expectedConsumePaths.add("file:/tmp/com.inmobi.conduit.distcp" +
-        ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-valid-data");
+        ".TestDistCPBaseService/system/mirrors/conduitCluster/file-with-valid-data");
     expectedConsumePaths.add("file:/tmp/com.inmobi.conduit.distcp" +
-        ".TestDistCPBaseService/system/mirrors/databusCluster/file-with-junk-data");
+        ".TestDistCPBaseService/system/mirrors/conduitCluster/file-with-junk-data");
     expectedConsumePaths.add("file:/tmp/com.inmobi.conduit.distcp" +
-        ".TestDistCPBaseService/system/mirrors/databusCluster/file1-empty");
+        ".TestDistCPBaseService/system/mirrors/conduitCluster/file1-empty");
 
   }
   @AfterTest

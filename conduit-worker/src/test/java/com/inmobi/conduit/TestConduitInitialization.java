@@ -19,8 +19,8 @@ public class TestConduitInitialization {
       List<AbstractService> listOfServices) throws Exception {
     ConduitConfigParser configParser = new ConduitConfigParser(filename);
     ConduitConfig config = configParser.getConfig();
-    Conduit databus = new Conduit(config, clustersToProcess);
-    listOfServices.addAll(databus.init());
+    Conduit conduit = new Conduit(config, clustersToProcess);
+    listOfServices.addAll(conduit.init());
   }
   
   public void testServicesOnCluster(String confFile, Set<String> clustersToProcess, 
@@ -207,7 +207,7 @@ public class TestConduitInitialization {
    *                 only purger service will be started
    */
   @Test
-  public void testDatabusAllServices() throws Exception {
+  public void testConduitAllServices() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
     testServicesOnCluster("test-merge-mirror-conduit.xml", clustersToProcess, 1, 1,

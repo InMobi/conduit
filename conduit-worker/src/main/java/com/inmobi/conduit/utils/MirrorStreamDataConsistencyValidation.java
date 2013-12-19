@@ -35,7 +35,7 @@ public class MirrorStreamDataConsistencyValidation {
     if (mirrorStreamUrls != null) {
       rootDirSplits = mirrorStreamUrls.split(",");
     } else {
-      throw new IllegalArgumentException("Databus root directory not specified");
+      throw new IllegalArgumentException("Conduit root directory not specified");
     }
     mirrorStreamDirs = new ArrayList<Path>(rootDirSplits.length);
     for (String mirrorRootDir : rootDirSplits) {

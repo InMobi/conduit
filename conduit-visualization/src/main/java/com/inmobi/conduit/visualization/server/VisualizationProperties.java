@@ -22,7 +22,7 @@ public class VisualizationProperties {
     try {
       Properties p = new Properties();
       p.load(new FileInputStream(new File(filePath)));
-      propMap.put(ServerConstants.DATABUS_XML_PATH, p.get("databus.xml.path")
+      propMap.put(ServerConstants.DATABUS_XML_PATH, p.get("conduit.xml.path")
           .toString());
       propMap.put(ServerConstants.PERCENTILE_STRING,
           p.get("percentile.string").toString());

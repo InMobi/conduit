@@ -1,9 +1,9 @@
 # constants
-DATABUS_MIRROR_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.MirrorStreamDataConsistencyValidation"
-DATABUS_ORDERLY_CREATION_FILES_CLASS="com.inmobi.conduit.utils.OrderlyCreationOfDirs"
-DATABUS_MERGE_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.MergeStreamDataConsistency"
-DATABUS_LOCAL_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.LocalStreamDataConsistency"
-DATABUS_VALIDATION_CLASS="com.inmobi.conduit.validator.DatabusValidator"
+CONDUIT_MIRROR_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.MirrorStreamDataConsistencyValidation"
+CONDUIT_ORDERLY_CREATION_FILES_CLASS="com.inmobi.conduit.utils.OrderlyCreationOfDirs"
+CONDUIT_MERGE_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.MergeStreamDataConsistency"
+CONDUIT_LOCAL_STREAM_VALIDATION_CLASS="com.inmobi.conduit.utils.LocalStreamDataConsistency"
+CONDUIT_VALIDATION_CLASS="com.inmobi.conduit.validator.ConduitValidator"
 #functions
 info() {
   local msg=$1
@@ -34,25 +34,25 @@ USAGE: $0 mirrorstreamdataconsistency <mergedstreamroot-dir> <mirrorstreamroot-d
        $0 orderlycreated <root-dirs (comma separated list)> [<basedir (comma separated list)>] [<streamname (comma separated list)>]
        $0 mergestreamdataconsistency <local stream root-dirs (comma separated list)> <merge stream root-dir> [<streamNames (comma separated list)>]
        $0 localstreamdataconsistency <root-dirs (comma separated list)>
-       $0 admin -verify [-stream (comma separated stream names)] [-mode (comma separated stream modes: {local,merge,mirror})] [-cluster (comma separated cluster names)] <-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)> <-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)> [-numThreads (number of threads for parallel listing)] <-conf (databus.xml file path)>
-       $0 admin -fix <-stream (stream name)> <-mode (stream mode: {local,merge,mirror})> <-cluster (cluster name)> <-start (YYYY/MM/DD/HH/mm)> <-stop (YYYY/MM/DD/HH/mm)> [-numThreads (number of threads for parallel listing)] <-conf (databus.xml file path)> [NOTE: THIS NEEDS SHUTDOWN OF TARGET DATABUS WORKERS]
-       $0 admin -checkpoint <-stream (stream name)> <-destCluster (destination cluster)> [-srcCluster (source cluster) ] <-date (YYYY/MM/DD/HH/mm)> <-conf (databus.xml file path)> 
+       $0 admin -verify [-stream (comma separated stream names)] [-mode (comma separated stream modes: {local,merge,mirror})] [-cluster (comma separated cluster names)] <-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)> <-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)> [-numThreads (number of threads for parallel listing)] <-conf (conduit.xml file path)>
+       $0 admin -fix <-stream (stream name)> <-mode (stream mode: {local,merge,mirror})> <-cluster (cluster name)> <-start (YYYY/MM/DD/HH/mm)> <-stop (YYYY/MM/DD/HH/mm)> [-numThreads (number of threads for parallel listing)] <-conf (conduit.xml file path)> [NOTE: THIS NEEDS SHUTDOWN OF TARGET CONDUIT WORKERS]
+       $0 admin -checkpoint <-stream (stream name)> <-destCluster (destination cluster)> [-srcCluster (source cluster) ] <-date (YYYY/MM/DD/HH/mm)> <-conf (conduit.xml file path)> 
 EOF
 }
 
-run_databus() {
-  local DATABUS_UTILITY_CLASS
+run_conduit() {
+  local CONDUIT_UTILITY_CLASS
 
   if [ "$#" -gt 0 ]; then
-    DATABUS_UTILITY_CLASS=$1
+    CONDUIT_UTILITY_CLASS=$1
     shift
   else
-    error "Must specify databus utility class" 1
+    error "Must specify conduit utility class" 1
   fi
 
   set -x
-  exec $JAVA_HOME/bin/java $JAVA_OPTS -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -cp "$DATABUS_CLASSPATH" \
-      "$DATABUS_UTILITY_CLASS" $*
+  exec $JAVA_HOME/bin/java $JAVA_OPTS -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -cp "$CONDUIT_CLASSPATH" \
+      "$CONDUIT_UTILITY_CLASS" $*
 
 }
 
@@ -61,8 +61,8 @@ run_databus() {
 ################################
 
 # set default params
-DATABUS_CLASSPATH=""
-DATABUS_JAVA_LIBRARY_PATH=""
+CONDUIT_CLASSPATH=""
+CONDUIT_JAVA_LIBRARY_PATH=""
 JAVA_OPTS="-Xmx128M"
 
 
@@ -127,8 +127,8 @@ fi
 
 
 # figure out where the client distribution is
-if [ -z "${DATABUS_HOME}" ] ; then
-  DATABUS_HOME=$(cd $(dirname $0)/..; pwd)
+if [ -z "${CONDUIT_HOME}" ] ; then
+  CONDUIT_HOME=$(cd $(dirname $0)/..; pwd)
 fi
 
 if [ -z $HADOOP_HOME ]; then
@@ -139,24 +139,24 @@ fi
 #set classpath
 for f in $HADOOP_HOME/hadoop-*.jar;do
   if [[ "$f" != *tool* ]]; then
-export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:$f
+export CONDUIT_CLASSPATH=$CONDUIT_CLASSPATH:$f
   fi
 done
-export DATABUS_CLASSPATH=$DATABUS_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
-export DATABUS_CLASSPATH="${DATABUS_HOME}/lib/*:$DEV_CLASSPATH:$DATABUS_CLASSPATH"
+export CONDUIT_CLASSPATH=$CONDUIT_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+export CONDUIT_CLASSPATH="${CONDUIT_HOME}/lib/*:$DEV_CLASSPATH:$CONDUIT_CLASSPATH"
 
 
 # finally, invoke the appropriate command
 if [ -n "$opt_order" ] ; then
-  run_databus $DATABUS_ORDERLY_CREATION_FILES_CLASS $args 
+  run_conduit $CONDUIT_ORDERLY_CREATION_FILES_CLASS $args 
 elif [ -n "$opt_mirror" ] ; then
-  run_databus $DATABUS_MIRROR_STREAM_VALIDATION_CLASS $args $args1 $args2
+  run_conduit $CONDUIT_MIRROR_STREAM_VALIDATION_CLASS $args $args1 $args2
 elif [ -n "$opt_local_merge" ] ; then 
-  run_databus $DATABUS_MERGE_STREAM_VALIDATION_CLASS $args
+  run_conduit $CONDUIT_MERGE_STREAM_VALIDATION_CLASS $args
 elif [ -n "$opt_local" ] ; then
-  run_databus $DATABUS_LOCAL_STREAM_VALIDATION_CLASS $args
+  run_conduit $CONDUIT_LOCAL_STREAM_VALIDATION_CLASS $args
 elif [ -n "$opt_admin" ] ; then
-  run_databus $DATABUS_VALIDATION_CLASS $args
+  run_conduit $CONDUIT_VALIDATION_CLASS $args
 #  echo $args
 else
   error "This message should never appear" 1

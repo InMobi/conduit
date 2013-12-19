@@ -1,4 +1,4 @@
-<databus>
+<conduit>
   <defaults>
     <rootdir>/mergeValidatorService</rootdir>
     <retentioninhours>24</retentioninhours>
@@ -45,4 +45,4 @@
              >
     </cluster>
   </clusters>
-</databus>
+</conduit>

@@ -1,6 +1,6 @@
-<databus>
+<conduit>
     <defaults>
-        <rootdir>/databusclustername</rootdir>
+        <rootdir>/conduitclustername</rootdir>
         <retentioninhours>24</retentioninhours>
         <trashretentioninhours>48</trashretentioninhours>
     </defaults>
@@ -34,33 +34,33 @@
     </streams>
 
     <clusters>
-        <cluster name="testcluster1" hdfsurl="file:///tmp/databusclustername/testcluster1"
+        <cluster name="testcluster1" hdfsurl="file:///tmp/conduitclustername/testcluster1"
                  jturl="local"
                  jobqueuename="default"
                 >
         </cluster>
-        <cluster name="testcluster2" hdfsurl="file:////tmp/databusclustername/testcluster2"
+        <cluster name="testcluster2" hdfsurl="file:////tmp/conduitclustername/testcluster2"
                  jturl="local"
                  jobqueuename="default"
                 >
         </cluster>
         <cluster name="testcluster3"
-                 hdfsurl="file:////tmp/databusclustername/testcluster3"
+                 hdfsurl="file:////tmp/conduitclustername/testcluster3"
                  jturl="local"
                  jobqueuename="default"
                 >
         </cluster>
         <cluster name="testcluster4"
-                 hdfsurl="file:////tmp/databusclustername/testcluster4"
+                 hdfsurl="file:////tmp/conduitclustername/testcluster4"
                  jturl="local"
                  jobqueuename="default"
                 >
         </cluster>
         <cluster name="testcluster5"
-                 hdfsurl="file:////tmp/databusclustername/testcluster5"
+                 hdfsurl="file:////tmp/conduitclustername/testcluster5"
                  jturl="local"
                  jobqueuename="default"
                 >
         </cluster>
     </clusters>
-</databus>
+</conduit>

@@ -1,6 +1,6 @@
-<databus>
+<conduit>
   <defaults>
-    <rootdir>/tmp/databustest3</rootdir>
+    <rootdir>/tmp/conduittest3</rootdir>
     <retentioninhours>24</retentioninhours>
     <trashretentioninhours>24</trashretentioninhours>
   </defaults>
@@ -51,4 +51,4 @@
     </cluster>
 
   </clusters>
-</databus>
+</conduit>

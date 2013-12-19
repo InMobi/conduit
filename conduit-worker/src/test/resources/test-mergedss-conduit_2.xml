@@ -1,4 +1,4 @@
-<databus>
+<conduit>
   <defaults>
     <rootdir>/mergesingleservice</rootdir>
     <retentioninhours>24</retentioninhours>
@@ -37,4 +37,4 @@
              >
     </cluster>
   </clusters>
-</databus>
+</conduit>

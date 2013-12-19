@@ -70,7 +70,7 @@ public class Cluster {
     this.hadoopConf = new Configuration();
     this.hadoopConf.set("mapred.job.tracker",
         clusterElementsMap.get(ConduitConfigParser.JT_URL));
-    this.hadoopConf.set("databus.tmp.path", getTmpPath().toString());
+    this.hadoopConf.set("conduit.tmp.path", getTmpPath().toString());
     this.consumeStreams = consumeStreams;
     this.sourceStreams = sourceStreams;
     this.hadoopConf.set("fs.default.name", hdfsUrl);

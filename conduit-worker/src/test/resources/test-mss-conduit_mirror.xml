@@ -1,4 +1,4 @@
-<databus>
+<conduit>
   <defaults>
     <rootdir>/merge_mirrorservice</rootdir>
     <retentioninhours>24</retentioninhours>
@@ -54,4 +54,4 @@
              >
     </cluster>
   </clusters>
-</databus>
+</conduit>

@@ -72,7 +72,7 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
     if (dom != null)
       parseDocument(dom);
     else
-      throw new Exception("databus.xml file not found");
+      throw new Exception("conduit.xml file not found");
   }
 
   private void parseDocument(Document dom) throws Exception {
@@ -292,7 +292,7 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
         logger.debug("Root Directory: " + cluster.getRootDir());
       }
 
-      // databusConfigParser.parseXmlFile();
+      // conduitConfigParser.parseXmlFile();
     } catch (Exception e) {
       e.printStackTrace();
       logger.debug(e);

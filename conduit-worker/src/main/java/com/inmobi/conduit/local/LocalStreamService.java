@@ -105,7 +105,7 @@ public class LocalStreamService extends AbstractService implements
     this.tmpJobOutputPath = new Path(tmpPath, "jobOut");
     this.tmpCounterOutputPath = new Path(tmpPath, "counters");
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
-    inputFormatJarDestPath = new Path(jarsPath, "databus-distcp-current.jar");
+    inputFormatJarDestPath = new Path(jarsPath, "conduit-distcp-current.jar");
     auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
 	
     //register metrics
@@ -241,12 +241,12 @@ public class LocalStreamService extends AbstractService implements
   }
 
   /*
-   * Trash paths: srcPath:  hdfsUri/databus/data/<streamname>/<collectorname>/<fileName>
-   *              destPath: hdfsUri/databus/system/trash/yyyy-MM-dd/HH/<filename>
+   * Trash paths: srcPath:  hdfsUri/conduit/data/<streamname>/<collectorname>/<fileName>
+   *              destPath: hdfsUri/conduit/system/trash/yyyy-MM-dd/HH/<filename>
    *
    * local stream Paths:
-   *  srcPath: hdfsUri/databus/system/tmp/<localStreamservicename>/jobout/<streamName>/<fileName>
-   *  destPath: hdfsUri/databus/streams_local/<streamName>/yyyy/MM/dd/HH/mm/<fileName>
+   *  srcPath: hdfsUri/conduit/system/tmp/<localStreamservicename>/jobout/<streamName>/<fileName>
+   *  destPath: hdfsUri/conduit/streams_local/<streamName>/yyyy/MM/dd/HH/mm/<fileName>
    */
   private void commit(Map<Path, Path> commitPaths, boolean isTrashData, List<AuditMessage> auditMsgList)
       throws Exception {
@@ -634,7 +634,7 @@ public class LocalStreamService extends AbstractService implements
 
   /*
    * Find the topic name from path of format
-   * /databus/streams_local/<streamName>/2013/10/
+   * /conduit/streams_local/<streamName>/2013/10/
    * 01/09/17/<collectorName>-<streamName>-2013-10-01-09-13_00000.gz
    */
   public String getTopicNameFromDestnPath(Path destnPath) {

@@ -29,14 +29,14 @@ public class TestMirrorStreamPrepForCommit {
 
   private static Logger LOG = Logger.getLogger(TestCreateListing.class);
 
-  // since tests can run in parallel use a seperate databusRoot for this test
+  // since tests can run in parallel use a seperate conduitRoot for this test
   FileSystem localFs;
   Set<String> testPaths = new TreeSet<String>();
   Path rootDir = new Path("/tmp/");
-  String databusRoot =  this.getClass().getName();
-  Path testRoot = new Path(rootDir, databusRoot);
+  String conduitRoot =  this.getClass().getName();
+  Path testRoot = new Path(rootDir, conduitRoot);
   Path tmpOut = new Path(testRoot,
-      "system/tmp/distcp_mirror_databusCluster_databusCluster/");
+      "system/tmp/distcp_mirror_conduitCluster_conduitCluster/");
   Path streamRoot = new Path(tmpOut, "tmp/streams/stream1/");
   MirrorStreamService service = null;
   List<Path> finalExpectedPaths = new ArrayList<Path>();
@@ -56,7 +56,7 @@ public class TestMirrorStreamPrepForCommit {
     Map<String, String> clusterConf = new HashMap<String, String>();
     clusterConf.put("hdfsurl", localFs.getUri().toString());
     clusterConf.put("jturl", "local");
-    clusterConf.put("name", "databusCluster");
+    clusterConf.put("name", "conduitCluster");
     clusterConf.put("jobqueuename", "default");
     Set<String> sourceNames = new HashSet<String>();
     sourceNames.add("stream1");

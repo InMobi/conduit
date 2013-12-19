@@ -77,11 +77,11 @@ public class ConduitTest extends TestMiniClusterUtil {
   private static ConduitServiceTest testService = null;
 
   // @Test
-  public void testDatabus() throws Exception {
-    testDatabus("testConduitService_simple.xml");
+  public void testConduit() throws Exception {
+    testConduit("testConduitService_simple.xml");
   }
 
-  private void testDatabus(String filename) throws Exception {
+  private void testConduit(String filename) throws Exception {
     ConduitConfigParser configParser = new ConduitConfigParser(filename);
     ConduitConfig config = configParser.getConfig();
     Set<String> clustersToProcess = new HashSet<String>();
@@ -106,23 +106,23 @@ public class ConduitTest extends TestMiniClusterUtil {
     timer.schedule(new TimerTask() {
       public void run() {
         try {
-          LOG.info("Stopping Databus Test Service");
+          LOG.info("Stopping Conduit Test Service");
           testService.stop();
-          LOG.info("Done stopping Databus Test Service");
+          LOG.info("Done stopping Conduit Test Service");
         } catch (Exception e) {
           e.printStackTrace();
         }
       }
     }, calendar.getTime());
 
-    LOG.info("Starting Databus Test Service");
-    testService.startDatabus();
+    LOG.info("Starting Conduit Test Service");
+    testService.startConduit();
 
     for (Map.Entry<String, Cluster> cluster : config.getClusters().entrySet()) {
       fs.delete(new Path(cluster.getValue().getRootDir()), true);
     }
 
-    LOG.info("Done with Databus Test Service");
+    LOG.info("Done with Conduit Test Service");
   }
 
 }

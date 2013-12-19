@@ -1,4 +1,4 @@
-<databus>
+<conduit>
   <defaults>
     <rootdir>/tmp/datapurger</rootdir>
     <retentioninhours>48</retentioninhours>
@@ -42,4 +42,4 @@
              >
     </cluster>
   </clusters>
-</databus>
+</conduit>

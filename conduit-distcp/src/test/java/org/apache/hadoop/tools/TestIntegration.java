@@ -81,7 +81,7 @@ public class TestIntegration {
     try {
       Path listFile = new Path("target/tmp1/listing").makeQualified(fs);
       addEntries(listFile, "*");
-      createFileForAudit("/databus/streams/test1/2013/10/10/10/10/file1.gz");
+      createFileForAudit("/conduit/streams/test1/2013/10/10/10/10/file1.gz");
       runTest(listFile, target, true);
       int numberOfCountersPerFile = 0;
       long sumOfCounterValues = 0;

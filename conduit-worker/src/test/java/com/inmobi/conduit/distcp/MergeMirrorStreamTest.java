@@ -81,7 +81,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Set<TestMergedStreamService> mergedStreamServices = new HashSet<TestMergedStreamService>();
     Set<TestMirrorStreamService> mirrorStreamServices = new HashSet<TestMirrorStreamService>();
 
-    initializeDatabus("test-mss-conduit.xml", null, null, true,
+    initializeConduit("test-mss-conduit.xml", null, null, true,
         localStreamServices, mergedStreamServices, mirrorStreamServices);
     Path localStreamlFile = new Path("file:/tmp/mergeservicetest/testcluster1/mergeservice/" +
         "streams_local/test1/2013/10/07/16/56/testcluster2-test1-2013-10-07-16-55_00002.gz");
@@ -264,7 +264,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Set<TestMergedStreamService> mergedStreamServices = new HashSet<TestMergedStreamService>();
     Set<TestMirrorStreamService> mirrorStreamServices = new HashSet<TestMirrorStreamService>();
 
-    initializeDatabus(filename, currentClusterName, additionalClustersToProcess,
+    initializeConduit(filename, currentClusterName, additionalClustersToProcess,
         addAllSourceClusters, localStreamServices, mergedStreamServices,
         mirrorStreamServices);
 
@@ -305,7 +305,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     }
   }
 
-  private void initializeDatabus(String filename, String currentClusterName,
+  private void initializeConduit(String filename, String currentClusterName,
       Set<String> additionalClustersToProcess, boolean addAllSourceClusters,
       Set<TestLocalStreamService> localStreamServices,
       Set<TestMergedStreamService> mergedStreamServices,

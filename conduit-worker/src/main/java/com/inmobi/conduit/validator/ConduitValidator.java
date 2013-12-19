@@ -27,7 +27,7 @@ public class ConduitValidator {
         "<-start (YYYY/MM/DD/HH/mm) | -relstart (minutes from now)>" +
         "<-stop (YYYY/MM/DD/HH/mm) | -relstop (minutes from now)>" +
         "[-numThreads (number of threads for parallel listing)]" +
-        "<-conf (databus.xml file path)>");
+        "<-conf (conduit.xml file path)>");
     System.out.println("-fix " +
         "<-stream (stream name)>" +
         "<-mode (stream mode: {local,merge,mirror})>" +
@@ -35,13 +35,13 @@ public class ConduitValidator {
         "<-start (YYYY/MM/DD/HH/mm)>" +
         "<-stop (YYYY/MM/DD/HH/mm)>" +
         "[-numThreads (number of threads for parallel listing)]" +
-        "<-conf (databus.xml file path)>");
+        "<-conf (conduit.xml file path)>");
     System.out.println("-checkpoint" +
         "<-stream (stream name)>" +
         "<-destCluster (destination cluster)>" +
         "[-srcCluster (source cluster) ]" +
         "<-date (YYYY/MM/DD/HH/mm)>" +
-        "<-conf (databus.xml file path)>");
+        "<-conf (conduit.xml file path)>");
   }
 
   public static void main(String[] args) throws Exception {
@@ -59,7 +59,7 @@ public class ConduitValidator {
     String relStartTime = null;
     String absoluteStopTime = null;
     String relStopTime = null;
-    String databusXmlFile = null;
+    String conduitXmlFile = null;
     int numThreads = 100;
     String destnCluster = null;
     String srcCluster = null;
@@ -104,7 +104,7 @@ public class ConduitValidator {
         numThreads = Integer.parseInt(args[i+1]);
         i += 2;
       } else if (args[i].equalsIgnoreCase("-conf")) {
-        databusXmlFile = args[i+1];
+        conduitXmlFile = args[i+1];
         i += 2;
       } else if (args[i].equalsIgnoreCase("-destCluster")) {
         destnCluster = args[i + 1];
@@ -122,12 +122,12 @@ public class ConduitValidator {
     }
     // validate the mandatory options
     if (createCheckpoint) {
-      if (databusXmlFile == null || dateString == null || streams == null
+      if (conduitXmlFile == null || dateString == null || streams == null
           || destnCluster == null) {
         printUsage();
         System.exit(-1);
       }
-    } else if (databusXmlFile == null
+    } else if (conduitXmlFile == null
         || !isTimeProvided(absoluteStartTime, relStartTime)
         || !isTimeProvided(absoluteStopTime, relStopTime)
         || (fix
@@ -136,9 +136,9 @@ public class ConduitValidator {
       printUsage();
       System.exit(-1);
     }
-    // parse databus.xml
+    // parse conduit.xml
     ConduitConfigParser configParser =
-        new ConduitConfigParser(databusXmlFile);
+        new ConduitConfigParser(conduitXmlFile);
     ConduitConfig config = configParser.getConfig();
     if (createCheckpoint) {
       date = CalendarHelper.minDirFormat.get().parse(dateString);

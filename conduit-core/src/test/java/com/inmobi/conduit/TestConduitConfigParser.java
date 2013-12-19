@@ -29,7 +29,7 @@ public class TestConduitConfigParser {
       Assert.assertEquals(cluster.getHadoopConf().get("mapred.job.tracker"),
           "local");
       Assert.assertEquals(cluster.getJobQueueName(), "default");
-      Assert.assertEquals(cluster.getRootDir(), "file://///tmp/databustest1/");
+      Assert.assertEquals(cluster.getRootDir(), "file://///tmp/conduittest1/");
       Assert.assertEquals(cluster.getReadUrl(), cluster.getHdfsUrl());
     }
 
@@ -67,7 +67,7 @@ public class TestConduitConfigParser {
       Assert.assertEquals(cluster.getHadoopConf().get("mapred.job.tracker"),
           "local");
       Assert.assertEquals(cluster.getJobQueueName(), "default");
-      Assert.assertEquals(cluster.getRootDir(), "file://///tmp/databustest2/");
+      Assert.assertEquals(cluster.getRootDir(), "file://///tmp/conduittest2/");
       Assert.assertEquals(cluster.getReadUrl(), "webhdfs://");
     }
 
@@ -86,11 +86,11 @@ public class TestConduitConfigParser {
     }
   }
 
-  private void createTmpDatabusXml(File file) throws IOException {
+  private void createTmpConduitXml(File file) throws IOException {
     StringBuffer buffer= new StringBuffer();
-    buffer.append("<databus>");
+    buffer.append("<conduit>");
     buffer.append("<defaults>");
-    buffer.append("<rootdir>/tmp/databustest3</rootdir>");
+    buffer.append("<rootdir>/tmp/conduittest3</rootdir>");
     buffer.append("<retentioninhours>96</retentioninhours>");
     buffer.append("</defaults>\n");
     buffer.append("<streams>");
@@ -115,10 +115,10 @@ public class TestConduitConfigParser {
     buffer.append("</cluster>");
     buffer.append("<cluster name='testcluster4' hdfsurl='file:///'");
     buffer.append(" jturl='localhost:8021'");
-    buffer.append(" jobqueuename='databus'>");
+    buffer.append(" jobqueuename='conduit'>");
     buffer.append("</cluster>");
     buffer.append("</clusters>");
-    buffer.append("</databus>");
+    buffer.append("</conduit>");
 
     BufferedWriter out = new BufferedWriter(new FileWriter(file));
     out.write(buffer.toString());
@@ -129,7 +129,7 @@ public class TestConduitConfigParser {
   public void testAbsolutePath() throws Exception {
     String path = "/tmp/tmp-conduit.xml";
     File file = new File(path);
-    createTmpDatabusXml(file);
+    createTmpConduitXml(file);
     ConduitConfigParser conduitConfigParser =
         new ConduitConfigParser(path);
 
@@ -148,16 +148,16 @@ public class TestConduitConfigParser {
             "local");
         Assert.assertEquals(cluster.getJobQueueName(), "default");
         Assert
-            .assertEquals(cluster.getRootDir(), "file://///tmp/databustest3/");
+            .assertEquals(cluster.getRootDir(), "file://///tmp/conduittest3/");
       }
       if (clusterentry.getKey().compareTo("testcluster4") == 0) {
         Assert.assertEquals(cluster.getName(), "testcluster4");
         Assert.assertEquals(cluster.getHdfsUrl(), "file:///");
         Assert.assertEquals(cluster.getHadoopConf().get("mapred.job.tracker"),
             "localhost:8021");
-        Assert.assertEquals(cluster.getJobQueueName(), "databus");
+        Assert.assertEquals(cluster.getJobQueueName(), "conduit");
         Assert
-            .assertEquals(cluster.getRootDir(), "file://///tmp/databustest3/");
+            .assertEquals(cluster.getRootDir(), "file://///tmp/conduittest3/");
       }
     }
 

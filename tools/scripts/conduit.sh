@@ -16,11 +16,11 @@
 # limitations under the License.
 
 
-# Runs a Databus command as a daemon.
+# Runs a Conduit command as a daemon.
 
-usage="Usage: databus.sh [start/stop] [<conf-file>]"
-DATABUS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../"
-echo "Running Databus from $DATABUS_DIR"
+usage="Usage: conduit.sh [start/stop] [<conf-file>]"
+CONDUIT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../"
+echo "Running Conduit from $CONDUIT_DIR"
 
 #echo $#
 # if no args specified, show usage
@@ -40,7 +40,7 @@ shift
 startStop=$var1
 configFile=$var2
 configDir=$(dirname $configFile)
-envfile=$configDir/databus.env
+envfile=$configDir/conduit.env
 
 if [ "$var1" == "start" ] || [ "$var1" == "stop" ] || [ "$var1" == "restart" ]
 then
@@ -60,10 +60,10 @@ fi
 . $envfile
 
 #create PID dir
-if [ "$DATABUS_PID_DIR" = "" ]; then
-  DATABUS_PID_DIR=/tmp/databus
+if [ "$CONDUIT_PID_DIR" = "" ]; then
+  CONDUIT_PID_DIR=/tmp/conduit
 fi
-export _DATABUS_DAEMON_PIDFILE=$DATABUS_PID_DIR/databus.pid
+export _CONDUIT_DAEMON_PIDFILE=$CONDUIT_PID_DIR/conduit.pid
 
 fi
 
@@ -84,65 +84,65 @@ for f in $HADOOP_HOME/hadoop-*.jar;do
   fi
 done
 export CLASSPATH=$CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
-export CLASSPATH=$CLASSPATH:`ls $DATABUS_DIR/lib/*jar | tr "\n" :`;
-export CLASSPATH=$DATABUS_DIR/conf:$CLASSPATH:$HADOOP_CONF_DIR:$DATABUS_DIR/bin
-export DATABUS_OPTS="-Dcom.sun.management.jmxremote.port=9089 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+export CLASSPATH=$CLASSPATH:`ls $CONDUIT_DIR/lib/*jar | tr "\n" :`;
+export CLASSPATH=$CONDUIT_DIR/conf:$CLASSPATH:$HADOOP_CONF_DIR:$CONDUIT_DIR/bin
+export CONDUIT_OPTS="-Dcom.sun.management.jmxremote.port=9089 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
 #echo setting classPath to $CLASSPATH
 
 case $startStop in
 
   (start)
 
-    mkdir -p "$DATABUS_PID_DIR"
+    mkdir -p "$CONDUIT_PID_DIR"
 
-    if [ -f $_DATABUS_DAEMON_PIDFILE ]; then
-      if kill -0 `cat $_DATABUS_DAEMON_PIDFILE` > /dev/null 2>&1; then
-        echo DATABUS running as process `cat $_DATABUS_DAEMON_PIDFILE`.  Stop it first.
+    if [ -f $_CONDUIT_DAEMON_PIDFILE ]; then
+      if kill -0 `cat $_CONDUIT_DAEMON_PIDFILE` > /dev/null 2>&1; then
+        echo CONDUIT running as process `cat $_CONDUIT_DAEMON_PIDFILE`.  Stop it first.
         exit 1
       fi
     fi
 
-    echo starting DATABUS
+    echo starting CONDUIT
 
-   nohup java $DATABUS_OPTS  -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -cp "$CLASSPATH" com.inmobi.conduit.Databus $configFile 2>&1 &
+   nohup java $CONDUIT_OPTS  -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -cp "$CLASSPATH" com.inmobi.conduit.Conduit $configFile 2>&1 &
    if [ $? -eq 0 ]
     then
-      if /bin/echo -n $! > "$_DATABUS_DAEMON_PIDFILE"
+      if /bin/echo -n $! > "$_CONDUIT_DAEMON_PIDFILE"
       then
         sleep 1
-        echo DATABUS STARTED
+        echo CONDUIT STARTED
       else
         echo FAILED TO WRITE PID
         exit 1
       fi
     else
-      echo DATABUS DID NOT START
+      echo CONDUIT DID NOT START
       exit 1
     fi
     ;;
           
   (stop)
 
-    if [ -f $_DATABUS_DAEMON_PIDFILE ]; then
-      if kill -0 `cat $_DATABUS_DAEMON_PIDFILE` > /dev/null 2>&1; then
-        echo -n Please be patient. It may take upto 1 min or more in stopping DATABUS..
-        kill -s SIGTERM `cat $_DATABUS_DAEMON_PIDFILE`
+    if [ -f $_CONDUIT_DAEMON_PIDFILE ]; then
+      if kill -0 `cat $_CONDUIT_DAEMON_PIDFILE` > /dev/null 2>&1; then
+        echo -n Please be patient. It may take upto 1 min or more in stopping CONDUIT..
+        kill -s SIGTERM `cat $_CONDUIT_DAEMON_PIDFILE`
       while :
         do 
-          if kill -0 `cat $_DATABUS_DAEMON_PIDFILE` > /dev/null 2>&1; then
+          if kill -0 `cat $_CONDUIT_DAEMON_PIDFILE` > /dev/null 2>&1; then
              echo -n "."
              sleep 1
           else
              break
           fi
         done
-        rm -rf  $_DATABUS_DAEMON_PIDFILE
+        rm -rf  $_CONDUIT_DAEMON_PIDFILE
         echo DONE
       else
-        echo no DATABUS to stop
+        echo no CONDUIT to stop
       fi
     else
-      echo no DATABUS to stop
+      echo no CONDUIT to stop
     fi
     ;;
 

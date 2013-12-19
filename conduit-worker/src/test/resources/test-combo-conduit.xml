@@ -1,4 +1,4 @@
-<databus>
+<conduit>
   <defaults>
     <rootdir>/test-combo</rootdir>
     <retentioninhours>25</retentioninhours>
@@ -911,4 +911,4 @@
     </cluster>
   </clusters>
 
-</databus>
+</conduit>

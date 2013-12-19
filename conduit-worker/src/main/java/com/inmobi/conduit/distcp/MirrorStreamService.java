@@ -42,7 +42,7 @@ import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
- * (i)   1 Mirror Thread per src DatabusConfig.Cluster from where streams need to be mirrored on destCluster
+ * (i)   1 Mirror Thread per src ConduitConfig.Cluster from where streams need to be mirrored on destCluster
  * (ii)  Mirror stream and mergedStream can't coexist on same Cluster
  * (iii) Mirror stream and merged Stream threads don't race with each other as they work on different
  * streams based on assumption(ii)
@@ -180,15 +180,15 @@ public class MirrorStreamService extends DistcpBaseService {
   LinkedHashMap<FileStatus, Path> prepareForCommit(Path tmpOut) throws Exception {
     /*
      * tmpOut would be like -
-     * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/ After
+     * /conduit/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/ After
      * distcp paths inside tmpOut would be eg:
      *
-     * /databus/system/distcp_mirror_<srcCluster>_<destCluster>
-     * /databus/streams/<streamName>/2012/1/13/15/7/
+     * /conduit/system/distcp_mirror_<srcCluster>_<destCluster>
+     * /conduit/streams/<streamName>/2012/1/13/15/7/
      * <hostname>-<streamName>-2012-01-16-07-21_00000.gz
      *
-     * tmpStreamRoot eg: /databus/system/distcp_mirror_<srcCluster>_
-     * <destCluster>/databus/streams/
+     * tmpStreamRoot eg: /conduit/system/distcp_mirror_<srcCluster>_
+     * <destCluster>/conduit/streams/
      */
 
     Path tmpStreamRoot = new Path(tmpOut.makeQualified(getDestFs()).toString()
@@ -196,7 +196,7 @@ public class MirrorStreamService extends DistcpBaseService {
     LOG.debug("tmpStreamRoot [" + tmpStreamRoot + "]");
 
     /* tmpStreamRoot eg -
-     * /databus/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/databus
+     * /conduit/system/tmp/distcp_mirror_<srcCluster>_<destCluster>/conduit
      * /streams/
      *
      * multiple streams can get mirrored from the same cluster
@@ -227,13 +227,13 @@ public class MirrorStreamService extends DistcpBaseService {
   private void createCommitPaths(LinkedHashMap<FileStatus, Path> commitPaths,
       List<FileStatus> streamPaths) {
     /*  Path eg in streamPaths -
-     *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+     *  /conduit/system/distcp_mirror_<srcCluster>_<destCluster>/conduit/streams
      *  /<streamName>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
      *  -21_00000.gz
      *
      * or it could be an emptyDir like
      *  /* Path eg in streamPaths -
-     *  /databus/system/distcp_mirror_<srcCluster>_<destCluster>/databus/streams
+     *  /conduit/system/distcp_mirror_<srcCluster>_<destCluster>/conduit/streams
      *  /<streamName>/2012/1/13/15/7/
      *
      */
