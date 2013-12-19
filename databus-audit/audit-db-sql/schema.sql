@@ -39,14 +39,4 @@ ALTER TABLE daily_databus_summary
 GRANT ALL ON TABLE daily_databus_summary TO databus_user;
 GRANT SELECT ON TABLE daily_databus_summary TO dbreadonly;
 
--- Trigger: daily_databus_insert_trigger on daily_databus_summary
-
--- DROP TRIGGER daily_databus_insert_trigger ON daily_databus_summary;
-
-CREATE TRIGGER daily_databus_insert_trigger
-  BEFORE INSERT
-  ON daily_databus_summary
-  FOR EACH ROW
-  EXECUTE PROCEDURE daily_databus_insert_trigger_function();
-
 
