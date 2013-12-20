@@ -87,7 +87,7 @@ public class AuditStats {
         DatabusConfigParser parser = new DatabusConfigParser(fullPath);
         databusConfigList.add(parser.getConfig());
       } catch (Exception e) {
-        e.printStackTrace();
+        LOG.error("Incorrect config in path:"+fullPath, e);
       }
     }
   }
