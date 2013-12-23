@@ -1,28 +1,32 @@
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#                                                                                                             #
-#                                            manage_partition.sh                                              #
-#                                  Script for creating partitions automatically                               #
-#                                        Written By Sushil on : 2011-03-28                                    #
-# NOTE :                                                                                                      #
-# 1. Arguments Used                                                                                           #
-#      $1 - Table name                                                                                        #
-#      $2 - Column name                                                                                       #
-#      $3 - Starting Month                                                                                    #
-#      $4 - No of partitions                                                                                  #
-#      $5 - DBuser to connect 
-#  eg. ./manage_partition.sh daily_conduit_summary timeinterval 2012-01-01 30 adarsh > /tmp/part_schema.sql   #
-#                                                                                                             #
-# 2. Save the output into a .sql file and execute it. This will create all partitions and respective indices  #
-#                                                                                                             #
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                                                                                                       #
+#                                            manage_partition.sh                                                        #
+#                                  Script for creating partitions automatically                                         #
+#                                        Written By Sushil on : 2011-03-28                                              #
+# NOTE :                                                                                                                #
+# 1. Arguments Used                                                                                                     #
+#      $1 - Table name                                                                                                  #
+#      $2 - Column name                                                                                                 #
+#      $3 - Starting Month                                                                                              #
+#      $4 - No of partitions                                                                                            #
+#      $5 - DB to connect                                                                                               #
+#      $6 - DBuser to connect                                                                                           #
+#      $7 - Port Number to connect to the db                                                                            #
+#  eg. ./manage_partition.sh daily_databus_summary timeinterval 2012-01-01 30 audit adarsh 5432 > /tmp/part_schema.sql  #
+#                                                                                                                       #
+# 2. Save the output into a .sql file and execute it. This will create all partitions and respective indices            #
+#                                                                                                                       #
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 Prg=$(basename $0)
 PartTable=$1
 PartColumn=$2
 StartPartMonth=$3
 NoOfPart=$4
-dbuser=$5
-DbConnect="/usr/lib/postgresql/9.2/bin/psql -p5499 -U $dbuser conduit_audit"
+db=$5
+dbuser=$6
+port=$7
+DbConnect="/usr/lib/postgresql/9.1/bin/psql -p $port -h localhost $dbuser $db"
 
 for (( i = 0; i < $NoOfPart; i++ ))
 do
@@ -68,7 +72,7 @@ EOF
 )
 
 CreatePartAlter=$($DbConnect -t <<EOF
-SELECT  'ALTER TABLE $PartTable$DatePrefix owner to conduit_user;';
+SELECT  'ALTER TABLE $PartTable$DatePrefix owner to $dbuser;';
 \q
 EOF
 )
@@ -83,4 +87,3 @@ echo $CreatePartInd3
 echo $CreatePartInd4
 echo $CreatePartAlter
 done
-                                   
