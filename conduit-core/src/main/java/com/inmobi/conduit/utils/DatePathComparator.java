@@ -29,7 +29,7 @@ public class DatePathComparator implements Comparator<FileStatus> {
 
     /*
     * Path eg:
-    * /conduit/system/distcp_mirror_srcCluster_destCluster/conduit/streams
+    * <rootdir>/system/distcp_mirror_srcCluster_destCluster/conduit/streams
     * /<stream-Name>/2012/1/13/15/7/<hostname>-<streamName>-2012-01-16-07
     * -21_00000.gz
     *

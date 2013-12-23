@@ -58,7 +58,7 @@ public class MergedStreamService extends DistcpBaseService {
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess)
           throws Exception {
-    super(config, "MergedStreamService_" + AbstractService.getServiceName(streamsToProcess),
+    super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
 
