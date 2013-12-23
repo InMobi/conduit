@@ -31,6 +31,7 @@ import java.util.Set;
 import com.inmobi.conduit.utils.CalendarHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -555,31 +556,45 @@ public abstract class AbstractService implements Service, Runnable {
     }
     Table<String, Long, Long> result = HashBasedTable.create();
     for (Path filePath : partFiles) {
-      Scanner scanner;
+      FSDataInputStream fin = null;
+      Scanner scanner = null;
       try {
-        scanner = new Scanner(fs.open(filePath));
+        fin = fs.open(filePath);
+        scanner = new Scanner(fin);
+
+        while (scanner.hasNext()) {
+          String counterNameValue = null;
+          try {
+            counterNameValue = scanner.next();
+            String tmp[] = counterNameValue.split(DatabusConstants.
+                AUDIT_COUNTER_NAME_DELIMITER);
+            if (tmp.length < 4) {
+              LOG.error("Malformed counter name,skipping " + counterNameValue);
+              continue;
+            }
+            String streamFileNameCombo = tmp[0]
+                + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
+            Long publishTimeWindow = Long.parseLong(tmp[2]);
+            Long numOfMsgs = Long.parseLong(tmp[3]);
+            result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
+          } catch (Exception e) {
+            LOG.error("Counters file has malformed line with counter name = "
+                + counterNameValue + " ..skipping the line", e);
+          }
+        }
       } catch (IOException e1) {
         LOG.error("Error while opening file " + filePath + " Skipping");
         continue;
-      }
-      while (scanner.hasNext()) {
-        String counterNameValue = null;
+      } finally {
         try {
-          counterNameValue = scanner.next();
-          String tmp[] = counterNameValue.split(ConduitConstants.
-              AUDIT_COUNTER_NAME_DELIMITER);
-          if (tmp.length < 4) {
-            LOG.error("Malformed counter name,skipping " + counterNameValue);
-            continue;
+          if (fin != null) {
+            fin.close();
           }
-          String streamFileNameCombo = tmp[0]
-              + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
-          Long publishTimeWindow = Long.parseLong(tmp[2]);
-          Long numOfMsgs = Long.parseLong(tmp[3]);
-          result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
+          if (scanner != null) {
+            scanner.close();
+          }
         } catch (Exception e) {
-          LOG.error("Counters file has malformed line with counter name = "
-              + counterNameValue + " ..skipping the line", e);
+          LOG.warn("Error while closing file " + filePath + " or scanner");
         }
       }
     }

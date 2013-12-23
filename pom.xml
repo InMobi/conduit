@@ -9,8 +9,8 @@
 
   <groupId>com.inmobi.conduit</groupId>
   <artifactId>conduit-parent</artifactId>
-  <version>2.2.2-SNAPSHOT</version>
   <name>Conduit</name>
+  <version>2.2.3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>

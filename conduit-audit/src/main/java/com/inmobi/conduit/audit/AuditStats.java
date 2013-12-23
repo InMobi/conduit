@@ -87,7 +87,7 @@ public class AuditStats {
         ConduitConfigParser parser = new ConduitConfigParser(fullPath);
         conduitConfigList.add(parser.getConfig());
       } catch (Exception e) {
-        e.printStackTrace();
+        LOG.error("Incorrect config in path:"+fullPath, e);
       }
     }
   }
