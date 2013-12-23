@@ -566,14 +566,14 @@ public abstract class AbstractService implements Service, Runnable {
           String counterNameValue = null;
           try {
             counterNameValue = scanner.next();
-            String tmp[] = counterNameValue.split(DatabusConstants.
+            String tmp[] = counterNameValue.split(ConduitConstants.
                 AUDIT_COUNTER_NAME_DELIMITER);
             if (tmp.length < 4) {
               LOG.error("Malformed counter name,skipping " + counterNameValue);
               continue;
             }
             String streamFileNameCombo = tmp[0]
-                + DatabusConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
+                + ConduitConstants.AUDIT_COUNTER_NAME_DELIMITER + tmp[1];
             Long publishTimeWindow = Long.parseLong(tmp[2]);
             Long numOfMsgs = Long.parseLong(tmp[3]);
             result.put(streamFileNameCombo, publishTimeWindow, numOfMsgs);
