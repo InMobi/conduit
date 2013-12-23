@@ -1,9 +1,0 @@
-Package: databus-audit
-Version: [[project.version]] 
-Section:  misc
-Priority: optional
-Architecture: all
-Pre-Depends: sun-java6-jre | java2-runtime
-Maintainer: Inmobi
-Description: Databus Audit is a feeder daemon that reads ,process and feed the audit messages to a DB
-Distribution: alpha

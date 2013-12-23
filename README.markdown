@@ -1,4 +1,4 @@
-# What is Databus?
+# What is Conduit?
   Yet another streaming data transport system
 
 # Why do we need when scribe, kafka, flume and other system exist?
@@ -24,8 +24,8 @@
   * Latency of 1-2 minutes in local data center, 2-3 minutes in remote data
   center and 4-5 minutes in the mirrored is acceptable.
   * "_" is the recommended character to use in stream Name. You should never
-  use "-" in stream names as it's reserved by DATABUS
-  * All clusters across data centers should run in the same TIME ZONE. Databus
+  use "-" in stream names as it's reserved by CONDUIT
+  * All clusters across data centers should run in the same TIME ZONE. Conduit
    uses time as paths for files and for mirroring/merging we need same paths across D.C.'s.
    Recommendation - UTC.
 
@@ -37,16 +37,16 @@
   clusters for same stream
   * Mirrored Stream - Copy of Merged Stream with paths being preserved.
                     
-# Databus from 1000ft
-![diagram](https://github.com/InMobi/data-bus/blob/master/doc/Databus-HighLevel-Arch.png?raw=true)   
+# Conduit from 1000ft
+![diagram](https://github.com/InMobi/data-bus/blob/master/doc/Conduit-HighLevel-Arch.png?raw=true)   
                     
 
 # How to use data bus
   * Download the package from guthub which has all the required JARS
-  * configure databus.xml
-  * configure databus.cfg
-  * Starting - . databus.sh start databus.cfg
-  * Stopping - . databus.sh stop databus.cfg
+  * configure conduit.xml
+  * configure conduit.cfg
+  * Starting - . conduit.sh start conduit.cfg
+  * Stopping - . conduit.sh stop conduit.cfg
              
 
             

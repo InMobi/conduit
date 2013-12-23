@@ -1,0 +1,9 @@
+Package: conduit
+Version: [[project.version]] 
+Section:  misc
+Priority: optional
+Architecture: all
+Pre-Depends: sun-java6-jre | java2-runtime
+Maintainer: Inmobi
+Description: Conduit is a distributed, highly available log processing platform
+Distribution: alpha
