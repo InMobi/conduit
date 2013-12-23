@@ -1,8 +1,8 @@
--- Table: daily_databus_summary
+-- Table: daily_conduit_summary
 
--- DROP TABLE daily_databus_summary;
+-- DROP TABLE daily_conduit_summary;
 
-CREATE TABLE daily_databus_summary
+CREATE TABLE daily_conduit_summary
 (
   timeinterval bigint NOT NULL,
   hostname character varying(50) NOT NULL,
@@ -27,26 +27,26 @@ CREATE TABLE daily_databus_summary
   c120 bigint,
   c240 bigint,
   c600 bigint,
-  CONSTRAINT daily_databus_summary_pkey PRIMARY KEY (timeinterval, hostname, tier, topic, cluster)
+  CONSTRAINT daily_conduit_summary_pkey PRIMARY KEY (timeinterval, hostname, tier, topic, cluster)
 )
 WITH (
   OIDS=FALSE
 );
 
-ALTER TABLE daily_databus_summary
-  OWNER TO databus_user;
+ALTER TABLE daily_conduit_summary
+  OWNER TO conduit_user;
 
-GRANT ALL ON TABLE daily_databus_summary TO databus_user;
-GRANT SELECT ON TABLE daily_databus_summary TO dbreadonly;
+GRANT ALL ON TABLE daily_conduit_summary TO conduit_user;
+GRANT SELECT ON TABLE daily_conduit_summary TO dbreadonly;
 
--- Trigger: daily_databus_insert_trigger on daily_databus_summary
+-- Trigger: daily_conduit_insert_trigger on daily_conduit_summary
 
--- DROP TRIGGER daily_databus_insert_trigger ON daily_databus_summary;
+-- DROP TRIGGER daily_conduit_insert_trigger ON daily_conduit_summary;
 
-CREATE TRIGGER daily_databus_insert_trigger
+CREATE TRIGGER daily_conduit_insert_trigger
   BEFORE INSERT
-  ON daily_databus_summary
+  ON daily_conduit_summary
   FOR EACH ROW
-  EXECUTE PROCEDURE daily_databus_insert_trigger_function();
+  EXECUTE PROCEDURE daily_conduit_insert_trigger_function();
 
 

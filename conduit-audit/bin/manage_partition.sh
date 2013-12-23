@@ -10,7 +10,7 @@
 #      $3 - Starting Month                                                                                    #
 #      $4 - No of partitions                                                                                  #
 #      $5 - DBuser to connect 
-#  eg. ./manage_partition.sh daily_databus_summary timeinterval 2012-01-01 30 adarsh > /tmp/part_schema.sql   #
+#  eg. ./manage_partition.sh daily_conduit_summary timeinterval 2012-01-01 30 adarsh > /tmp/part_schema.sql   #
 #                                                                                                             #
 # 2. Save the output into a .sql file and execute it. This will create all partitions and respective indices  #
 #                                                                                                             #
@@ -22,7 +22,7 @@ PartColumn=$2
 StartPartMonth=$3
 NoOfPart=$4
 dbuser=$5
-DbConnect="/usr/lib/postgresql/9.2/bin/psql -p5499 -U $dbuser databus_audit"
+DbConnect="/usr/lib/postgresql/9.2/bin/psql -p5499 -U $dbuser conduit_audit"
 
 for (( i = 0; i < $NoOfPart; i++ ))
 do
@@ -68,7 +68,7 @@ EOF
 )
 
 CreatePartAlter=$($DbConnect -t <<EOF
-SELECT  'ALTER TABLE $PartTable$DatePrefix owner to databus_user;';
+SELECT  'ALTER TABLE $PartTable$DatePrefix owner to conduit_user;';
 \q
 EOF
 )
