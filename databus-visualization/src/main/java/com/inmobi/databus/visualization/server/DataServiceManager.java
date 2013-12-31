@@ -349,7 +349,7 @@ public class DataServiceManager {
         new AuditTimeLineDbQuery(
             filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_STRING, ServerConstants.TIMEZONE, feederConfig);
+            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, feederConfig);
     try {
       dbQuery.execute();
     } catch (Exception e) {
