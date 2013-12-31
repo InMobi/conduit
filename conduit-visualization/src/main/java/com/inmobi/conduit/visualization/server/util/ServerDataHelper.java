@@ -1,6 +1,7 @@
 package com.inmobi.conduit.visualization.server.util;
 
 import com.google.protobuf.gwt.server.ServerJsonStreamFactory;
+
 import com.inmobi.conduit.visualization.server.MessageStats;
 import com.inmobi.conduit.visualization.server.Node;
 import com.inmobi.conduit.visualization.server.NodeKey;
@@ -9,6 +10,7 @@ import com.inmobi.conduit.visualization.server.VisualizationProperties;
 import com.inmobi.conduit.visualization.shared.RequestResponse;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.messaging.ClientConfig;
+
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -235,5 +237,17 @@ public class ServerDataHelper {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder()
             .setLoadMainPanelResponse(loadMainPanelResponse).build());
+  }
+  
+  
+  public String setGraphDataResponseTS(String jsonRestult) {
+   
+   
+    return ServerJsonStreamFactory.getInstance().serializeMessage(
+        RequestResponse.Response
+            .newBuilder()
+            .setTimeLineGraphResponse(
+                RequestResponse.TimeLineGraphResponse.newBuilder()
+                    .setJsonString(jsonRestult)).build());
   }
 }

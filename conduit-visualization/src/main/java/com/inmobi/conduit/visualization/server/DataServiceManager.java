@@ -1,19 +1,19 @@
 package com.inmobi.conduit.visualization.server;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.*;
-
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.audit.Tier;
+import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
+import com.inmobi.conduit.audit.query.AuditTimeLineDbQuery;
+import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
 
-import com.inmobi.conduit.ConduitConfig;
-import com.inmobi.conduit.audit.Tier;
-import com.inmobi.conduit.audit.Tuple;
-import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
+import java.io.File;
+import java.io.FileFilter;
+import java.util.*;
 
 public class DataServiceManager {
 
@@ -357,7 +357,28 @@ public class DataServiceManager {
     return Collections.unmodifiableList(conduitConfig);
   }
 
+  /**
+   * Will retrieve the timeseries information for a date range
+   */
   public String getTimeLineData(String filterValues) {
-    return null;
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
+    AuditTimeLineDbQuery dbQuery =
+        new AuditTimeLineDbQuery(
+            filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, feederConfig);
+    try {
+      dbQuery.execute();
+    } catch (Exception e) {
+      LOG.error("Exception while executing query: ", e);
+    }
+    LOG.info("Audit query: " + dbQuery.toString());
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
+    return ServerDataHelper.getInstance().setGraphDataResponseTS(dbQuery.convertToJson());
   }
 }
