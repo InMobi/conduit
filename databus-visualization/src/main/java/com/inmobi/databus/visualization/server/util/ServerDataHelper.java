@@ -4,7 +4,9 @@ import com.google.protobuf.gwt.server.ServerJsonStreamFactory;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.visualization.server.*;
 import com.inmobi.databus.visualization.shared.RequestResponse;
+import com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse;
 import com.inmobi.messaging.ClientConfig;
+
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -231,5 +233,17 @@ public class ServerDataHelper {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder()
             .setLoadMainPanelResponse(loadMainPanelResponse).build());
+  }
+  
+  
+  public String setGraphDataResponseTS(String jsonRestult) {
+   
+   
+    return ServerJsonStreamFactory.getInstance().serializeMessage(
+        RequestResponse.Response
+            .newBuilder()
+            .setTimeLineGraphResponse(
+                TimeLineGraphResponse.newBuilder()
+                    .setJsonString(jsonRestult)).build());
   }
 }

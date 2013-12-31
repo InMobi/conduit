@@ -34,6 +34,15 @@ public class Tuple {
     this.sent = sent;
     setReceived();
   }
+  
+  
+  public Tuple(String tier, String cluster, Date timestamp, String topic,
+      Long sent, Long received) {
+    this(null, tier, cluster, timestamp, topic,
+        new HashMap<LatencyColumns, Long>(), sent);
+    this.received = received;
+  }
+  
 
   private void setReceived() {
     received = 0l;

@@ -397,10 +397,9 @@ public class MirrorStreamService extends DistcpBaseService {
 
   }
 
-
   @Override
   protected String getTier() {
-    return "mirror";
+    return "MIRROR";
   }
   /*
    * Full path needs to be preserved for mirror stream

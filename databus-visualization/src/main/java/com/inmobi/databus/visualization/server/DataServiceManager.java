@@ -6,8 +6,10 @@ import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.audit.query.AuditDbQuery;
+import com.inmobi.databus.audit.query.AuditTimeLineDbQuery;
 import com.inmobi.databus.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
+
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -337,7 +339,28 @@ public class DataServiceManager {
     return Collections.unmodifiableList(dataBusConfig);
   }
 
+  /**
+   * Will retrieve the timeseries information for a date range
+   */
   public String getTimeLineData(String filterValues) {
-    return null;
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
+    AuditTimeLineDbQuery dbQuery =
+        new AuditTimeLineDbQuery(
+            filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, feederConfig);
+    try {
+      dbQuery.execute();
+    } catch (Exception e) {
+      LOG.error("Exception while executing query: ", e);
+    }
+    LOG.info("Audit query: " + dbQuery.toString());
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
+    return ServerDataHelper.getInstance().setGraphDataResponseTS(dbQuery.convertToJson());
   }
 }

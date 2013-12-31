@@ -388,8 +388,11 @@ ConfigConstants {
         }
 
         String currentFile = getCurrentFile(fs, files);
-
+        LOG.debug("last file " + currentFile + " in the collector directory "
+            + collector.getPath());
+        
         for (FileStatus file : files) {
+          LOG.debug("Processing " + file.getPath());
           processFile(file, currentFile, checkPointValue, fs, results,
               collectorPaths);
         }
@@ -626,7 +629,7 @@ ConfigConstants {
   }
 
   protected String getTier() {
-    return "local";
+    return "LOCAL";
   }
 
   /*

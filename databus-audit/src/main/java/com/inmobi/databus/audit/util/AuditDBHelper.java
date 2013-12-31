@@ -322,6 +322,25 @@ public class AuditDBHelper {
     }
     return tuple;
   }
+  
+  private static Tuple createNewTupleForTS(ResultSet rs) {
+	    Tuple tuple;
+	    try {
+	      tuple = new Tuple(rs.getString(Column.TIER.toString()),
+	    	  rs.getString(Column.CLUSTER.toString()),
+	    	  new Date(rs.getLong(Column.TIMEINTERVAL.toString())/1000 ),
+	    	  rs.getString(Column.TOPIC.toString()),
+	          rs.getLong(AuditDBConstants.SENT),
+	          rs.getLong(AuditDBConstants.RECEIVED));
+	    } catch (SQLException e) {
+	      logNextException("SException thrown while creating new tuple ", e);
+	      return null;
+	    }
+	    return tuple;
+	  }
+  
+  
+  
 
   private String getSelectStmtForRetrieve(Filter filter, GroupBy groupBy) {
     String sumString = "", whereString = "", groupByString = "";
@@ -356,6 +375,58 @@ public class AuditDBHelper {
     LOG.debug("Select statement " + statement);
     return statement;
   }
+  
+  
+	  
+  
+  /**
+   * 
+	 select Sum(c0+c1+c2+c3+c4+c5+c6+c7+c8+c9+c10+c15+c30+c60+c120+c240+c600) as received, sum(sent) as sent ,cluster , timeinterval , tier , topic
+	 from daily_databus_summary  
+	 where TIMEINTERVAL >= '1385856000000' and TIMEINTERVAL < '1386028800000' 
+	 group by timeinterval , cluster , tier , topic
+	 order by timeinterval 
+   * @param filter
+   * @param groupBy
+   * @return
+   */
+  
+  private String getSelectStmtForTimeLine(Filter filter, GroupBy groupBy) {
+	    StringBuffer sumString = new StringBuffer(", Sum(");
+	    String  whereString = "", groupByString = "";
+	    for (LatencyColumns latencyColumn : LatencyColumns.values()) {
+		      sumString.append( latencyColumn.toString() + " + " ) ;
+		    }
+	    sumString =sumString.deleteCharAt(sumString.length() -2);
+		    sumString.append(") "); 
+	    if (filter.getFilters() != null) {
+	      for (Column column : Column.values()) {
+	        List<String> values = filter.getFilters().get(column);
+	        if (values != null && !values.isEmpty()) {
+	          whereString += " and (" + column.toString() + " = ?";
+	          for (int i = 1; i < values.size(); i++) {
+	            whereString += " or " + column.toString() + " = ?";
+	          }
+	          whereString += ")";
+	        }
+	      }
+	    }
+	    for (Column column : groupBy.getGroupByColumns()) {
+	      groupByString += ", " + column.toString();
+	    }
+	    String statement =
+	        "select Sum(" + AuditDBConstants.SENT + ") as " + AuditDBConstants
+	            .SENT + sumString+ " as " + AuditDBConstants.RECEIVED +" " + groupByString + " from " + tableName + " " +
+	            "where " + AuditDBConstants.TIMESTAMP + " >= ?" 
+	            + " and "+ AuditDBConstants.TIMESTAMP + " < ? " + whereString;
+	    if(!groupByString.isEmpty()) {
+	      statement += " group by " + groupByString.substring(1);
+	      statement += " order by " + groupByString.substring(1);
+	    }
+	    LOG.debug("Select statement " + statement);
+	    return statement;
+	  }
+  
 
   public static void logNextException(String message, SQLException e) {
     while (e != null) {
@@ -363,4 +434,68 @@ public class AuditDBHelper {
       e = e.getNextException();
     }
   }
+  
+  
+  public Set<Tuple> retrieveTimeSeries(Date toDate, Date fromDate, Filter filter,
+	      GroupBy groupBy) {
+	    LOG.debug("Retrieving from db  from-time :" + fromDate + " to-date :" + ":"
+	        + toDate + " filter :" + filter.toString());
+	    Set<Tuple> tupleSet = new HashSet<Tuple>();
+
+	    LOG.info("Connecting to DB ...");
+	    Connection connection = getConnection(
+	        config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
+	        config.getString(AuditDBConstants.DB_URL),
+	        config.getString(AuditDBConstants.DB_USERNAME),
+	        config.getString(AuditDBConstants.DB_PASSWORD));
+	    if (connection == null) {
+	      LOG.error("Connection not initialized returning ...");
+	      return null;
+	    }
+	    LOG.info("Connected to DB");
+	    ResultSet rs = null;
+	    String statement = getSelectStmtForTimeLine(filter, groupBy);
+	    LOG.debug("Select statement :" + statement);
+	    PreparedStatement preparedstatement = null;
+	    try {
+	      preparedstatement = connection.prepareStatement(statement);
+	      int index = 1;
+	      preparedstatement.setLong(index++, fromDate.getTime());
+	      preparedstatement.setLong(index++, toDate.getTime());
+	      if (filter.getFilters() != null) {
+	        for (Column column : Column.values()) {
+	          List<String> values = filter.getFilters().get(column);
+	          if (values != null && !values.isEmpty()) {
+	            for (String value : values) {
+	              preparedstatement.setString(index++, value);
+	            }
+	          }
+	        }
+	      }
+	      LOG.debug("Prepared statement is " + preparedstatement.toString());
+	      rs = preparedstatement.executeQuery();
+	      while (rs.next()) {
+	        Tuple tuple = createNewTupleForTS(rs);
+	        if (tuple == null) {
+	          LOG.error("Returned null tuple..returning");
+	          return null;
+	        }
+	        tupleSet.add(tuple);
+	      }
+	      connection.commit();
+	    } catch (SQLException e) {
+	      logNextException("SQLException encountered", e);
+	    } finally {
+	      try {
+	        if (rs != null)
+	          rs.close();
+	        if (preparedstatement != null)
+	          preparedstatement.close();
+	        connection.close();
+	      } catch (SQLException e) {
+	        logNextException("Exception while closing ", e);
+	      }
+	    }
+	    return tupleSet;
+	  }
 }
