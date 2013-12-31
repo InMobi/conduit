@@ -562,9 +562,18 @@ public final class RequestResponse {
     public boolean hasLoadMainPanelResponse() { return hasLoadMainPanelResponse; }
     public com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse getLoadMainPanelResponse() { return loadMainPanelResponse_; }
     
+    // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+    public static final int TIMELINEGRAPHRESPONSE_FIELD_NUMBER = 3;
+    private boolean hasTimeLineGraphResponse;
+    @com.google.protobuf.gwt.shared.FieldNumber(3)
+    private com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse timeLineGraphResponse_;
+    public boolean hasTimeLineGraphResponse() { return hasTimeLineGraphResponse; }
+    public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() { return timeLineGraphResponse_; }
+    
     private void initFields() {
       graphDataResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
       loadMainPanelResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance();
+      timeLineGraphResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -580,6 +589,10 @@ public final class RequestResponse {
       
       if (hasLoadMainPanelResponse()) {
         output.writeMessage(2, "loadMainPanelResponse", getLoadMainPanelResponse());
+      }
+      
+      if (hasTimeLineGraphResponse()) {
+        output.writeMessage(3, "timeLineGraphResponse", getTimeLineGraphResponse());
       }
     }
     
@@ -673,6 +686,10 @@ public final class RequestResponse {
         if (other.hasLoadMainPanelResponse()) {
           mergeLoadMainPanelResponse(other.getLoadMainPanelResponse());
         }
+        
+        if (other.hasTimeLineGraphResponse()) {
+          mergeTimeLineGraphResponse(other.getTimeLineGraphResponse());
+        }
       
         return this;
       }
@@ -698,6 +715,16 @@ public final class RequestResponse {
           }
           loadMainPanelResponseBuilder.readFrom(loadMainPanelResponseJson);
           setLoadMainPanelResponse(loadMainPanelResponseBuilder.buildParsed());
+        }
+        
+        com.google.protobuf.gwt.shared.JsonStream timeLineGraphResponseJson = input.readStream(3);
+        if (timeLineGraphResponseJson != null) {
+          com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder timeLineGraphResponseBuilder = com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder();
+          if (hasTimeLineGraphResponse()) {
+            timeLineGraphResponseBuilder.mergeFrom(getTimeLineGraphResponse());
+          }
+          timeLineGraphResponseBuilder.readFrom(timeLineGraphResponseJson);
+          setTimeLineGraphResponse(timeLineGraphResponseBuilder.buildParsed());
         }
         
         return this;
@@ -777,6 +804,43 @@ public final class RequestResponse {
         return this;
       }
       
+      // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+      public boolean hasTimeLineGraphResponse() {
+        return result.hasTimeLineGraphResponse();
+      }
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() {
+        return result.getTimeLineGraphResponse();
+      }
+      public Builder setTimeLineGraphResponse(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
+        }
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = value;
+        return this;
+      }
+      public Builder setTimeLineGraphResponse(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder builderForValue) {
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeTimeLineGraphResponse(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
+        if (result.hasTimeLineGraphResponse() &&
+            result.timeLineGraphResponse_ != com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance()) {
+          result.timeLineGraphResponse_ =
+            com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder(result.timeLineGraphResponse_).mergeFrom(value).buildPartial();
+        } else {
+          result.timeLineGraphResponse_ = value;
+        }
+        result.hasTimeLineGraphResponse = true;
+        return this;
+      }
+      public Builder clearTimeLineGraphResponse() {
+        result.hasTimeLineGraphResponse = false;
+        result.timeLineGraphResponse_ = com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+        return this;
+      }
+      
       // @@protoc_insertion_point(builder_scope:Response)
     }
     
@@ -787,6 +851,187 @@ public final class RequestResponse {
     }
     
     // @@protoc_insertion_point(class_scope:Response)
+  }
+  
+  public static final class TimeLineGraphResponse extends
+      com.google.protobuf.gwt.shared.GeneratedMessage {
+    // Use TimeLineGraphResponse.newBuilder() to construct.
+    private TimeLineGraphResponse() {
+      initFields();
+    }
+    
+    private TimeLineGraphResponse(boolean noInit) {}
+    
+    private static final TimeLineGraphResponse defaultInstance;
+    public static TimeLineGraphResponse getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public TimeLineGraphResponse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    // optional string jsonString = 1;
+    public static final int JSONSTRING_FIELD_NUMBER = 1;
+    private boolean hasJsonString;
+    @com.google.protobuf.gwt.shared.FieldNumber(1)
+    private java.lang.String jsonString_ = "";
+    public boolean hasJsonString() { return hasJsonString; }
+    public java.lang.String getJsonString() { return jsonString_; }
+    
+    private void initFields() {
+    }
+    
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
+      throws java.io.IOException {
+      
+      if (hasJsonString()) {
+        output.writeString(1, "jsonString", getJsonString());
+      }
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
+          com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse, Builder> {
+      
+      private com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse result;
+      
+      // Construct using com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse();
+        return builder;
+      }
+      
+      protected com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse getDefaultInstanceForType() {
+        return com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse buildParsed()
+          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse buildPartial() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
+        if (other instanceof com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse) {
+          return mergeFrom((com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse)other);
+        }
+        return this;
+      }
+      
+      public Builder mergeFrom(com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse other) {
+        if (other == com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance()) return this;
+        
+        if (other.hasJsonString()) {
+          setJsonString(other.getJsonString());
+        }
+      
+        return this;
+      }
+      
+      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
+        throws java.io.IOException {
+        
+        java.lang.String jsonString = input.readString(1);
+        if (jsonString != null) {
+          setJsonString(jsonString);
+        }
+        
+        return this;
+      }
+      
+      // optional string jsonString = 1;
+      public boolean hasJsonString() {
+        return result.hasJsonString();
+      }
+      public java.lang.String getJsonString() {
+        return result.getJsonString();
+      }
+      public Builder setJsonStringIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setJsonString(value);
+        }
+        return this;
+      }
+      public Builder setJsonString(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasJsonString = true;
+        result.jsonString_ = value;
+        return this;
+      }
+      public Builder clearJsonString() {
+        result.hasJsonString = false;
+        result.jsonString_ = getDefaultInstance().getJsonString();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:TimeLineGraphResponse)
+    }
+    
+    static {
+      defaultInstance = new TimeLineGraphResponse(true);
+      com.inmobi.databus.visualization.shared.RequestResponse.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:TimeLineGraphResponse)
   }
   
   public static final class GraphDataResponse extends
@@ -1965,6 +2210,46 @@ public final class RequestResponse {
     public boolean hasWarnLossThresholdDiff() { return hasWarnLossThresholdDiff; }
     public java.lang.String getWarnLossThresholdDiff() { return warnLossThresholdDiff_; }
     
+    // optional string localSla = 12;
+    public static final int LOCALSLA_FIELD_NUMBER = 12;
+    private boolean hasLocalSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(12)
+    private java.lang.String localSla_ = "";
+    public boolean hasLocalSla() { return hasLocalSla; }
+    public java.lang.String getLocalSla() { return localSla_; }
+    
+    // optional string mergeSla = 13;
+    public static final int MERGESLA_FIELD_NUMBER = 13;
+    private boolean hasMergeSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(13)
+    private java.lang.String mergeSla_ = "";
+    public boolean hasMergeSla() { return hasMergeSla; }
+    public java.lang.String getMergeSla() { return mergeSla_; }
+    
+    // optional string mirrorSla = 14;
+    public static final int MIRRORSLA_FIELD_NUMBER = 14;
+    private boolean hasMirrorSla;
+    @com.google.protobuf.gwt.shared.FieldNumber(14)
+    private java.lang.String mirrorSla_ = "";
+    public boolean hasMirrorSla() { return hasMirrorSla; }
+    public java.lang.String getMirrorSla() { return mirrorSla_; }
+    
+    // optional string rolleduptilldays = 15;
+    public static final int ROLLEDUPTILLDAYS_FIELD_NUMBER = 15;
+    private boolean hasRolleduptilldays;
+    @com.google.protobuf.gwt.shared.FieldNumber(15)
+    private java.lang.String rolleduptilldays_ = "";
+    public boolean hasRolleduptilldays() { return hasRolleduptilldays; }
+    public java.lang.String getRolleduptilldays() { return rolleduptilldays_; }
+    
+    // optional string timeTickInterval = 16;
+    public static final int TIMETICKINTERVAL_FIELD_NUMBER = 16;
+    private boolean hasTimeTickInterval;
+    @com.google.protobuf.gwt.shared.FieldNumber(16)
+    private java.lang.String timeTickInterval_ = "";
+    public boolean hasTimeTickInterval() { return hasTimeTickInterval; }
+    public java.lang.String getTimeTickInterval() { return timeTickInterval_; }
+    
     private void initFields() {
     }
     
@@ -2017,6 +2302,26 @@ public final class RequestResponse {
       
       if (hasWarnLossThresholdDiff()) {
         output.writeString(11, "warnLossThresholdDiff", getWarnLossThresholdDiff());
+      }
+      
+      if (hasLocalSla()) {
+        output.writeString(12, "localSla", getLocalSla());
+      }
+      
+      if (hasMergeSla()) {
+        output.writeString(13, "mergeSla", getMergeSla());
+      }
+      
+      if (hasMirrorSla()) {
+        output.writeString(14, "mirrorSla", getMirrorSla());
+      }
+      
+      if (hasRolleduptilldays()) {
+        output.writeString(15, "rolleduptilldays", getRolleduptilldays());
+      }
+      
+      if (hasTimeTickInterval()) {
+        output.writeString(16, "timeTickInterval", getTimeTickInterval());
       }
     }
     
@@ -2146,6 +2451,26 @@ public final class RequestResponse {
         if (other.hasWarnLossThresholdDiff()) {
           setWarnLossThresholdDiff(other.getWarnLossThresholdDiff());
         }
+        
+        if (other.hasLocalSla()) {
+          setLocalSla(other.getLocalSla());
+        }
+        
+        if (other.hasMergeSla()) {
+          setMergeSla(other.getMergeSla());
+        }
+        
+        if (other.hasMirrorSla()) {
+          setMirrorSla(other.getMirrorSla());
+        }
+        
+        if (other.hasRolleduptilldays()) {
+          setRolleduptilldays(other.getRolleduptilldays());
+        }
+        
+        if (other.hasTimeTickInterval()) {
+          setTimeTickInterval(other.getTimeTickInterval());
+        }
       
         return this;
       }
@@ -2206,6 +2531,31 @@ public final class RequestResponse {
         java.lang.String warnLossThresholdDiff = input.readString(11);
         if (warnLossThresholdDiff != null) {
           setWarnLossThresholdDiff(warnLossThresholdDiff);
+        }
+        
+        java.lang.String localSla = input.readString(12);
+        if (localSla != null) {
+          setLocalSla(localSla);
+        }
+        
+        java.lang.String mergeSla = input.readString(13);
+        if (mergeSla != null) {
+          setMergeSla(mergeSla);
+        }
+        
+        java.lang.String mirrorSla = input.readString(14);
+        if (mirrorSla != null) {
+          setMirrorSla(mirrorSla);
+        }
+        
+        java.lang.String rolleduptilldays = input.readString(15);
+        if (rolleduptilldays != null) {
+          setRolleduptilldays(rolleduptilldays);
+        }
+        
+        java.lang.String timeTickInterval = input.readString(16);
+        if (timeTickInterval != null) {
+          setTimeTickInterval(timeTickInterval);
         }
         
         return this;
@@ -2505,6 +2855,141 @@ public final class RequestResponse {
       public Builder clearWarnLossThresholdDiff() {
         result.hasWarnLossThresholdDiff = false;
         result.warnLossThresholdDiff_ = getDefaultInstance().getWarnLossThresholdDiff();
+        return this;
+      }
+      
+      // optional string localSla = 12;
+      public boolean hasLocalSla() {
+        return result.hasLocalSla();
+      }
+      public java.lang.String getLocalSla() {
+        return result.getLocalSla();
+      }
+      public Builder setLocalSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setLocalSla(value);
+        }
+        return this;
+      }
+      public Builder setLocalSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasLocalSla = true;
+        result.localSla_ = value;
+        return this;
+      }
+      public Builder clearLocalSla() {
+        result.hasLocalSla = false;
+        result.localSla_ = getDefaultInstance().getLocalSla();
+        return this;
+      }
+      
+      // optional string mergeSla = 13;
+      public boolean hasMergeSla() {
+        return result.hasMergeSla();
+      }
+      public java.lang.String getMergeSla() {
+        return result.getMergeSla();
+      }
+      public Builder setMergeSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setMergeSla(value);
+        }
+        return this;
+      }
+      public Builder setMergeSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasMergeSla = true;
+        result.mergeSla_ = value;
+        return this;
+      }
+      public Builder clearMergeSla() {
+        result.hasMergeSla = false;
+        result.mergeSla_ = getDefaultInstance().getMergeSla();
+        return this;
+      }
+      
+      // optional string mirrorSla = 14;
+      public boolean hasMirrorSla() {
+        return result.hasMirrorSla();
+      }
+      public java.lang.String getMirrorSla() {
+        return result.getMirrorSla();
+      }
+      public Builder setMirrorSlaIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setMirrorSla(value);
+        }
+        return this;
+      }
+      public Builder setMirrorSla(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasMirrorSla = true;
+        result.mirrorSla_ = value;
+        return this;
+      }
+      public Builder clearMirrorSla() {
+        result.hasMirrorSla = false;
+        result.mirrorSla_ = getDefaultInstance().getMirrorSla();
+        return this;
+      }
+      
+      // optional string rolleduptilldays = 15;
+      public boolean hasRolleduptilldays() {
+        return result.hasRolleduptilldays();
+      }
+      public java.lang.String getRolleduptilldays() {
+        return result.getRolleduptilldays();
+      }
+      public Builder setRolleduptilldaysIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setRolleduptilldays(value);
+        }
+        return this;
+      }
+      public Builder setRolleduptilldays(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasRolleduptilldays = true;
+        result.rolleduptilldays_ = value;
+        return this;
+      }
+      public Builder clearRolleduptilldays() {
+        result.hasRolleduptilldays = false;
+        result.rolleduptilldays_ = getDefaultInstance().getRolleduptilldays();
+        return this;
+      }
+      
+      // optional string timeTickInterval = 16;
+      public boolean hasTimeTickInterval() {
+        return result.hasTimeTickInterval();
+      }
+      public java.lang.String getTimeTickInterval() {
+        return result.getTimeTickInterval();
+      }
+      public Builder setTimeTickIntervalIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setTimeTickInterval(value);
+        }
+        return this;
+      }
+      public Builder setTimeTickInterval(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasTimeTickInterval = true;
+        result.timeTickInterval_ = value;
+        return this;
+      }
+      public Builder clearTimeTickInterval() {
+        result.hasTimeTickInterval = false;
+        result.timeTickInterval_ = getDefaultInstance().getTimeTickInterval();
         return this;
       }
       

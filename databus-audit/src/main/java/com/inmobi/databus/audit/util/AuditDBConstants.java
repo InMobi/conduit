@@ -12,6 +12,8 @@ public interface AuditDBConstants {
 
   public static final String TIMESTAMP = "TIMEINTERVAL";
   public static final String SENT = "SENT";
+  public static final String RECEIVED = "RECEIVED";
+
 
   public static final String GANGLIA_HOST = "feeder.ganglia.host";
   public static final String GANGLIA_PORT = "feeder.ganglia.port";

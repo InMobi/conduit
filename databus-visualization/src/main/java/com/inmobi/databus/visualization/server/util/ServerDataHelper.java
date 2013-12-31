@@ -4,6 +4,9 @@ import com.google.protobuf.gwt.server.ServerJsonStreamFactory;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.visualization.server.*;
 import com.inmobi.databus.visualization.shared.RequestResponse;
+import com.inmobi.databus.visualization.shared.RequestResponse.TimeLineGraphResponse;
+import com.inmobi.messaging.ClientConfig;
+
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ServerDataHelper {
   private static Logger LOG = Logger.getLogger(ServerDataHelper.class);
@@ -118,6 +122,16 @@ public class ServerDataHelper {
         if ((node.getTier().equalsIgnoreCase("merge") ||
             node.getTier().equalsIgnoreCase("mirror")) &&
             node.getSourceList() != null) {
+
+          JSONArray steamSourceArray = new JSONArray();
+          for (Map.Entry<String, Set<String>> sourceEntry: node
+              .getTopicSourceList().entrySet()) {
+            JSONObject object = new JSONObject();
+            object.put("topic", sourceEntry.getKey());
+            object.put("sourceList", sourceEntry.getValue());
+            steamSourceArray.put(object);
+          }
+          nodeObject.put("topicSource", steamSourceArray);
           JSONArray sourceListArray = new JSONArray();
           sourceListArray.put(node.getSourceList());
           nodeObject.put("source", sourceListArray);
@@ -184,7 +198,8 @@ public class ServerDataHelper {
 
   public String setLoadMainPanelResponse(List<String> streamList,
                                          List<String> clusterList,
-                                         VisualizationProperties properties) {
+                                         VisualizationProperties properties,
+                                         ClientConfig feederConfig) {
     RequestResponse.ClientConfiguration clientConfiguration =
         RequestResponse.ClientConfiguration.newBuilder()
             .setPublisherSla(properties.get(ServerConstants.PUBLISHER_SLA))
@@ -204,7 +219,13 @@ public class ServerDataHelper {
             .setMaxTimeRangeInt(properties.get(ServerConstants
                 .MAX_TIME_RANGE_INTERVAL_IN_HOURS))
             .setWarnLossThresholdDiff(properties
-                .get(ServerConstants.LOSS_WARN_THRESHOLD_DIFF_IN_MINS)).build();
+                .get(ServerConstants.LOSS_WARN_THRESHOLD_DIFF_IN_MINS))
+            .setLocalSla(properties.get(ServerConstants.LOCAL_SLA))
+            .setMergeSla(properties.get(ServerConstants.MERGE_SLA))
+            .setMirrorSla(properties.get(ServerConstants.MIRROR_SLA))
+            .setRolleduptilldays(feederConfig.getString(ServerConstants
+                .ROLLEDUP_TILL_DAYS, "2"))
+            .build();
     RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
         RequestResponse.LoadMainPanelResponse.newBuilder()
             .addAllStream(streamList).addAllCluster(clusterList)
@@ -212,5 +233,17 @@ public class ServerDataHelper {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder()
             .setLoadMainPanelResponse(loadMainPanelResponse).build());
+  }
+  
+  
+  public String setGraphDataResponseTS(String jsonRestult) {
+   
+   
+    return ServerJsonStreamFactory.getInstance().serializeMessage(
+        RequestResponse.Response
+            .newBuilder()
+            .setTimeLineGraphResponse(
+                TimeLineGraphResponse.newBuilder()
+                    .setJsonString(jsonRestult)).build());
   }
 }

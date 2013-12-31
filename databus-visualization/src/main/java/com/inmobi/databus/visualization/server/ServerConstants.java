@@ -20,10 +20,14 @@ public class ServerConstants {
   public static final String VIP_SLA = "vipSla";
   public static final String COLLECTOR_SLA = "collectorSla";
   public static final String HDFS_SLA = "hdfsSla";
+  public static final String LOCAL_SLA  = "localSla";
+  public static final String MERGE_SLA = "mergeSla";
+  public static final String MIRROR_SLA = "mirrorSla";
   public static final String PERCENTILE_FOR_SLA = "slaPercentile";
   public static final String PERCENTAGE_FOR_LOSS = "lossPercentage";
   public static final String PERCENTAGE_FOR_WARN = "warnPercentage";
   public static final String MAX_START_TIME = "maxStartTime";
   public static final String MAX_TIME_RANGE_INTERVAL_IN_HOURS = "timeRange";
   public static final String LOSS_WARN_THRESHOLD_DIFF_IN_MINS = "threshold";
+  public static final String ROLLEDUP_TILL_DAYS = "rollup.tilldays";
 }

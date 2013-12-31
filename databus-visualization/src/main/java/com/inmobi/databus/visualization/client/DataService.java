@@ -11,4 +11,6 @@ public interface DataService extends RemoteService {
   public String getStreamAndClusterList();
 
   public String getData(String filterValues);
+
+  public String getTimeLineData(String filterValues);
 }
