@@ -36,7 +36,7 @@
         </fileSet>
       <fileSet>
         <directory>../databus-visualization/conf</directory>
-        <outputDirectory>/var/lib/tomcat6/bin</outputDirectory>
+        <outputDirectory>/var/lib/tomcat7/bin</outputDirectory>
         <includes>
           <include>**/setenv.sh</include>
         </includes>
@@ -44,7 +44,7 @@
 
         <fileSet>
             <directory>../databus-visualization/target/</directory>
-            <outputDirectory>/var/lib/tomcat6/webapps</outputDirectory>
+            <outputDirectory>/var/lib/tomcat7/webapps</outputDirectory>
             <includes>
                 <include>**/databus-visualization.war</include>
             </includes>
