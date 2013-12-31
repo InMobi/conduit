@@ -132,4 +132,16 @@ public class ClientDataHelper {
     }
     return tierLatencyMap;
   }
+
+  public String getJsonFromTimeLineGraphResponse(String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance()
+              .createNewStreamFromJson(serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getTimeLineGraphResponse().getJsonString();
+  }
 }
