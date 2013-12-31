@@ -1,0 +1,9 @@
+Package: conduit-visualization
+Version: [[project.version]]
+Section:  misc
+Priority: optional
+Architecture: all
+Pre-Depends: sun-java6-jre | java2-runtime
+Maintainer: Inmobi
+Description: Visualization project is helpful in viewing of data in Conduit
+Distribution: alpha

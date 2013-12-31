@@ -7,10 +7,10 @@
     <messaging-client-version>4.0.3</messaging-client-version>
   </properties>
 
-  <groupId>com.inmobi.databus</groupId>
-  <artifactId>databus-parent</artifactId>
-  <version>2.1.1-SNAPSHOT</version>
-  <name>Databus</name>
+  <groupId>com.inmobi.conduit</groupId>
+  <artifactId>conduit-parent</artifactId>
+  <name>Conduit</name>
+  <version>2.2.5-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>
@@ -300,12 +300,12 @@
   </reporting>
 
   <modules>
-    <module>databus-core</module>
-    <module>databus-worker</module>
-    <module>databus-dist</module>
-    <module>databus-audit</module>
-    <module>databus-visualization</module>
-    <module>databus-distcp</module>
+    <module>conduit-core</module>
+    <module>conduit-worker</module>
+    <module>conduit-dist</module>
+    <module>conduit-audit</module>
+    <module>conduit-visualization</module>
+    <module>conduit-distcp</module>
   </modules>
 
 </project>
