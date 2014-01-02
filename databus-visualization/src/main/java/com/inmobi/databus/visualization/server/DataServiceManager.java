@@ -200,8 +200,10 @@ public class DataServiceManager {
     for (DatabusConfig config : dataBusConfig) {
       Map<String, Cluster> clusterMap = config.getClusters();
       Cluster cluster = clusterMap.get(clusterName);
-      if (cluster == null)
+      if (cluster == null) {
+        LOG.debug("Could not find cluster of tuple:"+tuple+" in clusterMap");
         continue;
+      }
       if (tuple.getTier().equalsIgnoreCase(Tier.MERGE.toString())) {
         Set<String> mergeStreams = cluster.getPrimaryDestinationStreams();
         for (Map.Entry<String, Cluster> entry: clusterMap.entrySet()) {
@@ -223,7 +225,7 @@ public class DataServiceManager {
 
       }
     }
-    LOG.info("Set source list as:"+sourceList);
+    LOG.info("Set source list for tuple " + tuple + "as:" + sourceList);
     return sourceList;
   }
 
