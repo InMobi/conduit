@@ -1,0 +1,53 @@
+<assembly
+        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+    <id>visualization-pkg</id>
+
+    <formats>
+        <format>dir</format>
+    </formats>
+
+    <baseDirectory>conduit-visualization-${project.version}</baseDirectory>
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <moduleSets>
+        <moduleSet>
+
+            <includes>
+                <include>com.inmobi.conduit:conduit-visualisation
+                </include>
+            </includes>
+
+            <binaries>
+                <unpack>false</unpack>
+            </binaries>
+        </moduleSet>
+    </moduleSets>
+
+    <fileSets>
+           <fileSet>
+            <directory>../conduit-visualization/conf</directory>
+            <outputDirectory>/usr/local/conduit-visualization-${project.version}/conf/</outputDirectory>
+            <includes>
+                <include>**/audit-feeder.properties</include>
+                <include>**/visualization.properties</include>
+            </includes>
+        </fileSet>
+      <fileSet>
+        <directory>../conduit-visualization/conf</directory>
+        <outputDirectory>/var/lib/tomcat7/bin</outputDirectory>
+        <includes>
+          <include>**/setenv.sh</include>
+        </includes>
+      </fileSet>
+
+        <fileSet>
+            <directory>../conduit-visualization/target/</directory>
+            <outputDirectory>/var/lib/tomcat7/webapps</outputDirectory>
+            <includes>
+                <include>**/conduit-visualization.war</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>

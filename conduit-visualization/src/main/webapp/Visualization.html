@@ -1,0 +1,52 @@
+<!doctype html>
+
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link type="text/css" rel="stylesheet" href="Visualization.css">
+    <title>Conduit Dashboard</title>
+    <script type="text/javascript"
+            src="Visualization/d3.v3.min.js"></script>
+    <script type="text/javascript"
+            src="Visualization/native.history.js"></script>
+    <script type="text/javascript" language="javascript"
+            src="Visualization/Visualization.nocache.js"></script>
+</head>
+
+<body>
+
+<iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1'
+        style="position:absolute;width:0;height:0;border:0"></iframe>
+<noscript>
+    <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        Your web browser must have JavaScript enabled
+        in order for this application to display correctly.
+    </div>
+</noscript>
+<div id="page">
+    <div id="gwtPanel">
+        <div id="headerContainer"></div>
+        <div id="filterContainer"></div>
+    </div>
+    <div id="viewPanelContainer">
+        <div id="viewPanel">
+            <div id="tabs">
+                <ul>
+                    <li><a id="latency" href="javascript:void(0)" onClick="tabSelected(2, 'null', 'null')">Latency</a></li>
+                    <li><a id="count" href="javascript:void(0)" onClick="tabSelected(1, 'null', 'null')" class="active">Count</a></li>
+                </ul>
+            </div>
+            <div id="graphInfoContainer">
+                <div id="graphPanel"></div>
+                <div id="summaryAndInfoPanel">
+                    <div id="summaryPanel"></div>
+                    <div id="infoPanel"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript"
+        src="Visualization/d3graph.nocache.js"></script>
+</body>
+</html>

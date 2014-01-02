@@ -1,0 +1,37 @@
+<conduit>
+  <defaults>
+    <rootdir>/conduit</rootdir>
+    <retentioninhours>48</retentioninhours>
+    <trashretentioninhours>24</trashretentioninhours>
+  </defaults>
+
+  <!-- A stream can have only one primary and multiple mirrors as destinations
+    -->
+  <streams>
+    <stream name="">
+      <sources>
+        <source>
+          <name></name>
+          <retentioninhours></retentioninhours>
+        </source>
+        <source>
+          <name></name>
+          <retentioninhours></retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
+  </streams>
+
+  <clusters>
+    <cluster name="" hdfsurl=""
+             jturl="" jobqueuename="default">
+    </cluster>
+
+    <cluster name="" hdfsurl=""
+             jturl="" jobqueuename="default">
+    </cluster>
+
+  </clusters>
+</conduit>
