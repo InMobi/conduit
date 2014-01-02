@@ -19,7 +19,8 @@ public class TestDataServiceManager {
   public void testAuditStreamNotAdded() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder2",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     String response = serviceManager.getStreamAndClusterList();
     List<String> streamList = TestUtil.getStreamsListFromResponse(response);
     Assert.assertFalse(streamList.contains(ServerConstants.AUDIT_STREAM));
@@ -29,7 +30,8 @@ public class TestDataServiceManager {
   public void testMultipleXmls() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder1",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     assert serviceManager.getConduitConfig().size() == 2;
     String response = serviceManager.getStreamAndClusterList();
     List<String> streamList = TestUtil.getStreamsListFromResponse(response);
@@ -53,7 +55,8 @@ public class TestDataServiceManager {
   public void testVipNodeStreamsAddedCorrect() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder2",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     Set<Float> percentileSet = new HashSet<Float>();
     percentileSet.add(99.9f);
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
@@ -94,7 +97,8 @@ public class TestDataServiceManager {
   public void testNewNodeCreatedFromTuple() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder2",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     Set<Float> percentileSet = new HashSet<Float>();
     percentileSet.add(99.9f);
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
@@ -131,7 +135,8 @@ public class TestDataServiceManager {
   public void testNodeUpdatedWithNewTupleInfoOfDiffTopic() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder2",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     List<Tuple> tupleList = TestUtil.getTuplesWithSameNodeKeyDiffTopic();
     Set<Float> percentileSet = new HashSet<Float>();
     percentileSet.add(99.9f);
@@ -188,7 +193,8 @@ public class TestDataServiceManager {
   public void testHdfsNodeMessageStatsHostName() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder2",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     Tuple hdfsTuple = TestUtil.getHdfsTestTuple();
     Set<Float> percentileSet = new HashSet<Float>();
     percentileSet.add(99.9f);
@@ -215,7 +221,8 @@ public class TestDataServiceManager {
   public void testAggregatePercentileMapOfNode() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder2",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     Set<Float> percentileSet = new HashSet<Float>();
     percentileSet.add(70f);
     List<Tuple> tupleList = TestUtil.getTuplesWithSameNodeKeyDiffTopic();
@@ -262,7 +269,8 @@ public class TestDataServiceManager {
   public void testFilterParametersSet() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder2",
-        "./src/test/resources/visualization2.properties", null);
+        "./src/test/resources/visualization2.properties",
+        "./src/test/resources/audit-feeder.properties");
     Calendar calendar = Calendar.getInstance();
     Date startDate = calendar.getTime();
     calendar.add(Calendar.MINUTE, 5);
