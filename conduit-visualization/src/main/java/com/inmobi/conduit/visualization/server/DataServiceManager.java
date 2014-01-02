@@ -201,8 +201,10 @@ public class DataServiceManager {
     for (ConduitConfig config : conduitConfig) {
       Map<String, Cluster> clusterMap = config.getClusters();
       Cluster cluster = clusterMap.get(clusterName);
-      if (cluster == null)
+      if (cluster == null) {
+        LOG.debug("Could not find cluster of tuple:"+tuple+" in clusterMap");
         continue;
+      }
       if (tuple.getTier().equalsIgnoreCase(Tier.MERGE.toString())) {
         Set<String> mergeStreams = cluster.getPrimaryDestinationStreams();
         for (Map.Entry<String, Cluster> entry: clusterMap.entrySet()) {
@@ -224,7 +226,7 @@ public class DataServiceManager {
 
       }
     }
-    LOG.info("Set source list as:"+sourceList);
+    LOG.info("Set source list for tuple " + tuple + "as:" + sourceList);
     return sourceList;
   }
 
@@ -332,25 +334,6 @@ public class DataServiceManager {
     LOG.debug("List1: " + list1 + " List2: " + list2 + " MERGRED LIST : " +
         mergedList);
     return mergedList;
-  }
-
-  /**
-   * If any node in the nodeList is a merge/mirror tier node, set the source
-   * node's names list for merge/mirror node.
-   *
-   * @param nodeMap map of all nodeKey::nodes returned by the query
-   */
-  private void checkAndSetSourceListForMergeMirror(Map<NodeKey, Node> nodeMap) {
-    for (Node node : nodeMap.values()) {
-      if (node.getTier().equalsIgnoreCase("merge") ||
-          node.getTier().equalsIgnoreCase("mirror")) {
-        for (ConduitConfig config : conduitConfig) {
-          node.setSourceList(
-              config.getClusters().get(node.getClusterName())
-                  .getDestinationStreams().keySet());
-        }
-      }
-    }
   }
 
   public List<ConduitConfig> getConduitConfig() {
