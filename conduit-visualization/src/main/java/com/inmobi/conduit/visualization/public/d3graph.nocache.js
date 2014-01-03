@@ -1706,8 +1706,7 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
   });
   var drawlink = graphsvg.selectAll("line.link")
     .filter(function (l) {
-      return l.source.clusterName == clusterName && l.source.tier.toLowerCase() ==
-        node.tier.toLowerCase();
+      return l.source.clusterName == node.clusterName && l.source.tier.toLowerCase() == node.tier.toLowerCase() && l.name == node.name;
     })
     .data(links).enter()
     .append("svg:g")
