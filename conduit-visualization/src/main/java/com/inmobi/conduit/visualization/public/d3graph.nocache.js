@@ -239,9 +239,11 @@ function highlightChildNodes(n, isLoadDefaultView) {
       isVipNodeHighlighed = true;
     }
   }
-  n.children.forEach(function (c) {
-    highlightChildNodes(c, isLoadDefaultView);
-  });
+  if (n.allTopicsLatency.length > 0) {
+	  n.children.forEach(function (c) {
+	    highlightChildNodes(c, isLoadDefaultView);
+	  });
+  }
 }
 
 function highlightHDFSNode(n) {
@@ -375,6 +377,14 @@ function latencyhighlightChildNodes(n, isLoadDefaultView) {
   if (n.tier.toLowerCase() == "vip" && isLoadDefaultView) {
     isVipNodeHighlighed = true;
   }
+  if (isLoadDefaultView) {
+    lineLinkCache.each(function (d) {
+    	d.status = "nofill";
+    });
+    pathLinkCache.filter(function (d) {
+    	d.status = "nofill";
+    });
+  }
   n.children.forEach(function (c) {
     if (n.tier.toLowerCase() == "mirror" || n.tier.toLowerCase() == "merge") {
       lineLinkCache.filter(function (d) {
@@ -385,7 +395,10 @@ function latencyhighlightChildNodes(n, isLoadDefaultView) {
         .transition()
         .duration(100)
         .style("fill", "none")
-        .style("stroke", "#ADBCE6");
+        .style("stroke", "#ADBCE6")
+        .each(function (d) {
+	        d.status = "healthy";
+        });
     } else {
       pathLinkCache.filter(function (d) {
           return d.source.clusterName == n.clusterName && d.source.name ==
@@ -395,9 +408,14 @@ function latencyhighlightChildNodes(n, isLoadDefaultView) {
         .transition()
         .duration(100)
         .style("fill", "none")
-        .style("stroke", "#ADBCE6");
+        .style("stroke", "#ADBCE6")
+        .each(function (d) {
+	        d.status = "healthy";
+        });
     }
-    latencyhighlightChildNodes(c, isLoadDefaultView);
+    if (n.allTopicsLatency.length > 0) {
+    	latencyhighlightChildNodes(c, isLoadDefaultView);
+    }
   });
 }
 
@@ -1348,40 +1366,43 @@ function loadDefaultView() {
     addColorsToNodes();
     isNodeColored = true;
   } else {
-    if (isCountView) {
-      pathLinkCache.each(function(d) {
-        var color;
-        switch (d.status) {
-          case "loss":
-            color = "#ff0000";
-            break;
-          case "healthy":
-            color = "#00ff00";
-            break;
-          default:
-            color = "#dedede";
+    pathLinkCache.each(function(d) {
+      var color;
+      switch (d.status) {
+        case "loss":
+          color = "#ff0000";
+          break;
+        case "healthy":
+        	if (isCountView) {
+        		color = "#00ff00";
+        	} else {
+        		color = "#ADBCE6";
+        	}
+          break;
+        default:
+          color = "#dedede";
         }
-        d3.select(this).style("fill", "none").style("stroke", color);
-      });
+      d3.select(this).style("fill", "none").style("stroke", color);
+    });
 
-      lineLinkCache.each(function(d) {
-        var color;
-        switch (d.status) {
-          case "loss":
-            color = "#ff0000";
-            break;
-          case "healthy":
-            color = "#00ff00";
-            break;
-          default:
+    lineLinkCache.each(function(d) {
+      var color;
+      switch (d.status) {
+        case "loss":
+          color = "#ff0000";
+          break;
+        case "healthy":
+          if (isCountView) {
+        		color = "#00ff00";
+        	} else {
+        		color = "#ADBCE6";
+        	}
+          break;
+        default:
             color = "#dedede";
-        }
-        d3.select(this).style("fill", "none").style("stroke", color);
-      });
-    } else {
-      pathLinkCache.style("fill", "none").style("stroke", "#ADBCE6");
-      lineLinkCache.style("fill", "none").style("stroke", "#ADBCE6");
-    }
+      	}
+      d3.select(this).style("fill", "none").style("stroke", color);
+    });
   }
 }
 
@@ -1485,7 +1506,9 @@ function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
           var streamSource = new StreamSource(topic);
           s.source.forEach(function (sourceObj) {
             streamSource.source.push(sourceObj);
-            allSourceList.push(sourceObj);
+          	if (!allSourceList.contains(sourceObj)) {
+            	allSourceList.push(sourceObj);
+          	}
           });
           topicSourceList.push(streamSource);
           break;
