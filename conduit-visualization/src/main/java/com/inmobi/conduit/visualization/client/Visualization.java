@@ -227,7 +227,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     stDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        String selectedDateString = DateUtils.baseDateFormatter.format(selectedDate);
+        String selectedDateString = DateUtils.BASE_DATE_FORMATTER.format(selectedDate);
         startTime.setText(selectedDateString);
         if (DateUtils.checkSelectedDateRolledUp(selectedDate,
             Integer.parseInt(clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
@@ -242,7 +242,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     endDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        String selectedDateString = DateUtils.baseDateFormatter.format(selectedDate);
+        String selectedDateString = DateUtils.BASE_DATE_FORMATTER.format(selectedDate);
         endtime.setText(selectedDateString);
         if (DateUtils.checkSelectedDateRolledUp(selectedDate, rolledUpTillDays)) {
           edTimeMinute.setSelectedIndex(1);
