@@ -34,10 +34,12 @@ public class Visualization implements EntryPoint, ClickHandler {
   private Label stTimeLabel, etTimeLabel, streamLabel, clusterLabel,
       currentTimeLabel;
   private PopupPanel stcalendarPopup, etcalendarPopup;
+  private boolean isDevMode = false;
 
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
   private Map<String, String> clientConfig;
+  private int rolledUpTillDays;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
   public void onModuleLoad() {
@@ -70,10 +72,12 @@ public class Visualization implements EntryPoint, ClickHandler {
             ClientDataHelper.getInstance()
                 .getStreamsListFromLoadMainPanelResponse(result));
         clusters.addAll(
-            ClientDataHelper.getInstance().getClusterListFromLoadMainPanelResponse
-                (result));
+            ClientDataHelper.getInstance()
+                .getClusterListFromLoadMainPanelResponse(result));
         clientConfig = ClientDataHelper.getInstance()
             .getClientConfigLoadMainPanelResponse(result);
+        rolledUpTillDays = Integer.parseInt(clientConfig.get(ClientConstants
+            .ROLLEDUP_TILL_DAYS));
         loadMainPanel();
       }
     });
@@ -87,6 +91,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
+    checkIfGWTDevMode();
     String stream, cluster, startTime, endTime, selectedTab;
     if (checkParametersNull()) {
       System.out.println("Loading default settings");
@@ -107,6 +112,15 @@ public class Visualization implements EntryPoint, ClickHandler {
     sendRequest(startTime, endTime, cluster, stream, selectedTab);
   }
 
+  private void checkIfGWTDevMode() {
+    String host = Window.Location.getParameter(ClientConstants
+        .GWT_DEVLOPMENT_MODE);
+    if (host == null || host.length() == 0)
+      isDevMode = false;
+    else
+      isDevMode = true;
+  }
+
   private void setSelectedParameterValues(String stTime, String endTime,
                                           String cluster, String stream) {
     startTime.setText(DateUtils.getBaseDateStringFromAuditDateFormat(stTime));
@@ -116,9 +130,20 @@ public class Visualization implements EntryPoint, ClickHandler {
     setSelectedInListBox(stTimeHour, DateUtils.getHourFromAuditDateFormatString(stTime));
     setSelectedInListBox(stTimeMinute,
         DateUtils.getMinuteFromAuditDateFormatString(stTime));
-    setSelectedInListBox(edTimeHour, DateUtils.getHourFromAuditDateFormatString(endTime));
+    setSelectedInListBox(edTimeHour,
+        DateUtils.getHourFromAuditDateFormatString(endTime));
     setSelectedInListBox(edTimeMinute,
         DateUtils.getMinuteFromAuditDateFormatString(endTime));
+    if (DateUtils.checkSelectedDateRolledUp(stTime, rolledUpTillDays, true)) {
+      stTimeMinute.setEnabled(false);
+    } else {
+      stTimeMinute.setEnabled(true);
+    }
+    if (DateUtils.checkSelectedDateRolledUp(endTime, rolledUpTillDays, true)) {
+      edTimeMinute.setEnabled(false);
+    } else {
+      edTimeMinute.setEnabled(true);
+    }
     setSelectedInListBox(clusterList, cluster);
     setSelectedInListBox(streamsList, stream);
   }
@@ -126,7 +151,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private void setSelectedInListBox(ListBox listBox, String selectedString) {
     int selectedIndex = 0;
     for (int i = 0; i < listBox.getItemCount(); i++) {
-      if (listBox.getItemText(i).equals(selectedString)) {
+      if (listBox.getItemText(i).equalsIgnoreCase(selectedString)) {
         selectedIndex = i;
         break;
       }
@@ -202,18 +227,29 @@ public class Visualization implements EntryPoint, ClickHandler {
     stDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.BASE_DATE_FORMAT);
-        String selectedDateString = fmt.format(selectedDate);
+        String selectedDateString = DateUtils.BASE_DATE_FORMATTER.format(selectedDate);
         startTime.setText(selectedDateString);
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
+            Integer.parseInt(clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
+          stTimeMinute.setSelectedIndex(1);
+          stTimeMinute.setEnabled(false);
+        } else {
+          stTimeMinute.setEnabled(true);
+        }
         stcalendarPopup.hide();
       }
     });
     endDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        DateTimeFormat fmt = DateTimeFormat.getFormat(DateUtils.BASE_DATE_FORMAT);
-        String selectedDateString = fmt.format(selectedDate);
+        String selectedDateString = DateUtils.BASE_DATE_FORMATTER.format(selectedDate);
         endtime.setText(selectedDateString);
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate, rolledUpTillDays)) {
+          edTimeMinute.setSelectedIndex(1);
+          edTimeMinute.setEnabled(false);
+        } else {
+          edTimeMinute.setEnabled(true);
+        }
         etcalendarPopup.hide();
       }
     });
@@ -321,6 +357,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     if (!validateParameters(stTime, edTime)) {
       return;
     }
+    disableFilterSelection();
     sendRequest(stTime, edTime, clusterList.getItemText(clusterList
         .getSelectedIndex()), streamsList.getItemText(streamsList
         .getSelectedIndex()), null);
@@ -358,6 +395,9 @@ public class Visualization implements EntryPoint, ClickHandler {
           Integer aLatency = tierLatencyMap.get(ClientConstants.AGENT);
           Integer cLatency = tierLatencyMap.get(ClientConstants.COLLECTOR);
           Integer hLatency = tierLatencyMap.get(ClientConstants.HDFS);
+          Integer lLatency = tierLatencyMap.get(ClientConstants.LOCAL);
+          Integer mergeLatency = tierLatencyMap.get(ClientConstants.MERGE);
+          Integer mirrorLatency = tierLatencyMap.get(ClientConstants.MIRROR);
           if ( pLatency == null )
             pLatency = -1;
           if ( aLatency == null )
@@ -366,7 +406,14 @@ public class Visualization implements EntryPoint, ClickHandler {
             cLatency = -1;
           if ( hLatency == null )
             hLatency = -1;
-          setTierLatencyValues(pLatency, aLatency, cLatency,hLatency);
+          if ( lLatency == null )
+            lLatency = -1;
+          if ( mergeLatency == null )
+            mergeLatency = -1;
+          if ( mirrorLatency == null )
+            mirrorLatency = -1;
+          setTierLatencyValues(pLatency, aLatency, cLatency,hLatency,
+              lLatency, mergeLatency, mirrorLatency);
         }
         drawGraph(nodesJson, selectedCluster, selectedStream, stTime, edTime,
             selectedTabId, Integer.parseInt(clientConfig
@@ -374,14 +421,56 @@ public class Visualization implements EntryPoint, ClickHandler {
             .get(ClientConstants.AGENT)), Integer.parseInt(clientConfig.get
             (ClientConstants.VIP)), Integer.parseInt(clientConfig.get
             (ClientConstants.COLLECTOR)), Integer.parseInt(clientConfig.get
-            (ClientConstants.HDFS)), Float.parseFloat(clientConfig.get
+            (ClientConstants.HDFS)), Integer.parseInt(clientConfig.get
+            (ClientConstants.LOCAL)), Integer.parseInt(clientConfig.get
+            (ClientConstants.MERGE)), Integer.parseInt(clientConfig.get
+            (ClientConstants.MIRROR)), Float.parseFloat(clientConfig.get
             (ClientConstants.PERCENTILE_FOR_SLA)),
             Float.parseFloat(clientConfig.get(ClientConstants
                 .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
             (ClientConstants.PERCENTAGE_FOR_WARN)),
-            Integer.parseInt(clientConfig.get(ClientConstants.LOSS_WARN_THRESHOLD_DIFF)));
+            Integer.parseInt(clientConfig.get(ClientConstants
+                .LOSS_WARN_THRESHOLD_DIFF)), isDevMode);
+        enableFilterSelection();
       }
     });
+  }
+
+  private void enableFilterSelection() {
+    startTime.setEnabled(true);
+    stTimeHour.setEnabled(true);
+    if (DateUtils.checkSelectedDateRolledUp(startTime.getText(),
+        rolledUpTillDays, false)) {
+      stTimeMinute.setEnabled(false);
+    } else {
+      stTimeMinute.setEnabled(true);
+    }
+
+    endtime.setEnabled(true);
+    edTimeHour.setEnabled(true);
+    if (DateUtils.checkSelectedDateRolledUp(endtime.getText(),
+        rolledUpTillDays, false)) {
+      edTimeMinute.setEnabled(false);
+    } else {
+      edTimeMinute.setEnabled(true);
+    }
+
+    streamsList.setEnabled(true);
+    clusterList.setEnabled(true);
+
+  }
+
+  private void disableFilterSelection() {
+    startTime.setEnabled(false);
+    stTimeHour.setEnabled(false);
+    stTimeMinute.setEnabled(false);
+
+    endtime.setEnabled(false);
+    edTimeHour.setEnabled(false);
+    edTimeMinute.setEnabled(false);
+
+    streamsList.setEnabled(false);
+    clusterList.setEnabled(false);
   }
 
   private native void saveHistory(String stTime, String edTime,
@@ -394,19 +483,16 @@ public class Visualization implements EntryPoint, ClickHandler {
   private native void setTierLatencyValues(int publisherLatency,
                                            int agentLatency,
                                            int collectorLatency,
-                                           int hdfsLatency)/*-{
+                                           int hdfsLatency,
+                                           int localLatency,
+                                           int mergeLatency,
+                                           int mirrorLatency)/*-{
     $wnd.setTierLatencyValues(publisherLatency, agentLatency,
-    collectorLatency, hdfsLatency);
+    collectorLatency, hdfsLatency, localLatency, mergeLatency, mirrorLatency);
   }-*/;
 
   private boolean validateParameters(String stTime, String edTime) {
-    if (!DateUtils.checkTimeStringFormat(stTime)) {
-      Window.alert("Incorrect format of startTime");
-      return false;
-    } else if (!DateUtils.checkTimeStringFormat(edTime)) {
-      Window.alert("Incorrect format of endTime");
-      return false;
-    } else if (DateUtils.checkIfFutureDate(stTime)) {
+    if (DateUtils.checkIfFutureDate(stTime)) {
       Window.alert("Future start time is not allowed");
       return false;
     } else if (DateUtils.checkIfFutureDate(edTime)) {
@@ -439,13 +525,17 @@ public class Visualization implements EntryPoint, ClickHandler {
                                 Integer selectedTabID,
                                 Integer publisherSla, Integer agentSla,
                                 Integer vipSla, Integer collectorSla,
-                                Integer hdfsSla, Float percentileForSla,
+                                Integer hdfsSla,
+                                Integer localSla,
+                                Integer mergeSla,
+                                Integer mirrorSla, Float percentileForSla,
                                 Float percentageForLoss,
                                 Float percentageForWarn,
-                                Integer lossWarnThresholdDiff)/*-{
+                                Integer lossWarnThresholdDiff,
+                                boolean isDevMode)/*-{
     $wnd.drawGraph(result, cluster, stream, start, end, selectedTabID,
-    publisherSla, agentSla, vipSla,
-    collectorSla, hdfsSla, percentileForSla, percentageForLoss,
-    percentageForWarn, lossWarnThresholdDiff);
+    publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla,
+    mergeSla, mirrorSla, percentileForSla, percentageForLoss,
+    percentageForWarn, lossWarnThresholdDiff, isDevMode);
   }-*/;
 }
