@@ -24,6 +24,7 @@ message TimeLineGraphResponse {
 message GraphDataResponse {
 	optional string jsonString = 1;
 	optional TierLatencyResponse tierLatencyResponse = 2;
+	optional TimeLineGraphResponse timeLineGraphResponse = 3;
 }
 
 message TierLatencyResponse {

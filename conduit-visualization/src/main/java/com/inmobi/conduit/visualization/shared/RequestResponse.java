@@ -1068,8 +1068,17 @@ public final class RequestResponse {
     public boolean hasTierLatencyResponse() { return hasTierLatencyResponse; }
     public com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() { return tierLatencyResponse_; }
     
+    // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+    public static final int TIMELINEGRAPHRESPONSE_FIELD_NUMBER = 3;
+    private boolean hasTimeLineGraphResponse;
+    @com.google.protobuf.gwt.shared.FieldNumber(3)
+    private com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse timeLineGraphResponse_;
+    public boolean hasTimeLineGraphResponse() { return hasTimeLineGraphResponse; }
+    public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() { return timeLineGraphResponse_; }
+    
     private void initFields() {
       tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
+      timeLineGraphResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -1085,6 +1094,10 @@ public final class RequestResponse {
       
       if (hasTierLatencyResponse()) {
         output.writeMessage(2, "tierLatencyResponse", getTierLatencyResponse());
+      }
+      
+      if (hasTimeLineGraphResponse()) {
+        output.writeMessage(3, "timeLineGraphResponse", getTimeLineGraphResponse());
       }
     }
     
@@ -1178,6 +1191,10 @@ public final class RequestResponse {
         if (other.hasTierLatencyResponse()) {
           mergeTierLatencyResponse(other.getTierLatencyResponse());
         }
+        
+        if (other.hasTimeLineGraphResponse()) {
+          mergeTimeLineGraphResponse(other.getTimeLineGraphResponse());
+        }
       
         return this;
       }
@@ -1198,6 +1215,16 @@ public final class RequestResponse {
           }
           tierLatencyResponseBuilder.readFrom(tierLatencyResponseJson);
           setTierLatencyResponse(tierLatencyResponseBuilder.buildParsed());
+        }
+        
+        com.google.protobuf.gwt.shared.JsonStream timeLineGraphResponseJson = input.readStream(3);
+        if (timeLineGraphResponseJson != null) {
+          com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder timeLineGraphResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder();
+          if (hasTimeLineGraphResponse()) {
+            timeLineGraphResponseBuilder.mergeFrom(getTimeLineGraphResponse());
+          }
+          timeLineGraphResponseBuilder.readFrom(timeLineGraphResponseJson);
+          setTimeLineGraphResponse(timeLineGraphResponseBuilder.buildParsed());
         }
         
         return this;
@@ -1264,6 +1291,43 @@ public final class RequestResponse {
       public Builder clearTierLatencyResponse() {
         result.hasTierLatencyResponse = false;
         result.tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
+        return this;
+      }
+      
+      // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+      public boolean hasTimeLineGraphResponse() {
+        return result.hasTimeLineGraphResponse();
+      }
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() {
+        return result.getTimeLineGraphResponse();
+      }
+      public Builder setTimeLineGraphResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
+        }
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = value;
+        return this;
+      }
+      public Builder setTimeLineGraphResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder builderForValue) {
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeTimeLineGraphResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
+        if (result.hasTimeLineGraphResponse() &&
+            result.timeLineGraphResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance()) {
+          result.timeLineGraphResponse_ =
+            com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder(result.timeLineGraphResponse_).mergeFrom(value).buildPartial();
+        } else {
+          result.timeLineGraphResponse_ = value;
+        }
+        result.hasTimeLineGraphResponse = true;
+        return this;
+      }
+      public Builder clearTimeLineGraphResponse() {
+        result.hasTimeLineGraphResponse = false;
+        result.timeLineGraphResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
         return this;
       }
       

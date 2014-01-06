@@ -84,7 +84,8 @@ public class ServerDataHelper {
 
   public String setGraphDataResponse(Map<NodeKey, Node> nodeMap,
                                      Map<Tuple, Map<Float, Integer>> tierLatencyMap,
-                                     VisualizationProperties properties) {
+                                     VisualizationProperties properties,
+                                     String timeLineJSON) {
     JSONObject newObject = new JSONObject();
     JSONArray nodeArray = new JSONArray();
     try {
@@ -176,7 +177,9 @@ public class ServerDataHelper {
         RequestResponse.Response.newBuilder().setGraphDataResponse(
             RequestResponse.GraphDataResponse.newBuilder()
                 .setJsonString(newObject.toString())
-                .setTierLatencyResponse(tierLatency)).build());
+                .setTierLatencyResponse(tierLatency))
+                .setTimeLineGraphResponse(RequestResponse.TimeLineGraphResponse.newBuilder()
+                    .setJsonString(timeLineJSON)).build());
   }
 
   private RequestResponse.TierLatencyResponse setTierLatencyResponseObject(
@@ -238,7 +241,7 @@ public class ServerDataHelper {
   }
   
   
-  public String setGraphDataResponseTS(String jsonRestult) {
+  public String setGraphDataResponseTS(String jsonResult) {
    
    
     return ServerJsonStreamFactory.getInstance().serializeMessage(
@@ -246,6 +249,6 @@ public class ServerDataHelper {
             .newBuilder()
             .setTimeLineGraphResponse(
                 RequestResponse.TimeLineGraphResponse.newBuilder()
-                    .setJsonString(jsonRestult)).build());
+                    .setJsonString(jsonResult)).build());
   }
 }

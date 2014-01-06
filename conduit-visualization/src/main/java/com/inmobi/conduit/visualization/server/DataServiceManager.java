@@ -131,8 +131,9 @@ public class DataServiceManager {
     Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
         (filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
+    String timeLineJSON = getTimeLineQueryJSONResult(filterValues);
     return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
-        tierLatencyMap, properties);
+        tierLatencyMap, properties, timeLineJSON);
   }
 
   protected Map<String, String> getFilterMap(String filterValues) {
@@ -340,10 +341,7 @@ public class DataServiceManager {
     return Collections.unmodifiableList(conduitConfig);
   }
 
-  /**
-   * Will retrieve the timeseries information for a date range
-   */
-  public String getTimeLineData(String filterValues) {
+  public String getTimeLineQueryJSONResult(String filterValues) {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
     AuditTimeLineDbQuery dbQuery =
@@ -351,17 +349,27 @@ public class DataServiceManager {
             filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, feederConfig);
+    LOG.info("Audit Time line query: " + dbQuery.toString());
     try {
+      LOG.debug("Executing time line query");
       dbQuery.execute();
+      LOG.debug("Executed time line query");
     } catch (Exception e) {
-      LOG.error("Exception while executing query: ", e);
+      LOG.error("Exception while executing time line query: ", e);
     }
-    LOG.info("Audit query: " + dbQuery.toString());
     try {
       dbQuery.displayResults();
+      LOG.info("TimeSeries JSON:"+dbQuery.convertToJson());
     } catch (Exception e) {
       LOG.error("Exception while displaying results: ", e);
     }
-    return ServerDataHelper.getInstance().setGraphDataResponseTS(dbQuery.convertToJson());
+    return dbQuery.convertToJson();
+  }
+  /**
+   * Will retrieve the timeseries information for a date range
+   */
+  public String getTimeLineData(String filterValues) {
+    String jsonResult = getTimeLineQueryJSONResult(filterValues);
+    return ServerDataHelper.getInstance().setGraphDataResponseTS(jsonResult);
   }
 }
