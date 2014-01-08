@@ -53,7 +53,7 @@ public class DateUtils {
 
   public static String getBaseDateStringFromAuditDateFormat(String dateString) {
     Date date = AUDIT_DATE_FORMATTER.parse(dateString);
-    return AUDIT_DATE_FORMATTER.format(date);
+    return BASE_DATE_FORMATTER.format(date);
   }
 
   public static String getHourFromAuditDateFormatString(String dateString) {
