@@ -53,7 +53,7 @@ public class DateUtils {
 
   public static String getBaseDateStringFromAuditDateFormat(String dateString) {
     Date date = AUDIT_DATE_FORMATTER.parse(dateString);
-    return AUDIT_DATE_FORMATTER.format(date);
+    return BASE_DATE_FORMATTER.format(date);
   }
 
   public static String getHourFromAuditDateFormatString(String dateString) {
@@ -118,12 +118,14 @@ public class DateUtils {
     return checkSelectedDateRolledUp(date, rolledUpTillDayas);
   }
 
-  public static boolean checkSelectedDateRolledUp(Date selectedDate, int rolledUpTillDayas) {
-    String selectedDateStr = BASE_DATE_FORMATTER.format(selectedDate);
-    Date currentDate = new Date();
-    Date rolledUpDate = getDateByOffset(currentDate, -rolledUpTillDayas);
-    String rolledUpDateStr = BASE_DATE_FORMATTER.format(rolledUpDate);
-    if (selectedDateStr.compareTo(rolledUpDateStr) >= 0) {
+  public static boolean checkSelectedDateRolledUp(Date selectedDate,
+                                                  int rolledUpTillDayas) {
+    Date finalDate = new Date(selectedDate.getTime() - (selectedDate.getTime
+        () % 86400000l));
+    Date rolledUpDate = getDateByOffset(new Date(), -rolledUpTillDayas);
+    Date finalRollupDate = new Date(rolledUpDate.getTime() - (rolledUpDate
+        .getTime() % 86400000l));
+    if (!finalDate.before(finalRollupDate)) {
       return false;
     }
     return true;
