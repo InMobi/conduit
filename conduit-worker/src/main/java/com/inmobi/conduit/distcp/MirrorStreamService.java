@@ -59,12 +59,12 @@ public class MirrorStreamService extends DistcpBaseService {
         srcCluster, destinationCluster, currentCluster, provider,
         streamsToProcess);
     for (String eachStream : streamsToProcess) {
-      ConduitMetrics.registerCounter(getServiceType(), RETRY_CHECKPOINT, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), RETRY_MKDIR, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), RETRY_RENAME, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), RETRY_EXIST, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), EMPTYDIR_CREATE, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), FILES_COPIED_COUNT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_RENAME, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_EXIST, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FILES_COPIED_COUNT, eachStream);
     }
   }
 
@@ -144,7 +144,7 @@ public class MirrorStreamService extends DistcpBaseService {
       String streamName = getTopicNameFromDestnPath(entry.getValue());
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue(), streamName);
-        ConduitMetrics.incCounter(getServiceType(), EMPTYDIR_CREATE,
+        ConduitMetrics.updateSWGuage(getServiceType(), EMPTYDIR_CREATE,
             streamName, 1);
       } else {
         if (retriableExists(getDestFs(), entry.getValue(), streamName)) {
@@ -162,13 +162,13 @@ public class MirrorStreamService extends DistcpBaseService {
         }
         generateAuditMsgs(streamName, entry.getKey().getPath().getName(),
             parsedCounters, auditMsgList);
-        ConduitMetrics.incCounter(getServiceType(), FILES_COPIED_COUNT,
+        ConduitMetrics.updateSWGuage(getServiceType(), FILES_COPIED_COUNT,
             streamName, 1);
       }
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     LOG.debug("Committed " + commitPaths.size() + " paths.");
-    ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
+    ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
         Thread.currentThread().getName(), elapsedTime);
   }
 

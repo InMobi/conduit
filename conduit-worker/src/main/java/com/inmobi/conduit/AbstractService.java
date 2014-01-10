@@ -43,6 +43,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.util.AuditUtil;
@@ -152,14 +153,14 @@ public abstract class AbstractService implements Service, Runnable {
   @Override
   public void run() {
     LOG.info("Starting Service [" + Thread.currentThread().getName() + "]");
-    Counter runtimeCounter =
-        ConduitMetrics.registerCounter(getServiceType(), RUNTIME,
+    SlidingTimeWindowGauge runtimeCounter =
+        ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RUNTIME,
             Thread.currentThread().getName());
-    Counter failureJobCounter =
-        ConduitMetrics.registerCounter(getServiceType(), FAILURES,
+    SlidingTimeWindowGauge failureJobCounter =
+        ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
             Thread.currentThread().getName());
     if(!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())) {
-      ConduitMetrics.registerCounter(getServiceType(), COMMIT_TIME,
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), COMMIT_TIME,
           Thread.currentThread().getName());
     }
     while (!stopped) {
@@ -175,7 +176,7 @@ public abstract class AbstractService implements Service, Runnable {
           return;
       } catch (Throwable th) {
         if(failureJobCounter!=null){
-          failureJobCounter.inc();
+          failureJobCounter.setValue(1l);
         }
         LOG.error("Thread: " + thread + " interrupt status: "
             + thread.isInterrupted() + " and Error in run: " + th);
@@ -183,7 +184,7 @@ public abstract class AbstractService implements Service, Runnable {
       long finishTime = System.currentTimeMillis();
       long elapsedTime = finishTime - startTime;
       if(runtimeCounter!=null){
-        runtimeCounter.inc(elapsedTime);
+        runtimeCounter.setValue(elapsedTime);
       }
       if (elapsedTime >= runIntervalInMsec)
         continue;
@@ -315,7 +316,7 @@ public abstract class AbstractService implements Service, Runnable {
           if (!fs.exists(missingDir)) {
             LOG.debug("Creating Missing Directory [" + missingDir + "]");
             fs.mkdirs(missingDir);
-            ConduitMetrics.incCounter(getServiceType(), EMPTYDIR_CREATE,
+            ConduitMetrics.updateSWGuage(getServiceType(), EMPTYDIR_CREATE,
                 categoryName, 1);
           }
           prevRuntime += MILLISECONDS_IN_MINUTE;
@@ -348,7 +349,7 @@ public abstract class AbstractService implements Service, Runnable {
       }
       count++;
       if (streamName != null) {
-        ConduitMetrics.incCounter(getServiceType(), RETRY_RENAME, streamName, 1);
+        ConduitMetrics.updateSWGuage(getServiceType(), RETRY_RENAME, streamName, 1);
       } else {
         LOG.warn("Can not increment retriable rename counter as stream name is null");
       }
@@ -420,7 +421,7 @@ public abstract class AbstractService implements Service, Runnable {
       }
       count++;
       if (streamName != null) {
-        ConduitMetrics.incCounter(getServiceType(), RETRY_CHECKPOINT,
+        ConduitMetrics.updateSWGuage(getServiceType(), RETRY_CHECKPOINT,
             streamName, 1);
       } else {
         LOG.warn("Can not increment retriable checkpoint counter as stream name is null");
@@ -457,7 +458,7 @@ public abstract class AbstractService implements Service, Runnable {
       }
       count++;
       if (streamName != null) {
-        ConduitMetrics.incCounter(getServiceType(), RETRY_MKDIR, streamName, 1);
+        ConduitMetrics.updateSWGuage(getServiceType(), RETRY_MKDIR, streamName, 1);
       } else {
         LOG.warn("Can not increment retriable mkdir counter as stream name is null");
       }
@@ -495,7 +496,7 @@ public abstract class AbstractService implements Service, Runnable {
       }
       count++;
       if (streamName != null) {
-        ConduitMetrics.incCounter(getServiceType(), RETRY_EXIST, streamName, 1);
+        ConduitMetrics.updateSWGuage(getServiceType(), RETRY_EXIST, streamName, 1);
       } else {
         LOG.warn("Can not increment retriable exists counter as stream name is null");
       }

@@ -33,6 +33,7 @@ import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.utils.FileUtil;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -50,9 +51,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
+import com.codahale.metrics.Counter;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
@@ -78,6 +81,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
   public void beforeTest() throws Exception{
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
+    prop.setProperty("com.inmobi.conduit.metrics.slidingwindowtime", "100000000");
     ConduitMetrics.init(prop);
     ConduitMetrics.startAll();
   }
@@ -414,10 +418,10 @@ cluster.getCheckpointDir()),
       i++;
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getValue().longValue() , 0);
   }
 
   @Test
@@ -425,10 +429,10 @@ cluster.getCheckpointDir()),
     LOG.info("Running LocalStreamIntegration for filename test-lss-conduit.xml");
     testMapReduce("test-lss-conduit.xml", 1);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() ,9 );
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() ,0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() ,0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() ,0 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() ,9 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() ,0 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() ,0 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() ,0 );
   }
 
   @Test(groups = { "integration" })
@@ -436,18 +440,18 @@ cluster.getCheckpointDir()),
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-conduit.xml");
     testMapReduce("test-lss-multiple-conduit.xml", 1);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 9);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test2").getCount() , 9);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test3").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 9);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test2").getValue().longValue() , 9);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test3").getValue().longValue() , 9);
   }
 
   @Test(groups = { "integration" })
@@ -455,18 +459,18 @@ cluster.getCheckpointDir()),
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-conduit.xml, Running Twice");
     testMapReduce("test-lss-multiple-conduit1.xml", 2);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 19);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test2").getCount() , 19);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test3").getCount() , 19);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 19);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test2").getValue().longValue() , 19);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test3").getValue().longValue() , 19);
   }
 
   private static class NullCheckPointProvider implements CheckpointProvider {
@@ -514,31 +518,31 @@ cluster.getCheckpointDir()),
       Assert.assertEquals(service.getMapperClass(), S3NCopyMapper.class);
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
   }
 
   @Test
   public void testWithOutClusterName() throws Exception {
     testClusterName("test-lss-conduit.xml", null);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
   }
 
   @Test
   public void testWithClusterName() throws Exception {
     testClusterName("test-lss-conduit.xml", "testcluster2");
 
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
   }
 
   private void testClusterName(String configName, String currentClusterName)

@@ -18,6 +18,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.conduit.local.TestLocalStreamService;
 
 public class PublishMissingPathsTest {
@@ -102,6 +103,6 @@ public class PublishMissingPathsTest {
     fs.delete(new Path(cluster.getRootDir()), true);
 
     fs.close();
-    Assert.assertTrue(ConduitMetrics.getCounter("LocalStreamService","emptyDir.create","test1").getCount() >0 );
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService","emptyDir.create","test1").getValue() >0 );
   }
 }
