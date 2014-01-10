@@ -706,6 +706,10 @@ function getStreamsCausingDataLoss(l) {
       isstreampresent = false;
     });
   } else if (l.source.tier.equalsIgnoreCase("merge") || l.source.tier.equalsIgnoreCase("mirror")) {
+    var targetNodeStreams = [];
+    l.target.allreceivedtopicstats.forEach(function(s) {
+    	targetNodeStreams.push(s.topic);
+    });
     l.source.allreceivedtopicstats.forEach(function (s) {
       var topic = s.topic;
       var topicSourceList;
@@ -718,12 +722,14 @@ function getStreamsCausingDataLoss(l) {
         l.target.allreceivedtopicstats.forEach(function (t) {
           if (t.topic == topic) {
             isstreampresent = true;
-            if (isLoss(s.messages, t.messages))
+            if (isLoss(s.messages, t.messages)) {
               streamslist.push(t.topic);
+            }
           }
         });
-        if (!isstreampresent && !(streamslist.contains(topic)))
+        if (!isstreampresent && !(streamslist.contains(topic)) && targetNodeStreams.contains(topic)) {
           streamslist.push(topic);
+        }
         isstreampresent = false;
       }
     });
@@ -1042,7 +1048,7 @@ function getHealth(count1, count2) {
     return 4;
   } else if (count1 > count2) {
     return 3;
-  } else if (isWarn(count1, count2)) {
+  } else if (isWarn(count1, count2) && !isLoss(count1, count2)) {
     return 1;
   } else if (isLoss(count1, count2)) {
     return 2;
