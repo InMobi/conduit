@@ -262,7 +262,6 @@ public class MergeCheckpointTest {
 
     assert (pathsCreated2.get(2).getParent().toString()
         .equals(checkPointString));
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 8);
@@ -310,7 +309,6 @@ public class MergeCheckpointTest {
     // different directories
 
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue() , numberOfEmptyDirs);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 7);
@@ -328,7 +326,6 @@ public class MergeCheckpointTest {
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
     assert (!remoteFs.exists(new Path(destnCluster.getFinalDestDirRoot())));
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
@@ -382,7 +379,6 @@ public class MergeCheckpointTest {
     // should be in diff directory as they have been create in diff directories
 
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue() , numberOfEmptyDirs);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 6);
@@ -428,7 +424,6 @@ public class MergeCheckpointTest {
     assert (pathsCreated2.get(2).getParent().toString()
         .equals(checkPointString));
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue() , numberOfEmptyDirs);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 4);
@@ -482,7 +477,6 @@ public class MergeCheckpointTest {
     int numberOfEmptyDirs = getNumOfPublishMissingPaths(results);
     assert (results.size() == (1 + numberOfEmptyDirs));
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue(), numberOfEmptyDirs);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 1);

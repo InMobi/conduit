@@ -62,7 +62,6 @@ public class MirrorStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_CHECKPOINT, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_MKDIR, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_RENAME, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_EXIST, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), EMPTYDIR_CREATE, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FILES_COPIED_COUNT, eachStream);
     }

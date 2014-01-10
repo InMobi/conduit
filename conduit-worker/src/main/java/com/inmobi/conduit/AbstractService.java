@@ -73,7 +73,6 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String FAILURES = "failures";
   public final static String COMMIT_TIME = "commit.time";
   public final static String RETRY_RENAME = "retry.rename";
-  public final static String RETRY_EXIST = "retry.exist";
   public final static String RETRY_MKDIR = "retry.mkDir";
   public final static String EMPTYDIR_CREATE = "emptyDir.create";
   public final static String RETRY_CHECKPOINT = "retry.checkPoint";
@@ -495,11 +494,6 @@ public abstract class AbstractService implements Service, Runnable {
           break;
       }
       count++;
-      if (streamName != null) {
-        ConduitMetrics.updateSWGuage(getServiceType(), RETRY_EXIST, streamName, 1);
-      } else {
-        LOG.warn("Can not increment retriable exists counter as stream name is null");
-      }
       try {
         Thread.sleep(TIME_RETRY_IN_MILLIS);
       } catch (InterruptedException e) {

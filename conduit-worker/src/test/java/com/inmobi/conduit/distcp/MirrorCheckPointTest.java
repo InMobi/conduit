@@ -261,7 +261,6 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 8);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -313,7 +312,6 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 7);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -330,7 +328,6 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -351,7 +348,6 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -386,7 +382,6 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 4);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -409,7 +404,6 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 8);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 

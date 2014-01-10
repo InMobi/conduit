@@ -66,7 +66,6 @@ public class MergedStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_CHECKPOINT, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_MKDIR, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_RENAME, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_EXIST, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.EMPTYDIR_CREATE, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.FILES_COPIED_COUNT, eachStream);
     }

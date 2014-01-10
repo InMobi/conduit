@@ -66,7 +66,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue() >= 120);
@@ -74,7 +73,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
   }
 
   @Test
@@ -108,7 +106,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"stream1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"stream1").getValue().longValue() , 0);
@@ -118,12 +115,10 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getValue().longValue() , 18);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"stream1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getValue().longValue() , 9);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getValue().longValue() , 18);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getValue().longValue() , 18);
@@ -135,9 +130,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     testMergeMirrorStream("test-mss-conduit_mirror.xml", null, null);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
@@ -158,7 +151,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     testMergeMirrorStream("testConduitWithClusterName.xml", clusterName,
         clustersToProcess);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 36);
@@ -201,7 +193,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     testMergeMirrorStream("testConduitWithClusterNameParallel.xml",
         currentClusterName, clustersToProcess, false);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 36);
@@ -216,7 +207,6 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     // Test with 1 merged stream only
     testMergeMirrorStream("test-mergedss-conduit.xml", null, null);
 
-    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getValue().longValue() , 0 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18 );
