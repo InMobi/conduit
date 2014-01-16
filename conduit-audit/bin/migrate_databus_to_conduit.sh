@@ -11,10 +11,10 @@ db=$1
 dbuser=$2
 host=$3
 port=$4
-DbConnect="/usr/bin/psql -A -t -R \n -p $port -h $host $dbuser $db"
+DbConnect="/usr/bin/psql -A -t -R \n -p $port -h $host $db $dbuser"
 
 tables=$($DbConnect <<EOF
-select tablename from pg_tables where tableowner = '$db'
+select tablename from pg_tables where tableowner = '$dbuser'
 \q
 EOF
 )
