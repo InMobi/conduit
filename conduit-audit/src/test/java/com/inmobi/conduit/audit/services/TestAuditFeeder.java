@@ -128,6 +128,24 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
   }
 
   @Test
+  public void testOldMessageUpdatedToDB() throws IOException, SQLException {
+    setupPublisher();
+    addAuditMessageToPublisher(oldMsg);
+    setupAuditDB();
+    AuditFeederService feeder = new AuditFeederServiceTest(cluster, "mock",
+        ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE),
+        publisher);
+    feeder.addTuples(oldMsg);
+    feeder.execute();
+    feeder.stop();
+    int n = getNumberOfRowsInAuditDB();
+    assert (n == 0);
+    ResultSet rs = getAllRowsInAuditDB();
+    assert(rs != null);
+    assert(rs.next() == false);
+  }
+
+  @Test
   public void testConsumerDBUpdateFails()
       throws IOException, InterruptedException, SQLException {
     setupPublisher();

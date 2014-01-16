@@ -2,11 +2,7 @@ package com.inmobi.conduit.audit.util;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import junit.framework.Assert;
 
@@ -19,11 +15,16 @@ public class AuditDBUtil {
   protected Connection connection;
   protected Tuple tuple1, tuple2, tuple3, tuple4;
   protected Set<Tuple> tupleSet1, tupleSet2, tupleSet3;
-  protected Date fromDate = new Date(1355314200000l);
-  protected Date toDate = new Date(1355314400000l);
+  protected Date currentDate, fromDate, toDate;
   private String tableName = "audit";
 
   public void setupDB(boolean updateDB) {
+    Calendar calendar = Calendar.getInstance();
+    currentDate = calendar.getTime();
+    calendar.add(Calendar.MINUTE, -2);
+    fromDate = calendar.getTime();
+    calendar.add(Calendar.MINUTE, 4);
+    toDate = calendar.getTime();
     ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     connection = AuditDBHelper.getConnection(
         config.getString(AuditDBConstants.JDBC_DRIVER_CLASS_NAME),
@@ -72,7 +73,7 @@ public class AuditDBUtil {
     String hostname2 = "testhost2";
     String tier = Tier.AGENT.toString();
     String cluster = "testCluster";
-    Date timestamp = new Date(1355314332000l);
+    Date timestamp = currentDate;
     String topic = "testTopic";
     String topic2 = "testTopic1";
     Map<LatencyColumns, Long> latencyCountMap1 =

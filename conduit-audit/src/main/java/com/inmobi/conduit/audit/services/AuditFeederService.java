@@ -399,7 +399,17 @@ public class AuditFeederService extends AuditDBService {
               continue;
             }
             Set<Tuple> tupleSet = new HashSet<Tuple>();
-            tupleSet.addAll(tuples.values());
+            for (Tuple tuple : tuples.values()) {
+              Date nextRollupTime = AuditDBHelper.addDaysToCurrentDate
+                  (-config.getInteger(AuditDBConstants.TILLDAYS_KEY));
+              if (!tuple.getTimestamp().before(nextRollupTime)) {
+                tupleSet.add(tuple);
+              } else {
+                LOG.warn("Not adding tuple:" + tuple + "with timestamp:" +
+                    tuple.getTimestamp() + "as it is before " +
+                    "next rollup date:" + nextRollupTime);
+              }
+            }
             final Timer.Context dbUpdate = timeTakenDbUpdate.time();
             try {
               if (dbHelper.update(tupleSet)) {

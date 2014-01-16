@@ -161,8 +161,8 @@ public class AuditRollUpService extends AuditDBService {
       Date currentDate = lastDate;
       while (!currentDate.before(firstDate)) {
         if (checkTableExists(connection, createTableName(currentDate, true)))
-          return addDaysToGivenDate(currentDate, 1);
-        currentDate = addDaysToGivenDate(currentDate, -1);
+          return AuditDBHelper.addDaysToGivenDate(currentDate, 1);
+        currentDate = AuditDBHelper.addDaysToGivenDate(currentDate, -1);
       }
       return firstDate;
     } else {
@@ -288,8 +288,8 @@ public class AuditRollUpService extends AuditDBService {
   private boolean createDailyTable(Connection connection) {
     if (!isStop) {
       Date fromDate = new Date();
-      Date todate = addDaysToCurrentDate(config.getInteger(AuditDBConstants
-          .NUM_DAYS_AHEAD_TABLE_CREATION));
+      Date todate = AuditDBHelper.addDaysToCurrentDate(config.getInteger
+          (AuditDBConstants.NUM_DAYS_AHEAD_TABLE_CREATION));
       LOG.info("Creating daily table from:" + fromDate + " till:" + todate);
       return createDailyTable(fromDate, todate, connection);
     }
@@ -315,7 +315,7 @@ public class AuditRollUpService extends AuditDBService {
         int addedToBatch = 0;
         while (!fromDate.after(todate) && !isStop) {
           String currentDateString = dayChkFormat.format(fromDate);
-          String nextDayString = dayChkFormat.format(addDaysToGivenDate
+          String nextDayString = dayChkFormat.format(AuditDBHelper.addDaysToGivenDate
               (fromDate, 1));
           String dayTable = createTableName(fromDate, false);
           int index = 1;
@@ -328,7 +328,7 @@ public class AuditRollUpService extends AuditDBService {
               + " with table name as:" + dayTable + " and parent is :" +
               masterTable);
           addedToBatch++;
-          fromDate = addDaysToGivenDate(fromDate, 1);
+          fromDate = AuditDBHelper.addDaysToGivenDate(fromDate, 1);
         }
         if (!isStop) {
           LOG.info("Executing batch update for creating daily tables");
@@ -355,30 +355,9 @@ public class AuditRollUpService extends AuditDBService {
     return true;
   }
 
-  public Date addDaysToGivenDate(Date date, int increment) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.setTime(date);
-    calendar.set(Calendar.HOUR_OF_DAY, 0);
-    calendar.set(Calendar.MINUTE, 0);
-    calendar.set(Calendar.SECOND, 0);
-    calendar.set(Calendar.MILLISECOND, 0);
-    calendar.add(Calendar.DATE, increment);
-    return calendar.getTime();
-  }
-
   private String getCreateTableQuery() {
     String query = "{call createDailyTable(?,?,?,?)}";
     return query;
-  }
-
-  public Date addDaysToCurrentDate(Integer dayIncrement) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.set(Calendar.HOUR_OF_DAY, 0);
-    calendar.set(Calendar.MINUTE, 0);
-    calendar.set(Calendar.SECOND, 0);
-    calendar.set(Calendar.MILLISECOND, 0);
-    calendar.add(Calendar.DATE, dayIncrement);
-    return calendar.getTime();
   }
 
   private void sleepTillNextRun() {
@@ -397,7 +376,7 @@ public class AuditRollUpService extends AuditDBService {
   private Date rollupTables(Connection connection) throws SQLException {
     if (!isStop) {
       Date fromTime = getFromTime(connection);
-      Date toDate = addDaysToCurrentDate(-tilldays);
+      Date toDate = AuditDBHelper.addDaysToCurrentDate(-tilldays);
       if (fromTime != null && !fromTime.after(toDate)) {
         return rollupTables(fromTime, toDate, connection);
       } else {
@@ -429,7 +408,7 @@ public class AuditRollUpService extends AuditDBService {
         rollupStmt = connection.prepareCall(statement);
         LOG.info("Starting roll up of tables from:"+currentDate+" till:"+toDate);
         while (currentDate.before(toDate) && !isStop) {
-          Date nextDay = addDaysToGivenDate(currentDate, 1);
+          Date nextDay = AuditDBHelper.addDaysToGivenDate(currentDate, 1);
           String srcTable = createTableName(currentDate, false);
           String destTable = createTableName(currentDate, true);
           Long firstMillisOfDay = getFirstMilliOfDay(currentDate);
