@@ -146,7 +146,7 @@ public class AuditFeederService extends AuditDBService {
   private static final String START_FROM_STARTING_KEY = DatabusConsumerConfig.startOfStreamConfig;
   private static final int DEFAULT_TIMEOUT = 30;
 
-  private final Counter messagesProcessed;
+  private final Counter messagesProcessed, oldTuplesSkipped;
   private final Timer timeTakenPerRun, timeTakenDbUpdate;
   private final AuditDBHelper dbHelper;
 
@@ -170,6 +170,8 @@ public class AuditFeederService extends AuditDBService {
     LOG.info("Messages per batch " + msgsPerBatch);
     messagesProcessed = AuditStats.metrics.counter(clusterName
         + ".messagesProcessed");
+    oldTuplesSkipped =
+        AuditStats.metrics.counter(clusterName + ".oldTuplesSkipped");
     timeTakenPerRun = AuditStats.metrics
         .timer(clusterName + ".timeTakenPerRun");
     timeTakenDbUpdate = AuditStats.metrics.timer(clusterName
@@ -408,6 +410,7 @@ public class AuditFeederService extends AuditDBService {
                 LOG.warn("Not adding tuple:" + tuple + "with timestamp:" +
                     tuple.getTimestamp() + "as it is before " +
                     "next rollup date:" + nextRollupTime);
+                oldTuplesSkipped.inc();
               }
             }
             final Timer.Context dbUpdate = timeTakenDbUpdate.time();
