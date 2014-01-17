@@ -26,7 +26,7 @@ NoOfPart=$4
 db=$5
 dbuser=$6
 port=$7
-DbConnect="/usr/lib/postgresql/9.1/bin/psql -p $port -h localhost $dbuser $db"
+DbConnect="/usr/lib/postgresql/9.1/bin/psql -p $port -h localhost $db $dbuser"
 
 for (( i = 0; i < $NoOfPart; i++ ))
 do
