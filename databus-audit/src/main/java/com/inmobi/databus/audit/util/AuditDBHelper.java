@@ -314,7 +314,7 @@ public class AuditDBHelper {
       Date timeinterval = null;
       if(groupBy.getGroupByColumns().contains(Column.TIMEINTERVAL))
       {
-        timeinterval = new Date(Long.parseLong(columnValuesInTuple.get(Column.TIMEINTERVAL))/1000 );
+        timeinterval = new Date(Long.parseLong(columnValuesInTuple.get(Column.TIMEINTERVAL)));
       }
       tuple = new Tuple(columnValuesInTuple.get(Column.HOSTNAME),
           columnValuesInTuple.get(Column.TIER),
