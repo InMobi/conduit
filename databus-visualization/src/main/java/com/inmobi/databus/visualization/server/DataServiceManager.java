@@ -6,7 +6,6 @@ import com.inmobi.databus.DatabusConfigParser;
 import com.inmobi.databus.audit.Tier;
 import com.inmobi.databus.audit.Tuple;
 import com.inmobi.databus.audit.query.AuditDbQuery;
-import com.inmobi.databus.audit.query.AuditTimeLineDbQuery;
 import com.inmobi.databus.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
 
@@ -345,11 +344,11 @@ public class DataServiceManager {
   public String getTimeLineData(String filterValues) {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
-    AuditTimeLineDbQuery dbQuery =
-        new AuditTimeLineDbQuery(
+    AuditDbQuery dbQuery =
+        new AuditDbQuery(
             filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, feederConfig);
+            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, null,feederConfig);
     try {
       dbQuery.execute();
     } catch (Exception e) {
