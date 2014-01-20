@@ -361,6 +361,6 @@ public class DataServiceManager {
     } catch (Exception e) {
       LOG.error("Exception while displaying results: ", e);
     }
-    return ServerDataHelper.getInstance().setGraphDataResponseTS(dbQuery.convertToJson());
+    return ServerDataHelper.convertToJson(dbQuery.getTupleSet());
   }
 }

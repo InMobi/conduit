@@ -275,7 +275,7 @@ public class AuditDBHelper {
       rs = preparedstatement.executeQuery();
       while (rs.next()) {
         Tuple tuple = createNewTuple(rs, groupBy);
-        if (tuple == null) {
+         if (tuple == null) {
           LOG.error("Returned null tuple..returning");
           return null;
         }
@@ -311,9 +311,14 @@ public class AuditDBHelper {
         latencyCountMap
             .put(latencyColumn, rs.getLong(latencyColumn.toString()));
       }
+      Date timeinterval = null;
+      if(groupBy.getGroupByColumns().contains(Column.TIMEINTERVAL))
+      {
+        timeinterval = new Date(Long.parseLong(columnValuesInTuple.get(Column.TIMEINTERVAL))/1000 );
+      }
       tuple = new Tuple(columnValuesInTuple.get(Column.HOSTNAME),
           columnValuesInTuple.get(Column.TIER),
-          columnValuesInTuple.get(Column.CLUSTER), null,
+          columnValuesInTuple.get(Column.CLUSTER), timeinterval,
           columnValuesInTuple.get(Column.TOPIC), latencyCountMap,
           rs.getLong(AuditDBConstants.SENT));
     } catch (SQLException e) {
