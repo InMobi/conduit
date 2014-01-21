@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.apache.commons.logging.Log;
@@ -18,6 +19,10 @@ import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.messaging.ClientConfig;
 
 public class AuditDBHelper {
+  public static final SimpleDateFormat DAY_CHK_FORMATTER = new SimpleDateFormat
+      ("yyyy-MM-dd");
+  public static final SimpleDateFormat TABLE_DATE_FORMATTER = new
+      SimpleDateFormat("yyyyMMdd");
 
   private static final Log LOG = LogFactory.getLog(AuditDBHelper.class);
   private final ClientConfig config;
@@ -27,6 +32,13 @@ public class AuditDBHelper {
   public AuditDBHelper(ClientConfig config) {
     this.config = config;
     tableName = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
+  }
+
+  public static Connection getConnection(ClientConfig config) {
+    return getConnection(config.getString(AuditDBConstants
+        .JDBC_DRIVER_CLASS_NAME), config.getString(AuditDBConstants.DB_URL),
+        config.getString(AuditDBConstants.DB_USERNAME),
+        config.getString(AuditDBConstants.DB_PASSWORD));
   }
 
   public static Connection getConnection(String driverName, String url,
@@ -378,5 +390,19 @@ public class AuditDBHelper {
     calendar.set(Calendar.MILLISECOND, 0);
     calendar.add(Calendar.DATE, increment);
     return calendar.getTime();
+  }
+
+  /*
+   * Return long corresponding to first millisecond of day to which date
+   * belongs
+   */
+  public static Long getFirstMilliOfDay(Date date) {
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+    cal.set(Calendar.HOUR_OF_DAY, 0);
+    cal.set(Calendar.MINUTE, 0);
+    cal.set(Calendar.SECOND, 0);
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTime().getTime();
   }
 }

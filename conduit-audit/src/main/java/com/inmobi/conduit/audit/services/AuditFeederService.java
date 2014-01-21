@@ -1,6 +1,7 @@
 package com.inmobi.conduit.audit.services;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,7 +140,6 @@ public class AuditFeederService extends AuditDBService {
   private int DEFAULT_MSG_PER_BATCH = 5000;
   private int msgsPerBatch;
   private TDeserializer deserializer = new TDeserializer();
-  private final ClientConfig config;
   private final static long RETRY_INTERVAL = 60000;
   private final String rootDir;
   private static final String START_TIME_KEY = MessageConsumerFactory.ABSOLUTE_START_TIME;
@@ -160,8 +160,8 @@ public class AuditFeederService extends AuditDBService {
    */
   public AuditFeederService(String clusterName, String rootDir,
       ClientConfig config) throws IOException {
+    super(config);
     this.clusterName = clusterName;
-    this.config = config;
     this.rootDir = rootDir;
     dbHelper = new AuditDBHelper(config);
     consumer = getConsumer(config);
@@ -401,9 +401,8 @@ public class AuditFeederService extends AuditDBService {
               continue;
             }
             Set<Tuple> tupleSet = new HashSet<Tuple>();
+            Date nextRollupTime = getRollupTime();
             for (Tuple tuple : tuples.values()) {
-              Date nextRollupTime = AuditDBHelper.addDaysToCurrentDate
-                  (-config.getInteger(AuditDBConstants.TILLDAYS_KEY));
               if (!tuple.getTimestamp().before(nextRollupTime)) {
                 tupleSet.add(tuple);
               } else {
