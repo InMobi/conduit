@@ -37,6 +37,5 @@ ALTER TABLE daily_conduit_summary
   OWNER TO conduit_user;
 
 GRANT ALL ON TABLE daily_conduit_summary TO conduit_user;
-GRANT SELECT ON TABLE daily_conduit_summary TO dbreadonly;
 
 
