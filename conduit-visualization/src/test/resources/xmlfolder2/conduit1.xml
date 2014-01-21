@@ -1,0 +1,50 @@
+<conduit>
+  <defaults>
+    <rootdir>/conduit</rootdir>
+    <retentioninhours>48</retentioninhours>
+    <trashretentioninhours>24</trashretentioninhours>
+  </defaults>
+
+  <streams>
+    <stream name="vistest1">
+      <sources>
+        <source>
+          <name>viscluster1</name>
+          <retentioninhours>12</retentioninhours>
+        </source>
+      </sources>
+    </stream>
+    <stream name="vistest2">
+      <sources>
+        <source>
+          <name>viscluster2</name>
+          <retentioninhours>12</retentioninhours>
+        </source>
+      </sources>
+    </stream>
+    <stream name="_audit">
+      <sources>
+        <source>
+          <name>viscluster1</name>
+          <retentioninhours>12</retentioninhours>
+        </source>
+      </sources>
+    </stream>
+  </streams>
+
+  <clusters>
+    <cluster name="viscluster1"
+             hdfsurl="file:///tmp/vistest/viscluster1"
+             jturl="local"
+             jobqueuename="default"
+        >
+    </cluster>
+    <cluster name="viscluster2"
+             hdfsurl="file:///tmp/vistest/viscluster2"
+             jturl="local"
+             jobqueuename="default"
+        >
+    </cluster>
+
+  </clusters>
+</conduit>

@@ -1,0 +1,28 @@
+<conduit xmlns:xi="http://www.w3.org/2001/XInclude">
+  <defaults>
+    <rootdir>/mergeonlyservice</rootdir>
+    <retentioninhours>24</retentioninhours>
+    <trashretentioninhours>48</trashretentioninhours>
+  </defaults>
+
+  <!-- A stream can have only one primary and multiple mirrors as destinations
+    -->
+  <streams>
+    <xi:include href="src/test/resources/xinclude.xml">
+      <xi:fallback>file is not included</xi:fallback>
+    </xi:include>
+  </streams>
+
+  <clusters>
+    <cluster name="testcluster1" hdfsurl="file:///tmp/mergeservicetest/testcluster1"
+             jturl="local"
+             jobqueuename="default"
+             >
+    </cluster>
+    <cluster name="testcluster2" hdfsurl="file:////tmp/mergeservicetest/testcluster2"
+             jturl="local"
+             jobqueuename="default"
+             >
+    </cluster>
+  </clusters>
+</conduit>
