@@ -130,7 +130,10 @@ public class DataServiceManager {
     Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
         (filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
-    String timeLineJSON = getTimeLineQueryJSONResult(filterValues);
+    String timeLineJSON = getTimeLineQueryJSONResult(filterMap.get
+        (ServerConstants.START_TIME_FILTER), (filterMap.get(ServerConstants
+        .END_TIME_FILTER)), filterString, properties.get(
+        ServerConstants.PERCENTILE_STRING));
     return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
         tierLatencyMap, properties, timeLineJSON);
   }
@@ -340,21 +343,24 @@ public class DataServiceManager {
     return Collections.unmodifiableList(conduitConfig);
   }
 
-  public String getTimeLineQueryJSONResult(String filterValues) {
-    Map<String, String> filterMap = getFilterMap(filterValues);
-    String filterString = setFilterString(filterMap);
-    AuditDbQuery dbQuery =
-        new AuditDbQuery(
-            filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, null,feederConfig);
-    LOG.info("Audit Time line query: " + dbQuery.toString());
+  public String getTimeLineQueryJSONResult(String start,
+                                           String end, String filterString,
+                                           String percentiles) {
+    LOG.info("Calling time line query with filer string:" + filterString);
+    LOG.info("Start:"+start+" end:"+end+" percentileList:"+percentiles);
+    AuditDbQuery dbQuery;
     try {
+      dbQuery =
+          new AuditDbQuery(end, start, filterString,
+              ServerConstants.GROUPBY_TIMELINE_STRING,
+              ServerConstants.TIMEZONE, percentiles, feederConfig);
       LOG.debug("Executing time line query");
       dbQuery.execute();
+      LOG.info("Audit Time line query: " + dbQuery.toString());
       LOG.debug("Executed time line query");
     } catch (Exception e) {
       LOG.error("Exception while executing time line query: ", e);
+      return null;
     }
     try {
       dbQuery.displayResults();
@@ -370,7 +376,14 @@ public class DataServiceManager {
    * Will retrieve the timeseries information for a date range
    */
   public String getTimeLineData(String filterValues) {
-    String jsonResult = getTimeLineQueryJSONResult(filterValues);
+    LOG.info("getTimeLineData filterValues:"+filterValues);
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    LOG.debug("FilterMap:"+filterMap);
+    String filterString = setFilterString(filterMap);
+    String jsonResult = getTimeLineQueryJSONResult(filterMap.get
+        (ServerConstants.START_TIME_FILTER),
+        filterMap.get(ServerConstants.END_TIME_FILTER),
+        filterString, properties.get(ServerConstants.PERCENTILE_STRING));
     return ServerDataHelper.getInstance().setGraphDataResponseTS(jsonResult);
   }
 }

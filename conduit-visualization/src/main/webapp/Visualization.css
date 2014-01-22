@@ -113,7 +113,7 @@ div.tooltip {
   width: 200px;
 }
 
-#tabs {
+.viewTabs {
     width: 71.5%;
     margin: auto;
     overflow: hidden;
@@ -122,20 +122,20 @@ div.tooltip {
     float:left;
 }
 
-#tabs ul {
+.viewTabs ul {
     list-style: none;
     overflow: hidden;
     padding: 0;
     margin: 0;
 }
 
-#tabs li {
+.viewTabs li {
     float: right;
     border: 1px solid #ccc;
     border-bottom: none;
 }
 
-#tabs li a {
+.viewTabs li a {
     color: #444444;
     font-weight: bold;
     display: block;
@@ -144,13 +144,13 @@ div.tooltip {
     text-decoration: none;
 }
 
-#tabs li a:hover {
+.viewTabs li a:hover {
     background:#EBF4F8;
     cursor: pointer;
     cursor: hand;
 }
 
-#tabs li a.active {
+.viewTabs li a.active {
     background:#EBF4F8;
 }
 
@@ -191,4 +191,56 @@ div.healthtooltip {
   border:#d8eaf3;
   padding:0px;
   margin:0px;
+}
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	stroke-width : 1px;
+	shape-rendering: crispEdges;
+}
+
+.x.axis path {
+	/*display: none;*/
+}
+
+.line {
+	fill: none;
+	stroke: steelblue;
+	stroke-width: 1.5px;
+}
+
+.grid .tick {
+	stroke: lightgrey;
+	opacity: 0.7;
+}
+
+.grid path {
+	fill: none;
+	stroke: darkgrey;
+	stroke-width: 1.5px;
+}
+
+#timelinePanel {
+	border: grey solid thin;
+	margin-top: 25px;
+	/*padding-top: 25px;*/
+}
+
+#tierButtonPanel {
+	padding-top: 10px;
+	padding-right: 100px;
+	float: right;
+}
+
+.tierButton {
+	float: right;
+	width: 100px;
+}
+
+.brush .extent {
+	stroke: #fff;
+	fill-opacity: .125;
+	shape-rendering: crispEdges;
 }

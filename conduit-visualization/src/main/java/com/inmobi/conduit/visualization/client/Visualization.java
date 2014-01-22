@@ -14,6 +14,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.datepicker.client.DatePicker;
 import com.inmobi.conduit.visualization.client.util.ClientDataHelper;
 import com.inmobi.conduit.visualization.client.util.DateUtils;
+import com.inmobi.messaging.ClientConfig;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -76,6 +77,9 @@ public class Visualization implements EntryPoint, ClickHandler {
                 .getClusterListFromLoadMainPanelResponse(result));
         clientConfig = ClientDataHelper.getInstance()
             .getClientConfigLoadMainPanelResponse(result);
+
+        checkIfGWTDevMode();
+        setConfiguration();
         rolledUpTillDays = Integer.parseInt(clientConfig.get(ClientConstants
             .ROLLEDUP_TILL_DAYS));
         loadMainPanel();
@@ -91,7 +95,6 @@ public class Visualization implements EntryPoint, ClickHandler {
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
-    checkIfGWTDevMode();
     String stream, cluster, startTime, endTime, selectedTab;
     if (checkParametersNull()) {
       System.out.println("Loading default settings");
@@ -372,6 +375,7 @@ public class Visualization implements EntryPoint, ClickHandler {
       defaultTabId =  Integer.parseInt(selectedTab);
     final Integer selectedTabId = defaultTabId;
     saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTabId);
+
     System.out.println("Sending request to load graph");
     System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
         ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab " +
@@ -416,21 +420,7 @@ public class Visualization implements EntryPoint, ClickHandler {
               lLatency, mergeLatency, mirrorLatency);
         }
         drawGraph(nodesJson, selectedCluster, selectedStream, stTime, edTime,
-            selectedTabId, Integer.parseInt(clientConfig
-            .get(ClientConstants.PUBLISHER)), Integer.parseInt(clientConfig
-            .get(ClientConstants.AGENT)), Integer.parseInt(clientConfig.get
-            (ClientConstants.VIP)), Integer.parseInt(clientConfig.get
-            (ClientConstants.COLLECTOR)), Integer.parseInt(clientConfig.get
-            (ClientConstants.HDFS)), Integer.parseInt(clientConfig.get
-            (ClientConstants.LOCAL)), Integer.parseInt(clientConfig.get
-            (ClientConstants.MERGE)), Integer.parseInt(clientConfig.get
-            (ClientConstants.MIRROR)), Float.parseFloat(clientConfig.get
-            (ClientConstants.PERCENTILE_FOR_SLA)),
-            Float.parseFloat(clientConfig.get(ClientConstants
-                .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
-            (ClientConstants.PERCENTAGE_FOR_WARN)),
-            Integer.parseInt(clientConfig.get(ClientConstants
-                .LOSS_WARN_THRESHOLD_DIFF)), isDevMode);
+            selectedTabId);
         enableFilterSelection();
       }
     });
@@ -522,20 +512,40 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   private native void drawGraph(String result, String cluster, String stream,
                                 String start, String end,
-                                Integer selectedTabID,
-                                Integer publisherSla, Integer agentSla,
-                                Integer vipSla, Integer collectorSla,
-                                Integer hdfsSla,
-                                Integer localSla,
-                                Integer mergeSla,
-                                Integer mirrorSla, Float percentileForSla,
-                                Float percentageForLoss,
-                                Float percentageForWarn,
-                                Integer lossWarnThresholdDiff,
-                                boolean isDevMode)/*-{
-    $wnd.drawGraph(result, cluster, stream, start, end, selectedTabID,
-    publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla,
-    mergeSla, mirrorSla, percentileForSla, percentageForLoss,
-    percentageForWarn, lossWarnThresholdDiff, isDevMode);
+                                Integer selectedTabID)/*-{
+    $wnd.drawGraph(result, cluster, stream, start, end, selectedTabID);
+  }-*/;
+
+  private void setConfiguration() {
+    setConfiguration(Integer.parseInt(clientConfig
+        .get(ClientConstants.PUBLISHER)), Integer.parseInt(clientConfig
+        .get(ClientConstants.AGENT)), Integer.parseInt(clientConfig.get
+        (ClientConstants.VIP)), Integer.parseInt(clientConfig.get
+        (ClientConstants.COLLECTOR)), Integer.parseInt(clientConfig.get
+        (ClientConstants.HDFS)), Integer.parseInt(clientConfig.get
+        (ClientConstants.LOCAL)), Integer.parseInt(clientConfig.get
+        (ClientConstants.MERGE)), Integer.parseInt(clientConfig.get
+        (ClientConstants.MIRROR)), Float.parseFloat(clientConfig.get
+        (ClientConstants.PERCENTILE_FOR_SLA)),
+        Float.parseFloat(clientConfig.get(ClientConstants
+            .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
+        (ClientConstants.PERCENTAGE_FOR_WARN)),
+        Integer.parseInt(clientConfig.get(ClientConstants
+            .LOSS_WARN_THRESHOLD_DIFF)), isDevMode);
+  }
+
+  private native void setConfiguration(Integer publisherSla, Integer agentSla,
+                                       Integer vipSla, Integer collectorSla,
+                                       Integer hdfsSla,
+                                       Integer localSla,
+                                       Integer mergeSla,
+                                       Integer mirrorSla, Float percentileForSla,
+                                       Float percentageForLoss,
+                                       Float percentageForWarn,
+                                       Integer lossWarnThresholdDiff,
+                                       boolean isDevMode) /*-{
+    $wnd.setConfiguration(publisherSla,agentSla, vipSla, collectorSla,
+    hdfsSla, localSla, mergeSla, mirrorSla, percentileForSla,
+    percentageForLoss, percentageForWarn, lossWarnThresholdDiff,isDevMode);
   }-*/;
 }

@@ -305,8 +305,6 @@ public class ServerDataHelper {
     return map;
 
   }
-  
-
 
   @SuppressWarnings("unchecked")
   private static Map<String, Object> covertToUIFriendlyObject(Set<Tuple> tuples) {
