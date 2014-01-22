@@ -364,6 +364,7 @@ public class DataServiceManager {
       LOG.error("Exception while displaying results: ", e);
     }
     return ServerDataHelper.convertToJson(dbQuery.getTupleSet());
+  }
     
   /**
    * Will retrieve the timeseries information for a date range
