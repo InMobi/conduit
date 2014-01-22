@@ -363,21 +363,27 @@ public class DataServiceManager {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
     AuditDbQuery dbQuery =
-        new AuditDbQuery(
-            filterMap.get(ServerConstants.END_TIME_FILTER),
+        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, null,feederConfig);
+            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
+            null, feederConfig);
+    AuditDbQuery aggregatedLatency =
+        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+            ServerConstants.GROUPBY_LATENCY_TIMELINE_STRING,
+            ServerConstants.TIMEZONE,
+            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig);
     try {
       dbQuery.execute();
+      aggregatedLatency.execute();
     } catch (Exception e) {
       LOG.error("Exception while executing query: ", e);
     }
-    LOG.info("Audit query: " + dbQuery.toString());
-    try {
-      dbQuery.displayResults();
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
-    }
-    return ServerDataHelper.convertToJson(dbQuery.getTupleSet());
+    LOG.info("TimeLine query: " + dbQuery.toString());
+    LOG.info("TimeLine Query Aggregated on Topic query: " + aggregatedLatency.toString());
+    return ServerDataHelper.setGraphDataResponseTS(ServerDataHelper
+        .convertToJson(dbQuery, aggregatedLatency));
   }
+  
+  
 }
