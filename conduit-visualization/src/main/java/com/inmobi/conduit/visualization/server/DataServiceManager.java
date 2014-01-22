@@ -6,7 +6,6 @@ import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.audit.Tier;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
-import com.inmobi.conduit.audit.query.AuditTimeLineDbQuery;
 import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
@@ -344,11 +343,11 @@ public class DataServiceManager {
   public String getTimeLineQueryJSONResult(String filterValues) {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
-    AuditTimeLineDbQuery dbQuery =
-        new AuditTimeLineDbQuery(
+    AuditDbQuery dbQuery =
+        new AuditDbQuery(
             filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, feederConfig);
+            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE, null,feederConfig);
     LOG.info("Audit Time line query: " + dbQuery.toString());
     try {
       LOG.debug("Executing time line query");
@@ -359,12 +358,13 @@ public class DataServiceManager {
     }
     try {
       dbQuery.displayResults();
-      LOG.info("TimeSeries JSON:"+dbQuery.convertToJson());
+      LOG.debug("TimeSeries JSON:" + ServerDataHelper.convertToJson(dbQuery
+          .getTupleSet()));
     } catch (Exception e) {
       LOG.error("Exception while displaying results: ", e);
     }
-    return dbQuery.convertToJson();
-  }
+    return ServerDataHelper.convertToJson(dbQuery.getTupleSet());
+    
   /**
    * Will retrieve the timeseries information for a date range
    */

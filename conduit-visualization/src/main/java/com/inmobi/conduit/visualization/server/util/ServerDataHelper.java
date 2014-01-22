@@ -15,9 +15,12 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class ServerDataHelper {
   private static Logger LOG = Logger.getLogger(ServerDataHelper.class);
@@ -243,12 +246,109 @@ public class ServerDataHelper {
   
   public String setGraphDataResponseTS(String jsonResult) {
    
-   
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response
             .newBuilder()
             .setTimeLineGraphResponse(
                 RequestResponse.TimeLineGraphResponse.newBuilder()
                     .setJsonString(jsonResult)).build());
+  }
+  
+  
+  
+  @SuppressWarnings("unchecked")
+  private static Map<String, Map<String, Map<String, Object>>> convertToMap(Set<Tuple> tupleSet) {
+    Map<String, Map<String, Map<String, Object>>> map =
+        new HashMap<String, Map<String, Map<String, Object>>>();
+
+    for (Tuple eachTuple : tupleSet) {
+      Map<String, Map<String, Object>> eachTierMap =
+          map.get(eachTuple.getTier());
+      if (eachTierMap == null) {
+        eachTierMap = new HashMap<String, Map<String, Object>>();
+        map.put(eachTuple.getTier(), eachTierMap);
+      }
+      Map<String, Object> eachTSMap =
+          eachTierMap.get("" + eachTuple.getTimestamp().getTime());
+      if (eachTSMap == null) {
+        eachTSMap = new TreeMap<String, Object>();
+        eachTierMap.put("" + eachTuple.getTimestamp().getTime(), eachTSMap);
+        eachTSMap.put("aggreceived", eachTuple.getReceived());
+        eachTSMap.put("aggsent", eachTuple.getSent());
+      } else {
+        eachTSMap.put("aggreceived", (Long) eachTSMap.get("aggreceived")
+            + eachTuple.getReceived());
+        eachTSMap.put("aggsent",
+            (Long) eachTSMap.get("aggsent") + eachTuple.getSent());
+      }
+      Map<String, Object> eachStream =
+          (Map<String, Object>) eachTSMap.get(eachTuple.getTopic());
+      if (eachStream == null) {
+        eachStream = new HashMap<String, Object>();
+        eachTSMap.put(eachTuple.getTopic(), eachStream);
+        eachStream.put("topic", eachTuple.getTopic());
+      }
+
+      List<Map<String, Object>> clusterList =
+          (List<Map<String, Object>>) eachStream.get("clusterStats");
+      if (clusterList == null) {
+        clusterList = new ArrayList<Map<String, Object>>();
+        eachStream.put("clusterStats", clusterList);
+      }
+      Map<String, Object> clusterStat = new HashMap<String, Object>();
+      clusterStat.put("cluster", eachTuple.getCluster());
+      clusterStat.put("received", eachTuple.getReceived());
+      clusterStat.put("sent", eachTuple.getSent());
+      clusterList.add(clusterStat);
+
+    }
+    return map;
+
+  }
+  
+
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> covertToUIFriendlyObject(Set<Tuple> tuples) {
+    Map<String, Object> returnMap = new HashMap<String, Object>();
+    Map<String, Map<String, Map<String, Object>>> map = convertToMap(tuples);
+
+    List<Object> datapoints = new ArrayList<Object>();
+    for (String eachTier : map.keySet()) {
+      Map<String, Object> eachTierMap = new HashMap<String, Object>();
+      eachTierMap.put("tier", eachTier);
+      Set<Map<String, Object>> modifiedtimeserierList = new HashSet<Map<String, Object>>();
+      eachTierMap.put("tierWisePointList", modifiedtimeserierList);
+      for (String eachTimeKey : map.get(eachTier).keySet()) {
+        Object eachTimeData = map.get(eachTier).get(eachTimeKey);
+        Map<String, Object> eachObject = (Map<String, Object>) eachTimeData;
+        List<Object> steamwiseMap = new ArrayList<Object>();
+        Map<String, Object> changedMap = new HashMap<String, Object>();
+        Set<String> keys = eachObject.keySet();
+        for (String eachKey : keys) {
+          if (!eachKey.equals("aggreceived") && !eachKey.equals("aggsent")) {
+
+            steamwiseMap.add(eachObject.get(eachKey));
+          } else {
+            changedMap.put(eachKey, eachObject.get(eachKey));
+          }
+        }
+        changedMap.put("time", eachTimeKey);
+        changedMap.put("topicCountList", steamwiseMap);
+        modifiedtimeserierList.add(changedMap);
+        System.out.println(eachTimeData);
+      }
+      datapoints.add(eachTierMap);
+    }
+    returnMap.put("datapoints", datapoints);
+
+    return returnMap;
+
+  }
+
+  public static String convertToJson(Set<Tuple> tuples) {
+    JSONObject newObject = new JSONObject(covertToUIFriendlyObject(tuples));
+    return newObject.toString();
+
   }
 }
