@@ -10,15 +10,22 @@
   <groupId>com.inmobi.conduit</groupId>
   <artifactId>conduit-parent</artifactId>
   <name>Conduit</name>
+  <description>Yet another streaming data transport system.</description>
+  <url>https://github.com/InMobi/conduit</url>
   <version>2.2.6-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <scm>
-    <connection>scm:git:https://github.corp.inmobi.com/platform/conduit.git</connection>
-    <url>https://github.corp.inmobi.com/platform/conduit</url>
-    <developerConnection>scm:git:https://github.corp.inmobi.com/platform/conduit.git</developerConnection>
+    <connection>scm:git:https://github.com/InMobi/conduit.git</connection>
+    <url>https://github.com/InMobi/conduit</url>
+    <developerConnection>scm:git:git@github.corp.inmobi.com:ritwik-saikia/conduit.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
+
+  <organization>
+    <name>InMobi</name>
+    <url>https://github.com/InMobi</url>
+  </organization>
 
   <distributionManagement>
     <site>
@@ -27,6 +34,23 @@
     </site>
   </distributionManagement>
 
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/InMobi/conduit/issues</url>
+  </issueManagement>
+
+  <ciManagement>
+    <system>Travis</system>
+    <url>https://travis-ci.org/InMobi/conduit</url>
+  </ciManagement>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
   <repositories>
     <repository>
@@ -34,9 +58,11 @@
       <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
       <releases>
         <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
       </releases>
       <snapshots>
         <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
       </snapshots>
     </repository>
     <repository>
@@ -44,9 +70,11 @@
       <url>https://raw.github.com/InMobi/mvn-repo/master/releases</url>
       <releases>
         <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
       </releases>
       <snapshots>
         <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
       </snapshots>
     </repository>
     <repository>
@@ -54,9 +82,11 @@
       <url>https://raw.github.com/InMobi/mvn-repo/master/thirdparty</url>
       <releases>
         <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
       </releases>
       <snapshots>
         <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
       </snapshots>
     </repository>
   </repositories>
@@ -361,6 +391,20 @@
         <configuration>
           <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
         </configuration>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>index</report>
+              <report>summary</report>
+              <report>modules</report>
+              <report>issue-tracking</report>
+              <report>scm</report>
+              <report>cim</report>
+              <report>dependencies</report>
+              <report></report>
+            </reports>
+          </reportSet>
+        </reportSets>
       </plugin>
     </plugins>
   </reporting>
