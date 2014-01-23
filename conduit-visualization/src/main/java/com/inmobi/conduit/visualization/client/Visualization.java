@@ -7,14 +7,12 @@ import com.google.gwt.event.logical.shared.ShowRangeEvent;
 import com.google.gwt.event.logical.shared.ShowRangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.datepicker.client.DatePicker;
 import com.inmobi.conduit.visualization.client.util.ClientDataHelper;
 import com.inmobi.conduit.visualization.client.util.DateUtils;
-import com.inmobi.messaging.ClientConfig;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -112,7 +110,9 @@ public class Visualization implements EntryPoint, ClickHandler {
       selectedTab = Window.Location.getParameter(ClientConstants.SELECTED_TAB);
     }
     setSelectedParameterValues(startTime, endTime, cluster, stream);
-    sendRequest(startTime, endTime, cluster, stream, selectedTab);
+    getTopologyData(startTime, endTime, cluster, stream, selectedTab);
+    getTierLatencyData(startTime, endTime, cluster, stream, selectedTab);
+    getTimeLineData(startTime, endTime, cluster, stream, selectedTab);
   }
 
   private void checkIfGWTDevMode() {
@@ -361,12 +361,18 @@ public class Visualization implements EntryPoint, ClickHandler {
       return;
     }
     disableFilterSelection();
-    sendRequest(stTime, edTime, clusterList.getItemText(clusterList
+    getTopologyData(stTime, edTime, clusterList.getItemText(clusterList
+        .getSelectedIndex()), streamsList.getItemText(streamsList
+        .getSelectedIndex()), null);
+    getTierLatencyData(stTime, edTime, clusterList.getItemText(clusterList
+        .getSelectedIndex()), streamsList.getItemText(streamsList
+        .getSelectedIndex()), null);
+    getTimeLineData(stTime, edTime, clusterList.getItemText(clusterList
         .getSelectedIndex()), streamsList.getItemText(streamsList
         .getSelectedIndex()), null);
   }
 
-  public void sendRequest(final String stTime, final String edTime,
+  public void getTopologyData(final String stTime, final String edTime,
                           final String selectedCluster,
                           final String selectedStream,
                           final String selectedTab) {
@@ -376,55 +382,95 @@ public class Visualization implements EntryPoint, ClickHandler {
     final Integer selectedTabId = defaultTabId;
     saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTabId);
 
-    System.out.println("Sending request to load graph");
+    System.out.println("Sending request to get topology data");
     System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
         ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab " +
         "selected:"+selectedTabId);
     clearAndShowLoadingSymbol();
     String clientJson = ClientDataHelper.getInstance()
         .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
-    serviceInstance.getData(clientJson, new AsyncCallback<String>() {
+    serviceInstance.getTopologyData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         caught.printStackTrace();
       }
 
       public void onSuccess(String result) {
-        String nodesJson = ClientDataHelper.getInstance()
-            .getJsonStringFromGraphDataResponse(result);
-        Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
-            .getTierLatencyObjListFromResponse(result);
-        if (tierLatencyMap != null) {
-          Integer pLatency = tierLatencyMap.get(ClientConstants.PUBLISHER);
-          Integer aLatency = tierLatencyMap.get(ClientConstants.AGENT);
-          Integer cLatency = tierLatencyMap.get(ClientConstants.COLLECTOR);
-          Integer hLatency = tierLatencyMap.get(ClientConstants.HDFS);
-          Integer lLatency = tierLatencyMap.get(ClientConstants.LOCAL);
-          Integer mergeLatency = tierLatencyMap.get(ClientConstants.MERGE);
-          Integer mirrorLatency = tierLatencyMap.get(ClientConstants.MIRROR);
-          if ( pLatency == null )
-            pLatency = -1;
-          if ( aLatency == null )
-            aLatency = -1;
-          if ( cLatency == null )
-            cLatency = -1;
-          if ( hLatency == null )
-            hLatency = -1;
-          if ( lLatency == null )
-            lLatency = -1;
-          if ( mergeLatency == null )
-            mergeLatency = -1;
-          if ( mirrorLatency == null )
-            mirrorLatency = -1;
-          setTierLatencyValues(pLatency, aLatency, cLatency,hLatency,
-              lLatency, mergeLatency, mirrorLatency);
-        }
-        drawGraph(nodesJson, selectedCluster, selectedStream, stTime, edTime,
+        String topologyJson = ClientDataHelper.getInstance()
+            .getJsonFromTopologyDataResponse(result);
+        drawGraph(topologyJson, selectedCluster, selectedStream, stTime, edTime,
             selectedTabId);
         enableFilterSelection();
       }
     });
   }
+
+  public void getTierLatencyData(final String stTime, final String edTime,
+                              final String selectedCluster,
+                              final String selectedStream,
+                              final String selectedTab) {
+    Integer defaultTabId = 1;
+    if(selectedTab != null)
+      defaultTabId =  Integer.parseInt(selectedTab);
+    final Integer selectedTabId = defaultTabId;
+    saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTabId);
+
+    System.out.println("Sending request to get timeline data");
+    System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
+        ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab " +
+        "selected:"+selectedTabId);
+    clearAndShowLoadingSymbol();
+    String clientJson = ClientDataHelper.getInstance()
+        .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
+    serviceInstance.getTierLatencyData(clientJson, new AsyncCallback<String>() {
+
+      public void onFailure(Throwable caught) {
+        caught.printStackTrace();
+      }
+
+      public void onSuccess(String result) {
+        Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
+            .getTierLatencyObjListFromResponse(result);
+        setTierLatencyValues(tierLatencyMap);
+      }
+    });
+  }
+
+  public void getTimeLineData(final String stTime, final String edTime,
+                               final String selectedCluster,
+                               final String selectedStream,
+                               final String selectedTab) {
+    Integer defaultTabId = 1;
+    if(selectedTab != null)
+      defaultTabId =  Integer.parseInt(selectedTab);
+    final Integer selectedTabId = defaultTabId;
+    saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTabId);
+
+    System.out.println("Sending request to get timeline data");
+    System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
+        ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab " +
+        "selected:"+selectedTabId);
+    clearAndShowLoadingSymbol();
+    String clientJson = ClientDataHelper.getInstance()
+        .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
+    serviceInstance.getTimeLineData(clientJson, new AsyncCallback<String>() {
+
+      public void onFailure(Throwable caught) {
+        caught.printStackTrace();
+      }
+
+      public void onSuccess(String result) {
+        String timeLineJson = ClientDataHelper.getInstance()
+            .getTimeLineJSONFromResponse(result);
+        renderTimeLineGraph(timeLineJson);
+        enableFilterSelection();
+      }
+    });
+  }
+
+  private native void renderTimeLineGraph(String timeLineJson)/*-{
+    $wnd.renderTimeLine(timeLineJson, 60);
+  }-*/;
 
   private void enableFilterSelection() {
     startTime.setEnabled(true);
@@ -469,6 +515,34 @@ public class Visualization implements EntryPoint, ClickHandler {
     $wnd.saveHistory(selectedStream, selectedCluster, selectedTab, stTime,
     edTime);
   }-*/;
+
+  private void setTierLatencyValues(Map<String, Integer> tierLatencyMap) {
+    if (tierLatencyMap != null) {
+      Integer pLatency = tierLatencyMap.get(ClientConstants.PUBLISHER);
+      Integer aLatency = tierLatencyMap.get(ClientConstants.AGENT);
+      Integer cLatency = tierLatencyMap.get(ClientConstants.COLLECTOR);
+      Integer hLatency = tierLatencyMap.get(ClientConstants.HDFS);
+      Integer lLatency = tierLatencyMap.get(ClientConstants.LOCAL);
+      Integer mergeLatency = tierLatencyMap.get(ClientConstants.MERGE);
+      Integer mirrorLatency = tierLatencyMap.get(ClientConstants.MIRROR);
+      if ( pLatency == null )
+        pLatency = -1;
+      if ( aLatency == null )
+        aLatency = -1;
+      if ( cLatency == null )
+        cLatency = -1;
+      if ( hLatency == null )
+        hLatency = -1;
+      if ( lLatency == null )
+        lLatency = -1;
+      if ( mergeLatency == null )
+        mergeLatency = -1;
+      if ( mirrorLatency == null )
+        mirrorLatency = -1;
+      setTierLatencyValues(pLatency, aLatency, cLatency,hLatency,
+          lLatency, mergeLatency, mirrorLatency);
+    }
+  }
 
   private native void setTierLatencyValues(int publisherLatency,
                                            int agentLatency,

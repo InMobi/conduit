@@ -88,10 +88,7 @@ public class ServerDataHelper {
     return endTime;
   }
 
-  public String setGraphDataResponse(Map<NodeKey, Node> nodeMap,
-                                     Map<Tuple, Map<Float, Integer>> tierLatencyMap,
-                                     VisualizationProperties properties,
-                                     String timeLineJSON) {
+  public String setTopologyDataResponse(Map<NodeKey, Node> nodeMap) {
     JSONObject newObject = new JSONObject();
     JSONArray nodeArray = new JSONArray();
     try {
@@ -177,21 +174,14 @@ public class ServerDataHelper {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    RequestResponse.TierLatencyResponse tierLatency =
-        setTierLatencyResponseObject(tierLatencyMap, properties);
     return ServerJsonStreamFactory.getInstance().serializeMessage(
-        RequestResponse.Response.newBuilder().setGraphDataResponse(
-            RequestResponse.GraphDataResponse.newBuilder()
-                .setJsonString(newObject.toString())
-                .setTierLatencyResponse(tierLatency))
-                .setTimeLineGraphResponse(
-                    RequestResponse.TimeLineGraphResponse.newBuilder()
-                        .setJsonString(timeLineJSON)).build());
+        RequestResponse.Response.newBuilder().setTopologyDataResponse(
+            RequestResponse.TopologyDataResponse.newBuilder()
+                .setJsonString(newObject.toString())).build());
   }
 
-  private RequestResponse.TierLatencyResponse setTierLatencyResponseObject(
-      Map<Tuple, Map<Float, Integer>> tierLatencyMap, VisualizationProperties
-      properties) {
+  public String setTierLatencyResponseObject(Map<Tuple, Map<Float,
+      Integer>> tierLatencyMap,VisualizationProperties properties) {
     Float percentileForSla = Float.valueOf(properties.get(ServerConstants
         .PERCENTILE_FOR_SLA));
     List<RequestResponse.TierLatencyObj> tierLatencyObjList = new ArrayList
@@ -204,8 +194,10 @@ public class ServerDataHelper {
           .newBuilder().setTier(tier).setLatency(latency).build();
       tierLatencyObjList.add(newObj);
     }
-    return RequestResponse.TierLatencyResponse.newBuilder().addAllTierLatencyObjList(
-        tierLatencyObjList).build();
+    return ServerJsonStreamFactory.getInstance().serializeMessage(
+        RequestResponse.Response.newBuilder().setTierLatencyResponse(
+            RequestResponse.TierLatencyResponse.newBuilder()
+                .addAllTierLatencyObjList(tierLatencyObjList)).build());
   }
 
   public String setLoadMainPanelResponse(List<String> streamList,
@@ -247,8 +239,7 @@ public class ServerDataHelper {
             .setLoadMainPanelResponse(loadMainPanelResponse).build());
   }
 
-  public static String setGraphDataResponseTS(String jsonRestult) {
-   
+  public static String setTimeLineDataResponse(String jsonResult) {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response
             .newBuilder()

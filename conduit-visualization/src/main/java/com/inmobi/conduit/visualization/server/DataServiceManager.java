@@ -92,7 +92,7 @@ public class DataServiceManager {
     return serverJson;
   }
 
-  public String getData(String filterValues) {
+  public String getTopologyData(String filterValues) {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
@@ -127,12 +127,7 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
-    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
-        (filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
-    String timeLineJSON = getTimeLineData(filterValues);
-    return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
-        tierLatencyMap, properties, timeLineJSON);
+    return ServerDataHelper.getInstance().setTopologyDataResponse(nodeMap);
   }
 
   protected Map<String, String> getFilterMap(String filterValues) {
@@ -230,27 +225,6 @@ public class DataServiceManager {
     return sourceList;
   }
 
-  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
-                                                            String startTime,
-                                                            String
-                                                                filterString) {
-    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
-        "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
-        .PERCENTILE_FOR_SLA), feederConfig);
-    try {
-      dbQuery.execute();
-    } catch (Exception e) {
-      LOG.error("Exception while executing query: ", e);
-    }
-    LOG.info("Audit query: " + dbQuery.toString());
-    try {
-      dbQuery.displayResults();
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
-    }
-    return dbQuery.getPercentile();
-  }
-
   protected String setFilterString(Map<String, String> filterMap) {
     String filterString;
     String selectedStream = filterMap.get(ServerConstants.STREAM_FILTER);
@@ -339,6 +313,35 @@ public class DataServiceManager {
   public List<ConduitConfig> getConduitConfig() {
     return Collections.unmodifiableList(conduitConfig);
   }
+  public String getTierLatencyData(String filterValues) {
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
+    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
+        (filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
+    return ServerDataHelper.getInstance().setTierLatencyResponseObject(tierLatencyMap, properties);
+  }
+
+  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
+                                                            String startTime,
+                                                            String
+                                                                filterString) {
+    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
+        "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
+        .PERCENTILE_FOR_SLA), feederConfig);
+    try {
+      dbQuery.execute();
+    } catch (Exception e) {
+      LOG.error("Exception while executing query: ", e);
+    }
+    LOG.info("Audit query: " + dbQuery.toString());
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
+    return dbQuery.getPercentile();
+  }
 
   /**
    * Will retrieve the timeseries information for a date range
@@ -369,7 +372,8 @@ public class DataServiceManager {
     }
     try {
       dbQuery.displayResults();
-      LOG.debug("TimeSeries JSON:" + ServerDataHelper.convertToJson(dbQuery, aggregatedLatency));
+      LOG.debug("TimeSeries JSON:" + ServerDataHelper.convertToJson(dbQuery,
+          aggregatedLatency));
     } catch (Exception e) {
       LOG.error("Exception while displaying results: ", e);
     }
