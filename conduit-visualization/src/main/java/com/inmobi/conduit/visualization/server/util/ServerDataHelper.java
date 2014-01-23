@@ -8,6 +8,7 @@ import com.inmobi.conduit.visualization.server.ServerConstants;
 import com.inmobi.conduit.visualization.server.VisualizationProperties;
 import com.inmobi.conduit.visualization.shared.RequestResponse;
 import com.inmobi.conduit.audit.Tuple;
+import com.inmobi.conduit.audit.query.AuditDbQuery;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -17,8 +18,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -181,8 +184,9 @@ public class ServerDataHelper {
             RequestResponse.GraphDataResponse.newBuilder()
                 .setJsonString(newObject.toString())
                 .setTierLatencyResponse(tierLatency))
-                .setTimeLineGraphResponse(RequestResponse.TimeLineGraphResponse.newBuilder()
-                    .setJsonString(timeLineJSON)).build());
+                .setTimeLineGraphResponse(
+                    RequestResponse.TimeLineGraphResponse.newBuilder()
+                        .setJsonString(timeLineJSON)).build());
   }
 
   private RequestResponse.TierLatencyResponse setTierLatencyResponseObject(
@@ -242,9 +246,8 @@ public class ServerDataHelper {
         RequestResponse.Response.newBuilder()
             .setLoadMainPanelResponse(loadMainPanelResponse).build());
   }
-  
-  
-  public String setGraphDataResponseTS(String jsonResult) {
+
+  public static String setGraphDataResponseTS(String jsonRestult) {
    
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response
@@ -257,11 +260,11 @@ public class ServerDataHelper {
   
   
   @SuppressWarnings("unchecked")
-  private static Map<String, Map<String, Map<String, Object>>> convertToMap(Set<Tuple> tupleSet) {
+  private static Map<String, Map<String, Map<String, Object>>> convertToMap(AuditDbQuery query, AuditDbQuery aggregatedQuery) {
     Map<String, Map<String, Map<String, Object>>> map =
         new HashMap<String, Map<String, Map<String, Object>>>();
 
-    for (Tuple eachTuple : tupleSet) {
+    for (Tuple eachTuple : query.getTupleSet()) {
       Map<String, Map<String, Object>> eachTierMap =
           map.get(eachTuple.getTier());
       if (eachTierMap == null) {
@@ -275,6 +278,9 @@ public class ServerDataHelper {
         eachTierMap.put("" + eachTuple.getTimestamp().getTime(), eachTSMap);
         eachTSMap.put("aggreceived", eachTuple.getReceived());
         eachTSMap.put("aggsent", eachTuple.getSent());
+        eachTSMap.put("overallLatency" , convertTLatencyListOfMaps(aggregatedQuery.getPercentile().get(new Tuple(eachTuple.getHostname(), 
+            eachTuple.getTier(), eachTuple.getCluster(), eachTuple.getTimestamp(), null)).entrySet()));
+        System.out.println();
       } else {
         eachTSMap.put("aggreceived", (Long) eachTSMap.get("aggreceived")
             + eachTuple.getReceived());
@@ -299,17 +305,31 @@ public class ServerDataHelper {
       clusterStat.put("cluster", eachTuple.getCluster());
       clusterStat.put("received", eachTuple.getReceived());
       clusterStat.put("sent", eachTuple.getSent());
+      clusterStat.put("latencyList", convertTLatencyListOfMaps(query.getPercentile().get(eachTuple).entrySet()));
       clusterList.add(clusterStat);
 
     }
     return map;
 
   }
+  
+  private static List<Map<String, String>> convertTLatencyListOfMaps(
+      Set<Entry<Float, Integer>> latencyMap) {
+    List<Map<String, String>> returnList =
+        new LinkedList<Map<String, String>>();
+    for (Entry<Float, Integer> eachEntry : latencyMap) {
+      Map<String, String> eachMap = new HashMap<String, String>();
+      eachMap.put("percentile", eachEntry.getKey().toString());
+      eachMap.put("latency", eachEntry.getValue().toString());
+      returnList.add(eachMap);
+    }
+    return returnList;
+  }
 
   @SuppressWarnings("unchecked")
-  private static Map<String, Object> covertToUIFriendlyObject(Set<Tuple> tuples) {
+  private static Map<String, Object> covertToUIFriendlyObject(AuditDbQuery query, AuditDbQuery aggregatedQuery) {
     Map<String, Object> returnMap = new HashMap<String, Object>();
-    Map<String, Map<String, Map<String, Object>>> map = convertToMap(tuples);
+    Map<String, Map<String, Map<String, Object>>> map = convertToMap(query ,aggregatedQuery);
 
     List<Object> datapoints = new ArrayList<Object>();
     for (String eachTier : map.keySet()) {
@@ -324,7 +344,7 @@ public class ServerDataHelper {
         Map<String, Object> changedMap = new HashMap<String, Object>();
         Set<String> keys = eachObject.keySet();
         for (String eachKey : keys) {
-          if (!eachKey.equals("aggreceived") && !eachKey.equals("aggsent")) {
+          if (!eachKey.equals("aggreceived") && !eachKey.equals("aggsent") &&!eachKey.equals("overallLatency")) {
 
             steamwiseMap.add(eachObject.get(eachKey));
           } else {
@@ -344,8 +364,8 @@ public class ServerDataHelper {
 
   }
 
-  public static String convertToJson(Set<Tuple> tuples) {
-    JSONObject newObject = new JSONObject(covertToUIFriendlyObject(tuples));
+  public static String convertToJson(AuditDbQuery query, AuditDbQuery aggregatedQuery) {
+    JSONObject newObject = new JSONObject(covertToUIFriendlyObject(query , aggregatedQuery));
     return newObject.toString();
 
   }

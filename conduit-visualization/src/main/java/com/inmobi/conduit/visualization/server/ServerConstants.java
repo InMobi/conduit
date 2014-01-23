@@ -5,6 +5,7 @@ public class ServerConstants {
       "/usr/local/conduit-visualization/conf/audit-feeder.properties";
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String GROUPBY_TIMELINE_STRING ="TIER,TOPIC,CLUSTER,TIMEINTERVAL";
+  public static final String GROUPBY_LATENCY_TIMELINE_STRING ="TIER,CLUSTER,TIMEINTERVAL";
   public static final String TIMEZONE = "GMT";
   public static final String AUDIT_STREAM = "_audit";
   public static final String STREAM_FILTER = "stream";
