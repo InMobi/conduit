@@ -367,22 +367,14 @@ public class DataServiceManager {
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
             null, feederConfig);
-    AuditDbQuery aggregatedLatency =
-        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_LATENCY_TIMELINE_STRING,
-            ServerConstants.TIMEZONE,
-            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig);
     try {
       dbQuery.execute();
-      aggregatedLatency.execute();
     } catch (Exception e) {
       LOG.error("Exception while executing query: ", e);
     }
     LOG.info("TimeLine query: " + dbQuery.toString());
-    LOG.info("TimeLine Query Aggregated on Topic query: " + aggregatedLatency.toString());
     return ServerDataHelper.setGraphDataResponseTS(ServerDataHelper
-        .convertToJson(dbQuery, aggregatedLatency));
+        .convertToJson(dbQuery));
   }
   
   
