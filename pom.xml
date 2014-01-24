@@ -1,95 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.inmobi.conduit</groupId>
+  <artifactId>conduit-parent</artifactId>
+  <version>2.2.6-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Conduit</name>
+  <description>Yet another streaming data transport system.</description>
+  <url>https://github.com/InMobi/conduit</url>
+
+  <modules>
+    <module>conduit-core</module>
+    <module>conduit-distcp</module>
+    <module>conduit-worker</module>
+    <module>conduit-dist</module>
+    <module>conduit-audit</module>
+    <module>conduit-visualization</module>
+  </modules>
 
   <properties>
     <excluded.testng.groups>integration</excluded.testng.groups>
     <messaging-client-version>4.0.3</messaging-client-version>
   </properties>
-
-  <groupId>com.inmobi.conduit</groupId>
-  <artifactId>conduit-parent</artifactId>
-  <name>Conduit</name>
-  <description>Yet another streaming data transport system.</description>
-  <url>https://github.com/InMobi/conduit</url>
-  <version>2.2.6-SNAPSHOT</version>
-  <packaging>pom</packaging>
-
-  <scm>
-    <connection>scm:git:https://github.com/InMobi/conduit.git</connection>
-    <url>https://github.com/InMobi/conduit</url>
-    <developerConnection>scm:git:git@github.corp.inmobi.com:ritwik-saikia/conduit.git</developerConnection>
-    <tag>HEAD</tag>
-  </scm>
-
-  <organization>
-    <name>InMobi</name>
-    <url>https://github.com/InMobi</url>
-  </organization>
-
-  <distributionManagement>
-    <site>
-      <id>conduit-site</id>
-      <url>https://raw.github.com/InMobi/conduit-site/master</url>
-    </site>
-  </distributionManagement>
-
-  <issueManagement>
-    <system>Github</system>
-    <url>https://github.com/InMobi/conduit/issues</url>
-  </issueManagement>
-
-  <ciManagement>
-    <system>Travis</system>
-    <url>https://travis-ci.org/InMobi/conduit</url>
-  </ciManagement>
-
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-
-  <repositories>
-    <repository>
-      <id>cloudera</id>
-      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
-      <releases>
-        <enabled>true</enabled>
-        <updatePolicy>never</updatePolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-        <updatePolicy>never</updatePolicy>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>inmobi-external</id>
-      <url>https://raw.github.com/InMobi/mvn-repo/master/releases</url>
-      <releases>
-        <enabled>true</enabled>
-        <updatePolicy>never</updatePolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-        <updatePolicy>never</updatePolicy>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>inmobi-external-thirdparty</id>
-      <url>https://raw.github.com/InMobi/mvn-repo/master/thirdparty</url>
-      <releases>
-        <enabled>true</enabled>
-        <updatePolicy>never</updatePolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-        <updatePolicy>never</updatePolicy>
-      </snapshots>
-    </repository>
-  </repositories>
 
   <profiles>
     <!-- added for cdh4 update -->
@@ -194,12 +128,12 @@
         <version>${messaging-client-version}</version>
         <type>jar</type>
       </dependency>
-     <dependency>
-      <groupId>com.inmobi.messaging</groupId>
-      <artifactId>messaging-client-scribe</artifactId>
-      <version>${messaging-client-version}</version>
-      <scope>runtime</scope>
-    </dependency>
+      <dependency>
+        <groupId>com.inmobi.messaging</groupId>
+        <artifactId>messaging-client-scribe</artifactId>
+        <version>${messaging-client-version}</version>
+        <scope>runtime</scope>
+      </dependency>
       <dependency>
         <groupId>com.inmobi.messaging</groupId>
         <artifactId>messaging-client-core</artifactId>
@@ -284,7 +218,7 @@
         <version>${hadoop-distcp.version}</version>
         <scope>provided</scope>
       </dependency>
-       <!-- metrics -->
+      <!-- metrics -->
       <dependency>
         <groupId>com.codahale.metrics</groupId>
         <artifactId>metrics-servlets</artifactId>
@@ -409,13 +343,80 @@
     </plugins>
   </reporting>
 
-  <modules>
-    <module>conduit-core</module>
-    <module>conduit-distcp</module>
-    <module>conduit-worker</module>
-    <module>conduit-dist</module>
-    <module>conduit-audit</module>
-    <module>conduit-visualization</module>
-  </modules>
+  <scm>
+    <connection>scm:git:https://github.com/InMobi/conduit.git</connection>
+    <url>https://github.com/InMobi/conduit</url>
+    <developerConnection>scm:git:git@github.corp.inmobi.com:ritwik-saikia/conduit.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <organization>
+    <name>InMobi</name>
+    <url>https://github.com/InMobi</url>
+  </organization>
+
+  <distributionManagement>
+    <site>
+      <id>conduit-site</id>
+      <url>https://raw.github.com/InMobi/conduit-site/master</url>
+    </site>
+  </distributionManagement>
+
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/InMobi/conduit/issues</url>
+  </issueManagement>
+
+  <ciManagement>
+    <system>Travis</system>
+    <url>https://travis-ci.org/InMobi/conduit</url>
+  </ciManagement>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <repositories>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>inmobi-external</id>
+      <url>https://raw.github.com/InMobi/mvn-repo/master/releases</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>inmobi-external-thirdparty</id>
+      <url>https://raw.github.com/InMobi/mvn-repo/master/thirdparty</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
+    </repository>
+  </repositories>
 
 </project>
