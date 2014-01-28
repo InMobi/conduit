@@ -10,7 +10,10 @@ public class Node {
   private Long aggregateMessagesSent = 0L;
   private List<MessageStats> receivedMessagesList;
   private List<MessageStats> sentMessagesList;
-  private List<String> sourceList;
+
+  private Map<String, Set<String>> topicSourceList = new HashMap<String,
+      Set<String>>();
+  private Set<String> sourceList = new HashSet<String>();
   private Set<Float> percentileSet;
   private Map<String, Map<LatencyColumns, Long>> perTopicCountMap = new
       HashMap<String, Map<LatencyColumns, Long>>();
@@ -191,7 +194,7 @@ public class Node {
     return sentMessagesList;
   }
 
-  public List<String> getSourceList() {
+  public Set<String> getSourceList() {
     return sourceList;
   }
 
@@ -205,6 +208,10 @@ public class Node {
 
   public NodeKey getNodeKey() {
     return nodeKey;
+  }
+
+  public Map<String, Set<String>> getTopicSourceList() {
+    return topicSourceList;
   }
 
   public void setAggregateMessagesSent(Long aggregateMessagesSent) {
@@ -235,7 +242,7 @@ public class Node {
   }
 
   public void setSourceList(Set<String> sourceList) {
-    this.sourceList = new ArrayList<String>();
+    this.sourceList = new HashSet<String>();
     this.sourceList.addAll(sourceList);
   }
 
@@ -274,12 +281,19 @@ public class Node {
         ", aggregateMessagesSent=" + aggregateMessagesSent +
         ", receivedMessagesList=" + receivedMessagesList +
         ", sentMessagesList=" + sentMessagesList +
+        ", topicSourceList=" + topicSourceList +
         ", sourceList=" + sourceList +
-        ", percentileSet=" + percentileSet +
         ", perTopicCountMap=" + perTopicCountMap +
         ", perTopicPercentileMap=" + perTopicPercentileMap +
-        ", latencyValues=" + latencyValues +
         ", percentileMap=" + percentileMap +
         '}';
+  }
+
+  public void setSourceListForTopic(String topic, Set<String> sourceList) {
+    this.sourceList.addAll(sourceList);
+    if (topicSourceList.get(topic) != null) {
+      sourceList.addAll(topicSourceList.get(topic));
+    }
+    topicSourceList.put(topic, sourceList);
   }
 }

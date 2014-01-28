@@ -16,7 +16,7 @@ public class AuditFeederServiceTest extends AuditFeederService {
 
   private static final String CONSUMER_CLASS_NAME_KEY = "consumer.classname";
   private MessagePublisher publisher;
-  private  boolean isSetSource;
+  private  boolean isSetSource = false;
 
   public AuditFeederServiceTest(String clusterName, String rootDir,
                                 ClientConfig config,

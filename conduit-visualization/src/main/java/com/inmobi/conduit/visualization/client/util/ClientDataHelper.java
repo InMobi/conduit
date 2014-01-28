@@ -88,6 +88,12 @@ public class ClientDataHelper {
         response.getLoadMainPanelResponse().getClientConfig().getCollectorSla());
     configMap.put(ClientConstants.HDFS, response.getLoadMainPanelResponse()
         .getClientConfig().getHdfsSla());
+    configMap.put(ClientConstants.LOCAL, response.getLoadMainPanelResponse()
+        .getClientConfig().getLocalSla());
+    configMap.put(ClientConstants.MERGE, response.getLoadMainPanelResponse()
+        .getClientConfig().getMergeSla());
+    configMap.put(ClientConstants.MIRROR, response.getLoadMainPanelResponse()
+        .getClientConfig().getMirrorSla());
     configMap.put(ClientConstants.PERCENTILE_FOR_SLA, response.getLoadMainPanelResponse()
         .getClientConfig().getPercentileForSla());
     configMap.put(ClientConstants.PERCENTAGE_FOR_LOSS, response.getLoadMainPanelResponse()
@@ -100,6 +106,8 @@ public class ClientDataHelper {
         .getClientConfig().getMaxTimeRangeInt());
     configMap.put(ClientConstants.LOSS_WARN_THRESHOLD_DIFF, response.getLoadMainPanelResponse()
         .getClientConfig().getWarnLossThresholdDiff());
+    configMap.put(ClientConstants.ROLLEDUP_TILL_DAYS, response.getLoadMainPanelResponse()
+        .getClientConfig().getRolleduptilldays());
     return configMap;
   }
 
