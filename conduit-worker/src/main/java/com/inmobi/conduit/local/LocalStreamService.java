@@ -283,7 +283,7 @@ public class LocalStreamService extends AbstractService implements
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     LOG.debug("Committed " + commitPaths.size() + " paths.");
-    ConduitMetrics.incCounter(getServiceType(), COMMIT_TIME,
+    ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
         Thread.currentThread().getName(), elapsedTime);
 
   }
