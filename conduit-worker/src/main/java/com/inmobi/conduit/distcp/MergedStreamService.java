@@ -63,12 +63,11 @@ public class MergedStreamService extends DistcpBaseService {
         streamsToProcess);
 
     for (String eachStream : streamsToProcess) {
-      ConduitMetrics.registerCounter(getServiceType(), AbstractService.RETRY_CHECKPOINT, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), AbstractService.RETRY_MKDIR, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), AbstractService.RETRY_RENAME, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), AbstractService.RETRY_EXIST, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), AbstractService.EMPTYDIR_CREATE, eachStream);
-      ConduitMetrics.registerCounter(getServiceType(), AbstractService.FILES_COPIED_COUNT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_CHECKPOINT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_MKDIR, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_RENAME, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.EMPTYDIR_CREATE, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.FILES_COPIED_COUNT, eachStream);
     }
   }
 
@@ -236,12 +235,12 @@ public class MergedStreamService extends DistcpBaseService {
       }
       String filename = entry.getKey().getName();
       generateAuditMsgs(streamName, filename, parsedCounters, auditMsgList);
-      ConduitMetrics.incCounter(getServiceType(), AbstractService.FILES_COPIED_COUNT,
+      ConduitMetrics.updateSWGuage(getServiceType(), AbstractService.FILES_COPIED_COUNT,
           streamName, 1);
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     LOG.debug("Committed " + commitPaths.size() + " paths.");
-    ConduitMetrics.incCounter(getServiceType(), AbstractService.COMMIT_TIME,
+    ConduitMetrics.updateSWGuage(getServiceType(), AbstractService.COMMIT_TIME,
         Thread.currentThread().getName(), elapsedTime);
 
   }

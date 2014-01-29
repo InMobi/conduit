@@ -25,6 +25,7 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.local.TestLocalStreamService;
 import com.inmobi.messaging.publisher.MessagePublisher;
@@ -38,6 +39,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   public void beforeTest() throws Exception{
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
+    prop.setProperty("com.inmobi.conduit.metrics.slidingwindowtime", "100000000");
     ConduitMetrics.init(prop);
     ConduitMetrics.startAll();
   }
@@ -59,20 +61,18 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   @Test
   public void testMergeMirrorStream() throws Exception {
     testMergeMirrorStream("test-mss-conduit.xml", null, null);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService", AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertTrue(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getCount() >= 120);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService", AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"test1").getValue().longValue() >= 120);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
   }
 
   @Test
@@ -101,49 +101,44 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
   @Test
   public void testMergeMirrorStreamWithMultipleStreams() throws Exception {
     testMergeMirrorStream("test-mss-conduit1.xml", null, null);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_EXIST,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"stream1").getCount() , 0);
-    Assert.assertTrue(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"stream2").getCount() >= 120);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getCount() , 9);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_RENAME,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_MKDIR,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getCount() , 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"stream1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getCount() , 9);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getCount() , 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getCount() , 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"stream1").getValue().longValue() , 0);
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.EMPTYDIR_CREATE,"stream2").getValue().longValue() >= 120);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getValue().longValue() , 9);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"stream2").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getValue().longValue() , 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getValue().longValue() , 9);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"stream1").getValue().longValue() , 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"stream2").getValue().longValue() , 18);
   }
 
   @Test
   public void testMergeMirrorStreamWithMirror() throws Exception {
     // Test with 2 mirror sites
     testMergeMirrorStream("test-mss-conduit_mirror.xml", null, null);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
   @Test
@@ -155,15 +150,14 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     clustersToProcess.add("testcluster4");
     testMergeMirrorStream("testConduitWithClusterName.xml", clusterName,
         clustersToProcess);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 36);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 27);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 36);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 27);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
   @Test
@@ -198,15 +192,14 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     clustersToProcess.add("testcluster4");
     testMergeMirrorStream("testConduitWithClusterNameParallel.xml",
         currentClusterName, clustersToProcess, false);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 36);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 36);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
   @Test(groups = { "integration" })
@@ -214,25 +207,24 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     // Test with 1 merged stream only
     testMergeMirrorStream("test-mergedss-conduit.xml", null, null);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_EXIST,"test1").getCount() , 0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 18 );
-    Assert.assertEquals(ConduitMetrics.getCounter("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0 );
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount(), 18);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount(), 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount(), 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount(), 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0 );
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue(), 18);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue(), 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue(), 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue(), 0);
   }
 
   @Test(groups = { "integration" })
   public void testAllServices() throws Exception {
     // Test with 1 source and 1 merged stream only
     testMergeMirrorStream("test-mergedss-conduit_2.xml", null, null);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getCount() , 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getCount() , 9);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 9);
   }
 
   @BeforeSuite
