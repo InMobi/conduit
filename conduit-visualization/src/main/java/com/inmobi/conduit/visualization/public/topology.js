@@ -5,11 +5,6 @@ var yDiff = 40;
 var fullTreeList = []; // Full list of Node objects grouped by respective cluster name
 var degToRadFactor = Math.PI / 180;
 var radToDegFactor = 180 / Math.PI;
-var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla, mergeSla, mirrorSla, percentileForSla,
-  percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
-var publisherLatency = 0, agentLatency = 0, collectorLatency = 0, hdfsLatency = 0, localLatency = 0, mergeLatency = 0, mirrorLatency = 0;
-var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A", "#AE8886", "#FB6183", "#8E4804"];
-var tierList = ["Publisher", "Agent", "VIP", "Collector", "HDFS", "Local", "Merge", "Mirror"];
 var isNodeColored = false;
 var rootNodes = [];
 var pathLinkCache = [], lineLinkCache = [];
@@ -65,10 +60,6 @@ function Node(name, clusterName, tier, aggregatemessagesreceived,
   this.overallLatency = [];
   this.allTopicsLatency = [];
   this.point = new Point(0, 0);
-}
-
-String.prototype.equalsIgnoreCase = function (s) {
-    return s.toLowerCase() == this.toLowerCase();
 }
 
 function buildNodeList() {
@@ -1114,17 +1105,17 @@ function clearPreviousGraph() {
   document.getElementById("summaryPanel")
     .innerHTML = "";
   document.getElementById("summaryPanel")
-    .style.backgroundColor = "#D8EAF3";
+    .style.backgroundColor = "#EBF4F8";
   document.getElementById("infoPanel")
     .innerHTML = "";
   document.getElementById("infoPanel")
-    .style.backgroundColor = "#D8EAF3";
+    .style.backgroundColor = "#EBF4F8";
   d3.select("#graphsvg")
     .remove();
 }
 
 function saveHistoryAndLoadGraph(streamName, clusterName, selectedTabID) {
-  saveHistory(streamName, clusterName, selectedTabID);
+  saveHistory(false, streamName, clusterName, selectedTabID);
   loadGraph(streamName, clusterName, selectedTabID);
 }
 
@@ -1443,12 +1434,10 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
 }
 
 function checkCountView(selectedTabID) {
-  var isCountView;
   if (parseInt(selectedTabID, 10) == 1)
     isCountView = true;
   else if (parseInt(selectedTabID, 10) == 2)
     isCountView = false;
-  return isCountView;
 }
 
 function Point(x, y) {
@@ -1518,17 +1507,17 @@ function loadGraph(streamName, clusterName, selectedTabID) {
   rootNodes.length = 0;
   lineLinkCache.length = 0;
   pathLinkCache.length = 0;
-  isCountView = checkCountView(selectedTabID);
+  checkCountView(selectedTabID);
   clearPreviousGraph();
   var treeList = getTreeList(streamName, clusterName);
   console.log("AAAA");
   console.log(treeList);
-  var graphsvg = d3.select("#graphPanel")
+  var graphsvg = d3.select("#topologyPanel")
     .append("svg:svg")
     .style("stroke", "gray")
     .attr("width", r * 5)
     .attr("height", r * 5)
-    .style("background", "#D8EAF3")
+    .style("background", "#EBF4F8")
     .attr("id", "graphsvg")
     .append("svg:g")
     .attr("transform", "translate(" + r * 2.5 + "," + (r * 2.5) + ")");
@@ -1678,42 +1667,27 @@ function loadGraph(streamName, clusterName, selectedTabID) {
   addSummaryBox(treeList);
 }
 
-function drawGraph(result, cluster, stream, start, end, selectedTab, publisher, agent, vip, collector, hdfs, local, merge, mirror, percentileFrSla, percentageFrLoss, percentageFrWarn, lWThresholdDiff) {
-  publisherSla = publisher;
-  agentSla = agent;
-  vipSla = vip;
-  collectorSla = collector;
-  hdfsSla = hdfs;
-  localSla = local;
-  mergeSla = merge;
-  mirrorSla = mirror;
-  percentileForSla = percentileFrSla;
-  percentageForLoss = percentageFrLoss;
-  percentageForWarn = percentageFrWarn;
-  lossWarnThresholdDiff = lWThresholdDiff;
-  document.getElementById("tabs").style.display = "block";
-  qStream = stream;
-  qCluster = cluster;
-  qstart = start;
-  qend = end;
+function drawGraph(result) {
+  document.getElementById("tabs1").style.display = "block";
   fullTreeList.length = 0;
   aggCollectorNodeList.length = 0;
 
+	console.log("topology result:"+result);
   jsonresponse = JSON.parse(result);
   clearHistory();
   buildNodeList();
-  loadGraph(stream, cluster, selectedTab);
+  loadGraph(qStream, qCluster, qSelectedTab);
 }
 
 function clearSvgAndAddLoadSymbol() {
   clearPreviousGraph();
-  var graphsvg = d3.select("#graphPanel")
+  var graphsvg = d3.select("#topologyPanel")
     .append("svg:svg")
     .style("stroke",
       "gray")
     .attr("width", r * 5)
     .attr("height", r * 5)
-    .style("background", "#D8EAF3")
+    .style("background", "#EBF4F8")
     .attr("id", "graphsvg")
     .append("svg:g")
   var imgpath = "Visualization/bar-ajax-loader.gif";
@@ -1728,14 +1702,14 @@ function clearSvgAndAddLoadSymbol() {
 
 function highlightTab(selectedTabID) {
   if (parseInt(selectedTabID) == 1) {
-    document.getElementById("count")
+    document.getElementById("count1")
       .className = "active";
-    document.getElementById("latency")
+    document.getElementById("latency1")
       .className = "";
   } else if (parseInt(selectedTabID) == 2) {
-    document.getElementById("count")
+    document.getElementById("count1")
       .className = "";
-    document.getElementById("latency")
+    document.getElementById("latency1")
       .className = "active";
   }
 }
@@ -1747,16 +1721,6 @@ function tabSelected(selectedTabID, stream, cluster) {
   }
   clearSvgAndAddLoadSymbol();
   saveHistoryAndLoadGraph(stream, cluster, selectedTabID);
-}
-
-Array.prototype.contains = function (obj) {
-  var i = this.length;
-  while (i--) {
-    if (this[i] == obj) {
-      return true;
-    }
-  }
-  return false;
 }
 
 function checkAndClearList(treeList) {

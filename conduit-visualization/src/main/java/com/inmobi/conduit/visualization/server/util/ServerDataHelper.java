@@ -254,6 +254,8 @@ public class ServerDataHelper {
   private static Map<String, Map<String, Map<String, Object>>> convertToMap(AuditDbQuery query, AuditDbQuery aggregatedQuery) {
     Map<String, Map<String, Map<String, Object>>> map =
         new HashMap<String, Map<String, Map<String, Object>>>();
+    Map<Tuple, Map<Float, Integer>> percentileMap = query.getPercentile();
+    LOG.info("XXX percentileMap :"+percentileMap);
 
     for (Tuple eachTuple : query.getTupleSet()) {
       Map<String, Map<String, Object>> eachTierMap =
@@ -296,7 +298,8 @@ public class ServerDataHelper {
       clusterStat.put("cluster", eachTuple.getCluster());
       clusterStat.put("received", eachTuple.getReceived());
       clusterStat.put("sent", eachTuple.getSent());
-      clusterStat.put("latencyList", convertTLatencyListOfMaps(query.getPercentile().get(eachTuple).entrySet()));
+      clusterStat.put("latencyList", convertTLatencyListOfMaps(percentileMap.get
+          (eachTuple).entrySet()));
       clusterList.add(clusterStat);
 
     }

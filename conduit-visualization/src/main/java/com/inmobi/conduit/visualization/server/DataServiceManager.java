@@ -353,7 +353,7 @@ public class DataServiceManager {
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
-            null, feederConfig);
+            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig);
     AuditDbQuery aggregatedLatency =
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,

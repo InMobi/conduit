@@ -1,4 +1,8 @@
+var publisherLatency = 0, agentLatency = 0, collectorLatency = 0,
+hdfsLatency = 0, localLatency = 0, mergeLatency = 0, mirrorLatency = 0;
+
 function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency, meLatency, miLatency) {
+	console.log("setting latency values "+pLatency+","+aLatency+","+cLatency+","+hLatency+","+lLatency+","+meLatency+","+miLatency);
   publisherLatency = pLatency;
   agentLatency = aLatency;
   collectorLatency = cLatency;
@@ -10,6 +14,7 @@ function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency, 
 }
 
 function addSummaryBox(treeList) {
+	console.log("adding summary box with isCountView:"+isCountView);
   if (isCountView) {
     loadCountSummary(treeList);
   } else {
@@ -18,6 +23,7 @@ function addSummaryBox(treeList) {
 }
 
 function loadLatencySummary() {
+	console.log("loading latency summary");
   document.getElementById("summaryPanel")
     .innerHTML = "";
   var div = document.createElement('div');
@@ -46,6 +52,7 @@ function loadLatencySummary() {
 }
 
 function loadCountSummary(treeList) {
+	console.log("loading count summary");
   var publisherCount = 0,
     agentReceivedCount = 0,
     agentSentCount = 0,

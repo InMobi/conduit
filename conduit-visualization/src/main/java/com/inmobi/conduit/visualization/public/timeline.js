@@ -28,64 +28,69 @@ function DataPoint(time, tier, aggreceived, aggsent) {
 }
 
 function buildDataPointList(tier, stream, cluster) {
+	console.log("building data point list for tier:"+tier+" stream:"+stream+" and cluster:"+cluster);
 	dataPointList.length = 0;
-	for (var i = 0; i < timelienjson.datapoints.length; i++) {
-		var tierList = timelienjson.datapoints[i];
-		var currentTier = tierList.tier;
-		if (tier.toLowerCase() == 'all' || (tier.toLowerCase() != 'all' && currentTier.toLowerCase() == tier.toLowerCase())) {
-			var tierPointList = [];
-			for (var j = 0; j < tierList.tierWisePointList.length; j++) {
-				var p = tierList.tierWisePointList[j];
-				var actualReceived = 0;
-					var actualSent = 0;
-					var datapoint = new DataPoint(parseInt(p.time, 10), currentTier, parseInt(p.aggreceived, 10), parseInt(p.aggsent, 10));
-					if (minDate == 0 || parseInt(p.time, 10) < minDate) {
-						minDate = parseInt(p.time, 10);
-					}
-					if (maxDate == 0 || parseInt(p.time, 10) > maxDate) {
-						maxDate = parseInt(p.time, 10);
-					}
-					if (minCount == 0 || parseInt(p.aggreceived, 10) < minCount) {
-						minCount = parseInt(p.aggreceived, 10);
-					}
-					if (maxCount == 0 || parseInt(p.aggreceived, 10) > maxCount) {
-						maxCount = parseInt(p.aggreceived, 10);
-					}
-					var streamList = p.topicCountList;
-					for (var k = 0; k < streamList.length; k++) {
-						var streamEntry = streamList[k];
-						var currentStream = streamEntry.topic;
-						var newTopicStats = new TopicStatsTimeLine(currentStream);
-						if (stream == 'all' || (stream != 'all' && stream == currentStream)) {
-							for (var l = 0; l < streamEntry.clusterStats.length; l++) {
-								var clusterEntry = streamEntry.clusterStats[l];
-								var currentCluster = clusterEntry.cluster;
-								if (cluster == 'all' || (cluster != 'all' && cluster == currentCluster)) {
-									var newClusterStats = new ClusterStats(currentCluster, parseInt(clusterEntry.received, 10), parseInt(clusterEntry.sent, 10));
-									newTopicStats.clusterStatsList.push(newClusterStats);
-									actualReceived += parseInt(clusterEntry.received, 10);
-									actualSent += parseInt(clusterEntry.sent, 10);
-									if (cluster != 'all' && cluster == currentCluster) {
-										break;
+	if (timelienjson != undefined) {
+		for (var i = 0; i < timelienjson.datapoints.length; i++) {
+			var tierList = timelienjson.datapoints[i];
+			var currentTier = tierList.tier;
+			if (tier.toLowerCase() == 'all' || (tier.toLowerCase() != 'all' && currentTier.toLowerCase() == tier.toLowerCase())) {
+				var tierPointList = [];
+				for (var j = 0; j < tierList.tierWisePointList.length; j++) {
+					var p = tierList.tierWisePointList[j];
+					var actualReceived = 0;
+						var actualSent = 0;
+						var datapoint = new DataPoint(parseInt(p.time, 10), currentTier, parseInt(p.aggreceived, 10), parseInt(p.aggsent, 10));
+						if (minDate == 0 || parseInt(p.time, 10) < minDate) {
+							minDate = parseInt(p.time, 10);
+						}
+						if (maxDate == 0 || parseInt(p.time, 10) > maxDate) {
+							maxDate = parseInt(p.time, 10);
+						}
+						if (minCount == 0 || parseInt(p.aggreceived, 10) < minCount) {
+							minCount = parseInt(p.aggreceived, 10);
+						}
+						if (maxCount == 0 || parseInt(p.aggreceived, 10) > maxCount) {
+							maxCount = parseInt(p.aggreceived, 10);
+						}
+						var streamList = p.topicCountList;
+						for (var k = 0; k < streamList.length; k++) {
+							var streamEntry = streamList[k];
+							var currentStream = streamEntry.topic;
+							var newTopicStats = new TopicStatsTimeLine(currentStream);
+							if (stream == 'all' || (stream != 'all' && stream == currentStream)) {
+								for (var l = 0; l < streamEntry.clusterStats.length; l++) {
+									var clusterEntry = streamEntry.clusterStats[l];
+									var currentCluster = clusterEntry.cluster;
+									if (cluster == 'all' || (cluster != 'all' && cluster == currentCluster)) {
+										var newClusterStats = new ClusterStats(currentCluster, parseInt(clusterEntry.received, 10), parseInt(clusterEntry.sent, 10));
+										newTopicStats.clusterStatsList.push(newClusterStats);
+										actualReceived += parseInt(clusterEntry.received, 10);
+										actualSent += parseInt(clusterEntry.sent, 10);
+										if (cluster != 'all' && cluster == currentCluster) {
+											break;
+										}
 									}
 								}
-							}
-							datapoint.topicStatList.push(newTopicStats);
-							if (stream != 'all' && stream == currentStream) {
-								break;
+								datapoint.topicStatList.push(newTopicStats);
+								if (stream != 'all' && stream == currentStream) {
+									break;
+								}
 							}
 						}
-					}
-					datapoint.aggreceived = actualReceived;
-					datapoint.aggsent = actualSent;
-					tierPointList.push(datapoint);
-			}
-			dataPointList.push(tierPointList);
-			if (tier != 'all' && currentTier == tier) {
-				break;
+						datapoint.aggreceived = actualReceived;
+						datapoint.aggsent = actualSent;
+						tierPointList.push(datapoint);
+				}
+				dataPointList.push(tierPointList);
+				if (tier != 'all' && currentTier == tier) {
+					break;
+				}
 			}
 		}
 	}
+	console.log("data point list:");
+	console.log(dataPointList);
 }
 
 function clearSVG() {
@@ -144,7 +149,7 @@ function brushed() {
 
 function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
 
-  //console.log("Calling renderTimeLine for tier:"+tier+" stream:"+stream+" and cluster:"+cluster);
+  console.log("Calling renderTimeLine for tier:"+tier+" stream:"+stream+" and cluster:"+cluster);
 
   minDate = 0, maxDate = 0, minCount = 0, maxCount = 0;
 
@@ -179,19 +184,19 @@ function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
   dataPointList.forEach(function (t) {
     var color = "steelblue";
     if (t[0].tier.toLowerCase() == "publisher") {
-      color = publisherColor;
+      color = hexcodeList[0];
     } else if (t[0].tier.toLowerCase() == "agent") {
-      color = agentColor;
+      color = hexcodeList[1];
     } else if (t[0].tier.toLowerCase() == "collector") {
-      color = collectorColor;
+      color = hexcodeList[3];
     } else if (t[0].tier.toLowerCase() == "hdfs") {
-      color = hdfsColor;
+      color = hexcodeList[4];
     } else if (t[0].tier.toLowerCase() == "local") {
-      color = localColor;
+      color = hexcodeList[5];
     } else if (t[0].tier.toLowerCase() == "merge") {
-      color = mergeColor;
+      color = hexcodeList[6];
     } else if (t[0].tier.toLowerCase() == "mirror") {
-      color = mirrorColor;
+      color = hexcodeList[7];
     }
 	  svg.append("path")
 	      .datum(t)
@@ -219,6 +224,8 @@ function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
 
 function appendTierButtonPanel() {
 
+	console.log("append tier button panel");
+
   d3.select("#timelinePanel")
     .append("div")
     .attr("id", "tierButtonPanel")
@@ -241,31 +248,37 @@ function appendTierButtonPanel() {
       .style("background-color", function (d) {
         var color = "cornflowerblue";
         if (d.toLowerCase() == "publisher") {
-          color = publisherColor;
+          color = hexcodeList[0];
         } else if (d.toLowerCase() == "agent") {
-          color = agentColor;
+          color = hexcodeList[1];
         } else if (d.toLowerCase() == "collector") {
-          color = collectorColor;
+          color = hexcodeList[3];
         } else if (d.toLowerCase() == "hdfs") {
-          color = hdfsColor;
+          color = hexcodeList[4];
         } else if (d.toLowerCase() == "local") {
-          color = localColor;
+          color = hexcodeList[5];
         } else if (d.toLowerCase() == "merge") {
-          color = mergeColor;
+          color = hexcodeList[6];
         } else if (d.toLowerCase() == "mirror") {
-          color = mirrorColor;
+          color = hexcodeList[7];
         }
         return color;
       });
 }
 
 function renderTimeLine(result, timeticklength) {
+	console.log("render time line:"+result);
 	if (timeticklength != undefined && parseInt(timeticklength, 10) != 0) {
 		timetick = parseInt(timeticklength, 10);
 	}
-	timelienjson = JSON.parse(result);
+	console.log("timetick:"+timetick);
+	if(result!= undefined && result.length != 0) {
+		timelienjson = JSON.parse(result);
+	}
+	console.log("timelienJson:"+timelienjson);
 
   clearGraph();
+  console.log("cleared graph");
   appendTierButtonPanel();
 	renderTimeLineForTierStreamCluster('all', 'all', 'all');
 }

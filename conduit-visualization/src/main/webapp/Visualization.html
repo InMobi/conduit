@@ -19,7 +19,8 @@
             style="position:absolute;width:0;height:0;border:0"></iframe>
 
     <noscript>
-        <div style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+        <div
+            style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
             Your web browser must have JavaScript enabled
             in order for this application to display correctly.
         </div>
@@ -30,41 +31,36 @@
             <div id="headerContainer"></div>
             <div id="filterContainer"></div>
         </div>
-        <div id="viewPanelContainer">
-            <div id="viewPanel">
-                <div id="tabs1" class="viewTabs">
-                    <ul>
-                        <li><a id="latency1" class="latency" href="javascript:void(0)"
-                               onClick="tabSelected(2, 'null', 'null')">Latency</a></li>
-                        <li><a id="count1" class="count" href="javascript:void(0)"
-                               onClick="tabSelected(1, 'null', 'null')" class="active">Count</a></li>
-                    </ul>
+        <div id="fullGraphContainer">
+          <div id="tabs1">
+            <ul class="tabs">
+              <li id="latency1"><a href="javascript:void(0)"
+                     onClick="tabSelected(2, 'null', 'null')">Latency</a></li>
+              <li id="count1" class="active"><a href="javascript:void(0)"
+                     onClick="tabSelected(1, 'null', 'null')">Count</a></li>
+            </ul>
+          </div>
+          <div id="graphContainer">
+            <div id="topologyPanelContainer">
+              <div id="topologyInfoContainer">
+                <div id="topologyPanel"></div>
+                <div id="summaryAndInfoPanel">
+                  <div id="summaryPanel"></div>
+                  <div id="infoPanel"></div>
                 </div>
-                <div id="graphInfoContainer">
-                    <div id="graphPanel"></div>
-                    <div id="summaryAndInfoPanel">
-                        <div id="summaryPanel"></div>
-                        <div id="infoPanel"></div>
-                    </div>
-                </div>
+              </div>
             </div>
             <div id="timelinePanelContainer">
-              <div id="tabs2" class="viewTabs">
-                <ul>
-                  <li><a id="latency2" class="latency" href="javascript:void(0)"
-                         onClick="tabSelected(2, 'null', 'null')">Latency</a></li>
-                  <li><a id="count2" class="count" href="javascript:void(0)"
-                         onClick="tabSelected(1, 'null', 'null')" class="active">Count</a></li>
-                </ul>
-              </div>
               <div id="timelinePanel">
               </div>
             </div>
+          </div>
         </div>
     </div>
 
     <script type="text/javascript" src="Visualization/common.js"></script>
     <script type="text/javascript" src="Visualization/timeline.js"></script>
+    <script type="text/javascript" src="Visualization/summary.js"></script>
     <script type="text/javascript" src="Visualization/topology.js"></script>
   </body>
 </html>
