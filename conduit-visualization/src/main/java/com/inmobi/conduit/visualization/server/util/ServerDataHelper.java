@@ -267,13 +267,13 @@ public class ServerDataHelper {
       Map<String, Map<String, Object>> eachTierMap =
           map.get(eachTuple.getTier());
       if (eachTierMap == null) {
-        eachTierMap = new HashMap<String, Map<String, Object>>();
+        eachTierMap = new TreeMap<String, Map<String, Object>>();
         map.put(eachTuple.getTier(), eachTierMap);
       }
       Map<String, Object> eachTSMap =
           eachTierMap.get("" + eachTuple.getTimestamp().getTime());
       if (eachTSMap == null) {
-        eachTSMap = new TreeMap<String, Object>();
+        eachTSMap = new HashMap<String, Object>();
         eachTierMap.put("" + eachTuple.getTimestamp().getTime(), eachTSMap);
         eachTSMap.put("aggreceived", eachTuple.getReceived());
         eachTSMap.put("aggsent", eachTuple.getSent());
@@ -339,7 +339,7 @@ public class ServerDataHelper {
     for (String eachTier : map.keySet()) {
       Map<String, Object> eachTierMap = new HashMap<String, Object>();
       eachTierMap.put("tier", eachTier);
-      Set<Map<String, Object>> modifiedtimeserierList = new HashSet<Map<String, Object>>();
+      List<Map<String, Object>> modifiedtimeserierList = new ArrayList<Map<String, Object>>();
       eachTierMap.put("tierWisePointList", modifiedtimeserierList);
       for (String eachTimeKey : map.get(eachTier).keySet()) {
         Object eachTimeData = map.get(eachTier).get(eachTimeKey);
