@@ -354,29 +354,22 @@ public class DataServiceManager {
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
             null, feederConfig);
-    AuditDbQuery aggregatedLatency =
-        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
-            ServerConstants.GROUPBY_LATENCY_TIMELINE_STRING,
-            ServerConstants.TIMEZONE,
-            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig);
     try {
       LOG.debug("Executing time line query");
       dbQuery.execute();
       LOG.info("Audit Time line query: " + dbQuery.toString());
       LOG.debug("Executed time line query");
-      aggregatedLatency.execute();
     } catch (Exception e) {
       LOG.error("Exception while executing time line query: ", e);
       return null;
     }
     try {
       dbQuery.displayResults();
-      LOG.debug("TimeSeries JSON:" + ServerDataHelper.convertToJson(dbQuery,
-          aggregatedLatency));
+      LOG.debug("TimeSeries JSON:" + ServerDataHelper.convertToJson(dbQuery));
     } catch (Exception e) {
       LOG.error("Exception while displaying results: ", e);
     }
-    return ServerDataHelper.convertToJson(dbQuery, aggregatedLatency);
+    return ServerDataHelper.setTimeLineDataResponse(ServerDataHelper
+        .convertToJson(dbQuery));
   }
 }
