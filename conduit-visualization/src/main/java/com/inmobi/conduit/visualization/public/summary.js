@@ -15,6 +15,7 @@ function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency, 
 
 function addSummaryBox(treeList) {
 	console.log("adding summary box with isCountView:"+isCountView);
+  clearSummary();
   if (isCountView) {
     loadCountSummary(treeList);
   } else {
@@ -312,4 +313,11 @@ function getHealth(count1, count2) {
   } else {
     return 0;
   }
+}
+
+function clearSummary() {
+  document.getElementById("summaryPanel").innerHTML = "";
+  document.getElementById("summaryPanel").style.backgroundColor = "#EBF4F8";
+  document.getElementById("infoPanel").innerHTML = "";
+  document.getElementById("infoPanel").style.backgroundColor = "#EBF4F8";
 }

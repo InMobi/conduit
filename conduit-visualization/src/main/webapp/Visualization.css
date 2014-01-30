@@ -195,7 +195,7 @@ html ul.tabs li.active, html ul.tabs li.active a:hover  { /*--Makes sure that th
  background: #EBF4F8;
 }
 
-#tabs1 {
+#tabsContainer {
 	padding-top: 5px;
 }
 /*.viewTabs {
@@ -321,6 +321,7 @@ div.healthtooltip {
   border-width:2px;
   border-color:#ccc;
 	margin-top: 25px;
+	height: 505px;
 	/*padding-top: 25px;*/
 }
 

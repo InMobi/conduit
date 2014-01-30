@@ -10,7 +10,6 @@ var rootNodes = [];
 var pathLinkCache = [], lineLinkCache = [];
 var aggCollectorNodeList= [];
 var isVipNodeHighlighed = false; //this variable is used so that when loaing default view, same vip child tree need not be highlighted for every collector
-var isCountView = true;
 
 /*
 When creating the full graph, 3 different types of trees are created.
@@ -435,7 +434,7 @@ function addListToInfoPanel(n) {
   c.innerHTML = "clusterName:";
   c = r.insertCell(1);
   if (isCountView) {
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + n.clusterName + "</button>";
+    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + n.clusterName + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Aggregate Received:";
@@ -453,7 +452,7 @@ function addListToInfoPanel(n) {
     c.innerHTML = "Message Count Table:";
     c.style.fontWeight = "bold";
   } else {
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + n.clusterName + "</button>";
+    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + n.clusterName + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Latency Table:";
@@ -503,7 +502,7 @@ function nodeclick(n) {
       });
       r = t.insertRow(currentRow);
       c = r.insertCell(0);
-      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + receivedStats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + receivedStats.topic + "</button>";
+      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + receivedStats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + receivedStats.topic + "</button>";
       if (sent != received) {
         c.firstChild.style.color = "#ff0000";
       } else {
@@ -546,7 +545,7 @@ function nodeclick(n) {
         r = t.insertRow(currentRow);
         var cell = 0;
         c = r.insertCell(cell);
-        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
+        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
         cell++;
         c = r.insertCell(cell);
         c.innerHTML = topicstats.messages;
@@ -557,7 +556,7 @@ function nodeclick(n) {
         r = t.insertRow(currentRow);
         var cell = 0;
         c = r.insertCell(cell);
-        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
+        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
         cell++;
         c = r.insertCell(cell);
         c.innerHTML = topicstats.messages;
@@ -610,7 +609,7 @@ function latencynodeclick(n) {
     r = t.insertRow(currentRow++);
     var currentColumn = 0;
     c = r.insertCell(currentColumn++);
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + topic + "', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + topic + "</button>";
+    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topic + "', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + topic + "</button>";
     percentileSet.forEach(function (p) {
       var currentPercentile = p;
       l.latencyList.forEach(function (pl) {
@@ -788,7 +787,7 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Source cluster:";
   c = r.insertCell(1);
-  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + l.target.clusterName + "', 1)\" class=\"transparentButton\">" + l.target.clusterName + "</button>";
+  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.target.clusterName + "', 1)\" class=\"transparentButton\">" + l.target.clusterName + "</button>";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Target Name:";
@@ -803,7 +802,7 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Target Cluster:";
   c = r.insertCell(1);
-  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + l.source.clusterName + "</button>";
+  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + l.source.clusterName + "</button>";
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
     r = t.insertRow(currentRow++);
@@ -812,7 +811,7 @@ function linkclick(l) {
     streams.forEach(function (s) {
       r = t.insertRow(currentRow++);
       c = r.insertCell(0);
-      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + s + "', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + s + "</button>";
+      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + s + "', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + s + "</button>";
     });
   }
   document.getElementById("infoPanel")
@@ -946,7 +945,7 @@ function getTierList(clusterNodeList, tier) {
   return returnArray;
 }
 
-function addClusterName(clusterName, tree, angle, graphsvg, selectedTabID) {
+function addClusterName(clusterName, tree, angle, graphsvg) {
   var clusternamenode = new Node(clusterName, clusterName, "clusterName");
   clusterNameTreeNode = tree.nodes(clusternamenode);
   clusterNameTreeNode[0].x = angle;
@@ -980,7 +979,7 @@ function addClusterName(clusterName, tree, angle, graphsvg, selectedTabID) {
     .style("cursor", "hand")
     .style("cursor", "pointer")
     .on("click", function (d) {
-      saveHistoryAndLoadGraph('All', d.name, selectedTabID);
+      saveHistoryAndReload('All', d.name);
     });
 }
 
@@ -1101,22 +1100,8 @@ function loadDefaultView() {
 
 function clearHistory() {}
 
-function clearPreviousGraph() {
-  document.getElementById("summaryPanel")
-    .innerHTML = "";
-  document.getElementById("summaryPanel")
-    .style.backgroundColor = "#EBF4F8";
-  document.getElementById("infoPanel")
-    .innerHTML = "";
-  document.getElementById("infoPanel")
-    .style.backgroundColor = "#EBF4F8";
-  d3.select("#graphsvg")
-    .remove();
-}
-
-function saveHistoryAndLoadGraph(streamName, clusterName, selectedTabID) {
-  saveHistory(false, streamName, clusterName, selectedTabID);
-  loadGraph(streamName, clusterName, selectedTabID);
+function clearTopologyGraph() {
+  d3.select("#graphsvg").remove();
 }
 
 function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
@@ -1433,13 +1418,6 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
     drawnode.on("click", latencynodeclick);
 }
 
-function checkCountView(selectedTabID) {
-  if (parseInt(selectedTabID, 10) == 1)
-    isCountView = true;
-  else if (parseInt(selectedTabID, 10) == 2)
-    isCountView = false;
-}
-
 function Point(x, y) {
   this.x = x;
   this.y = y;
@@ -1501,14 +1479,12 @@ function cacheLinks() {
   lineLinkCache = d3.selectAll("line.link");
 }
 
-function loadGraph(streamName, clusterName, selectedTabID) {
-  highlightTab(selectedTabID);
+function loadGraph(streamName, clusterName) {
   isNodeColored = false;
   rootNodes.length = 0;
   lineLinkCache.length = 0;
   pathLinkCache.length = 0;
-  checkCountView(selectedTabID);
-  clearPreviousGraph();
+  clearTopologyGraph();
   var treeList = getTreeList(streamName, clusterName);
   console.log("AAAA");
   console.log(treeList);
@@ -1582,13 +1558,13 @@ function loadGraph(streamName, clusterName, selectedTabID) {
     var currentCluster = clusterNodeList[0].clusterName;
     var startindex = getStartIndex(clusterNodeList);
     if (startindex === undefined) {
-      addClusterName(currentCluster, tree, angle, graphsvg, selectedTabID);
+      addClusterName(currentCluster, tree, angle, graphsvg);
       angle += diff/2;
       continue;
     }
     appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, startindex,
       angle, diff, currentCluster);
-    addClusterName(currentCluster, tree, angle, graphsvg, selectedTabID);
+    addClusterName(currentCluster, tree, angle, graphsvg);
     angle += diff/2;
   }
 
@@ -1668,7 +1644,6 @@ function loadGraph(streamName, clusterName, selectedTabID) {
 }
 
 function drawGraph(result) {
-  document.getElementById("tabs1").style.display = "block";
   fullTreeList.length = 0;
   aggCollectorNodeList.length = 0;
 
@@ -1680,47 +1655,23 @@ function drawGraph(result) {
 }
 
 function clearSvgAndAddLoadSymbol() {
-  clearPreviousGraph();
+  clearTopologyGraph();
+  clearSummary();
   var graphsvg = d3.select("#topologyPanel")
     .append("svg:svg")
-    .style("stroke",
-      "gray")
+    .style("stroke", "gray")
     .attr("width", r * 5)
     .attr("height", r * 5)
     .style("background", "#EBF4F8")
     .attr("id", "graphsvg")
     .append("svg:g")
-  var imgpath = "Visualization/bar-ajax-loader.gif";
-  var imgs = graphsvg.append("svg:image")
-    .attr("xlink:href", imgpath)
+  graphsvg.append("svg:image")
+    .attr("xlink:href", "Visualization/bar-ajax-loader.gif")
     .attr("x",
       r * 2.5 - 100)
     .attr("y", r * 2.5)
     .attr("width", "200")
     .attr("height", "40");
-}
-
-function highlightTab(selectedTabID) {
-  if (parseInt(selectedTabID) == 1) {
-    document.getElementById("count1")
-      .className = "active";
-    document.getElementById("latency1")
-      .className = "";
-  } else if (parseInt(selectedTabID) == 2) {
-    document.getElementById("count1")
-      .className = "";
-    document.getElementById("latency1")
-      .className = "active";
-  }
-}
-
-function tabSelected(selectedTabID, stream, cluster) {
-  if (stream == 'null' && cluster == 'null') {
-    stream = qStream;
-    cluster = qCluster;
-  }
-  clearSvgAndAddLoadSymbol();
-  saveHistoryAndLoadGraph(stream, cluster, selectedTabID);
 }
 
 function checkAndClearList(treeList) {

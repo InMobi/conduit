@@ -502,6 +502,7 @@ public class Visualization implements EntryPoint, ClickHandler {
       public void onSuccess(String result) {
         String timeLineJson = ClientDataHelper.getInstance()
             .getTimeLineJSONFromResponse(result);
+        System.out.println("JSON:"+timeLineJson);
         renderTimeLineGraph(timeLineJson);
         enableFilterSelection();
       }

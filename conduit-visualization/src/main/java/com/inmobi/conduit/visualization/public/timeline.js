@@ -94,14 +94,12 @@ function buildDataPointList(tier, stream, cluster) {
 }
 
 function clearSVG() {
-  d3.select("#timelineSVG")
-    .remove();
+  d3.select("#timelineSVG").remove();
 }
 
-function clearGraph() {
+function clearTimeLineGraph() {
   clearSVG();
-  d3.select("#tierButtonPanel")
-    .remove();
+  d3.select("#tierButtonPanel").remove();
 }
 
 var margin = {top: 20, right: 20, bottom: 50, left: 100},
@@ -277,7 +275,7 @@ function renderTimeLine(result, timeticklength) {
 	}
 	console.log("timelienJson:"+timelienjson);
 
-  clearGraph();
+  clearTimeLineGraph();
   console.log("cleared graph");
   appendTierButtonPanel();
 	renderTimeLineForTierStreamCluster('all', 'all', 'all');
