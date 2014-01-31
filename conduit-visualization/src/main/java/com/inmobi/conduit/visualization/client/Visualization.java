@@ -1,13 +1,14 @@
 package com.inmobi.conduit.visualization.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ShowRangeEvent;
 import com.google.gwt.event.logical.shared.ShowRangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
@@ -22,17 +23,17 @@ import java.util.Map;
 
 public class Visualization implements EntryPoint, ClickHandler {
 
-  private ListBox streamsList, clusterList;
+  private ListBox streamsList, clusterList, viewList;
   private TextBox startTime, endtime;
   private VerticalPanel startTimeVPanel, endTimeVPanel, streamVPanel,
-      clusterVPanel, headerVPanel;
+      clusterVPanel, viewVPanel, headerVPanel;
   private ListBox stTimeHour, stTimeMinute, edTimeHour, edTimeMinute;
   private DatePicker stDatePicker, endDatePicker;
   private HorizontalPanel etTimeHPanel;
   private HorizontalPanel stTimeHPanel;
   private HorizontalPanel filterPanel;
   private Label stTimeLabel, etTimeLabel, streamLabel, clusterLabel,
-      currentTimeLabel;
+      currentTimeLabel, viewLabel;
   private PopupPanel stcalendarPopup, etcalendarPopup;
   private boolean isDevMode = false;
 
@@ -76,6 +77,9 @@ public class Visualization implements EntryPoint, ClickHandler {
                 .getClusterListFromLoadMainPanelResponse(result));
         clientConfig = ClientDataHelper.getInstance()
             .getClientConfigLoadMainPanelResponse(result);
+
+        checkIfGWTDevMode();
+        setConfiguration();
         rolledUpTillDays = Integer.parseInt(clientConfig.get(ClientConstants
             .ROLLEDUP_TILL_DAYS));
         loadMainPanel();
@@ -91,8 +95,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     RootPanel.get("filterContainer").add(filterPanel);
     System.out.println("Loaded main panel");
 
-    checkIfGWTDevMode();
     String stream, cluster, startTime, endTime, selectedTab;
+    int viewId = 0;
     if (checkParametersNull()) {
       System.out.println("Loading default settings");
       stream = "All";
@@ -100,6 +104,7 @@ public class Visualization implements EntryPoint, ClickHandler {
       startTime = DateUtils.getPreviousDayString();
       endTime = DateUtils.incrementAndGetTimeAsAuditDateFormatString(startTime, 60);
       selectedTab = "1";
+      viewId = ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID;
     } else {
       System.out.println("Retrieving parameters from URL");
       startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
@@ -107,9 +112,22 @@ public class Visualization implements EntryPoint, ClickHandler {
       cluster = Window.Location.getParameter(ClientConstants.QUERY_CLUSTER);
       stream = Window.Location.getParameter(ClientConstants.QUERY_STREAM);
       selectedTab = Window.Location.getParameter(ClientConstants.SELECTED_TAB);
+      String viewIdString = Window.Location.getParameter(
+          ClientConstants.QUERY_VIEW);
+      if (viewIdString != null && viewIdString.length() != 0) {
+        try {
+          viewId = Integer.parseInt(viewIdString);
+        } catch (NumberFormatException e) {
+          System.out.println("InValid view Id from URL");
+          e.printStackTrace();
+        }
+      }
+      if (viewId == 0) {
+        viewId = ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID;
+      }
     }
-    setSelectedParameterValues(startTime, endTime, cluster, stream);
-    sendRequest(startTime, endTime, cluster, stream, selectedTab);
+    setSelectedParameterValues(startTime, endTime, cluster, stream, viewId);
+    sendRequests(startTime, endTime, cluster, stream, selectedTab, viewId);
   }
 
   private void checkIfGWTDevMode() {
@@ -122,7 +140,8 @@ public class Visualization implements EntryPoint, ClickHandler {
   }
 
   private void setSelectedParameterValues(String stTime, String endTime,
-                                          String cluster, String stream) {
+                                          String cluster, String stream,
+                                          int viewId) {
     startTime.setText(DateUtils.getBaseDateStringFromAuditDateFormat(stTime));
     endtime.setText(DateUtils.getBaseDateStringFromAuditDateFormat(endTime));
     stDatePicker.setValue(DateUtils.getDateFromAuditDateFormatString(stTime));
@@ -146,6 +165,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     }
     setSelectedInListBox(clusterList, cluster);
     setSelectedInListBox(streamsList, stream);
+    viewList.setSelectedIndex(viewId);
   }
 
   private void setSelectedInListBox(ListBox listBox, String selectedString) {
@@ -178,6 +198,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     endtime = new TextBox();
     streamsList = new ListBox();
     clusterList = new ListBox();
+    viewList = new ListBox();
     stDatePicker = new DatePicker();
     endDatePicker = new DatePicker();
     stTimeHour = new ListBox();
@@ -190,16 +211,19 @@ public class Visualization implements EntryPoint, ClickHandler {
     startTimeVPanel = new VerticalPanel();
     streamVPanel = new VerticalPanel();
     clusterVPanel = new VerticalPanel();
+    viewVPanel = new VerticalPanel();
     stTimeLabel = new Label("Start Time");
     etTimeLabel = new Label("End Time");
     streamLabel = new Label("Stream");
     clusterLabel = new Label("Cluster");
+    viewLabel = new Label("Select View");
     Button goButton = new Button("Go");
 
     startTime.getElement().setId("stTextBox");
     endtime.getElement().setId("etTextBox");
     streamsList.getElement().setId("streamDropDown");
     clusterList.getElement().setId("clusterDropDown");
+    viewList.getElement().setId("viewDropDown");
     goButton.getElement().setId("goButton");
     filterPanel.getElement().setId("filterPanel");
     stDatePicker.setStyleName("calendar-popup");
@@ -209,6 +233,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     streamVPanel.add(streamsList);
     clusterVPanel.add(clusterLabel);
     clusterVPanel.add(clusterList);
+    viewVPanel.add(viewLabel);
+    viewVPanel.add(viewList);
     stcalendarPopup.add(stDatePicker);
     etcalendarPopup.add(endDatePicker);
     stcalendarPopup.setGlassEnabled(true);
@@ -227,10 +253,12 @@ public class Visualization implements EntryPoint, ClickHandler {
     stDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        String selectedDateString = DateUtils.baseDateFormatter.format(selectedDate);
+        String selectedDateString =
+            DateUtils.BASE_DATE_FORMATTER.format(selectedDate);
         startTime.setText(selectedDateString);
         if (DateUtils.checkSelectedDateRolledUp(selectedDate,
-            Integer.parseInt(clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
+            Integer.parseInt(
+                clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
           stTimeMinute.setSelectedIndex(1);
           stTimeMinute.setEnabled(false);
         } else {
@@ -242,7 +270,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     endDatePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
       public void onValueChange(ValueChangeEvent<Date> event) {
         Date selectedDate = event.getValue();
-        String selectedDateString = DateUtils.baseDateFormatter.format(selectedDate);
+        String selectedDateString = DateUtils.BASE_DATE_FORMATTER.format(selectedDate);
         endtime.setText(selectedDateString);
         if (DateUtils.checkSelectedDateRolledUp(selectedDate, rolledUpTillDays)) {
           edTimeMinute.setSelectedIndex(1);
@@ -253,11 +281,9 @@ public class Visualization implements EntryPoint, ClickHandler {
         etcalendarPopup.hide();
       }
     });
-    stDatePicker.addShowRangeHandler(new ShowRangeHandler<Date>()
-    {
+    stDatePicker.addShowRangeHandler(new ShowRangeHandler<Date>() {
       @Override
-      public void onShowRange(final ShowRangeEvent<Date> dateShowRangeEvent)
-      {
+      public void onShowRange(final ShowRangeEvent<Date> dateShowRangeEvent) {
         Date maxStartDate = DateUtils.getDateFromBaseDateFormatString
             (clientConfig.get(ClientConstants.MAX_START_TIME));
         Date d = DateUtils.getDateWithZeroTime(dateShowRangeEvent.getStart());
@@ -294,15 +320,21 @@ public class Visualization implements EntryPoint, ClickHandler {
       }
     });
     startTime.setWidth("100px");
+    startTime.setHeight("12px");
     endtime.setWidth("100px");
+    endtime.setHeight("12px");
     stTimeHour.addItem("HH");
     stTimeHour.setWidth("50px");
+    stTimeHour.setHeight("20px");
     stTimeMinute.addItem("MM");
     stTimeMinute.setWidth("50px");
+    stTimeMinute.setHeight("20px");
     edTimeHour.addItem("HH");
     edTimeHour.setWidth("50px");
+    edTimeHour.setHeight("20px");
     edTimeMinute.addItem("MM");
     edTimeMinute.setWidth("50px");
+    edTimeMinute.setHeight("20px");
     fillListBox(stTimeHour, 24);
     fillListBox(stTimeMinute, 60);
     fillListBox(edTimeHour, 24);
@@ -316,7 +348,22 @@ public class Visualization implements EntryPoint, ClickHandler {
     for (String cluster : clusters) {
       clusterList.addItem(cluster);
     }
+    for (int i = 0; i < 5; i++) {
+      viewList.addItem("<Select View>");
+    }
+    viewList.setItemText(ClientConstants.TOPOLOGY_VIEW_ID,
+        ClientConstants.TOPOLOGY_VIEW);
+    viewList.setItemText(ClientConstants.TIMELINE_VIEW_ID,
+        ClientConstants.TIMELINE_VIEW);
+    viewList.setItemText(ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID,
+        ClientConstants.TOPOLOGY_TIMELINE_VIEW);
+    viewList.setItemText(ClientConstants.CURRENT_TREND_VIEW_ID,
+        ClientConstants.CURRENT_TREND_VIEW);
     goButton.addClickHandler(this);
+
+    streamsList.setHeight("20px");
+    clusterList.setHeight("20px");
+    viewList.setHeight("20px");
 
     stTimeHPanel.add(startTime);
     stTimeHPanel.add(stTimeHour);
@@ -330,6 +377,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     endTimeVPanel.add(etTimeLabel);
     endTimeVPanel.add(etTimeHPanel);
 
+    filterPanel.add(viewVPanel);
     filterPanel.add(startTimeVPanel);
     filterPanel.add(endTimeVPanel);
     filterPanel.add(streamVPanel);
@@ -358,83 +406,112 @@ public class Visualization implements EntryPoint, ClickHandler {
       return;
     }
     disableFilterSelection();
-    sendRequest(stTime, edTime, clusterList.getItemText(clusterList
+    DOM.getElementById("topologyPanelContainer").getStyle().setDisplay(
+        Style.Display.NONE);
+    DOM.getElementById("timelinePanelContainer").getStyle().setDisplay(
+        Style.Display.NONE);
+    sendRequests(stTime, edTime, clusterList.getItemText(clusterList
         .getSelectedIndex()), streamsList.getItemText(streamsList
-        .getSelectedIndex()), null);
+        .getSelectedIndex()), "1", viewList.getSelectedIndex());
   }
 
-  public void sendRequest(final String stTime, final String edTime,
-                          final String selectedCluster,
-                          final String selectedStream,
-                          final String selectedTab) {
-    Integer defaultTabId = 1;
+  public void sendRequests(String stTime, String edTime,
+                           String selectedCluster, String selectedStream,
+                           String selectedTab, int viewId) {
+    Integer selectedTabId = 1;
     if(selectedTab != null)
-      defaultTabId =  Integer.parseInt(selectedTab);
-    final Integer selectedTabId = defaultTabId;
-    saveHistory(stTime, edTime, selectedCluster, selectedStream, selectedTabId);
-    System.out.println("Sending request to load graph");
-    System.out.println("Start:"+stTime+"\nEnd:"+edTime+"\nCluster" +
-        ":"+selectedCluster+"\nStream:"+selectedStream+"\nTab " +
-        "selected:"+selectedTabId);
+      selectedTabId =  Integer.parseInt(selectedTab);
+    saveHistory(stTime, edTime, selectedCluster, selectedStream,
+        selectedTabId, viewId);
+    DOM.getElementById("fullGraphContainer").getStyle().setDisplay(
+        Style.Display.BLOCK);
+
+    System.out.println("Sending request with params start:" + stTime + " " +
+        "end:" + edTime + " cluster:" + selectedCluster + " stream:" +
+        selectedStream + " tab selected:" + selectedTabId);
     clearAndShowLoadingSymbol();
     String clientJson = ClientDataHelper.getInstance()
         .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
-    serviceInstance.getData(clientJson, new AsyncCallback<String>() {
+    boolean loadTopologyView = false, loadTimeLineView = false;
+    switch (viewId) {
+      case ClientConstants.TOPOLOGY_VIEW_ID:
+        loadTopologyView = true;
+        break;
+      case ClientConstants.TIMELINE_VIEW_ID:
+        loadTimeLineView = true;
+        break;
+      case ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID:
+        loadTimeLineView = true;
+        loadTopologyView = true;
+        break;
+      default:
+        loadTimeLineView = true;
+        loadTopologyView = true;
+    }
+    if (loadTopologyView) {
+      DOM.getElementById("topologyPanelContainer").getStyle().setDisplay(
+          Style.Display.BLOCK);
+      getTopologyData(clientJson);
+      getTierLatencyData(clientJson);
+    }
+    if (loadTimeLineView) {
+      DOM.getElementById("timelinePanelContainer").getStyle().setDisplay(
+          Style.Display.BLOCK);
+      getTimeLineData(clientJson);
+    }
+  }
+
+  public void getTopologyData(String clientJson) {
+    serviceInstance.getTopologyData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         caught.printStackTrace();
       }
 
       public void onSuccess(String result) {
-        String nodesJson = ClientDataHelper.getInstance()
-            .getJsonStringFromGraphDataResponse(result);
-        Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
-            .getTierLatencyObjListFromResponse(result);
-        if (tierLatencyMap != null) {
-          Integer pLatency = tierLatencyMap.get(ClientConstants.PUBLISHER);
-          Integer aLatency = tierLatencyMap.get(ClientConstants.AGENT);
-          Integer cLatency = tierLatencyMap.get(ClientConstants.COLLECTOR);
-          Integer hLatency = tierLatencyMap.get(ClientConstants.HDFS);
-          Integer lLatency = tierLatencyMap.get(ClientConstants.LOCAL);
-          Integer mergeLatency = tierLatencyMap.get(ClientConstants.MERGE);
-          Integer mirrorLatency = tierLatencyMap.get(ClientConstants.MIRROR);
-          if ( pLatency == null )
-            pLatency = -1;
-          if ( aLatency == null )
-            aLatency = -1;
-          if ( cLatency == null )
-            cLatency = -1;
-          if ( hLatency == null )
-            hLatency = -1;
-          if ( lLatency == null )
-            lLatency = -1;
-          if ( mergeLatency == null )
-            mergeLatency = -1;
-          if ( mirrorLatency == null )
-            mirrorLatency = -1;
-          setTierLatencyValues(pLatency, aLatency, cLatency,hLatency,
-              lLatency, mergeLatency, mirrorLatency);
-        }
-        drawGraph(nodesJson, selectedCluster, selectedStream, stTime, edTime,
-            selectedTabId, Integer.parseInt(clientConfig
-            .get(ClientConstants.PUBLISHER)), Integer.parseInt(clientConfig
-            .get(ClientConstants.AGENT)), Integer.parseInt(clientConfig.get
-            (ClientConstants.VIP)), Integer.parseInt(clientConfig.get
-            (ClientConstants.COLLECTOR)), Integer.parseInt(clientConfig.get
-            (ClientConstants.HDFS)), Integer.parseInt(clientConfig.get
-            (ClientConstants.LOCAL)), Integer.parseInt(clientConfig.get
-            (ClientConstants.MERGE)), Integer.parseInt(clientConfig.get
-            (ClientConstants.MIRROR)), Float.parseFloat(clientConfig.get
-            (ClientConstants.PERCENTILE_FOR_SLA)),
-            Float.parseFloat(clientConfig.get(ClientConstants
-                .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
-            (ClientConstants.PERCENTAGE_FOR_WARN)),
-            Integer.parseInt(clientConfig.get(ClientConstants
-                .LOSS_WARN_THRESHOLD_DIFF)), isDevMode);
+        String topologyJson = ClientDataHelper.getInstance()
+            .getJsonFromTopologyDataResponse(result);
+        drawGraph(topologyJson);
         enableFilterSelection();
       }
     });
   }
+
+  public void getTierLatencyData(String clientJson) {
+    serviceInstance.getTierLatencyData(clientJson, new AsyncCallback<String>() {
+
+      public void onFailure(Throwable caught) {
+        caught.printStackTrace();
+      }
+
+      public void onSuccess(String result) {
+        Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
+            .getTierLatencyObjListFromResponse(result);
+        setTierLatencyValues(tierLatencyMap);
+      }
+    });
+  }
+
+  public void getTimeLineData(String clientJson) {
+    serviceInstance.getTimeLineData(clientJson, new AsyncCallback<String>() {
+
+      public void onFailure(Throwable caught) {
+        caught.printStackTrace();
+      }
+
+      public void onSuccess(String result) {
+        String timeLineJson = ClientDataHelper.getInstance()
+            .getTimeLineJSONFromResponse(result);
+        System.out.println("JSON:"+timeLineJson);
+        renderTimeLineGraph(timeLineJson);
+        enableFilterSelection();
+      }
+    });
+  }
+
+  private native void renderTimeLineGraph(String timeLineJson)/*-{
+    $wnd.renderTimeLine(timeLineJson, 60);
+  }-*/;
 
   private void enableFilterSelection() {
     startTime.setEnabled(true);
@@ -475,10 +552,38 @@ public class Visualization implements EntryPoint, ClickHandler {
 
   private native void saveHistory(String stTime, String edTime,
                             String selectedCluster, String selectedStream,
-                            int selectedTab)/*-{
-    $wnd.saveHistory(selectedStream, selectedCluster, selectedTab, stTime,
-    edTime);
+                            int selectedTab, int viewId)/*-{
+    $wnd.saveHistory(true, selectedStream, selectedCluster, selectedTab,
+    viewId, stTime, edTime);
   }-*/;
+
+  private void setTierLatencyValues(Map<String, Integer> tierLatencyMap) {
+    if (tierLatencyMap != null) {
+      Integer pLatency = tierLatencyMap.get(ClientConstants.PUBLISHER);
+      Integer aLatency = tierLatencyMap.get(ClientConstants.AGENT);
+      Integer cLatency = tierLatencyMap.get(ClientConstants.COLLECTOR);
+      Integer hLatency = tierLatencyMap.get(ClientConstants.HDFS);
+      Integer lLatency = tierLatencyMap.get(ClientConstants.LOCAL);
+      Integer mergeLatency = tierLatencyMap.get(ClientConstants.MERGE);
+      Integer mirrorLatency = tierLatencyMap.get(ClientConstants.MIRROR);
+      if ( pLatency == null )
+        pLatency = -1;
+      if ( aLatency == null )
+        aLatency = -1;
+      if ( cLatency == null )
+        cLatency = -1;
+      if ( hLatency == null )
+        hLatency = -1;
+      if ( lLatency == null )
+        lLatency = -1;
+      if ( mergeLatency == null )
+        mergeLatency = -1;
+      if ( mirrorLatency == null )
+        mirrorLatency = -1;
+      setTierLatencyValues(pLatency, aLatency, cLatency,hLatency,
+          lLatency, mergeLatency, mirrorLatency);
+    }
+  }
 
   private native void setTierLatencyValues(int publisherLatency,
                                            int agentLatency,
@@ -520,22 +625,40 @@ public class Visualization implements EntryPoint, ClickHandler {
     $wnd.clearSvgAndAddLoadSymbol();
   }-*/;
 
-  private native void drawGraph(String result, String cluster, String stream,
-                                String start, String end,
-                                Integer selectedTabID,
-                                Integer publisherSla, Integer agentSla,
-                                Integer vipSla, Integer collectorSla,
-                                Integer hdfsSla,
-                                Integer localSla,
-                                Integer mergeSla,
-                                Integer mirrorSla, Float percentileForSla,
-                                Float percentageForLoss,
-                                Float percentageForWarn,
-                                Integer lossWarnThresholdDiff,
-                                boolean isDevMode)/*-{
-    $wnd.drawGraph(result, cluster, stream, start, end, selectedTabID,
-    publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla,
-    mergeSla, mirrorSla, percentileForSla, percentageForLoss,
-    percentageForWarn, lossWarnThresholdDiff, isDevMode);
+  private native void drawGraph(String result)/*-{
+    $wnd.drawGraph(result);
+  }-*/;
+
+  private void setConfiguration() {
+    setConfiguration(Integer.parseInt(clientConfig
+        .get(ClientConstants.PUBLISHER)), Integer.parseInt(clientConfig
+        .get(ClientConstants.AGENT)), Integer.parseInt(clientConfig.get
+        (ClientConstants.VIP)), Integer.parseInt(clientConfig.get
+        (ClientConstants.COLLECTOR)), Integer.parseInt(clientConfig.get
+        (ClientConstants.HDFS)), Integer.parseInt(clientConfig.get
+        (ClientConstants.LOCAL)), Integer.parseInt(clientConfig.get
+        (ClientConstants.MERGE)), Integer.parseInt(clientConfig.get
+        (ClientConstants.MIRROR)), Float.parseFloat(clientConfig.get
+        (ClientConstants.PERCENTILE_FOR_SLA)),
+        Float.parseFloat(clientConfig.get(ClientConstants
+            .PERCENTAGE_FOR_LOSS)), Float.parseFloat(clientConfig.get
+        (ClientConstants.PERCENTAGE_FOR_WARN)),
+        Integer.parseInt(clientConfig.get(ClientConstants
+            .LOSS_WARN_THRESHOLD_DIFF)), isDevMode);
+  }
+
+  private native void setConfiguration(Integer publisherSla, Integer agentSla,
+                                       Integer vipSla, Integer collectorSla,
+                                       Integer hdfsSla,
+                                       Integer localSla,
+                                       Integer mergeSla,
+                                       Integer mirrorSla, Float percentileForSla,
+                                       Float percentageForLoss,
+                                       Float percentageForWarn,
+                                       Integer lossWarnThresholdDiff,
+                                       boolean isDevMode) /*-{
+    $wnd.setConfiguration(publisherSla,agentSla, vipSla, collectorSla,
+    hdfsSla, localSla, mergeSla, mirrorSla, percentileForSla,
+    percentageForLoss, percentageForWarn, lossWarnThresholdDiff,isDevMode);
   }-*/;
 }

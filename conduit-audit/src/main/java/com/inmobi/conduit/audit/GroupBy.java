@@ -68,9 +68,20 @@ public class GroupBy {
       return columns.get(Column.TOPIC);
     }
 
+    public String getTimeInterval() {
+      return columns.get(Column.TIMEINTERVAL);
+    }
+
     @Override
     public int compareTo(Group group) {
-      int result = 0;
+      int result;
+      if (columns.containsKey(Column.TIMEINTERVAL)) {
+        String cluster1 = columns.get(Column.TIMEINTERVAL);
+        String cluster2 = group.columns.get(Column.TIMEINTERVAL);
+        result = cluster1.compareTo(cluster2);
+        if (result != 0)
+          return result;
+      }
       if (columns.containsKey(Column.CLUSTER)) {
         String cluster1 = columns.get(Column.CLUSTER);
         String cluster2 = group.columns.get(Column.CLUSTER);

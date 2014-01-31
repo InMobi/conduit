@@ -93,7 +93,7 @@ public class DataServiceManager {
     return serverJson;
   }
 
-  public String getData(String filterValues) {
+  public String getTopologyData(String filterValues) {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
@@ -128,11 +128,7 @@ public class DataServiceManager {
     for (Node node : nodeMap.values()) {
       LOG.debug("Final node :" + node);
     }
-    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
-        (filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
-    return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
-        tierLatencyMap, properties);
+    return ServerDataHelper.getInstance().setTopologyDataResponse(nodeMap);
   }
 
   protected Map<String, String> getFilterMap(String filterValues) {
@@ -201,8 +197,10 @@ public class DataServiceManager {
     for (ConduitConfig config : conduitConfig) {
       Map<String, Cluster> clusterMap = config.getClusters();
       Cluster cluster = clusterMap.get(clusterName);
-      if (cluster == null)
+      if (cluster == null) {
+        LOG.debug("Could not find cluster of tuple:"+tuple+" in clusterMap");
         continue;
+      }
       if (tuple.getTier().equalsIgnoreCase(Tier.MERGE.toString())) {
         Set<String> mergeStreams = cluster.getPrimaryDestinationStreams();
         for (Map.Entry<String, Cluster> entry: clusterMap.entrySet()) {
@@ -224,29 +222,8 @@ public class DataServiceManager {
 
       }
     }
-    LOG.info("Set source list as:"+sourceList);
+    LOG.info("Set source list for tuple " + tuple + "as:" + sourceList);
     return sourceList;
-  }
-
-  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
-                                                            String startTime,
-                                                            String
-                                                                filterString) {
-    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
-        "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
-        .PERCENTILE_FOR_SLA), feederConfig);
-    try {
-      dbQuery.execute();
-    } catch (Exception e) {
-      LOG.error("Exception while executing query: ", e);
-    }
-    LOG.info("Audit query: " + dbQuery.toString());
-    try {
-      dbQuery.displayResults();
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
-    }
-    return dbQuery.getPercentile();
   }
 
   protected String setFilterString(Map<String, String> filterMap) {
@@ -334,27 +311,37 @@ public class DataServiceManager {
     return mergedList;
   }
 
-  /**
-   * If any node in the nodeList is a merge/mirror tier node, set the source
-   * node's names list for merge/mirror node.
-   *
-   * @param nodeMap map of all nodeKey::nodes returned by the query
-   */
-  private void checkAndSetSourceListForMergeMirror(Map<NodeKey, Node> nodeMap) {
-    for (Node node : nodeMap.values()) {
-      if (node.getTier().equalsIgnoreCase("merge") ||
-          node.getTier().equalsIgnoreCase("mirror")) {
-        for (ConduitConfig config : conduitConfig) {
-          node.setSourceList(
-              config.getClusters().get(node.getClusterName())
-                  .getDestinationStreams().keySet());
-        }
-      }
-    }
-  }
-
   public List<ConduitConfig> getConduitConfig() {
     return Collections.unmodifiableList(conduitConfig);
+  }
+  public String getTierLatencyData(String filterValues) {
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
+    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
+        (filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
+    return ServerDataHelper.getInstance().setTierLatencyResponseObject(tierLatencyMap, properties);
+  }
+
+  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
+                                                            String startTime,
+                                                            String
+                                                                filterString) {
+    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
+        "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
+        .PERCENTILE_FOR_SLA), feederConfig);
+    try {
+      dbQuery.execute();
+    } catch (Exception e) {
+      LOG.error("Exception while executing query: ", e);
+    }
+    LOG.info("Audit query: " + dbQuery.toString());
+    try {
+      dbQuery.displayResults();
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
+    return dbQuery.getPercentile();
   }
 
   /**
@@ -367,16 +354,24 @@ public class DataServiceManager {
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
-            null, feederConfig, new TimeLineAuditDBHelper(feederConfig));
+            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig,
+            new TimeLineAuditDBHelper(feederConfig));
     try {
+      LOG.debug("Executing time line query");
       dbQuery.execute();
+      LOG.info("Audit Time line query: " + dbQuery.toString());
+      LOG.debug("Executed time line query");
     } catch (Exception e) {
-      LOG.error("Exception while executing query: ", e);
+      LOG.error("Exception while executing time line query: ", e);
+      return null;
     }
-    LOG.info("TimeLine query: " + dbQuery.toString());
-    return ServerDataHelper.setGraphDataResponseTS(ServerDataHelper
+    try {
+      dbQuery.displayResults();
+      LOG.debug("TimeSeries JSON:" + ServerDataHelper.convertToJson(dbQuery));
+    } catch (Exception e) {
+      LOG.error("Exception while displaying results: ", e);
+    }
+    return ServerDataHelper.setTimeLineDataResponse(ServerDataHelper
         .convertToJson(dbQuery));
   }
-  
-  
 }

@@ -11,7 +11,6 @@ import com.inmobi.conduit.audit.LatencyColumns;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
 import com.inmobi.messaging.ClientConfig;
-
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -90,9 +89,7 @@ public class ServerDataHelper {
     return endTime;
   }
 
-  public String setGraphDataResponse(Map<NodeKey, Node> nodeMap,
-                                     Map<Tuple, Map<Float, Integer>> tierLatencyMap,
-                                     VisualizationProperties properties) {
+  public String setTopologyDataResponse(Map<NodeKey, Node> nodeMap) {
     JSONObject newObject = new JSONObject();
     JSONArray nodeArray = new JSONArray();
     try {
@@ -178,18 +175,14 @@ public class ServerDataHelper {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    RequestResponse.TierLatencyResponse tierLatency =
-        setTierLatencyResponseObject(tierLatencyMap, properties);
     return ServerJsonStreamFactory.getInstance().serializeMessage(
-        RequestResponse.Response.newBuilder().setGraphDataResponse(
-            RequestResponse.GraphDataResponse.newBuilder()
-                .setJsonString(newObject.toString())
-                .setTierLatencyResponse(tierLatency)).build());
+        RequestResponse.Response.newBuilder().setTopologyDataResponse(
+            RequestResponse.TopologyDataResponse.newBuilder()
+                .setJsonString(newObject.toString())).build());
   }
 
-  private RequestResponse.TierLatencyResponse setTierLatencyResponseObject(
-      Map<Tuple, Map<Float, Integer>> tierLatencyMap, VisualizationProperties
-      properties) {
+  public String setTierLatencyResponseObject(Map<Tuple, Map<Float,
+      Integer>> tierLatencyMap,VisualizationProperties properties) {
     Float percentileForSla = Float.valueOf(properties.get(ServerConstants
         .PERCENTILE_FOR_SLA));
     List<RequestResponse.TierLatencyObj> tierLatencyObjList = new ArrayList
@@ -202,8 +195,10 @@ public class ServerDataHelper {
           .newBuilder().setTier(tier).setLatency(latency).build();
       tierLatencyObjList.add(newObj);
     }
-    return RequestResponse.TierLatencyResponse.newBuilder().addAllTierLatencyObjList(
-        tierLatencyObjList).build();
+    return ServerJsonStreamFactory.getInstance().serializeMessage(
+        RequestResponse.Response.newBuilder().setTierLatencyResponse(
+            RequestResponse.TierLatencyResponse.newBuilder()
+                .addAllTierLatencyObjList(tierLatencyObjList)).build());
   }
 
   public String setLoadMainPanelResponse(List<String> streamList,
@@ -244,17 +239,14 @@ public class ServerDataHelper {
         RequestResponse.Response.newBuilder()
             .setLoadMainPanelResponse(loadMainPanelResponse).build());
   }
-  
-  
-  public static String setGraphDataResponseTS(String jsonRestult) {
-   
-   
+
+  public static String setTimeLineDataResponse(String jsonResult) {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response
             .newBuilder()
             .setTimeLineGraphResponse(
                 RequestResponse.TimeLineGraphResponse.newBuilder()
-                    .setJsonString(jsonRestult)).build());
+                    .setJsonString(jsonResult)).build());
   }
   
   private static final String TIER = "tier";
@@ -281,6 +273,9 @@ public class ServerDataHelper {
       AuditDbQuery query) {
     Map<String, Map<String, Map<String, Object>>> map =
         new HashMap<String, Map<String, Map<String, Object>>>();
+    Map<Tuple, Map<Float, Integer>> percentileMap = query.getPercentile();
+    LOG.info("XXX percentileMap :"+percentileMap);
+
     Set<Tuple> ungroupedSetofTuples = unGroupedByTopic(query.getTupleSet());
     Map<Tuple, Map<Float, Integer>> aggregatedPercentileMap =
         AuditDbQuery.populatePercentileMap(ungroupedSetofTuples,
@@ -295,7 +290,7 @@ public class ServerDataHelper {
       Map<String, Object> eachTSMap =
           eachTierMap.get("" + eachTuple.getTimestamp().getTime());
       if (eachTSMap == null) {
-        eachTSMap = new TreeMap<String, Object>();
+        eachTSMap = new HashMap<String, Object>();
         eachTierMap.put("" + eachTuple.getTimestamp().getTime(), eachTSMap);
         eachTSMap.put(AGGRECEIVED, eachTuple.getReceived());
         eachTSMap.put(AGGSENT, eachTuple.getSent());
@@ -332,13 +327,14 @@ public class ServerDataHelper {
       clusterStat.put(SENT, eachTuple.getSent());
       clusterStat.put(LATENCYLIST, convertTLatencyListOfMaps(query
           .getPercentile().get(eachTuple).entrySet()));
+      clusterStat.put(LATENCYLIST, convertTLatencyListOfMaps(percentileMap.get
+          (eachTuple).entrySet()));
       clusterList.add(clusterStat);
 
     }
     return map;
 
   }
-  
   
   private static List<Map<String, String>> convertTLatencyListOfMaps(
       Set<Entry<Float, Integer>> latencyMap) {
@@ -353,8 +349,6 @@ public class ServerDataHelper {
     return returnList;
   }
 
-  
-  
 
   @SuppressWarnings("unchecked")
   private static Map<String, Object> covertToUIFriendlyObject(AuditDbQuery query) {

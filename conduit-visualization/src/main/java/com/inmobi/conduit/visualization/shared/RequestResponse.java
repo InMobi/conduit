@@ -546,13 +546,13 @@ public final class RequestResponse {
       return defaultInstance;
     }
     
-    // optional .GraphDataResponse graphDataResponse = 1;
-    public static final int GRAPHDATARESPONSE_FIELD_NUMBER = 1;
-    private boolean hasGraphDataResponse;
+    // optional .TopologyDataResponse topologyDataResponse = 1;
+    public static final int TOPOLOGYDATARESPONSE_FIELD_NUMBER = 1;
+    private boolean hasTopologyDataResponse;
     @com.google.protobuf.gwt.shared.FieldNumber(1)
-    private com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse graphDataResponse_;
-    public boolean hasGraphDataResponse() { return hasGraphDataResponse; }
-    public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse getGraphDataResponse() { return graphDataResponse_; }
+    private com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse topologyDataResponse_;
+    public boolean hasTopologyDataResponse() { return hasTopologyDataResponse; }
+    public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse getTopologyDataResponse() { return topologyDataResponse_; }
     
     // optional .LoadMainPanelResponse loadMainPanelResponse = 2;
     public static final int LOADMAINPANELRESPONSE_FIELD_NUMBER = 2;
@@ -570,10 +570,19 @@ public final class RequestResponse {
     public boolean hasTimeLineGraphResponse() { return hasTimeLineGraphResponse; }
     public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() { return timeLineGraphResponse_; }
     
+    // optional .TierLatencyResponse tierLatencyResponse = 4;
+    public static final int TIERLATENCYRESPONSE_FIELD_NUMBER = 4;
+    private boolean hasTierLatencyResponse;
+    @com.google.protobuf.gwt.shared.FieldNumber(4)
+    private com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse tierLatencyResponse_;
+    public boolean hasTierLatencyResponse() { return hasTierLatencyResponse; }
+    public com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() { return tierLatencyResponse_; }
+    
     private void initFields() {
-      graphDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
+      topologyDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance();
       loadMainPanelResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance();
       timeLineGraphResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+      tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -583,8 +592,8 @@ public final class RequestResponse {
     public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
       throws java.io.IOException {
       
-      if (hasGraphDataResponse()) {
-        output.writeMessage(1, "graphDataResponse", getGraphDataResponse());
+      if (hasTopologyDataResponse()) {
+        output.writeMessage(1, "topologyDataResponse", getTopologyDataResponse());
       }
       
       if (hasLoadMainPanelResponse()) {
@@ -593,6 +602,10 @@ public final class RequestResponse {
       
       if (hasTimeLineGraphResponse()) {
         output.writeMessage(3, "timeLineGraphResponse", getTimeLineGraphResponse());
+      }
+      
+      if (hasTierLatencyResponse()) {
+        output.writeMessage(4, "tierLatencyResponse", getTierLatencyResponse());
       }
     }
     
@@ -679,8 +692,8 @@ public final class RequestResponse {
       public Builder mergeFrom(com.inmobi.conduit.visualization.shared.RequestResponse.Response other) {
         if (other == com.inmobi.conduit.visualization.shared.RequestResponse.Response.getDefaultInstance()) return this;
         
-        if (other.hasGraphDataResponse()) {
-          mergeGraphDataResponse(other.getGraphDataResponse());
+        if (other.hasTopologyDataResponse()) {
+          mergeTopologyDataResponse(other.getTopologyDataResponse());
         }
         
         if (other.hasLoadMainPanelResponse()) {
@@ -690,6 +703,10 @@ public final class RequestResponse {
         if (other.hasTimeLineGraphResponse()) {
           mergeTimeLineGraphResponse(other.getTimeLineGraphResponse());
         }
+        
+        if (other.hasTierLatencyResponse()) {
+          mergeTierLatencyResponse(other.getTierLatencyResponse());
+        }
       
         return this;
       }
@@ -697,14 +714,14 @@ public final class RequestResponse {
       public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
         throws java.io.IOException {
         
-        com.google.protobuf.gwt.shared.JsonStream graphDataResponseJson = input.readStream(1);
-        if (graphDataResponseJson != null) {
-          com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.Builder graphDataResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.newBuilder();
-          if (hasGraphDataResponse()) {
-            graphDataResponseBuilder.mergeFrom(getGraphDataResponse());
+        com.google.protobuf.gwt.shared.JsonStream topologyDataResponseJson = input.readStream(1);
+        if (topologyDataResponseJson != null) {
+          com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.Builder topologyDataResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.newBuilder();
+          if (hasTopologyDataResponse()) {
+            topologyDataResponseBuilder.mergeFrom(getTopologyDataResponse());
           }
-          graphDataResponseBuilder.readFrom(graphDataResponseJson);
-          setGraphDataResponse(graphDataResponseBuilder.buildParsed());
+          topologyDataResponseBuilder.readFrom(topologyDataResponseJson);
+          setTopologyDataResponse(topologyDataResponseBuilder.buildParsed());
         }
         
         com.google.protobuf.gwt.shared.JsonStream loadMainPanelResponseJson = input.readStream(2);
@@ -727,43 +744,53 @@ public final class RequestResponse {
           setTimeLineGraphResponse(timeLineGraphResponseBuilder.buildParsed());
         }
         
+        com.google.protobuf.gwt.shared.JsonStream tierLatencyResponseJson = input.readStream(4);
+        if (tierLatencyResponseJson != null) {
+          com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.Builder tierLatencyResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder();
+          if (hasTierLatencyResponse()) {
+            tierLatencyResponseBuilder.mergeFrom(getTierLatencyResponse());
+          }
+          tierLatencyResponseBuilder.readFrom(tierLatencyResponseJson);
+          setTierLatencyResponse(tierLatencyResponseBuilder.buildParsed());
+        }
+        
         return this;
       }
       
-      // optional .GraphDataResponse graphDataResponse = 1;
-      public boolean hasGraphDataResponse() {
-        return result.hasGraphDataResponse();
+      // optional .TopologyDataResponse topologyDataResponse = 1;
+      public boolean hasTopologyDataResponse() {
+        return result.hasTopologyDataResponse();
       }
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse getGraphDataResponse() {
-        return result.getGraphDataResponse();
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse getTopologyDataResponse() {
+        return result.getTopologyDataResponse();
       }
-      public Builder setGraphDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse value) {
+      public Builder setTopologyDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse value) {
         if (value == null) {
           throw new java.lang.NullPointerException();
         }
-        result.hasGraphDataResponse = true;
-        result.graphDataResponse_ = value;
+        result.hasTopologyDataResponse = true;
+        result.topologyDataResponse_ = value;
         return this;
       }
-      public Builder setGraphDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.Builder builderForValue) {
-        result.hasGraphDataResponse = true;
-        result.graphDataResponse_ = builderForValue.build();
+      public Builder setTopologyDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.Builder builderForValue) {
+        result.hasTopologyDataResponse = true;
+        result.topologyDataResponse_ = builderForValue.build();
         return this;
       }
-      public Builder mergeGraphDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse value) {
-        if (result.hasGraphDataResponse() &&
-            result.graphDataResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance()) {
-          result.graphDataResponse_ =
-            com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.newBuilder(result.graphDataResponse_).mergeFrom(value).buildPartial();
+      public Builder mergeTopologyDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse value) {
+        if (result.hasTopologyDataResponse() &&
+            result.topologyDataResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance()) {
+          result.topologyDataResponse_ =
+            com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.newBuilder(result.topologyDataResponse_).mergeFrom(value).buildPartial();
         } else {
-          result.graphDataResponse_ = value;
+          result.topologyDataResponse_ = value;
         }
-        result.hasGraphDataResponse = true;
+        result.hasTopologyDataResponse = true;
         return this;
       }
-      public Builder clearGraphDataResponse() {
-        result.hasGraphDataResponse = false;
-        result.graphDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
+      public Builder clearTopologyDataResponse() {
+        result.hasTopologyDataResponse = false;
+        result.topologyDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance();
         return this;
       }
       
@@ -838,6 +865,43 @@ public final class RequestResponse {
       public Builder clearTimeLineGraphResponse() {
         result.hasTimeLineGraphResponse = false;
         result.timeLineGraphResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+        return this;
+      }
+      
+      // optional .TierLatencyResponse tierLatencyResponse = 4;
+      public boolean hasTierLatencyResponse() {
+        return result.hasTierLatencyResponse();
+      }
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() {
+        return result.getTierLatencyResponse();
+      }
+      public Builder setTierLatencyResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse value) {
+        if (value == null) {
+          throw new java.lang.NullPointerException();
+        }
+        result.hasTierLatencyResponse = true;
+        result.tierLatencyResponse_ = value;
+        return this;
+      }
+      public Builder setTierLatencyResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.Builder builderForValue) {
+        result.hasTierLatencyResponse = true;
+        result.tierLatencyResponse_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeTierLatencyResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse value) {
+        if (result.hasTierLatencyResponse() &&
+            result.tierLatencyResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance()) {
+          result.tierLatencyResponse_ =
+            com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder(result.tierLatencyResponse_).mergeFrom(value).buildPartial();
+        } else {
+          result.tierLatencyResponse_ = value;
+        }
+        result.hasTierLatencyResponse = true;
+        return this;
+      }
+      public Builder clearTierLatencyResponse() {
+        result.hasTierLatencyResponse = false;
+        result.tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
         return this;
       }
       
@@ -1034,21 +1098,21 @@ public final class RequestResponse {
     // @@protoc_insertion_point(class_scope:TimeLineGraphResponse)
   }
   
-  public static final class GraphDataResponse extends
+  public static final class TopologyDataResponse extends
       com.google.protobuf.gwt.shared.GeneratedMessage {
-    // Use GraphDataResponse.newBuilder() to construct.
-    private GraphDataResponse() {
+    // Use TopologyDataResponse.newBuilder() to construct.
+    private TopologyDataResponse() {
       initFields();
     }
     
-    private GraphDataResponse(boolean noInit) {}
+    private TopologyDataResponse(boolean noInit) {}
     
-    private static final GraphDataResponse defaultInstance;
-    public static GraphDataResponse getDefaultInstance() {
+    private static final TopologyDataResponse defaultInstance;
+    public static TopologyDataResponse getDefaultInstance() {
       return defaultInstance;
     }
     
-    public GraphDataResponse getDefaultInstanceForType() {
+    public TopologyDataResponse getDefaultInstanceForType() {
       return defaultInstance;
     }
     
@@ -1060,16 +1124,7 @@ public final class RequestResponse {
     public boolean hasJsonString() { return hasJsonString; }
     public java.lang.String getJsonString() { return jsonString_; }
     
-    // optional .TierLatencyResponse tierLatencyResponse = 2;
-    public static final int TIERLATENCYRESPONSE_FIELD_NUMBER = 2;
-    private boolean hasTierLatencyResponse;
-    @com.google.protobuf.gwt.shared.FieldNumber(2)
-    private com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse tierLatencyResponse_;
-    public boolean hasTierLatencyResponse() { return hasTierLatencyResponse; }
-    public com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() { return tierLatencyResponse_; }
-    
     private void initFields() {
-      tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -1082,35 +1137,31 @@ public final class RequestResponse {
       if (hasJsonString()) {
         output.writeString(1, "jsonString", getJsonString());
       }
-      
-      if (hasTierLatencyResponse()) {
-        output.writeMessage(2, "tierLatencyResponse", getTierLatencyResponse());
-      }
     }
     
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse prototype) {
+    public static Builder newBuilder(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
     
     public static final class Builder extends
         com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
-          com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse, Builder> {
+          com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse, Builder> {
       
-      private com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse result;
+      private com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse result;
       
-      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.newBuilder()
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.newBuilder()
       private Builder() {}
       
       private static Builder create() {
         Builder builder = new Builder();
-        builder.result = new com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse();
+        builder.result = new com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse();
         return builder;
       }
       
-      protected com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse internalGetResult() {
+      protected com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse internalGetResult() {
         return result;
       }
       
@@ -1119,7 +1170,7 @@ public final class RequestResponse {
           throw new java.lang.IllegalStateException(
             "Cannot call clear() after build().");
         }
-        result = new com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse();
+        result = new com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse();
         return this;
       }
       
@@ -1127,22 +1178,22 @@ public final class RequestResponse {
         return create().mergeFrom(result);
       }
       
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse getDefaultInstanceForType() {
-        return com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse getDefaultInstanceForType() {
+        return com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance();
       }
       
       public boolean isInitialized() {
         return result.isInitialized();
       }
       
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse build() {
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse build() {
         if (result != null && !isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return buildPartial();
       }
       
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse buildParsed()
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse buildParsed()
           throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
         if (!isInitialized()) {
           throw newUninitializedMessageException(
@@ -1151,32 +1202,28 @@ public final class RequestResponse {
         return buildPartial();
       }
       
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse buildPartial() {
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse buildPartial() {
         if (result == null) {
           throw new java.lang.IllegalStateException(
             "build() has already been called on this Builder.");
         }
-        com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse returnMe = result;
+        com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse returnMe = result;
         result = null;
         return returnMe;
       }
       
       public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
-        if (other instanceof com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse) {
-          return mergeFrom((com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse)other);
+        if (other instanceof com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse) {
+          return mergeFrom((com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse)other);
         }
         return this;
       }
       
-      public Builder mergeFrom(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse other) {
-        if (other == com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance()) return this;
+      public Builder mergeFrom(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse other) {
+        if (other == com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance()) return this;
         
         if (other.hasJsonString()) {
           setJsonString(other.getJsonString());
-        }
-        
-        if (other.hasTierLatencyResponse()) {
-          mergeTierLatencyResponse(other.getTierLatencyResponse());
         }
       
         return this;
@@ -1188,16 +1235,6 @@ public final class RequestResponse {
         java.lang.String jsonString = input.readString(1);
         if (jsonString != null) {
           setJsonString(jsonString);
-        }
-        
-        com.google.protobuf.gwt.shared.JsonStream tierLatencyResponseJson = input.readStream(2);
-        if (tierLatencyResponseJson != null) {
-          com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.Builder tierLatencyResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder();
-          if (hasTierLatencyResponse()) {
-            tierLatencyResponseBuilder.mergeFrom(getTierLatencyResponse());
-          }
-          tierLatencyResponseBuilder.readFrom(tierLatencyResponseJson);
-          setTierLatencyResponse(tierLatencyResponseBuilder.buildParsed());
         }
         
         return this;
@@ -1230,53 +1267,16 @@ public final class RequestResponse {
         return this;
       }
       
-      // optional .TierLatencyResponse tierLatencyResponse = 2;
-      public boolean hasTierLatencyResponse() {
-        return result.hasTierLatencyResponse();
-      }
-      public com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() {
-        return result.getTierLatencyResponse();
-      }
-      public Builder setTierLatencyResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse value) {
-        if (value == null) {
-          throw new java.lang.NullPointerException();
-        }
-        result.hasTierLatencyResponse = true;
-        result.tierLatencyResponse_ = value;
-        return this;
-      }
-      public Builder setTierLatencyResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.Builder builderForValue) {
-        result.hasTierLatencyResponse = true;
-        result.tierLatencyResponse_ = builderForValue.build();
-        return this;
-      }
-      public Builder mergeTierLatencyResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse value) {
-        if (result.hasTierLatencyResponse() &&
-            result.tierLatencyResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance()) {
-          result.tierLatencyResponse_ =
-            com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder(result.tierLatencyResponse_).mergeFrom(value).buildPartial();
-        } else {
-          result.tierLatencyResponse_ = value;
-        }
-        result.hasTierLatencyResponse = true;
-        return this;
-      }
-      public Builder clearTierLatencyResponse() {
-        result.hasTierLatencyResponse = false;
-        result.tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
-        return this;
-      }
-      
-      // @@protoc_insertion_point(builder_scope:GraphDataResponse)
+      // @@protoc_insertion_point(builder_scope:TopologyDataResponse)
     }
     
     static {
-      defaultInstance = new GraphDataResponse(true);
+      defaultInstance = new TopologyDataResponse(true);
       com.inmobi.conduit.visualization.shared.RequestResponse.internalForceInit();
       defaultInstance.initFields();
     }
     
-    // @@protoc_insertion_point(class_scope:GraphDataResponse)
+    // @@protoc_insertion_point(class_scope:TopologyDataResponse)
   }
   
   public static final class TierLatencyResponse extends
