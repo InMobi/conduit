@@ -29,6 +29,10 @@ public class AuditDBHelper {
 
   final private String tableName;
 
+  public String getTableName() {
+    return tableName;
+  }
+
   public AuditDBHelper(ClientConfig config) {
     this.config = config;
     tableName = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
@@ -330,7 +334,7 @@ public class AuditDBHelper {
   
   
 
-  private String getSelectStmtForRetrieve(Filter filter, GroupBy groupBy) {
+  public String getSelectStmtForRetrieve(Filter filter, GroupBy groupBy) {
     String sumString = "", whereString = "", groupByString = "";
     for (LatencyColumns latencyColumn : LatencyColumns.values()) {
       sumString += ", Sum(" + latencyColumn.toString() + ") as "
