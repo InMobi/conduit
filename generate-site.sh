@@ -5,7 +5,7 @@ die() {
     exit 1
 }
 
-REPO=git@github.com:InMobi/conduit-site.git
+REPO=git@github.com:InMobi/conduit.git
 TMP=/tmp/conduit-site-stage
 STAGE=`pwd`/target/staging
 VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep -Ev '(^\[|Download\w+:)' || die "unable to get version")
