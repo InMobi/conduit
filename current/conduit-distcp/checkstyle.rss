@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<rss version="0.91">
+  <channel>
+    <title>Conduit Distcp - Checkstyle report</title>
+    <link>https://github.com/InMobi/conduit/conduit-distcp</link>
+    <description>Conduit Distcp - Checkstyle report</description>
+    <language>en-us</language>
+    <copyright>&#169;2014 InMobi</copyright>
+    <item>
+      <title>File: 26,
+             Errors: 1642,
+             Warnings: 0,
+             Infos: 0
+      </title>
+            <link>https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html</link>
+      <description>
+        <p>Click <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html">here</a> for the full Checkstyle report.</p>
+
+        <table summary="Files" boder="1">
+          <thead>
+            <tr>
+              <th>Files</th>
+              <th style="width:30px;"><abbr title="Info">I</abbr></th>
+              <th style="width:30px;"><abbr title="Warning">W</abbr></th>
+              <th style="width:30px;"><abbr title="Error">E</abbr></th>
+            </tr>
+          </thead>
+          <tbody>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.lib.DynamicInputChunk.java">org/apache/hadoop/tools/mapred/lib/DynamicInputChunk.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  28
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.RetriableDirectoryCreateCommand.java">org/apache/hadoop/tools/mapred/RetriableDirectoryCreateCommand.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  5
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.CopyListing.java">org/apache/hadoop/tools/CopyListing.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  69
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.util.RetriableCommand.java">org/apache/hadoop/tools/util/RetriableCommand.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  21
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.CopyCommitter.java">org/apache/hadoop/tools/mapred/CopyCommitter.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  76
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.util.RetryPolicy.java">org/apache/hadoop/tools/util/RetryPolicy.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  1
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.lib.DynamicInputChunkSet.java">org/apache/hadoop/tools/mapred/lib/DynamicInputChunkSet.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  27
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.util.ThrottledInputStream.java">org/apache/hadoop/tools/util/ThrottledInputStream.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  37
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.UniformSizeInputFormat.java">org/apache/hadoop/tools/mapred/UniformSizeInputFormat.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  41
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.FileBasedCopyListing.java">org/apache/hadoop/tools/FileBasedCopyListing.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  22
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.SimpleFileBasedCopyListing.java">org/apache/hadoop/tools/SimpleFileBasedCopyListing.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  18
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.lib.DynamicInputFormat.java">org/apache/hadoop/tools/mapred/lib/DynamicInputFormat.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  110
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.SimpleCopyListing.java">org/apache/hadoop/tools/SimpleCopyListing.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  76
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.OptionsParser.java">org/apache/hadoop/tools/OptionsParser.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  47
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.DistCp.java">org/apache/hadoop/tools/DistCp.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  91
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.util.DistCpUtils.java">org/apache/hadoop/tools/util/DistCpUtils.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  80
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.lib.DynamicRecordReader.java">org/apache/hadoop/tools/mapred/lib/DynamicRecordReader.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  77
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.DistCpConstants.java">org/apache/hadoop/tools/DistCpConstants.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  49
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.util.RetryPolicies.java">org/apache/hadoop/tools/util/RetryPolicies.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  144
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.RetriableFileCopyCommand.java">org/apache/hadoop/tools/mapred/RetriableFileCopyCommand.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  119
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.DistCpOptions.java">org/apache/hadoop/tools/DistCpOptions.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  196
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.CopyMapper.java">org/apache/hadoop/tools/mapred/CopyMapper.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  121
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.util.HadoopCompat.java">org/apache/hadoop/tools/util/HadoopCompat.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  98
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.GlobbedCopyListing.java">org/apache/hadoop/tools/GlobbedCopyListing.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  25
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.mapred.CopyOutputFormat.java">org/apache/hadoop/tools/mapred/CopyOutputFormat.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  23
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/InMobi/conduit/conduit-distcp/checkstyle.html#org.apache.hadoop.tools.DistCpOptionSwitch.java">org/apache/hadoop/tools/DistCpOptionSwitch.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  41
+                </td>
+              </tr>
+                      </tbody>
+        </table>
+        
+      </description>
+    </item>
+  </channel>
+</rss>
+

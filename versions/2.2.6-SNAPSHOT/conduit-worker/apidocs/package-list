@@ -1,0 +1,7 @@
+com.inmobi.conduit
+com.inmobi.conduit.distcp
+com.inmobi.conduit.local
+com.inmobi.conduit.purge
+com.inmobi.conduit.utils
+com.inmobi.conduit.validator
+com.inmobi.conduit.zookeeper
