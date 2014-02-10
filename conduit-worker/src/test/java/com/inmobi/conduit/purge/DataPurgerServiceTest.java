@@ -17,6 +17,7 @@ import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.local.LocalStreamServiceTest;
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.local.TestLocalStreamService;
 
@@ -53,6 +54,7 @@ public class DataPurgerServiceTest {
   public void beforeTest() throws Exception{
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
+    prop.setProperty("com.inmobi.conduit.metrics.slidingwindowtime", "100000000");
     ConduitMetrics.init(prop);
     ConduitMetrics.startAll();
   }
@@ -201,10 +203,10 @@ public class DataPurgerServiceTest {
       Assert.assertEquals(Retention.intValue(), 48);
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService",
-        "purgePaths.count", DataPurgerService.class.getName()).getCount(), 0);
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService",
-        "deleteFailures.count", DataPurgerService.class.getName()).getCount(), 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("DataPurgerService",
+        "purgePaths.count", DataPurgerService.class.getName()).getValue().longValue(), 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("DataPurgerService",
+        "deleteFailures.count", DataPurgerService.class.getName()).getValue().longValue(), 0);
   }
 
   final static int NUM_OF_FILES = 35;
@@ -347,10 +349,10 @@ public class DataPurgerServiceTest {
     testPurgerService("test-dps-conduit_X_4.xml", -3, false, true);
     testPurgerService("test-dps-conduit_X_4.xml", -1, true, true);
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService",
-        "purgePaths.count",DataPurgerService.class.getName()).getCount(), 6);
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService",
-        "deleteFailures.count", DataPurgerService.class.getName()).getCount(), 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("DataPurgerService",
+        "purgePaths.count",DataPurgerService.class.getName()).getValue().longValue(), 6);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("DataPurgerService",
+        "deleteFailures.count", DataPurgerService.class.getName()).getValue().longValue(), 0);
   }
 
   public void testDataPurger() throws Exception {
@@ -402,10 +404,10 @@ public class DataPurgerServiceTest {
       fs.close();
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService",
-        "purgePaths.count",DataPurgerService.class.getName()).getCount() , 9);
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService",
-        "deleteFailures.count", DataPurgerService.class.getName()).getCount(), 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("DataPurgerService",
+        "purgePaths.count",DataPurgerService.class.getName()).getValue().longValue() , 9);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("DataPurgerService",
+        "deleteFailures.count", DataPurgerService.class.getName()).getValue().longValue(), 0);
   }
 
   private Path[] getMergeCommitPath(FileSystem fs, Cluster cluster,
@@ -469,8 +471,8 @@ public class DataPurgerServiceTest {
       fs.close();
     }
 
-    Assert.assertEquals(ConduitMetrics.getCounter("DataPurgerService",
-        "purgePaths.count", DataPurgerService.class.getName()).getCount(), 6);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("DataPurgerService",
+        "purgePaths.count", DataPurgerService.class.getName()).getValue().longValue(), 6);
   }
 
   private DataPurgerService buildPurgerService() {

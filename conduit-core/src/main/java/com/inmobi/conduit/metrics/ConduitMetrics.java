@@ -15,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.ganglia.GangliaReporter;
@@ -41,6 +42,7 @@ public class ConduitMetrics {
   private final static String MERGED_SERVICE = "MergedStreamService";
   private final static String MIRROR_SERVICE = "MirrorStreamService";
   private final static String PURGER_SERVICE = "DataPurgerService";
+  private final static String SLIDING_WINDOW_TIME ="com.inmobi.conduit.metrics.slidingwindowtime";
 
 
   private final static Map<String, ScheduledReporter> reporterMap =
@@ -51,12 +53,12 @@ public class ConduitMetrics {
    *Each level is maintained by a hashMap, The highest level is the serviceLevel
    *which is created on init(), rest is created lazily
    */
-  private final static Map<String, Map<String, Map<String, Counter>>> threeLevelCache =
-      new HashMap<String, Map<String, Map<String, Counter>>>();
+  private final static Map<String, Map<String, Map<String, Metric>>> threeLevelCache =
+      new HashMap<String, Map<String, Map<String, Metric>>>();
 
   private static boolean isEnabled =false;
   private static int timeBetweenPolls = 10;
-
+  private static int slidingwindowtime= 0;
   /**
    * Will create reporters based on config
    * 
@@ -67,15 +69,16 @@ public class ConduitMetrics {
 
     if(config.getProperty(IS_ENABLED_PROPERTY,"false").equalsIgnoreCase("true")){
       isEnabled=true;
-      threeLevelCache.put(LOCAL_SERVICE, new HashMap<String , Map<String, Counter>>());
-      threeLevelCache.put(MIRROR_SERVICE, new HashMap<String , Map<String, Counter>>());
-      threeLevelCache.put(MERGED_SERVICE, new HashMap<String , Map<String, Counter>>());
-      threeLevelCache.put(PURGER_SERVICE, new HashMap<String , Map<String, Counter>>());
+      threeLevelCache.put(LOCAL_SERVICE, new HashMap<String , Map<String, Metric>>());
+      threeLevelCache.put(MIRROR_SERVICE, new HashMap<String , Map<String, Metric>>());
+      threeLevelCache.put(MERGED_SERVICE, new HashMap<String , Map<String, Metric>>());
+      threeLevelCache.put(PURGER_SERVICE, new HashMap<String , Map<String, Metric>>());
       registry= new MetricRegistry();
     }else{
       return;
     }
     timeBetweenPolls = Integer.parseInt(config.getProperty(REPORTING_PERIOD , "10"));
+    slidingwindowtime = Integer.parseInt(config.getProperty(SLIDING_WINDOW_TIME, "1"));
 
     if (config.getProperty(GANGLIA, "false").equalsIgnoreCase("true")) {
       final GMetric ganglia = new GMetric(config.getProperty(GANGLIA_SERVERNAME),
@@ -205,56 +208,118 @@ public class ConduitMetrics {
       LOG.warn("metrics not enabled");
       return null;
     }
-    if (registry.getCounters().get(serviceName + "." + counterType + "."
-        + context) != null) {
-      LOG.warn("Counter with name " + serviceName + "." + counterType + "."
-          + context + " already exsits");
+    if (registry.getCounters().get(createName(serviceName , counterType , context)) != null) {
+      LOG.warn("Counter with name " + createName(serviceName , counterType ,
+           context )+ " already exsits");
       return null;
     }
-    Map<String, Map<String, Counter>> serviceLevelCache = threeLevelCache.get(serviceName);
-    Map<String, Counter> counterTypeLevel = serviceLevelCache.get(counterType);
-    if(counterTypeLevel == null){
-      counterTypeLevel = new HashMap<String , Counter>();
-      serviceLevelCache.put(counterType, counterTypeLevel);
-    }
-    Counter counterInst = registry.counter(serviceName + "." + counterType + "."
-        + context);
-    counterTypeLevel.put(context, counterInst);
+    Counter counterInst = registry.counter(createName(serviceName , counterType ,
+         context));
+    addToCache(serviceName, counterType, context, counterInst);
     return counterInst;
+  }
+  
+  private static String createName(String serviceName,
+      String counterType, String context){
+	  return serviceName + "." + counterType + "."
+		        + context;
   }
 
   /**
    * Get a counter from the cache
    */
-  public static Counter getCounter(String serviceName, String counterType,
-      String context) {
-    if(!isEnabled){
-      LOG.warn("metrics not enabled");
-      return null;
-    }
-    Map<String, Map<String, Counter>> serviceLevel = threeLevelCache.get(serviceName);
+	
+  @SuppressWarnings("unchecked")
+  public static <T extends Metric> T getMetric(String serviceName,
+			String counterType, String context) {
+		if (!isEnabled) {
+			LOG.warn("metrics not enabled");
+			return null;
+		}
+		Metric c = getFromCache(serviceName, counterType, context);
+		try {
+			return (T) c;
+		} catch (Exception e) {
+			LOG.warn("Not able to convert to type " + serviceName + "."
+					+ counterType + "." + context + " ->" + e.getMessage());
+			return null;
+		}
 
-    Map<String, Counter> counterTypeLevel = serviceLevel.get(counterType);
-    if(counterTypeLevel == null){
-      LOG.info("counter does not exist:" + serviceName + "." +counterType + "."
-          + context);
-      return null;
-    }
-    Counter c = counterTypeLevel.get(context);
-    if(c == null){
-      LOG.info("counter does not exist:" + serviceName + "." +counterType + "."
-          + context);
-      return null;
-    }
-    return c;
-  }
+	}
+  
+  
+	private static void addToCache(String serviceName, String counterType,
+			String context, Metric any) {
+
+		Map<String, Map<String, Metric>> serviceLevelCache = threeLevelCache
+				.get(serviceName);
+		Map<String, Metric> counterTypeLevel = serviceLevelCache
+				.get(counterType);
+		if (counterTypeLevel == null) {
+			counterTypeLevel = new HashMap<String, Metric>();
+			serviceLevelCache.put(counterType, counterTypeLevel);
+		}
+		
+		counterTypeLevel.put(context, any);
+		
+
+	}
+	
+	
+	private static Metric getFromCache(String serviceName, String counterType,
+			String context) {
+
+		Map<String, Metric> counterTypeLevel = threeLevelCache.get(serviceName)
+				.get(counterType);
+		if (counterTypeLevel == null) {
+			LOG.info("metric does not exist:" + serviceName + "." + counterType
+					+ "." + context);
+			return null;
+		}
+		Metric c = counterTypeLevel.get(context);
+		if (c == null) {
+			LOG.info("metric does not exist:" + serviceName + "." + counterType
+					+ "." + context);
+			return null;
+		}
+		return c;
+	}
 
   public static void incCounter(String serviceName, String counterType,
       String context ,long value){
-    Counter c = getCounter(serviceName, counterType , context);
+    Counter c = getMetric(serviceName, counterType , context);
     if(c!=null){
       c.inc(value);
     }
   }
+  
+  public static SlidingTimeWindowGauge registerSlidingWindowGauge(String serviceName,
+	      String counterType, String context) {
+	final String metricsName =createName(serviceName, counterType, context);  
+    if(!isEnabled){
+      LOG.warn("metrics not enabled");
+      return null;
+    }
+    if (registry.getGauges().get(metricsName) != null) {
+      LOG.warn("SlidingTimeWindowGuage Gauge with name " + metricsName + " already exsits");
+      return null;
+    }
+
+    final SlidingTimeWindowGauge codahalegaugeInst = new SlidingTimeWindowGauge(slidingwindowtime, TimeUnit.SECONDS);
+    registry.register(metricsName, codahalegaugeInst);
+    addToCache(serviceName, counterType, context, codahalegaugeInst);
+    return codahalegaugeInst;
+
+  }
+  
+  
+	public static void updateSWGuage(String serviceName, String counterType,
+			String context, long value) {
+	  LOG.info("sliding window  value " + serviceName + "." + counterType + "." + context +"= " + value);
+		SlidingTimeWindowGauge c = getMetric(serviceName, counterType, context);
+		if (c != null) {
+			c.setValue(value);
+		}
+	  }
 
 }

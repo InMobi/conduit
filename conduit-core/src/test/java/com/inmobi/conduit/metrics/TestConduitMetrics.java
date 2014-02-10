@@ -81,7 +81,7 @@ public class TestConduitMetrics {
     final String context = "stream1";
     Counter abCounter = ConduitMetrics.registerCounter(serviceName, counterName, context);
     Assert.assertNotNull(abCounter);
-    abCounter = ConduitMetrics.getCounter(serviceName, counterName, context);
+    abCounter = ConduitMetrics.getMetric(serviceName, counterName, context);
     Assert.assertNotNull(abCounter);
     abCounter.inc();
     Assert.assertEquals(abCounter.getCount(), 1);
@@ -93,6 +93,38 @@ public class TestConduitMetrics {
     // trying to register again
     abCounter = ConduitMetrics.registerCounter(serviceName, counterName, context);
     Assert.assertNull(abCounter);
+
+  }
+  
+  
+  @Test
+  public void testSWGauge() {
+    final String guageName = "test.sw.gauge";
+    final String serviceName = "LocalStreamService";
+    final String context = "stream1";
+    SlidingTimeWindowGauge abGauge =
+        ConduitMetrics.registerSlidingWindowGauge(serviceName, guageName,
+            context);
+    Assert.assertNotNull(abGauge);
+    abGauge = ConduitMetrics.getMetric(serviceName, guageName, context);
+    Assert.assertNotNull(abGauge);
+    ConduitMetrics.updateSWGuage(serviceName, guageName, context, 1);
+    Assert.assertEquals(abGauge.getValue().longValue(), 1);
+    ConduitMetrics.updateSWGuage(serviceName, guageName, context, 4);
+    Assert.assertEquals(abGauge.getValue().longValue(), 5);
+    try {
+      Thread.sleep(1000);
+    } catch (Exception ex) {
+      Assert.fail(ex.getMessage());
+    }
+    Assert.assertEquals(abGauge.getValue().longValue(), 0);
+    ConduitMetrics.updateSWGuage(serviceName, guageName, context, 9);
+    Assert.assertEquals(abGauge.getValue().longValue(), 9);
+    // trying to register again
+    abGauge =
+        ConduitMetrics.registerSlidingWindowGauge(serviceName, guageName,
+            context);
+    Assert.assertNull(abGauge);
 
   }
 
