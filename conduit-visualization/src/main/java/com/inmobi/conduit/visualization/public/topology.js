@@ -29,11 +29,6 @@ function TopicStats(topic, messages, hostname) {
   this.hostname = hostname;
 }
 
-function PercentileLatency(percentile, latency) {
-  this.percentile = percentile;
-  this.latency = latency;
-}
-
 function TopicLatency(topic) {
   this.topic = topic;
   this.latencyList = [];
@@ -1416,11 +1411,6 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
     drawnode.on("click", nodeclick);
   } else
     drawnode.on("click", latencynodeclick);
-}
-
-function Point(x, y) {
-  this.x = x;
-  this.y = y;
 }
 
 function setCoordinatesOfNode(n) {

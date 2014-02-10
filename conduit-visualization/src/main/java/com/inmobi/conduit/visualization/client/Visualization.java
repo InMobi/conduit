@@ -553,7 +553,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private native void saveHistory(String stTime, String edTime,
                             String selectedCluster, String selectedStream,
                             int selectedTab, int viewId)/*-{
-    $wnd.saveHistory(true, selectedStream, selectedCluster, selectedTab,
+    $wnd.saveHistory(true, selectedStream, selectedCluster,'all', selectedTab,
     viewId, stTime, edTime);
   }-*/;
 
