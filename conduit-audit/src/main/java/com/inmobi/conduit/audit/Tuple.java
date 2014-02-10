@@ -147,7 +147,11 @@ public class Tuple {
     values.put(Column.TIER, tier);
     values.put(Column.TOPIC, topic);
     values.put(Column.CLUSTER, cluster);
-    values.put(Column.TIMEINTERVAL, String.valueOf(timestamp.getTime()));
+    if (timestamp != null) {
+      values.put(Column.TIMEINTERVAL, String.valueOf(timestamp.getTime()));
+    } else {
+      values.put(Column.TIMEINTERVAL, null);
+    }
     return values;
   }
 

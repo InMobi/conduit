@@ -460,6 +460,7 @@ function showPointDetails(d, xcoord, ycoord) {
   var table = document.createElement('table');
   var currentRow = 0;
   var num;
+  var r, c;
 
   r = table.insertRow(currentRow++);
   c = r.insertCell(0);

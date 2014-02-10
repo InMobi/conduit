@@ -268,7 +268,6 @@ public class ServerDataHelper {
   private static final String RECEIVED = "received";
   private static final String SENT ="sent";
   private static final String TOPICLATENCY = "topicLatency";
-  private static final String LATENCYLIST = "latencyList";
 
   @SuppressWarnings("unchecked")
   private static Map<String, Map<String, Map<String, Object>>> convertToMap

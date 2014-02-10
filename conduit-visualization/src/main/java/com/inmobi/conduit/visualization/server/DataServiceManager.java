@@ -112,8 +112,8 @@ public class DataServiceManager {
     Set<Float> percentileSet = dbQuery.getPercentileSet();
     Map<Tuple, Map<Float, Integer>> tuplesPercentileMap =
         dbQuery.getPercentile();
-    LOG.debug("Percentile Set:" + percentileSet);
-    LOG.debug("Tuples Percentile Map:" + tuplesPercentileMap);
+    LOG.info("Percentile Set:" + percentileSet);
+    LOG.info("Tuples Percentile Map length:" + tuplesPercentileMap.size());
     for (Tuple tuple : tupleSet) {
       createNode(tuple, nodeMap, percentileSet, tuplesPercentileMap.get(tuple));
     }
