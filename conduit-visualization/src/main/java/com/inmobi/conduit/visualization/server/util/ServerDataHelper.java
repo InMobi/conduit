@@ -250,6 +250,25 @@ public class ServerDataHelper {
                 RequestResponse.TimeLineGraphResponse.newBuilder()
                     .setJsonString(jsonResult)).build());
   }
+  
+  private static final String TIER = "tier";
+  private static final String TIERWISEPOINTLIST = "tierWisePointList";
+  private static final String AGGRECEIVED = "aggreceived";
+  private static final String AGGSENT = "aggsent";
+  private static final String OVERALLLATENCY ="overallLatency";
+  private static final String TIME = "time";
+  private static final String CLUSTERCOUNTLIST = "clusterCountList";
+  private static final String DATAPOINTS ="datapoints";
+  private static final String PERCENTILE ="percentile";
+  private static final String LATENCY ="latency";
+  private static final String TOPIC ="topic";
+  private static final String TOPICSTATS = "topicStats";
+  private static final String CLUSTERLATENCY = "clusterLatency";
+  private static final String CLUSTER= "cluster";
+  private static final String RECEIVED = "received";
+  private static final String SENT ="sent";
+  private static final String TOPICLATENCY = "topicLatency";
+  private static final String LATENCYLIST = "latencyList";
 
   @SuppressWarnings("unchecked")
   private static Map<String, Map<String, Map<String, Object>>> convertToMap
@@ -280,15 +299,15 @@ public class ServerDataHelper {
       if (eachTSMap == null) {
         eachTSMap = new HashMap<String, Object>();
         eachTierMap.put("" + tuple.getTimestamp().getTime(), eachTSMap);
-        eachTSMap.put("aggreceived", tuple.getReceived());
-        eachTSMap.put("aggsent", tuple.getSent());
-        eachTSMap.put("overallLatency", convertTLatencyListOfMaps
+        eachTSMap.put(AGGRECEIVED, tuple.getReceived());
+        eachTSMap.put(AGGSENT, tuple.getSent());
+        eachTSMap.put(OVERALLLATENCY, convertTLatencyListOfMaps
             (allAggPercentileMap.get(new Tuple(tuple.getHostname(),
                 tuple.getTier(), null, tuple.getTimestamp(), null)).entrySet()));
       } else {
-        eachTSMap.put("aggreceived", (Long) eachTSMap.get("aggreceived")
+        eachTSMap.put(AGGRECEIVED, (Long) eachTSMap.get(AGGRECEIVED)
             + tuple.getReceived());
-        eachTSMap.put("aggsent", (Long) eachTSMap.get("aggsent") + tuple
+        eachTSMap.put(AGGSENT, (Long) eachTSMap.get(AGGSENT) + tuple
             .getSent());
       }
       Map<String, Object> eachCluster = (Map<String, Object>) eachTSMap.get
@@ -296,22 +315,22 @@ public class ServerDataHelper {
       if (eachCluster == null) {
         eachCluster = new HashMap<String, Object>();
         eachTSMap.put(tuple.getCluster(), eachCluster);
-        eachCluster.put("cluster", tuple.getCluster());
+        eachCluster.put(CLUSTER, tuple.getCluster());
       }
       List<Map<String, Object>> topicList =
-          (List<Map<String, Object>>) eachCluster.get("topicStats");
+          (List<Map<String, Object>>) eachCluster.get(TOPICSTATS);
       if (topicList == null) {
         topicList = new ArrayList<Map<String, Object>>();
-        eachCluster.put("topicStats", topicList);
+        eachCluster.put(TOPICSTATS, topicList);
       }
-      eachCluster.put("clusterLatency", convertTLatencyListOfMaps
+      eachCluster.put(CLUSTERLATENCY, convertTLatencyListOfMaps
           (clusterAggPercentileMap.get(new Tuple(null, tuple.getTier(),
               tuple.getCluster(), tuple.getTimestamp(), null)).entrySet()));
       Map<String, Object> topicStat = new HashMap<String, Object>();
-      topicStat.put("topic", tuple.getTopic());
-      topicStat.put("received", tuple.getReceived());
-      topicStat.put("sent", tuple.getSent());
-      topicStat.put("topicLatency", convertTLatencyListOfMaps(percentileMap.get
+      topicStat.put(TOPIC, tuple.getTopic());
+      topicStat.put(RECEIVED, tuple.getReceived());
+      topicStat.put(SENT, tuple.getSent());
+      topicStat.put(TOPICLATENCY, convertTLatencyListOfMaps(percentileMap.get
           (tuple).entrySet()));
       topicList.add(topicStat);
     }
@@ -324,12 +343,13 @@ public class ServerDataHelper {
         new LinkedList<Map<String, String>>();
     for (Entry<Float, Integer> eachEntry : latencyMap) {
       Map<String, String> eachMap = new HashMap<String, String>();
-      eachMap.put("percentile", eachEntry.getKey().toString());
-      eachMap.put("latency", eachEntry.getValue().toString());
+      eachMap.put(PERCENTILE, eachEntry.getKey().toString());
+      eachMap.put(LATENCY, eachEntry.getValue().toString());
       returnList.add(eachMap);
     }
     return returnList;
   }
+
 
   @SuppressWarnings("unchecked")
   private static Map<String, Object> covertToUIFriendlyObject(AuditDbQuery query) {
@@ -338,9 +358,9 @@ public class ServerDataHelper {
     List<Object> datapoints = new ArrayList<Object>();
     for (String eachTier : map.keySet()) {
       Map<String, Object> eachTierMap = new HashMap<String, Object>();
-      eachTierMap.put("tier", eachTier);
+      eachTierMap.put(TIER, eachTier);
       List<Map<String, Object>> modifiedtimeserierList = new ArrayList<Map<String, Object>>();
-      eachTierMap.put("tierWisePointList", modifiedtimeserierList);
+      eachTierMap.put(TIERWISEPOINTLIST, modifiedtimeserierList);
       for (String eachTimeKey : map.get(eachTier).keySet()) {
         Object eachTimeData = map.get(eachTier).get(eachTimeKey);
         Map<String, Object> eachObject = (Map<String, Object>) eachTimeData;
@@ -348,21 +368,20 @@ public class ServerDataHelper {
         Map<String, Object> changedMap = new HashMap<String, Object>();
         Set<String> keys = eachObject.keySet();
         for (String eachKey : keys) {
-          if (!eachKey.equals("aggreceived") && !eachKey.equals("aggsent") &&
-              !eachKey.equals("overallLatency")) {
+          if (!eachKey.equals(AGGRECEIVED) && !eachKey.equals(AGGSENT) &&
+              !eachKey.equals(OVERALLLATENCY)) {
             clusterwiseMap.add(eachObject.get(eachKey));
           } else {
             changedMap.put(eachKey, eachObject.get(eachKey));
           }
         }
-        changedMap.put("time", eachTimeKey);
-        changedMap.put("clusterCountList", clusterwiseMap);
+        changedMap.put(TIME, eachTimeKey);
+        changedMap.put(CLUSTERCOUNTLIST, clusterwiseMap);
         modifiedtimeserierList.add(changedMap);
-        System.out.println(eachTimeData);
       }
       datapoints.add(eachTierMap);
     }
-    returnMap.put("datapoints", datapoints);
+    returnMap.put(DATAPOINTS, datapoints);
     return returnMap;
   }
 

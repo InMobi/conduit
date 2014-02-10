@@ -6,6 +6,7 @@ import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.audit.Tier;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
+import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
 import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
@@ -340,7 +341,8 @@ public class DataServiceManager {
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
-            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig);
+            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig,
+            new TimeLineAuditDBHelper(feederConfig));
     try {
       LOG.debug("Executing time line query");
       dbQuery.execute();

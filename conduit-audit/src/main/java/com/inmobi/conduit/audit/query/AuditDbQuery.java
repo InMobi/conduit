@@ -51,6 +51,7 @@ public class AuditDbQuery {
   Map<GroupBy.Group, Long> received;
   Map<GroupBy.Group, Long> sent;
   private final ClientConfig config;
+  private AuditDBHelper dbHelper;
 
   public AuditDbQuery(String toTimeString, String fromTimeString,
       String filterString, String groupByString, String timeZone) {
@@ -81,13 +82,24 @@ public class AuditDbQuery {
     else {
       this.config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     }
+    this.dbHelper = new AuditDBHelper(this.config);
+
+  }
+  
+  public AuditDbQuery(String toTimeString, String fromTimeString,
+      String filterString, String groupByString, String timeZone,
+      String percentileString, ClientConfig config, AuditDBHelper helper) {
+    this(toTimeString, fromTimeString, filterString, groupByString, timeZone,
+        percentileString, config);
+    if (helper != null) {
+      this.dbHelper = helper;
+    }
 
   }
 
   void aggregateStats() {
     LOG.debug("To time:" + toTime);
     LOG.debug("From time:" + fromTime);
-    AuditDBHelper dbHelper = new AuditDBHelper(config);
     Set<Tuple> tuples = dbHelper.retrieve(toTime, fromTime, filter, groupBy);
     if (tuples != null) {
       tupleSet.addAll(tuples);
