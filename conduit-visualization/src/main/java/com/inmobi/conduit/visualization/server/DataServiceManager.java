@@ -106,12 +106,7 @@ public class DataServiceManager {
     } catch (Exception e) {
       LOG.error("Exception while executing query: ", e);
     }
-    LOG.info("Audit query: " + dbQuery.toString());
-    try {
-      dbQuery.displayResults();
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
-    }
+    LOG.info("Audit topology query: " + dbQuery.toString());
     Set<Tuple> tupleSet = dbQuery.getTupleSet();
     Set<Float> percentileSet = dbQuery.getPercentileSet();
     Map<Tuple, Map<Float, Integer>> tuplesPercentileMap =
@@ -123,10 +118,7 @@ public class DataServiceManager {
     }
     buildPercentileMapOfAllNodes(nodeMap);
     addVIPNodesToNodesList(nodeMap, percentileSet);
-    LOG.debug("Printing node list");
-    for (Node node : nodeMap.values()) {
-      LOG.debug("Final node :" + node);
-    }
+    LOG.info("Final node list length:"+nodeMap.size());
     return ServerDataHelper.getInstance().setTopologyDataResponse(nodeMap);
   }
 
@@ -148,7 +140,7 @@ public class DataServiceManager {
   protected void createNode(Tuple tuple, Map<NodeKey, Node> nodeMap,
                           Set<Float> percentileSet,
                           Map<Float, Integer> tuplePercentileMap) {
-    LOG.info("Creating node from tuple :" + tuple);
+    LOG.debug("Creating node from tuple :" + tuple);
     String name, hostname = null;
     if (tuple.getTier().equalsIgnoreCase(Tier.HDFS.toString())) {
       name = tuple.getCluster();
@@ -334,12 +326,7 @@ public class DataServiceManager {
     } catch (Exception e) {
       LOG.error("Exception while executing query: ", e);
     }
-    LOG.info("Audit query: " + dbQuery.toString());
-    try {
-      dbQuery.displayResults();
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
-    }
+    LOG.info("Audit latency summary query: " + dbQuery.toString());
     return dbQuery.getPercentile();
   }
 
@@ -362,12 +349,6 @@ public class DataServiceManager {
     } catch (Exception e) {
       LOG.error("Exception while executing time line query: ", e);
       return null;
-    }
-    try {
-      dbQuery.displayResults();
-      LOG.debug("TimeSeries JSON:" + ServerDataHelper.convertToJson(dbQuery));
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
     }
     return ServerDataHelper.setTimeLineDataResponse(ServerDataHelper
         .convertToJson(dbQuery));

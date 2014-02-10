@@ -96,7 +96,7 @@ public class AuditDbQuery {
           "method");
       return;
     }
-    LOG.debug("Tuple set retrieved from DB: " + tupleSet);
+    LOG.debug("Tuple set retrieved from DB size : " + tupleSet.size());
     setReceivedAndSentStats();
     if (percentileSet != null) {
       LOG.debug("Creating percentile map for all tuples");
@@ -114,7 +114,8 @@ public class AuditDbQuery {
     }
   }
 
-  public static Map<Tuple, Map<Float, Integer>> populatePercentileMap(Set<Tuple> tupleSet,Set<Float> percentileSet) {
+  public static Map<Tuple, Map<Float, Integer>> populatePercentileMap
+      (Set<Tuple> tupleSet, Set<Float> percentileSet) {
     Map<Tuple, Map<Float, Integer>> percentile = new HashMap<Tuple, Map<Float, Integer>>();
     for (Tuple tuple : tupleSet) {
       LOG.debug("Creating percentile map for tuple :" + tuple.toString());

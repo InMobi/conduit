@@ -1,6 +1,8 @@
 package com.inmobi.conduit.visualization.server.util;
 
 import com.google.protobuf.gwt.server.ServerJsonStreamFactory;
+import com.inmobi.conduit.audit.Column;
+import com.inmobi.conduit.audit.GroupBy;
 import com.inmobi.conduit.visualization.server.MessageStats;
 import com.inmobi.conduit.visualization.server.Node;
 import com.inmobi.conduit.visualization.server.NodeKey;
@@ -248,73 +250,72 @@ public class ServerDataHelper {
                 RequestResponse.TimeLineGraphResponse.newBuilder()
                     .setJsonString(jsonResult)).build());
   }
-  
-  
-  
-  @SuppressWarnings("unchecked")
-  private static Map<String, Map<String, Map<String, Object>>> convertToMap(
-      AuditDbQuery query) {
-    Map<String, Map<String, Map<String, Object>>> map =
-        new HashMap<String, Map<String, Map<String, Object>>>();
-    Map<Tuple, Map<Float, Integer>> percentileMap = query.getPercentile();
-    LOG.info("XXX percentileMap :"+percentileMap);
 
-    Set<Tuple> ungroupedSetofTuples = unGroupedByTopic(query.getTupleSet());
-    Map<Tuple, Map<Float, Integer>> aggregatedPercentileMap =
-        AuditDbQuery.populatePercentileMap(ungroupedSetofTuples,
-            query.getPercentileSet());
-    for (Tuple eachTuple : query.getTupleSet()) {
+  @SuppressWarnings("unchecked")
+  private static Map<String, Map<String, Map<String, Object>>> convertToMap
+      (AuditDbQuery query) {
+
+    Map<String, Map<String, Map<String, Object>>> map = new HashMap<String, Map<String, Map<String, Object>>>();
+    Map<Tuple, Map<Float, Integer>> percentileMap = query.getPercentile();
+
+    Set<Tuple> allAggTupleSet = groupTuples(query.getTupleSet(),
+        new GroupBy(ServerConstants.GROUPBY_ALL_AGG_TIMELINE_STR));
+    Set<Tuple> clusterAggTupleSet = groupTuples(query.getTupleSet(),
+        new GroupBy(ServerConstants.GROUPBY_CLUSTER_AGG_TIMELINE_STR));
+
+    Map<Tuple, Map<Float, Integer>> allAggPercentileMap = AuditDbQuery
+        .populatePercentileMap(allAggTupleSet, query.getPercentileSet());
+    Map<Tuple, Map<Float, Integer>> clusterAggPercentileMap = AuditDbQuery
+        .populatePercentileMap(clusterAggTupleSet, query.getPercentileSet());
+
+    for (Tuple tuple : query.getTupleSet()) {
       Map<String, Map<String, Object>> eachTierMap =
-          map.get(eachTuple.getTier());
+          map.get(tuple.getTier());
       if (eachTierMap == null) {
         eachTierMap = new TreeMap<String, Map<String, Object>>();
-        map.put(eachTuple.getTier(), eachTierMap);
+        map.put(tuple.getTier(), eachTierMap);
       }
       Map<String, Object> eachTSMap =
-          eachTierMap.get("" + eachTuple.getTimestamp().getTime());
+          eachTierMap.get("" + tuple.getTimestamp().getTime());
       if (eachTSMap == null) {
         eachTSMap = new HashMap<String, Object>();
-        eachTierMap.put("" + eachTuple.getTimestamp().getTime(), eachTSMap);
-        eachTSMap.put("aggreceived", eachTuple.getReceived());
-        eachTSMap.put("aggsent", eachTuple.getSent());
-        eachTSMap.put(
-            "overallLatency",
-            convertTLatencyListOfMaps(aggregatedPercentileMap.get(
-                new Tuple(eachTuple.getHostname(), eachTuple.getTier(),
-                    eachTuple.getCluster(), eachTuple.getTimestamp(), null))
-                .entrySet()));
-
+        eachTierMap.put("" + tuple.getTimestamp().getTime(), eachTSMap);
+        eachTSMap.put("aggreceived", tuple.getReceived());
+        eachTSMap.put("aggsent", tuple.getSent());
+        eachTSMap.put("overallLatency", convertTLatencyListOfMaps
+            (allAggPercentileMap.get(new Tuple(tuple.getHostname(),
+                tuple.getTier(), null, tuple.getTimestamp(), null)).entrySet()));
       } else {
         eachTSMap.put("aggreceived", (Long) eachTSMap.get("aggreceived")
-            + eachTuple.getReceived());
-        eachTSMap.put("aggsent",
-            (Long) eachTSMap.get("aggsent") + eachTuple.getSent());
+            + tuple.getReceived());
+        eachTSMap.put("aggsent", (Long) eachTSMap.get("aggsent") + tuple
+            .getSent());
       }
-      Map<String, Object> eachStream =
-          (Map<String, Object>) eachTSMap.get(eachTuple.getTopic());
-      if (eachStream == null) {
-        eachStream = new HashMap<String, Object>();
-        eachTSMap.put(eachTuple.getTopic(), eachStream);
-        eachStream.put("topic", eachTuple.getTopic());
+      Map<String, Object> eachCluster = (Map<String, Object>) eachTSMap.get
+          (tuple.getCluster());
+      if (eachCluster == null) {
+        eachCluster = new HashMap<String, Object>();
+        eachTSMap.put(tuple.getCluster(), eachCluster);
+        eachCluster.put("cluster", tuple.getCluster());
       }
-
-      List<Map<String, Object>> clusterList =
-          (List<Map<String, Object>>) eachStream.get("clusterStats");
-      if (clusterList == null) {
-        clusterList = new ArrayList<Map<String, Object>>();
-        eachStream.put("clusterStats", clusterList);
+      List<Map<String, Object>> topicList =
+          (List<Map<String, Object>>) eachCluster.get("topicStats");
+      if (topicList == null) {
+        topicList = new ArrayList<Map<String, Object>>();
+        eachCluster.put("topicStats", topicList);
       }
-      Map<String, Object> clusterStat = new HashMap<String, Object>();
-      clusterStat.put("cluster", eachTuple.getCluster());
-      clusterStat.put("received", eachTuple.getReceived());
-      clusterStat.put("sent", eachTuple.getSent());
-      clusterStat.put("latencyList", convertTLatencyListOfMaps(percentileMap.get
-          (eachTuple).entrySet()));
-      clusterList.add(clusterStat);
-
+      eachCluster.put("clusterLatency", convertTLatencyListOfMaps
+          (clusterAggPercentileMap.get(new Tuple(null, tuple.getTier(),
+              tuple.getCluster(), tuple.getTimestamp(), null)).entrySet()));
+      Map<String, Object> topicStat = new HashMap<String, Object>();
+      topicStat.put("topic", tuple.getTopic());
+      topicStat.put("received", tuple.getReceived());
+      topicStat.put("sent", tuple.getSent());
+      topicStat.put("topicLatency", convertTLatencyListOfMaps(percentileMap.get
+          (tuple).entrySet()));
+      topicList.add(topicStat);
     }
     return map;
-
   }
   
   private static List<Map<String, String>> convertTLatencyListOfMaps(
@@ -334,7 +335,6 @@ public class ServerDataHelper {
   private static Map<String, Object> covertToUIFriendlyObject(AuditDbQuery query) {
     Map<String, Object> returnMap = new HashMap<String, Object>();
     Map<String, Map<String, Map<String, Object>>> map = convertToMap(query);
-
     List<Object> datapoints = new ArrayList<Object>();
     for (String eachTier : map.keySet()) {
       Map<String, Object> eachTierMap = new HashMap<String, Object>();
@@ -344,126 +344,70 @@ public class ServerDataHelper {
       for (String eachTimeKey : map.get(eachTier).keySet()) {
         Object eachTimeData = map.get(eachTier).get(eachTimeKey);
         Map<String, Object> eachObject = (Map<String, Object>) eachTimeData;
-        List<Object> steamwiseMap = new ArrayList<Object>();
+        List<Object> clusterwiseMap = new ArrayList<Object>();
         Map<String, Object> changedMap = new HashMap<String, Object>();
         Set<String> keys = eachObject.keySet();
         for (String eachKey : keys) {
-          if (!eachKey.equals("aggreceived") && !eachKey.equals("aggsent") &&!eachKey.equals("overallLatency")) {
-
-            steamwiseMap.add(eachObject.get(eachKey));
+          if (!eachKey.equals("aggreceived") && !eachKey.equals("aggsent") &&
+              !eachKey.equals("overallLatency")) {
+            clusterwiseMap.add(eachObject.get(eachKey));
           } else {
             changedMap.put(eachKey, eachObject.get(eachKey));
           }
         }
         changedMap.put("time", eachTimeKey);
-        changedMap.put("topicCountList", steamwiseMap);
+        changedMap.put("clusterCountList", clusterwiseMap);
         modifiedtimeserierList.add(changedMap);
         System.out.println(eachTimeData);
       }
       datapoints.add(eachTierMap);
     }
     returnMap.put("datapoints", datapoints);
-
     return returnMap;
-
   }
 
   public static String convertToJson(AuditDbQuery query) {
     JSONObject newObject = new JSONObject(covertToUIFriendlyObject(query));
     return newObject.toString();
-
   }
   
-  
-  private static Set<Tuple> unGroupedByTopic(final Set<Tuple> grouped) {
-    Map<String, Map<LatencyColumns, Long>> unGroupedMap =
-        new HashMap<String, Map<LatencyColumns, Long>>();
-    Map<String, Tuple> tupleMap = new HashMap<String, Tuple>();
-    final String delimiter = ":";
+  private static Set<Tuple> groupTuples(final Set<Tuple> grouped,
+                                             GroupBy groupBy) {
+    Map<GroupBy.Group, Map<LatencyColumns, Long>> unGroupedMap =
+        new HashMap<GroupBy.Group, Map<LatencyColumns, Long>>();
+    Map<GroupBy.Group, Tuple> tupleMap = new HashMap<GroupBy.Group, Tuple>();
     for (final Tuple eachTuple : grouped) {
-      String key =
-          eachTuple.getTier() + delimiter + eachTuple.getCluster() + delimiter
-              + eachTuple.getTimestamp();
-      Map<LatencyColumns, Long> latencyMap = unGroupedMap.get(key);
-      Tuple aggregatedTuple = tupleMap.get(key);
+      GroupBy.Group group = groupBy.getGroup(eachTuple.getTupleKey());
+      Map<LatencyColumns, Long> latencyMap = unGroupedMap.get(group);
+      Tuple aggregatedTuple = tupleMap.get(group);
       if (latencyMap == null) {
         latencyMap = new HashMap<LatencyColumns, Long>();
         Map<LatencyColumns, Long> eachTupleMap = eachTuple.getLatencyCountMap();
-        aggregatedTuple =
-            new Tuple(eachTuple.getHostname(), eachTuple.getTier(),
-                eachTuple.getCluster(), eachTuple.getTimestamp(), null, null,
-                eachTuple.getSent());
-        unGroupedMap.put(key, latencyMap);
-        tupleMap.put(key, aggregatedTuple);
-        latencyMap.put(LatencyColumns.C0, eachTupleMap.get(LatencyColumns.C0));
-        latencyMap.put(LatencyColumns.C1, eachTupleMap.get(LatencyColumns.C1));
-        latencyMap.put(LatencyColumns.C2, eachTupleMap.get(LatencyColumns.C2));
-        latencyMap.put(LatencyColumns.C3, eachTupleMap.get(LatencyColumns.C3));
-        latencyMap.put(LatencyColumns.C4, eachTupleMap.get(LatencyColumns.C4));
-        latencyMap.put(LatencyColumns.C5, eachTupleMap.get(LatencyColumns.C5));
-        latencyMap.put(LatencyColumns.C6, eachTupleMap.get(LatencyColumns.C6));
-        latencyMap.put(LatencyColumns.C7, eachTupleMap.get(LatencyColumns.C7));
-        latencyMap.put(LatencyColumns.C8, eachTupleMap.get(LatencyColumns.C8));
-        latencyMap.put(LatencyColumns.C9, eachTupleMap.get(LatencyColumns.C9));
-        latencyMap
-            .put(LatencyColumns.C10, eachTupleMap.get(LatencyColumns.C10));
-        latencyMap
-            .put(LatencyColumns.C15, eachTupleMap.get(LatencyColumns.C15));
-        latencyMap
-            .put(LatencyColumns.C30, eachTupleMap.get(LatencyColumns.C30));
-        latencyMap
-            .put(LatencyColumns.C60, eachTupleMap.get(LatencyColumns.C60));
-        latencyMap.put(LatencyColumns.C120,
-            eachTupleMap.get(LatencyColumns.C120));
-        latencyMap.put(LatencyColumns.C240,
-            eachTupleMap.get(LatencyColumns.C240));
-        latencyMap.put(LatencyColumns.C600,
-            eachTupleMap.get(LatencyColumns.C600));
-
+        if (groupBy.getGroupByColumns().contains(Column.CLUSTER)) {
+          aggregatedTuple = new Tuple(null, eachTuple.getTier(),
+              eachTuple.getCluster(), eachTuple.getTimestamp(), null, null,
+              eachTuple.getSent());
+        } else {
+          aggregatedTuple = new Tuple(null, eachTuple.getTier(), null,
+              eachTuple.getTimestamp(), null, null, eachTuple.getSent());
+        }
+        unGroupedMap.put(group, latencyMap);
+        tupleMap.put(group, aggregatedTuple);
+        for (LatencyColumns latencyColumn : LatencyColumns.values()) {
+          latencyMap.put(latencyColumn, eachTupleMap.get(latencyColumn));
+        }
       } else {
         Map<LatencyColumns, Long> eachTupleMap = eachTuple.getLatencyCountMap();
-
-        latencyMap.put(LatencyColumns.C0, latencyMap.get(LatencyColumns.C0)
-            + eachTupleMap.get(LatencyColumns.C0));
-        latencyMap.put(LatencyColumns.C1, latencyMap.get(LatencyColumns.C1)
-            + eachTupleMap.get(LatencyColumns.C1));
-        latencyMap.put(LatencyColumns.C2, latencyMap.get(LatencyColumns.C2)
-            + eachTupleMap.get(LatencyColumns.C2));
-        latencyMap.put(LatencyColumns.C3, latencyMap.get(LatencyColumns.C3)
-            + eachTupleMap.get(LatencyColumns.C3));
-        latencyMap.put(LatencyColumns.C4, latencyMap.get(LatencyColumns.C4)
-            + eachTupleMap.get(LatencyColumns.C4));
-        latencyMap.put(LatencyColumns.C5, latencyMap.get(LatencyColumns.C5)
-            + eachTupleMap.get(LatencyColumns.C5));
-        latencyMap.put(LatencyColumns.C6, latencyMap.get(LatencyColumns.C6)
-            + eachTupleMap.get(LatencyColumns.C6));
-        latencyMap.put(LatencyColumns.C7, latencyMap.get(LatencyColumns.C7)
-            + eachTupleMap.get(LatencyColumns.C7));
-        latencyMap.put(LatencyColumns.C8, latencyMap.get(LatencyColumns.C8)
-            + eachTupleMap.get(LatencyColumns.C8));
-        latencyMap.put(LatencyColumns.C9, latencyMap.get(LatencyColumns.C9)
-            + eachTupleMap.get(LatencyColumns.C9));
-        latencyMap.put(LatencyColumns.C10, latencyMap.get(LatencyColumns.C10)
-            + eachTupleMap.get(LatencyColumns.C10));
-        latencyMap.put(LatencyColumns.C15, latencyMap.get(LatencyColumns.C15)
-            + eachTupleMap.get(LatencyColumns.C15));
-        latencyMap.put(LatencyColumns.C30, latencyMap.get(LatencyColumns.C30)
-            + eachTupleMap.get(LatencyColumns.C30));
-        latencyMap.put(LatencyColumns.C60, latencyMap.get(LatencyColumns.C60)
-            + eachTupleMap.get(LatencyColumns.C60));
-        latencyMap.put(LatencyColumns.C120, latencyMap.get(LatencyColumns.C120)
-            + eachTupleMap.get(LatencyColumns.C120));
-        latencyMap.put(LatencyColumns.C240, latencyMap.get(LatencyColumns.C240)
-            + eachTupleMap.get(LatencyColumns.C240));
-        latencyMap.put(LatencyColumns.C600, latencyMap.get(LatencyColumns.C600)
-            + eachTupleMap.get(LatencyColumns.C600));
+        for (LatencyColumns latencyColumn : LatencyColumns.values()) {
+          latencyMap.put(latencyColumn, latencyMap.get(latencyColumn) +
+              eachTupleMap.get(latencyColumn));
+        }
         aggregatedTuple
             .setSent(aggregatedTuple.getSent() + eachTuple.getSent());
       }
     }
-
     Set<Tuple> returnSet = new HashSet<Tuple>();
-    for (String eachKey : unGroupedMap.keySet()) {
+    for (GroupBy.Group eachKey : unGroupedMap.keySet()) {
       Tuple eachTuple = tupleMap.get(eachKey);
       eachTuple.setLatencyCountMap(unGroupedMap.get(eachKey));
       returnSet.add(eachTuple);
