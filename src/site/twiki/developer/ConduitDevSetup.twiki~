@@ -1,0 +1,97 @@
+%BREADCRUMBS{ format="$name" separator=" » "}%
+
+---+!! Dev setup installation
+
+%TOC%
+
+---+++ Hadoop Setup
+
+Hadoop on Conduitdev1 and Conduitdev2 was setup using the instructions found in Cloudera [[https://ccp.cloudera.com/display/CDHDOC/CDH3+Deployment+on+a+Cluster][Document]].
+
+Both dev1 and dev2 machines have
+
+1. NameNode Directory is found at /etc/hadoop/hdfs/namenode
+
+2. DataNode Directory is found at /etc/hadoop/hdfs/datanode
+
+3. Configuration is found at /etc/hadoop/conf
+
+dev2 machines can run multiple datanodes
+
+1. DataNode2 and Datanode3 Directories are at /etc/hadoop/hdfs/datanode2 and /etc/hadoop/hdfs/datanode3 respectively.
+
+2. Configurations are found at /etc/hadoop/conf2 and /etc/hadoop/conf3 respectively.
+
+JobTracker can be started using "<strong><em>sudo service hadoop-0.20-jobtracker start</em></strong>"
+
+TaskTracker can be started using "<strong><em>sudo service hadoop-0.20-tasktracker start</em></strong>"
+
+NameNode can be started using "<strong><em>sudo service hadoop-0.20-namenode start</em></strong>"
+
+DataNodes can be started using "<em><strong>sudo service hadoop-0.20-datanode start</strong></em>" and services for other 2 are hadoop-0.20-datanode2 and hadoop-0.20-datanode3
+---+++ Scribe setup
+
+Scribe is setup using apt inmobi repository apt-get install scribe-service-hdfs-orig package. This installs the scribe binary in location /usr/bin.
+
+1. We have a wrapper script which sets the hadoop library class path present in /usr/bin/scribe.sh which should be run in background
+
+2. Logs everything to /tmp/scribe.log.
+
+3. The configuration is present in /etc/scribe.conf.
+
+4. We also have scribe_ctrl.py script present in /usr/bin for stopping, status, reloading etc. for controlling scribe.
+
+NOTE : PLEASE START SCRIBE AS "conduit" USER
+---+++ Zookeeper setup
+
+Zookeeper is setup using the Cloudera [[https://ccp.cloudera.com/display/CDHDOC/ZooKeeper+Installation][Document]]. No changes are made from default configuration.
+
+Start "sudo service hadoop-zookeeper-server start"
+
+Stop "sudo service hadoop-zookeeper-server stop"
+---+++ Conduit setup
+
+Conduit is setup using the generated deb package using dpkg command. Use the default configuration files present in /etc/conduit/conf to /usr/local/conduit/conf. All the configurations are attached here. Edit for any changes. Remove Symlink /usr/local/conduit and symlink to new /usr/local/conduit-newversion. Starting conduit using the following command
+
+cd /var/log/conduit
+
+. /usr/local/conduit/bin/conduit.sh start /usr/local/conduit/conf/conduit.cfg
+
+For Stopping
+
+/usr/local/conduit/bin/conduit.sh stop /usr/local/conduit/conf/conduit.cfg
+
+Logs are written to the cwd where conduit is started in the above case /var/log/conduit
+
+NOTE : PLEASE START CONDUIT AS "conduit" USER
+---+++ Exception Cron Job
+
+We have an entry in /etc/crontab which runs every 15 mins grepping /var/log/conduit/conduit.log for any exceptions. The script is written in python and can be found in /etc/sendmail.py(Attached here in twiki)
+
+1. greps for any exception in logs if found gets the stacktrace from next few statements, caches all the necessary lines
+
+2. checkpoints the file so that same exceptions are not sent again.
+
+3. constructs email using email library in python and adds the caches lines and attaches conduit.log to the email to platform-engg@
+
+---+++ Changing open file handle count
+
+To change the open file handle count to 10240, do the following
+
+   I. Add the following in /etc/security/limits.conf :
+      a. hdfs hard nofile 10240
+      a. hadoop hard nofile 10240
+      a. mapred hard nofile 10240
+      a. hadoop soft nofile 10240
+      a. hdfs soft nofile 10240
+      a. mapred soft nofile 10240 
+   I. Add the following to /etc/pam.d/common-session :
+      a. session required pam_limits.so
+   I. Logout and login back for the changes to get reflected.
+   I. Restart the daemons for the change to effect on them
+   I. Verify the limits by looking /proc/<pid>/limits
+
+-- Main.NishchayP - 2012-09-04
+
+%COMMENT%
+
