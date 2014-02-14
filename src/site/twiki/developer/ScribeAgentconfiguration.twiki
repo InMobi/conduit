@@ -1,0 +1,39 @@
+
+---+ Scribe Agent Configuration
+<verbatim>
+<store>
+   category=_audit
+   type=buffer
+   tier=agent
+   window_size=60
+   target_write_size=20480
+   max_write_interval=60
+   buffer_send_rate=1
+   retry_interval=30
+   retry_interval_range=10
+   must_succeed=yes
+   replay_buffer=yes
+   <primary>
+      type=network
+      remote_host=10.14.118.98
+      remote_port=12000
+   </primary>
+   <secondary>
+      type=file
+      fs_type=std
+      file_path=<spooling directory of scribe agent>/_audit
+      base_filename=_audit
+      max_size=100000000
+   </secondary>
+</store>
+
+</verbatim>
+Note:
+In production, please apply the entire set of configuration EXACTLY as mentioned above. You can configure the values of following options: 
+
+   1. 'retry_interval': should be same as in default store
+   1. 'retry_interval_range': should be same as in default store
+   1. 'remote_host' in <primary> section: MUST be same as in the <primary> section of default store
+   1. 'remote_port' in <primary> section: MUST be same as in the <primary> section of default store
+   1. 'file_path' in <secondary> section: MUST be of the format <spooling directory of scribe agent>/_audit. E.g:- /var/spool/databus/_audit
+
