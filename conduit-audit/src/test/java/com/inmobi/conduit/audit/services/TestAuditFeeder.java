@@ -6,16 +6,22 @@ import com.inmobi.conduit.audit.LatencyColumns;
 import com.inmobi.conduit.audit.Tier;
 import com.inmobi.conduit.audit.services.AuditFeederService.TupleKey;
 import com.inmobi.conduit.audit.util.AuditDBConstants;
+import com.inmobi.conduit.audit.util.AuditDBHelper;
 import com.inmobi.conduit.audit.util.AuditFeederTestUtil;
 import com.inmobi.messaging.ClientConfig;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.Date;
 
 public class TestAuditFeeder extends AuditFeederTestUtil {
@@ -23,6 +29,16 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
   @BeforeClass
   public void setup() {
     super.setup();
+  }
+
+  private void cleanUp(ClientConfig config) {
+    try {
+      FileSystem fs = FileSystem.getLocal(new Configuration());
+      fs.delete(
+          new Path(config.getString(AuditDBConstants.CHECKPOINT_DIR_KEY)), true);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Test
@@ -99,6 +115,7 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
     generateData(topic1, totalData/2);
     publisher.close();
     setupAuditDB();
+    cleanUp(ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE));
     AuditFeederService feeder = new AuditFeederServiceTest(cluster, "mock",
         ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE), publisher);
     feeder.execute();
@@ -134,6 +151,7 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
     generateData(topic, totalData / 2);
     Thread.sleep(30000);
     setupAuditDB();
+    cleanUp(ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE));
     AuditFeederService feeder = new AuditFeederServiceTest(cluster, "mock",
         ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE), publisher);
     feeder.execute();
@@ -168,4 +186,37 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
     teardown();
   }
 
+  @Test
+  public void testOldMsgUpdateWithChkPt() throws Exception {
+    setupPublisher();
+    addAuditMessageToPublisher(oldMsg);
+    setupAuditDB();
+    cleanUp(ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE));
+    ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants
+        .FEEDER_CONF_FILE);
+    AuditFeederService feeder = new AuditFeederServiceTest(cluster, "mock",
+        config, publisher);
+    feeder.consumer.mark();
+    AuditRollUpService rollUpService = new AuditRollUpService(config);
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTimeInMillis(oldMsgReceived);
+    calendar.add(Calendar.DATE, 1);
+    rollUpService.mark(AuditDBHelper.getFirstMilliOfDay(calendar.getTime()));
+    feeder.execute();
+    int n = getNumberOfRowsInAuditDB();
+    assert (n == 0);
+    ResultSet rs = getAllRowsInAuditDB();
+    assert(rs.next() == false);
+    calendar.add(Calendar.DATE, -1);
+    rollUpService.mark(calendar.getTimeInMillis());
+    feeder.consumer.reset();
+    feeder.execute();
+    n = getNumberOfRowsInAuditDB();
+    assert (n == 1);
+    rs = getAllRowsInAuditDB();
+    assert(rs.next() == true);
+    feeder.stop();
+    shutDownAuditDB();
+    teardown();
+  }
 }

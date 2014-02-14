@@ -129,7 +129,7 @@ public class AuditAdmin {
           config.getString(AuditDBConstants.DB_USERNAME),
           config.getString(AuditDBConstants.DB_PASSWORD));
       for (int i = 0; i < numDays; i++) {
-        Date currentDate = service.addDaysToGivenDate(date, i);
+        Date currentDate = AuditDBHelper.addDaysToGivenDate(date, i);
         String tableName = service.createTableName(currentDate, isRolledUp);
         boolean isExists = service.checkTableExists(connection, tableName);
         if (!isExists) {
@@ -194,7 +194,7 @@ public class AuditAdmin {
           config.getString(AuditDBConstants.DB_URL), 
           config.getString(AuditDBConstants.DB_USERNAME), 
           config.getString(AuditDBConstants.DB_PASSWORD));
-      Date toDate = service.addDaysToGivenDate(date, numDays - 1);
+      Date toDate = AuditDBHelper.addDaysToGivenDate(date, numDays - 1);
       return service.createDailyTable(date, toDate, connection);
     } finally {
       if (connection != null) {
@@ -229,14 +229,14 @@ public class AuditAdmin {
           config.getString(AuditDBConstants.DB_URL),
           config.getString(AuditDBConstants.DB_USERNAME),
           config.getString(AuditDBConstants.DB_PASSWORD));
-      Date upperLimitDate = service.addDaysToCurrentDate(-1 * config.getInteger
+      Date upperLimitDate = AuditDBHelper.addDaysToCurrentDate(-1 * config.getInteger
           (AuditDBConstants.TILLDAYS_KEY));
       if (!fromDate.before(upperLimitDate)) {
         System.out.println("Incorrect day passed: day after rollup upper " +
             "limit i.e " + formatter.format(upperLimitDate));
         return false;
       }
-      Date toDate = service.addDaysToGivenDate(fromDate, numDays);
+      Date toDate = AuditDBHelper.addDaysToGivenDate(fromDate, numDays);
       if (!toDate.before(upperLimitDate)) {
         System.out.println("ToDate[" + formatter.format(toDate) + "] is after" +
             " upper limit date[" + formatter.format(upperLimitDate) + "], " +

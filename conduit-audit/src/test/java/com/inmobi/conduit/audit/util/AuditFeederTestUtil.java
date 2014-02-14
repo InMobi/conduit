@@ -2,28 +2,39 @@ package com.inmobi.conduit.audit.util;
 
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.audit.Column;
+import com.inmobi.conduit.audit.query.AuditDbQuery;
+import com.inmobi.conduit.audit.services.AuditFeederService;
 import com.inmobi.messaging.ClientConfig;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.publisher.MessagePublisherFactory;
 import com.inmobi.messaging.publisher.MockInMemoryPublisher;
+import com.inmobi.messaging.util.AuditUtil;
 import junit.framework.Assert;
+import org.apache.thrift.TException;
+import org.apache.thrift.TSerializer;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class AuditFeederTestUtil {
+  protected AuditMessage oldMsg;
   protected AuditMessage msg1, msg2;
   protected String tier1 = "agent", tier2 = "publisher", host = "localhost",
        topic = "testTopic", cluster = "testCluster", topic1 = "testTopic1";
   protected long msgReceived1, msgReceived2, received1, received2,
-      upperRecieved1, upperRecieved2;
+      upperRecieved1, upperRecieved2, oldMsgReceived;
   protected MessagePublisher publisher;
   protected int totalData = 10;
   protected Connection connection;
+  TSerializer serializer = new TSerializer();
 
   public void setup() {
     Calendar cal = Calendar.getInstance();
@@ -40,6 +51,8 @@ public class AuditFeederTestUtil {
     cal.add(Calendar.MINUTE, -1);
     received2 = cal.getTimeInMillis();//9:0:0
     upperRecieved2 = received2 + 60 * 1000;//10:0:0
+    cal.add(Calendar.DATE, -3);
+    oldMsgReceived = cal.getTimeInMillis();
 
     msg1 = new AuditMessage();
     msg1.setTimestamp(msgReceived1);//10:20:0
@@ -59,6 +72,15 @@ public class AuditFeederTestUtil {
     msg2.setHostname(host);
     msg2.putToReceived(received1, 9);//<10:0:0, 9>
     msg2.putToSent(received1, 6);//<10:0:0, 6>
+
+    oldMsg = new AuditMessage();
+    oldMsg.setTimestamp(oldMsgReceived);
+    oldMsg.setWindowSize(60);
+    oldMsg.setTier(tier1);
+    oldMsg.setTopic(topic);
+    oldMsg.setHostname(host);
+    oldMsg.putToReceived(oldMsgReceived, 10);
+    oldMsg.putToSent(oldMsgReceived, 12);
   }
 
   public void setupPublisher() throws IOException {
@@ -69,6 +91,23 @@ public class AuditFeederTestUtil {
 
   public void teardown() {
     ((MockInMemoryPublisher) publisher).reset();
+  }
+
+  protected void addAuditMessageToPublisher(AuditMessage m) {
+    try {
+      if (((MockInMemoryPublisher) publisher).source.get(AuditUtil
+          .AUDIT_STREAM_TOPIC_NAME) == null) {
+        BlockingQueue<Message> list = new LinkedBlockingQueue<Message>();
+        list.add(new Message(ByteBuffer.wrap(serializer.serialize(m))));
+        ((MockInMemoryPublisher) publisher).source.put(AuditUtil
+            .AUDIT_STREAM_TOPIC_NAME, list);
+      } else {
+        ((MockInMemoryPublisher) publisher).source.get(AuditUtil
+            .AUDIT_STREAM_TOPIC_NAME).add(new Message(ByteBuffer.wrap(serializer.serialize(m))));
+      }
+    } catch (TException e) {
+      e.printStackTrace();
+    }
   }
 
   protected void generateData(String topic, int n) {

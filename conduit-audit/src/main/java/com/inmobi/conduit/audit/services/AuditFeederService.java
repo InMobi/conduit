@@ -1,6 +1,7 @@
 package com.inmobi.conduit.audit.services;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -139,14 +140,13 @@ public class AuditFeederService extends AuditDBService {
   private int DEFAULT_MSG_PER_BATCH = 5000;
   private int msgsPerBatch;
   private TDeserializer deserializer = new TDeserializer();
-  private final ClientConfig config;
   private final static long RETRY_INTERVAL = 60000;
   private final String rootDir;
   private static final String START_TIME_KEY = MessageConsumerFactory.ABSOLUTE_START_TIME;
   private static final String START_FROM_STARTING_KEY = DatabusConsumerConfig.startOfStreamConfig;
   private static final int DEFAULT_TIMEOUT = 30;
 
-  private final Counter messagesProcessed;
+  private final Counter messagesProcessed, oldTuplesSkipped;
   private final Timer timeTakenPerRun, timeTakenDbUpdate;
   private final AuditDBHelper dbHelper;
 
@@ -160,8 +160,8 @@ public class AuditFeederService extends AuditDBService {
    */
   public AuditFeederService(String clusterName, String rootDir,
       ClientConfig config) throws IOException {
+    super(config);
     this.clusterName = clusterName;
-    this.config = config;
     this.rootDir = rootDir;
     dbHelper = new AuditDBHelper(config);
     consumer = getConsumer(config);
@@ -170,6 +170,8 @@ public class AuditFeederService extends AuditDBService {
     LOG.info("Messages per batch " + msgsPerBatch);
     messagesProcessed = AuditStats.metrics.counter(clusterName
         + ".messagesProcessed");
+    oldTuplesSkipped =
+        AuditStats.metrics.counter(clusterName + ".oldTuplesSkipped");
     timeTakenPerRun = AuditStats.metrics
         .timer(clusterName + ".timeTakenPerRun");
     timeTakenDbUpdate = AuditStats.metrics.timer(clusterName
@@ -399,7 +401,17 @@ public class AuditFeederService extends AuditDBService {
               continue;
             }
             Set<Tuple> tupleSet = new HashSet<Tuple>();
-            tupleSet.addAll(tuples.values());
+            Date nextRollupTime = getRollupTime();
+            for (Tuple tuple : tuples.values()) {
+              if (!tuple.getTimestamp().before(nextRollupTime)) {
+                tupleSet.add(tuple);
+              } else {
+                LOG.warn("Not adding tuple:" + tuple + "with timestamp:" +
+                    tuple.getTimestamp() + "as it is before " +
+                    "next rollup date:" + nextRollupTime);
+                oldTuplesSkipped.inc();
+              }
+            }
             final Timer.Context dbUpdate = timeTakenDbUpdate.time();
             try {
               if (dbHelper.update(tupleSet)) {
