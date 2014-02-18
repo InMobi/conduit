@@ -57,17 +57,21 @@ public class FileUtil {
         }
         compressedOut.write(msg);
         compressedOut.write("\n".getBytes());
-        compressedOut.flush();
       }
     } catch (Exception e) {
       LOG.error("Error in compressing ", e);
     } finally {
       IOUtils.cleanup(LOG, in);
-      if (compressedOut != null) {
-       compressedOut.close();
-      }
-      if (out != null) {
-        out.close();
+      try {
+        if (compressedOut != null) {
+         compressedOut.close();
+        }
+        if (out != null) {
+          out.close();
+        }
+      } catch (IOException exception) {
+        LOG.error("Could not close output-stream. ", exception);
+        throw exception;
       }
       CodecPool.returnCompressor(gzipCompressor);
     }
