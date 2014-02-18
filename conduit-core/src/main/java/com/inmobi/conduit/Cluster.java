@@ -93,6 +93,10 @@ public class Cluster {
     return hdfsUrl + File.separator + rootDir + File.separator;
   }
 
+  public String getReadUrlRootDir() {
+    return getReadUrl() + File.separator + rootDir + File.separator;
+  }
+
   public String getLocalFinalDestDirRoot() {
     String dest = hdfsUrl + File.separator + rootDir + File.separator
         + "streams_local" + File.separator;
