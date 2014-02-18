@@ -1,20 +1,19 @@
-var publisherLatency = 0, agentLatency = 0, collectorLatency = 0,
-hdfsLatency = 0, localLatency = 0, mergeLatency = 0, mirrorLatency = 0;
+var tierLatencyMap = {};
 
-function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency, meLatency, miLatency) {
-	console.log("setting latency values "+pLatency+","+aLatency+","+cLatency+","+hLatency+","+lLatency+","+meLatency+","+miLatency);
-  publisherLatency = pLatency;
-  agentLatency = aLatency;
-  collectorLatency = cLatency;
-  hdfsLatency = hLatency;
-  localLatency = lLatency;
-  mergeLatency = meLatency;
-  mirrorLatency = miLatency;
-  loadLatencySummary();
+function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency,
+  meLatency, miLatency) {
+  tierLatencyMap["publisher"] = pLatency;
+  tierLatencyMap["agent"] = aLatency;
+  tierLatencyMap["collector"] = cLatency;
+  tierLatencyMap["hdfs"] = hLatency;
+  tierLatencyMap["local"] = lLatency;
+  tierLatencyMap["merge"] = meLatency;
+  tierLatencyMap["mirror"] = miLatency;
+  //loadLatencySummary();
 }
 
 function addSummaryBox(treeList) {
-	console.log("adding summary box with isCountView:"+isCountView);
+  console.log("adding summary box with isCountView:" + isCountView);
   clearSummary();
   if (isCountView) {
     loadCountSummary(treeList);
@@ -24,7 +23,7 @@ function addSummaryBox(treeList) {
 }
 
 function loadLatencySummary() {
-	console.log("loading latency summary");
+  console.log("loading latency summary");
   document.getElementById("summaryPanel")
     .innerHTML = "";
   var div = document.createElement('div');
@@ -36,24 +35,15 @@ function loadLatencySummary() {
   div.appendChild(t);
   document.getElementById("summaryPanel")
     .appendChild(div);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Publisher",
-    publisherSla, publisherLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Agent",
-    agentSla, agentLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Collector",
-    collectorSla, collectorLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "HDFS",
-    hdfsSla, hdfsLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Local",
-    localSla, localLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Merge",
-    mergeSla, mergeLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Mirror",
-    mirrorSla, mirrorLatency);
+  for (var tier in tierLatencyMap) {
+    addTierLatencyDetailsToSummary(div, currentRow, tier, tierLatencySlaMap[
+      tier], tierLatencyMap[tier]);
+    currentRow++;
+  }
 }
 
 function loadCountSummary(treeList) {
-	console.log("loading count summary");
+  console.log("loading count summary");
   var publisherCount = 0,
     agentReceivedCount = 0,
     agentSentCount = 0,
@@ -103,7 +93,6 @@ function loadCountSummary(treeList) {
   div.appendChild(t);
   document.getElementById("summaryPanel")
     .appendChild(div);
-
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Publisher",
     publisherCount, 0, 0, false);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Agent",
@@ -114,7 +103,6 @@ function loadCountSummary(treeList) {
     hdfsCount, 0, collectorSentCount, false);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Local",
     localCount, 0, hdfsCount, false);
-
   var comparableLocalNum = getComparableCountValue("local", "merge", treeList);
   var comparableMergeNum = getComparableCountValue("merge", "mirror", treeList);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Merge",
@@ -136,7 +124,8 @@ function getComparableCountValue(sourceTier, targetTier, treeList) {
         topicList.source.forEach(function (cluster) {
           var isFound = false;
           for (var i = 0; i < rootNodes.length; i++) {
-            if (rootNodes[i].tier.equalsIgnoreCase(sourceTier) && rootNodes[i].clusterName == cluster) {
+            if (rootNodes[i].tier.equalsIgnoreCase(sourceTier) && rootNodes[
+              i].clusterName == cluster) {
               isFound = true;
               rootNodes[i].allreceivedtopicstats.forEach(function (stats) {
                 if (stats.topic == topic) {
@@ -155,7 +144,8 @@ function getComparableCountValue(sourceTier, targetTier, treeList) {
   return count;
 }
 
-function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency,  actualLatency) {
+function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency,
+  actualLatency) {
   var health;
   /*
     If expectedLatency = 1 and lossWarnThresholdDiff = 1 (minimum values),
@@ -170,7 +160,7 @@ function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency, 
   } else if (actualLatency <= expectedLatency - lossWarnThresholdDiff) {
     health = 0;
   } else if (actualLatency <= expectedLatency && actualLatency >
-  expectedLatency - lossWarnThresholdDiff) {
+    expectedLatency - lossWarnThresholdDiff) {
     health = 1;
   } else if (actualLatency > expectedLatency) {
     health = 2;
@@ -313,11 +303,4 @@ function getHealth(count1, count2) {
   } else {
     return 0;
   }
-}
-
-function clearSummary() {
-  document.getElementById("summaryPanel").innerHTML = "";
-  document.getElementById("summaryPanel").style.backgroundColor = "#EBF4F8";
-  document.getElementById("infoPanel").innerHTML = "";
-  document.getElementById("infoPanel").style.backgroundColor = "#EBF4F8";
 }

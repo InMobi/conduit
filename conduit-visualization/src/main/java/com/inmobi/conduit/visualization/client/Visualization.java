@@ -104,7 +104,7 @@ public class Visualization implements EntryPoint, ClickHandler {
       startTime = DateUtils.getPreviousDayString();
       endTime = DateUtils.incrementAndGetTimeAsAuditDateFormatString(startTime, 60);
       selectedTab = "1";
-      viewId = ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID;
+      viewId = ClientConstants.TOPOLOGY_TREND_VIEW_ID;
     } else {
       System.out.println("Retrieving parameters from URL");
       startTime = Window.Location.getParameter(ClientConstants.QUERY_FROM_TIME);
@@ -123,7 +123,7 @@ public class Visualization implements EntryPoint, ClickHandler {
         }
       }
       if (viewId == 0) {
-        viewId = ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID;
+        viewId = ClientConstants.TOPOLOGY_TREND_VIEW_ID;
       }
     }
     setSelectedParameterValues(startTime, endTime, cluster, stream, viewId);
@@ -348,17 +348,13 @@ public class Visualization implements EntryPoint, ClickHandler {
     for (String cluster : clusters) {
       clusterList.addItem(cluster);
     }
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 3; i++) {
       viewList.addItem("<Select View>");
     }
-    viewList.setItemText(ClientConstants.TOPOLOGY_VIEW_ID,
-        ClientConstants.TOPOLOGY_VIEW);
-    viewList.setItemText(ClientConstants.TIMELINE_VIEW_ID,
-        ClientConstants.TIMELINE_VIEW);
-    viewList.setItemText(ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID,
-        ClientConstants.TOPOLOGY_TIMELINE_VIEW);
-    viewList.setItemText(ClientConstants.CURRENT_TREND_VIEW_ID,
-        ClientConstants.CURRENT_TREND_VIEW);
+    viewList.setItemText(ClientConstants.TREND_VIEW_ID,
+        ClientConstants.TREND_VIEW);
+    viewList.setItemText(ClientConstants.TOPOLOGY_TREND_VIEW_ID,
+        ClientConstants.TOPOLOGY_TREND_VIEW);
     goButton.addClickHandler(this);
 
     streamsList.setHeight("20px");
@@ -408,8 +404,6 @@ public class Visualization implements EntryPoint, ClickHandler {
     disableFilterSelection();
     DOM.getElementById("topologyPanelContainer").getStyle().setDisplay(
         Style.Display.NONE);
-    DOM.getElementById("timelinePanelContainer").getStyle().setDisplay(
-        Style.Display.NONE);
     sendRequests(stTime, edTime, clusterList.getItemText(clusterList
         .getSelectedIndex()), streamsList.getItemText(streamsList
         .getSelectedIndex()), "1", viewList.getSelectedIndex());
@@ -429,24 +423,11 @@ public class Visualization implements EntryPoint, ClickHandler {
     System.out.println("Sending request with params start:" + stTime + " " +
         "end:" + edTime + " cluster:" + selectedCluster + " stream:" +
         selectedStream + " tab selected:" + selectedTabId);
-    clearAndShowLoadingSymbol();
     String clientJson = ClientDataHelper.getInstance()
         .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
-    boolean loadTopologyView = false, loadTimeLineView = false;
-    switch (viewId) {
-      case ClientConstants.TOPOLOGY_VIEW_ID:
-        loadTopologyView = true;
-        break;
-      case ClientConstants.TIMELINE_VIEW_ID:
-        loadTimeLineView = true;
-        break;
-      case ClientConstants.TOPOLOGY_TIMELINE_VIEW_ID:
-        loadTimeLineView = true;
-        loadTopologyView = true;
-        break;
-      default:
-        loadTimeLineView = true;
-        loadTopologyView = true;
+    boolean loadTopologyView = false;
+    if (viewId == ClientConstants.TOPOLOGY_TREND_VIEW_ID) {
+      loadTopologyView = true;
     }
     if (loadTopologyView) {
       DOM.getElementById("topologyPanelContainer").getStyle().setDisplay(
@@ -454,11 +435,8 @@ public class Visualization implements EntryPoint, ClickHandler {
       getTopologyData(clientJson);
       getTierLatencyData(clientJson);
     }
-    if (loadTimeLineView) {
-      DOM.getElementById("timelinePanelContainer").getStyle().setDisplay(
-          Style.Display.BLOCK);
-      getTimeLineData(clientJson);
-    }
+    getTimeLineData(clientJson);
+    clearAndShowLoadingSymbol(viewId);
   }
 
   public void getTopologyData(String clientJson) {
@@ -502,7 +480,6 @@ public class Visualization implements EntryPoint, ClickHandler {
       public void onSuccess(String result) {
         String timeLineJson = ClientDataHelper.getInstance()
             .getTimeLineJSONFromResponse(result);
-        System.out.println("JSON:"+timeLineJson);
         renderTimeLineGraph(timeLineJson);
         enableFilterSelection();
       }
@@ -621,8 +598,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     return true;
   }
 
-  private native void clearAndShowLoadingSymbol()/*-{
-    $wnd.clearSvgAndAddLoadSymbol();
+  private native void clearAndShowLoadingSymbol(int viewId)/*-{
+    $wnd.clearAllAndAddLoadSymbol(viewId);
   }-*/;
 
   private native void drawGraph(String result)/*-{
