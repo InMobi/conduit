@@ -59,7 +59,7 @@ public class FileUtil {
         compressedOut.write("\n".getBytes());
       }
     } catch (Exception e) {
-      LOG.error("Error in compressing ", e);
+      throw new IOException("Error in compressing ", e);
     } finally {
       IOUtils.cleanup(LOG, in);
       try {
