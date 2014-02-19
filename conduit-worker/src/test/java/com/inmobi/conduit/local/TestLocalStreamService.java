@@ -24,10 +24,12 @@ import com.inmobi.conduit.AbstractServiceTest;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.Conduit;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.PublishMissingPathsTest;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -273,8 +275,20 @@ public class TestLocalStreamService extends LocalStreamService implements
                 + prevcurrentFile + ".gz")));
             totalFileProcessedInRun++;
           }
-          
-          for (int j = 0; j < NUM_OF_FILES - 1; ++j) {
+
+          /*
+           * When it is processing on limited num of files (throttling) in a run then
+           * We should not check for all files as they may falls in different minute directories.
+           * we Should check only files which were processed in the last run are present in the
+           * latest/last directory of local stream.
+           */
+          int start = 0;
+          String filesPerStream = System.getProperty(ConduitConstants.FILES_PER_LOCAL_STREAM);
+          if (filesPerStream != null) {
+            start = ((NUM_OF_FILES - 1) / Integer.parseInt(filesPerStream)) * Integer.parseInt(filesPerStream);
+            totalFileProcessedInRun += start;
+          }
+          for (int j = start; j < NUM_OF_FILES - 1; ++j) {
             LOG.debug("Checking file in mapred Output [" + filesList.get(j)
                 + "]");
             Assert.assertTrue(fs.exists(new Path(streams_local_dir + "-"
