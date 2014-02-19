@@ -201,7 +201,7 @@ function highlightChildNodes(n, isLoadDefaultView) {
     } else {
       n.children.forEach(function (c) {
         totalaggregatechild += parseInt(c.aggregatemessagesreceived, 10);
-      });      
+      });
     }
     n.children.forEach(function (c) {
       var currentLink;
@@ -1174,13 +1174,18 @@ function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
           t.latencyList.forEach(function (l) {
             topicLateny.latencyList.push(new PercentileLatency(l.percentile,
               l.latency));
-            overallLatency.push(new PercentileLatency(l.percentile, l.latency));
           });
           allTopicsLatency.push(topicLateny);
           break;
         }
       }
     });
+    if (n.allTopicsLatency.length == 1) {
+      n.allTopicsLatency[0].latencyList.forEach(function (l) {
+        overallLatency.push(new PercentileLatency(l.percentile, l.latency));
+      });
+      n.overallLatency = overallLatency;
+    }
     n.streamSourceList.forEach(function (s) {
       var topic = s.topic;
       for (var i = 0; i < streams.length; i++) {
@@ -1200,7 +1205,6 @@ function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
     n.allreceivedtopicstats = newReceivedStats;
     n.allsenttopicstats = newSentStats;
     n.allTopicsLatency = allTopicsLatency;
-    n.overallLatency = overallLatency;
     n.streamSourceList = topicSourceList;
     n.source = allSourceList;
   });
