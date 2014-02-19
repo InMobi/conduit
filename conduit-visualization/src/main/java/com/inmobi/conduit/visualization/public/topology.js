@@ -76,8 +76,8 @@ function buildNodeList() {
         };
         aggCollectorNodeList.push(aggNodeObj);
       }
-      aggNodeObj.received += node.aggregatemessagesreceived;
-      aggNodeObj.sent += node.aggregatemessagesent;
+      aggNodeObj.received += parseInt(node.aggregatemessagesreceived, 10);
+      aggNodeObj.sent += parseInt(node.aggregatemessagesent, 10);
     }
     n.receivedtopicStatsList.forEach(function (t) {
       if (t.hostname !== undefined)
@@ -150,38 +150,58 @@ function highlightChildNodes(n, isLoadDefaultView) {
   } else {
     if (n.tier.equalsIgnoreCase("vip") && isVipNodeHighlighed &&
       isLoadDefaultView) {
+      //Return without further action if vip is already highlighted since
+      //all collectors have same vip as child and same part of tree is
+      //highlighted multiple times if not returned here
       return;
     }
     var totalaggregatechild = 0;
     var totalaggregateparent = 0;
-    totalaggregateparent = n.aggregatemessagesreceived;
-    n.children.forEach(function (c) {
-      totalaggregatechild += parseInt(c.aggregatemessagesreceived, 10);
-    });
-    if (n.tier.equalsIgnoreCase("vip") || n.tier.equalsIgnoreCase("local") || n
-      .tier.equalsIgnoreCase("merge")) {
-      if (n.children.length === 0) {
-        for (var i = 0; i < rootNodes.length; i++) {
-          if (rootNodes[i].tier.equalsIgnoreCase(n.tier) && rootNodes[i].clusterName ==
-            n.clusterName) {
-            n = rootNodes[i];
-            break;
-          }
+    totalaggregateparent = parseInt(n.aggregatemessagesreceived, 10);
+    if ((n.tier.equalsIgnoreCase("vip") || n.tier.equalsIgnoreCase("local")
+    || n.tier.equalsIgnoreCase("merge")) && n.children.length === 0) {
+      for (var i = 0; i < rootNodes.length; i++) {
+        if (rootNodes[i].tier.equalsIgnoreCase(n.tier) && rootNodes[i].clusterName ==
+          n.clusterName) {
+          n = rootNodes[i];
+          break;
         }
       }
       if (n.children.length == 0) {
+        // Even after replacing n with non-dummy node it has no
+        //children which indicates that tree stops at this point
         return;
       }
-      n.children.forEach(function (c) {
-        totalaggregatechild += parseInt(c.aggregatemessagessent, 10);
-      });
-    } else if (n.tier.equalsIgnoreCase("collector")) {
+    }
+    if (n.tier.equalsIgnoreCase("collector")) {
       for (var i = 0; i < aggCollectorNodeList.length; i++) {
         if (aggCollectorNodeList[i].clusterName == n.clusterName) {
           totalaggregateparent = aggCollectorNodeList[i].received;
           break;
         }
       }
+    }
+    if (n.tier.equalsIgnoreCase("mirror") || n.tier.equalsIgnoreCase("merge")) {
+      n.streamSourceList.forEach(function (s) {
+        var currentStream = s.topic;
+        s.source.forEach(function (c) {
+          for (var i = 0; i < n.children.length; i++) {
+            if (n.children[i].clusterName == c) {
+              for (var j = 0; j < n.children[i].allreceivedtopicstats.length; j++) {
+                if (n.children[i].allreceivedtopicstats[j].topic == currentStream) {
+                  totalaggregatechild += n.children[i].allreceivedtopicstats[j].messages;
+                  break;
+                }
+              }
+              break;
+            }
+          }
+        });
+      });
+    } else {
+      n.children.forEach(function (c) {
+        totalaggregatechild += parseInt(c.aggregatemessagesreceived, 10);
+      });      
     }
     n.children.forEach(function (c) {
       var currentLink;
@@ -1016,7 +1036,7 @@ function addColorsToNodes() {
       if (d.tier.toLowerCase().equalsIgnoreCase("collector") || d.tier
         .toLowerCase().equalsIgnoreCase("agent")) {
         if (isCountView) {
-          if (d.aggregatemessagesent < d.aggregatemessagesreceived) {
+          if (parseInt(d.aggregatemessagesent, 10) < parseInt(d.aggregatemessagesreceived, 10)) {
             color = "#ff0000";
           } else {
             color = tierColorMap[d.tier.toLowerCase()];
@@ -1650,7 +1670,6 @@ function loadGraph(streamName, clusterName) {
 function drawGraph(result) {
   fullTreeList.length = 0;
   aggCollectorNodeList.length = 0;
-  console.log("topology result:" + result);
   jsonresponse = JSON.parse(result);
   clearHistory();
   buildNodeList();
