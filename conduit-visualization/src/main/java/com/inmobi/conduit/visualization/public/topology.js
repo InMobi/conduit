@@ -1699,7 +1699,7 @@ function getTreeList(streamName, clusterName) {
     if (fullTreeList.length != 0) {
       var clusterList = [];
       var streams = [];
-      var mirrorSourceList;
+      var mirrorSourceList = [];
       var mergeSourceList = [];
       for (var i = 0; i < fullTreeList.length; i++) {
         var l = fullTreeList[i];
@@ -1708,10 +1708,21 @@ function getTreeList(streamName, clusterName) {
             var clonedNode = cloneNode(nodeInCluster);
             if (clonedNode.tier.equalsIgnoreCase("merge") || clonedNode.tier.equalsIgnoreCase(
               "mirror")) {
-              if (clonedNode.tier.equalsIgnoreCase("mirror")) {
+              var isPresent = false;
+              if (streamName.equalsIgnoreCase("all")) {
+                isPresent = true;
+              } else {
+                for (var j = 0; j < clonedNode.streamSourceList.length; j++) {
+                  if(clonedNode.streamSourceList[j].topic == streamName) {
+                    isPresent = true;
+                    break;
+                  }
+                }
+              }
+              if (clonedNode.tier.equalsIgnoreCase("mirror") && isPresent) {
                 mirrorSourceList = clonedNode.source;
               }
-              if (clonedNode.tier.equalsIgnoreCase("merge")) {
+              if (clonedNode.tier.equalsIgnoreCase("merge") && isPresent) {
                 clonedNode.source.forEach(function (s) {
                   if (!mergeSourceList.contains(s) && s != clusterName) {
                     mergeSourceList.push(s);
