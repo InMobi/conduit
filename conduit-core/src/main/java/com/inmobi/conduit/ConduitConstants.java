@@ -41,5 +41,6 @@ public interface ConduitConstants {
   public static final String AUDIT_ENABLED_KEY = "audit.enabled";
   public static final String AUDIT_COUNTER_GROUP = "audit";
   public static final String AUDIT_COUNTER_NAME_DELIMITER = "#";
-  public static final String FILES_PER_LOCAL_STREAM = "com.inmobi.conduit.filesPerLocalStream";
+  public static final String FILES_PER_LOCAL_STREAM = "com.inmobi.conduit."
+      + "filesPerLocalStream";
 }

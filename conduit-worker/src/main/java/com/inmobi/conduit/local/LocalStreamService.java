@@ -76,7 +76,8 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
-  private int FILES_PER_LOCAL_STREAM = 10;
+  private int FILES_PER_LOCAL_STREAM = 60;
+  private int filesPerCollector;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -360,6 +361,7 @@ public class LocalStreamService extends AbstractService implements
       } catch (FileNotFoundException ex) {
         collectors = new FileStatus[0];
       }
+      filesPerCollector = getNumOfFilesPerCollector(collectors.length);
       for (FileStatus collector : collectors) {
         TreeMap<String, FileStatus> collectorPaths = new TreeMap<String, FileStatus>();
         // check point for this collector
@@ -399,7 +401,7 @@ public class LocalStreamService extends AbstractService implements
         
         Iterator<FileStatus> it = sortedFiles.iterator();
         int numberOfFilesProcessed = 0;
-        while (it.hasNext() && numberOfFilesProcessed < FILES_PER_LOCAL_STREAM) {
+        while (it.hasNext() && numberOfFilesProcessed < filesPerCollector) {
           FileStatus file = it.next();
           LOG.debug("Processing " + file.getPath());
           if (processFile(file, currentFile, checkPointValue, fs, results,
@@ -411,6 +413,13 @@ public class LocalStreamService extends AbstractService implements
         populateCheckpointPathForCollector(checkpointPaths, collectorPaths);
       } // all files in a collector
     }
+  }
+
+  private int getNumOfFilesPerCollector(int numOfCollectors) {
+    if (numOfCollectors != 0) {
+      return (FILES_PER_LOCAL_STREAM / numOfCollectors);
+    }
+    return 0;
   }
 
   private boolean processFile(FileStatus file, String currentFile,
