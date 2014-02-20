@@ -358,7 +358,7 @@
   <scm>
     <connection>scm:git:https://github.com/InMobi/conduit.git</connection>
     <url>https://github.com/InMobi/conduit</url>
-    <developerConnection>scm:git:git@github.corp.inmobi.com:ritwik-saikia/conduit.git</developerConnection>
+    <developerConnection>scm:git:https://github.com/InMobi/conduit.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
