@@ -1,0 +1,63 @@
+
+h1 {
+color: #CC0000;
+}
+
+h2 {
+background-color: #f2f2f2;
+color: DarkBlue;
+font-size: x-large;
+}
+
+h3 {
+background-color: #f2f2f2;
+color: DarkBlue;
+font-size: large;
+}
+
+h4 {
+background-color: #f2f2f2;
+color: DarkBlue;
+font-size: medium;
+}
+
+h5 {
+background-color: #f2f2f2;
+color: DarkBlue;
+font-size: small;
+}
+
+th {
+background-color: #bbb;
+color: #369;
+}
+
+body {
+font-size: medium;
+border: 1px solid #FFFFFF;
+background-color: ##FFFFFF;
+margin-top: 7px;
+margin-bottom: 2px;
+padding-top: 2px;
+padding-left: 2px;
+color: #000000;
+text-decoration-color: red;
+outline-color:#660000;
+}
+
+#leftColumn {
+ background-color: #eee;
+ color: #000;
+ border-right: 1px solid #aaa;
+ border-bottom: 1px solid #aaa;
+ border-top: 1px solid #fff;
+ padding-bottom: 2px; /* IE-9 scrollbar-fix */
+ font-size: medium;
+}
+
+#navcolumn li {
+list-style-type: none;
+list-style-position: outside;
+line-height: 1.2em;
+font-size: medium;
+}

@@ -1,0 +1,29 @@
+<project>
+ <body>
+    <menu name="Conduit" >
+      <item name="Conduit" href="index.html" />
+      <item name="Overview" href="developer/Overview.html" />
+      <item name="Design" href="developer/Design.html" />
+      <item name="Dev setup" href="developer/DevSetup.html" />
+      <item name="ConduitLite" href="developer/ConduitLite.html" />
+      <item name="Audit" href="developer/Audit.html" />
+      <item name="Visualization" href="developer/Visualization.html"/>
+      <item name="Admin Script" href="developer/AdminScript.html" />
+    </menu>
+
+    <menu ref="modules" />
+    <breadcrumbs>
+      <item name="InMobi" href="http://github.com/inmobi/" />
+      <item name="Conduit" href="http://github.com/inmobi/conduit"/>
+    </breadcrumbs>
+  </body>
+  <skin>
+    <groupId>org.apache.maven.skins</groupId>
+    <artifactId>maven-classic-skin</artifactId>
+    <version>1.1</version>
+  </skin>
+  <poweredBy>
+    <logo name="inmobi" href="http://www.inmobi.com/"
+          img="../images/inmobi-logo.jpg"/>
+  </poweredBy>
+</project>

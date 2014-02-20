@@ -3,7 +3,7 @@
 
 ---+++ Hadoop Setup
 
-Hadoop on Conduitdev1 and Conduitdev2 was setup using the instructions found in Cloudera [[https://ccp.cloudera.com/display/CDHDOC/CDH3+Deployment+on+a+Cluster][Document]].
+Hadoop on cluster was setup using the instructions found in Cloudera [[https://ccp.cloudera.com/display/CDHDOC/CDH3+Deployment+on+a+Cluster][Document]].
 
 Both dev1 and dev2 machines have
 
@@ -28,7 +28,7 @@ NameNode can be started using "<strong><em>sudo service hadoop-0.20-namenode sta
 DataNodes can be started using "<em><strong>sudo service hadoop-0.20-datanode start</strong></em>" and services for other 2 are hadoop-0.20-datanode2 and hadoop-0.20-datanode3
 ---+++ Scribe setup
 
-Scribe is setup using apt repository apt-get install scribe-service-hdfs-orig package. This installs the scribe binary in location /usr/bin.
+Install scribe-service-hdfs-orig package. This installs the scribe binary in location /usr/bin.
 
 1. We have a wrapper script which sets the hadoop library class path present in /usr/bin/scribe.sh which should be run in background
 
@@ -63,13 +63,13 @@ Logs are written to the cwd where conduit is started in the above case /var/log/
 NOTE : PLEASE START CONDUIT AS "conduit" USER
 ---+++ Exception Cron Job
 
-We have an entry in /etc/crontab which runs every 15 mins grepping /var/log/conduit/conduit.log for any exceptions. The script is written in python and can be found in /etc/sendmail.py(Attached here in twiki)
+We have an entry in /etc/crontab which runs every 15 mins grepping /var/log/conduit/conduit.log for any exceptions. The script is written in python and can be found <a href="../sendmail.py"> here </a>
 
 1. greps for any exception in logs if found gets the stacktrace from next few statements, caches all the necessary lines
 
 2. checkpoints the file so that same exceptions are not sent again.
 
-3. constructs email using email library in python and adds the caches lines and attaches conduit.log to the email to platform-engg@
+3. constructs email using email library in python and adds the caches lines and attaches conduit.log to the email to user@
 
 ---+++ Changing open file handle count
 

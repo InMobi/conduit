@@ -1,4 +1,6 @@
 
+---+ Overview
+
 ---+++ What is Conduit used for
 
    * High throughput, distributed streaming event collection at scale conforming to latencies by conduit. Read the DISCLAIMER below for you need to be extra vigilant using Conduit
@@ -10,7 +12,6 @@
 
    * Conduit supports consuming data for near real time latiences using message consumer library.
    * Latiences within datacenters are upto 10 sec
-   * Latiences across datacenters have to be taken on a case-by-case basis by discussing with NET-OPS and enabling QOS on ports
 ---+++ Batch Consumer Latencies/SLA's
 
    * 2-3 mins for data in local cluster

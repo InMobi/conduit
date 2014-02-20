@@ -23,20 +23,7 @@ Data Transport between Producers and Consumers.
       * Consumers are expected to consume the data within certain SLA, after which ALL data is purged
    * Batching semantics 
       * Consumer decide their own batching semantics &ndash;Same data stream can be used by multiple consumers with different needs
----+++ Users
-   * All event data consuming systems 
-      * Reporting
-      * Monetization
-      * AdServ ?
-   * All event data producing systems (as dependency) 
-      * Adserv
-      * Click
-      * Beacon
-      * Monetization
-<img width="620" alt="Conduit_pict1.png" src="./../images/Conduit_pict1.png" title="Conduit_pict1.png" height="400" />
 ---+++ Technology Evaluation
-
-FLUME, KAFKA and Scribe have been evaluated. Details - <a href= "../DataTransportTechnology.pptx">here</a>
 
 Details on Scribe setup/scenarios/usecases - [[ScribeArch][ScribeArch]]
 ---+++ Design
@@ -45,6 +32,8 @@ Scribe Agents on each producer node. Producer application log messages using API
 
 <img width="631" alt="Conduit_pict2.png" src="./../images/Conduit_pict2.png" title="Conduit_pict2.png" height="400" />
 
+Producer-1, Producer-2 and Producer-3 are the producers of the Conduit and Consumer-1, Consumer-2 and Consumer-3 are the consumers of the Cconduit.
+Producer-1 publishes messages to A_1 and B_1 categories to conduit, Producer-2 publishes messages to A_2 category and Produce-3 publishes the messages to B_3 caterogty/stream. Consumer-1 is only pulling the data from only A_1 stream, Consumer-2 is pulling the data from B_1 and Consumer-3 is pulling the data from A_2 and B_3 streams. 
 ---+++ Salient Features
 
    1. Data compression: All data is kept in compressed form in HDFS. All cross dc transfers are of compressed data.

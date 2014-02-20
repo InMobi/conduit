@@ -21,4 +21,4 @@ Note:
    1. If you want to use *S3N FileSystem*, change the above to s3n i.e change to s3n://BUCKET , fs.s3n.awsAccessKeyId and fs.s3n.awsSecretAccessKey
    1. S3 filesystem requires you to dedicate a bucket for the filesystem - you should not use an existing bucket containing files, or write other files to the same bucket.
 
-I had to pass the complete S3 url with Access and Secret Keys in hdfsurl definition of <cluster>
+ Pass the complete S3 url with Access and Secret Keys in hdfsurl definition of <cluster>

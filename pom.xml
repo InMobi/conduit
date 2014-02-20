@@ -372,6 +372,11 @@
       <id>conduit-site</id>
       <url>https://raw.github.com/InMobi/conduit-site/master</url>
     </site>
+    <repository>
+      <id>InMobiRepository</id>
+      <name>InMobi Repository</name>
+      <url>https://github.com/InMobi/mvn-repo/raw/master/releases</url>
+    </repository>
   </distributionManagement>
 
   <issueManagement>

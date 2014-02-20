@@ -1,28 +1,28 @@
 
----+++ Conduit World
+---+++ Overview
 
-   * [[./developer/ConduitWorld][Conduit World]]
----+++ Conduit Design
-   * [[./developer/ConduitDesign][Conduit Design]]
+   * [[./developer/Overview][Overview]]
+---+++ Design
+   * [[./developer/Design][Design]]
 
----+++ Installing Conduit
+---+++ Dev Setup
    * [[./developer/InstallingConduit][Installing Conduit]]
 
-   * [[./developer/ConduitDevSetup][Conduit dev setup]]
----+++ Conduit Test Coverage
+   * [[./developer/DevSetup][Dev setup]]
+---+++ Test Coverage
 
-   * [[./developer/ConduitTestCoverage][Conduit Test Coverage]]
+   * [[./developer/TestCoverage][Test Coverage]]
 ---+++ Conduit Lite
    * [[./developer/ConduitLite][Conduit Lite]]
----+++ Conduit Audit
-   * [[./developer/AuditFeature][Audit Feature]]
----+++ Conduit Visualization
-   * [[./developer/ConduitVisualization][Conduit Visualization]]
----+++ Conduit Admin Script
+---+++ Audit
+   * [[./developer/Audit][Audit Feature]]
+---+++ Visualization
+   * [[./developer/Visualization][Visualization]]
+---+++ Admin Script
 
-   * [[./developer/ConduitAdminScript][Admin Script]]
----+++ Conduit FAQ
+   * [[./developer/AdminScript][Admin Script]]
+---+++ FAQ
 
-   1. Issues faced/solutions during integration can be found [[./developer/ConduitFAQ][here]]
+   1. Issues faced/solutions during integration can be found [[./developer/FAQ][here]]
 <span style="color: #0000ff;"><span style="text-decoration: underline;"> </span></span>
 

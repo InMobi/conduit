@@ -19,7 +19,6 @@
    1. traffic to both of them
    1. failure in distcp job because the actual data doesn't exist
    1. doLocalCommit stage failure in merged stream service by changing the permissions of actual destination
-   1. doMirroredConsumerPathsCommit to fail by changing permissions of /conduit/system/consumers/ directory
    1. do FinalCommit failure by again changing permissions of the right folder.
 
 ---+++ MirrorStream 
