@@ -369,7 +369,7 @@
   <distributionManagement>
     <site>
       <id>conduit-site</id>
-      <url>https://raw.github.com/InMobi/conduit-site/master</url>
+      <url>https://inmobi.github.io/conduit/</url>
     </site>
     <repository>
       <id>InMobiRepository</id>
