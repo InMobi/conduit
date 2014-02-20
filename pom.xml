@@ -8,7 +8,6 @@
   <name>Conduit</name>
   <version>2.2.8-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Conduit</name>
   <description>Yet another streaming data transport system.</description>
   <url>https://github.com/InMobi/conduit</url>
 
