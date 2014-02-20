@@ -20,6 +20,7 @@ tierColorMap["local"] = "#AE8886";
 tierColorMap["merge"] = "#FB6183";
 tierColorMap["mirror"] = "#8E4804";
 var tierLatencySlaMap = {};
+var currentStream, currentCluster;
 String.prototype.equalsIgnoreCase = function (s) {
   return s.toLowerCase() == this.toLowerCase();
 }
@@ -75,6 +76,8 @@ function saveHistory(changeParams, streamName, clusterName, tier,
   selectedTabID, viewId, start, end) {
   console.log("save history with stream:" + streamName + "cluster:" +
     clusterName + "start:" + start + " end:" + end);
+  currentStream = streamName;
+  currentCluster = clusterName;
   if (changeParams) {
     console.log("change parameters of url");
     qstart = start;

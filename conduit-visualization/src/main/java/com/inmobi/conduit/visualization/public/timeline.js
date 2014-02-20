@@ -770,7 +770,7 @@ function appendTierButtonPanel() {
         .style("width", "110px")
         .style("margin-top", "8px");
       clearTrendSVG();
-      saveHistoryAndReload("all", "all", d.toLowerCase());
+      saveHistoryAndReload(currentStream, currentCluster, d.toLowerCase());
     })
     .style("background-color", function (d) {
       return tierColorMap[d.toLowerCase()];
