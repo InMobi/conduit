@@ -43,13 +43,24 @@ Please note that the S3NativeCopyMapper works with S3N filesystem.
 Here are the results of various benchmarking tests done on EC2 cluster:
 ---+++ Latency
 
+Run benchmarks
+
+============
+Mean Latency
+============
+
+   1. Collector Benchmark   44900 ms
+   1. Local Benchmark       206291 ms
+   1. Merge Benchmark       293522 ms
+   1. Mirror Benchmark      327832 ms
+
 Notes:
 
-   1. The above test covers the scenario of scribe collector writing to S3 bucket and conduit local/merge/mirror stream services processing files in S3. Latency is calculated by different consumers that read data written by collector/local/merge/mirror stream writers.
+  n 1. The above test covers the scenario of scribe collector writing to S3 bucket and conduit local/merge/mirror stream services processing files in S3. Latency is calculated by different consumers that read data written by collector/local/merge/mirror stream writers.
    1. Merge/mirror stream is configured across different regions.
    1. This test finds the *mean latency* (average latency to read all messages). In general, the order of mean latency (for collector/local/merge/mirror) is *(<1 min/3-4 min/4-5 min/5-6 min)*.
    1. This test does not cover *percentile latency*. However it should be possible to find percentile latency by using conduit audit feature exposed through audit dashboard. Please refer to [[ConduitVisualization][Conduit visualization]] for more details.
-
+ 
 ---+++ Throughput
 
 A) Refer to *producer/agent/collector throughput*  <a href="../ConduitLitePerfromanceOnAWS.pdf"> results </a>.

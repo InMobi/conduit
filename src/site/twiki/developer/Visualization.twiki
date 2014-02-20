@@ -37,7 +37,7 @@ Hadoop home path should be set in /var/lib/tomcat7/bin/setenv.sh file which is c
 |percentage.for.warn| The percentage that is to be taken as warn margin. If difference between numbers of two to-be compared entities is more than percentage.for.warn of the compared-to entity then the entity is considered to be in *warning* state. <p> </p> Note: percentage.for.warn should be less than percentage.for.loss | 0.02 |
 |max.start.time | The maximum start time before which a start date cannot be selected in the filter. The date should be entered in the format of dd-MM-yyyy|01-08-2013 <p> </p>Date before 01-08 say 31-07 cannot be selected in the date filter of dashboard.|
 |max.time.range.interval.in.hours | The maximum time range in hours that user can query for in the dashboard. | 24 |
-|loss.warn.threshold.diff.in.mins | Difference in minutes for loss SLA and warn SLA . The difference is the same for all tiers. |1 <p> </p> For hdfs tier, if hdfs.sla = 3, then if latency >3, it is considered to be in *unhealthy* state. If latency <=3 and latency > 3-(loss.warn.threshold.diff.in.mins) then it is in *warn* state, and healthy if *latency* <= 3-(loss.warn.threshold.diff.in.mins)|
+|loss.warn.threshold.diff.in.mins | Difference in minutes for loss SLA and warn SLA . The difference is the same for all tiers. | For hdfs tier, if hdfs.sla = 3, then if latency >3, it is considered to be in *unhealthy* state. If latency <=3 and latency > 3-(loss.warn.threshold.diff.in.mins) then it is in *warn* state, and healthy if *latency* <= 3-(loss.warn.threshold.diff.in.mins)|
 *Note*: tomcat should be restarted for dashboard to reflect changes made to config files
 ---+++ Logs
 
