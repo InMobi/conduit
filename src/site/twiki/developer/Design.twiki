@@ -31,6 +31,7 @@ Details on Scribe setup/scenarios/usecases - [[ScribeArch][ScribeArch]]
 Scribe Agents on each producer node. Producer application log messages using API which will write to the local scribe agent. Local scribe agent forward message to Scribe collectors. Scribe collectors writes to HDFS. Consumers pull data directly from HDFS.
 
 <img width="631" alt="Conduit_pict2.png" src="./../images/Conduit_pict2.png" title="Conduit_pict2.png" height="400" />
+
 Producer-1, Producer-2 and Producer-3 are the producers of the Conduit and Consumer-1, Consumer-2 and Consumer-3 are the consumers of the Cconduit.
 Producer-1 publishes messages to A_1 and B_1 categories to conduit, Producer-2 publishes messages to A_2 category and Produce-3 publishes the messages to B_3 caterogty/stream. Consumer-1 is only pulling the data from only A_1 stream, Consumer-2 is pulling the data from B_1 and Consumer-3 is pulling the data from A_2 and B_3 streams. 
 ---+++ Salient Features

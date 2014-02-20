@@ -1,3 +1,4 @@
+
 h1 {
 color: #CC0000;
 }
@@ -30,6 +31,7 @@ th {
 background-color: #bbb;
 color: #369;
 }
+
 body {
 font-size: medium;
 border: 1px solid #FFFFFF;
@@ -41,4 +43,21 @@ padding-left: 2px;
 color: #000000;
 text-decoration-color: red;
 outline-color:#660000;
+}
+
+#leftColumn {
+ background-color: #eee;
+ color: #000;
+ border-right: 1px solid #aaa;
+ border-bottom: 1px solid #aaa;
+ border-top: 1px solid #fff;
+ padding-bottom: 2px; /* IE-9 scrollbar-fix */
+ font-size: medium;
+}
+
+#navcolumn li {
+list-style-type: none;
+list-style-position: outside;
+line-height: 1.2em;
+font-size: medium;
 }

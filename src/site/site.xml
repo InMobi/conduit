@@ -13,8 +13,8 @@
 
     <menu ref="modules" />
     <breadcrumbs>
-      <item name="InMobi" href="http://github.com/inmobi/conduit" />
-      <item name="Conduit" href="index.html"/>
+      <item name="InMobi" href="http://github.com/inmobi/" />
+      <item name="Conduit" href="http://github.com/inmobi/conduit"/>
     </breadcrumbs>
   </body>
   <skin>
@@ -22,4 +22,8 @@
     <artifactId>maven-classic-skin</artifactId>
     <version>1.1</version>
   </skin>
+  <poweredBy>
+    <logo name="inmobi" href="http://www.inmobi.com/"
+          img="../images/inmobi-logo.jpg"/>
+  </poweredBy>
 </project>
