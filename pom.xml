@@ -8,7 +8,6 @@
   <name>Conduit</name>
   <version>2.2.8-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Conduit</name>
   <description>Yet another streaming data transport system.</description>
   <url>https://github.com/InMobi/conduit</url>
 
@@ -370,7 +369,7 @@
   <distributionManagement>
     <site>
       <id>conduit-site</id>
-      <url>https://raw.github.com/InMobi/conduit-site/master</url>
+      <url>https://inmobi.github.io/conduit/</url>
     </site>
     <repository>
       <id>InMobiRepository</id>
