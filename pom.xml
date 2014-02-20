@@ -1,38 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-  <properties>
-    <excluded.testng.groups>integration</excluded.testng.groups>
-    <messaging-client-version>4.0.3</messaging-client-version>
-  </properties>
 
   <groupId>com.inmobi.conduit</groupId>
   <artifactId>conduit-parent</artifactId>
   <name>Conduit</name>
   <version>2.2.8-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <name>Conduit</name>
+  <description>Yet another streaming data transport system.</description>
+  <url>https://github.com/InMobi/conduit</url>
 
-  <parent>
-    <artifactId>inmobi-master-pom</artifactId>
-    <groupId>com.inmobi</groupId>
-    <version>1.0.1</version>
-  </parent>
+  <modules>
+    <module>conduit-core</module>
+    <module>conduit-distcp</module>
+    <module>conduit-worker</module>
+    <module>conduit-dist</module>
+    <module>conduit-audit</module>
+    <module>conduit-visualization</module>
+  </modules>
 
-  <scm>
-    <connection>scm:git:https://github.corp.inmobi.com/platform/conduit.git</connection>
-    <url>https://github.corp.inmobi.com/platform/conduit</url>
-    <developerConnection>scm:git:https://github.corp.inmobi.com/platform/conduit.git</developerConnection>
-    <tag>HEAD</tag>
-  </scm>
-
-  <repositories>
-    <repository>
-      <id>releases</id>
-      <name>Releases</name>
-      <url>http://maven.scm.corp.inmobi.com/content/repositories/releases/</url>
-    </repository>
-  </repositories>
+  <properties>
+    <excluded.testng.groups>integration</excluded.testng.groups>
+    <messaging-client-version>4.0.3</messaging-client-version>
+  </properties>
 
   <profiles>
     <!-- added for cdh4 update -->
@@ -137,12 +129,12 @@
         <version>${messaging-client-version}</version>
         <type>jar</type>
       </dependency>
-     <dependency>
-      <groupId>com.inmobi.messaging</groupId>
-      <artifactId>messaging-client-scribe</artifactId>
-      <version>${messaging-client-version}</version>
-      <scope>runtime</scope>
-    </dependency>
+      <dependency>
+        <groupId>com.inmobi.messaging</groupId>
+        <artifactId>messaging-client-scribe</artifactId>
+        <version>${messaging-client-version}</version>
+        <scope>runtime</scope>
+      </dependency>
       <dependency>
         <groupId>com.inmobi.messaging</groupId>
         <artifactId>messaging-client-core</artifactId>
@@ -227,7 +219,7 @@
         <version>${hadoop-distcp.version}</version>
         <scope>provided</scope>
       </dependency>
-       <!-- metrics -->
+      <!-- metrics -->
       <dependency>
         <groupId>com.codahale.metrics</groupId>
         <artifactId>metrics-servlets</artifactId>
@@ -251,6 +243,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
@@ -278,7 +271,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.12</version>
         <configuration>
-          <excludedGroups>${excluded.testng.groups}</excludedGroups> 
+          <excludedGroups>${excluded.testng.groups}</excludedGroups>
           <forkedProcessTimeoutInSeconds>7200</forkedProcessTimeoutInSeconds>
         </configuration>
       </plugin>
@@ -287,25 +280,160 @@
         <artifactId>maven-release-plugin</artifactId>
         <version>2.2</version>
       </plugin>
-    </plugins>
+<plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.doxia</groupId>
+            <artifactId>doxia-module-twiki</artifactId>
+            <version>1.5<!-- doxia version appropriate to the site plugin version --></version>
+          </dependency>
+        </dependencies>
+      </plugin>   
+ </plugins>
   </build>
 
   <reporting>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+          </reportSet>
+          <reportSet>
+            <id>aggregate</id>
+            <inherited>false</inherited>
+            <reports>
+              <report>aggregate</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.0.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>2.5.3</version>
+      </plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>cobertura-maven-plugin</artifactId>
+        <version>2.5.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.7</version>
+        <configuration>
+          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+        </configuration>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>index</report>
+              <report>summary</report>
+              <report>modules</report>
+              <report>issue-tracking</report>
+              <report>scm</report>
+              <report>cim</report>
+              <report>dependencies</report>
+              <report></report>
+            </reports>
+          </reportSet>
+        </reportSets>
       </plugin>
     </plugins>
   </reporting>
 
-  <modules>
-    <module>conduit-core</module>
-    <module>conduit-worker</module>
-    <module>conduit-dist</module>
-    <module>conduit-audit</module>
-    <module>conduit-visualization</module>
-    <module>conduit-distcp</module>
-  </modules>
+  <scm>
+    <connection>scm:git:https://github.com/InMobi/conduit.git</connection>
+    <url>https://github.com/InMobi/conduit</url>
+    <developerConnection>scm:git:git@github.corp.inmobi.com:ritwik-saikia/conduit.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <organization>
+    <name>InMobi</name>
+    <url>https://github.com/InMobi</url>
+  </organization>
+
+  <distributionManagement>
+    <site>
+      <id>conduit-site</id>
+      <url>https://raw.github.com/InMobi/conduit-site/master</url>
+    </site>
+    <repository>
+      <id>InMobiRepository</id>
+      <name>InMobi Repository</name>
+      <url>https://github.com/InMobi/mvn-repo/raw/master/releases</url>
+    </repository>
+  </distributionManagement>
+
+  <issueManagement>
+    <system>Github</system>
+    <url>https://github.com/InMobi/conduit/issues</url>
+  </issueManagement>
+
+  <ciManagement>
+    <system>Travis</system>
+    <url>https://travis-ci.org/InMobi/conduit</url>
+  </ciManagement>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <repositories>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>inmobi-external</id>
+      <url>https://raw.github.com/InMobi/mvn-repo/master/releases</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>inmobi-external-thirdparty</id>
+      <url>https://raw.github.com/InMobi/mvn-repo/master/thirdparty</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
+    </repository>
+  </repositories>
 
 </project>

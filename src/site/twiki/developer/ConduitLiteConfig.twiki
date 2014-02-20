@@ -1,0 +1,24 @@
+---+++ Configuration Changes for S3/S3N
+   1. Add the following to hadoop core-site.xml for S3 FileSystem
+      <verbatim>
+        <property>
+          <name>fs.default.name</name>
+          <value>s3://BUCKET</value>
+        </property> 
+        <property> 
+          <name>fs.s3.awsAccessKeyId</name> 
+          <value>ID</value> 
+        </property> 
+        <property> 
+          <name>fs.s3.awsSecretAccessKey</name> 
+          <value>SECRET</value> 
+        </property
+      </verbatim>
+   1. Modify the file_path in scribe.conf to s3:// or s3n:// as applicable
+   1. Also modify the hdfsurl in <cluster></cluste> of conduit.xml to s3://<BUCKET_NAME> or s3n://<BUCKET_NAME>
+Note:
+
+   1. If you want to use *S3N FileSystem*, change the above to s3n i.e change to s3n://BUCKET , fs.s3n.awsAccessKeyId and fs.s3n.awsSecretAccessKey
+   1. S3 filesystem requires you to dedicate a bucket for the filesystem - you should not use an existing bucket containing files, or write other files to the same bucket.
+
+ Pass the complete S3 url with Access and Secret Keys in hdfsurl definition of <cluster>

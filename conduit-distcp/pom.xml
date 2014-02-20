@@ -1,18 +1,21 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <artifactId>conduit-distcp</artifactId>
+  <name>Conduit Distcp</name>
+  <packaging>jar</packaging>
+
   <parent>
     <groupId>com.inmobi.conduit</groupId>
     <artifactId>conduit-parent</artifactId>
     <version>2.2.8-SNAPSHOT</version>
   </parent>
-  <artifactId>conduit-distcp</artifactId>
-  <name>Conduit Distcp</name>
-  <packaging>jar</packaging>
-   <properties>
+
+  <properties>
     <file.encoding>UTF-8</file.encoding>
     <downloadSources>true</downloadSources>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <system.test.prefix />
+    <system.test.prefix/>
     <local.repo>file:///tmp/repo</local.repo>
   </properties>
 
@@ -106,13 +109,252 @@
       <artifactId>mockito-all</artifactId>
       <scope>test</scope>
     </dependency>
-      <dependency>
+    <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
       <type>jar</type>
     </dependency>
 
   </dependencies>
+
+  <profiles>
+    <!-- added for cdh4 update -->
+    <profile>
+      <id>hadoop-1.0</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>1</value>
+        </property>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <hadoop.version>0.20.2-cdh3u5</hadoop.version>
+        <slf4j.version>1.4.3</slf4j.version>
+        <hadoop.env.version>cdh3</hadoop.env.version>
+        <deb.tag>cdh3</deb.tag>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-test</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+
+    </profile>
+
+
+    <profile>
+      <id>hadoop-2.0</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>2</value>
+        </property>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <properties>
+        <hadoop.version>2.0.0-cdh4.3.0</hadoop.version>
+        <hadoop2mr1.version>2.0.0-mr1-cdh4.3.0</hadoop2mr1.version>
+        <slf4j.version>1.4.3</slf4j.version>
+        <hadoop.env.version>cdh4</hadoop.env.version>
+        <deb.tag>cdh4</deb.tag>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+          <version>${hadoop.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+          <version>${hadoop2mr1.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+          <version>${hadoop.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-test</artifactId>
+          <version>${hadoop2mr1.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-minicluster</artifactId>
+          <version>${hadoop2mr1.version}</version>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+
+    </profile>
+  </profiles>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <groupId>com.atlassian.maven.plugins</groupId>
+        <artifactId>maven-clover2-plugin</artifactId>
+        <version>3.0.2</version>
+        <configuration>
+          <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <forkMode>always</forkMode>
+          <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+          <argLine>-javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/1.6.7/aspectjweaver-1.6.7.jar
+            -Xmx1024m -Djava.security.krb5.realm= -Djava.security.krb5.kdc=
+          </argLine>
+          <includes>
+            <include>**/${system.test.prefix}Test*.java</include>
+          </includes>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <systemProperties>
+            <property>
+              <name>test.build.data</name>
+              <value>${basedir}/target/test/data</value>
+            </property>
+            <property>
+              <name>hadoop.log.dir</name>
+              <value>target/test/logs</value>
+            </property>
+            <property>
+              <name>org.apache.commons.logging.Log</name>
+              <value>org.apache.commons.logging.impl.SimpleLog</value>
+            </property>
+            <property>
+              <name>org.apache.commons.logging.simplelog.defaultlog</name>
+              <value>info</value>
+            </property>
+          </systemProperties>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.9</version>
+        <configuration>
+          <enableRulesSummary>true</enableRulesSummary>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.4</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.apache.hadoop.tools.DistCp</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.0.4</version>
+        <configuration>
+          <attach>true</attach>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!--   <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-pdf-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>pdf</id>
+              <phase>package</phase>
+              <goals>
+                <goal>pdf</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin> -->
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-pdf-plugin</artifactId>
+          <version>2.5.1</version>
+          <configuration>
+            <outputDirectory>${project.reporting.outputDirectory}</outputDirectory>
+            <includeReports>false</includeReports>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 
   <reporting>
     <plugins>
@@ -202,242 +444,5 @@
       </plugin>
     </plugins>
   </reporting>
-
-  <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-    <testResources>
-      <testResource>
-        <directory>src/test/resources</directory>
-        <filtering>true</filtering>
-      </testResource>
-    </testResources>
-    <plugins>
-      <plugin>
-        <groupId>com.atlassian.maven.plugins</groupId>
-        <artifactId>maven-clover2-plugin</artifactId>
-        <version>3.0.2</version>
-        <configuration>
-          <licenseLocation>/home/y/conf/clover/clover.license</licenseLocation>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <forkMode>always</forkMode>
-          <forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
-          <argLine>-javaagent:${settings.localRepository}/org/aspectj/aspectjweaver/1.6.7/aspectjweaver-1.6.7.jar -Xmx1024m -Djava.security.krb5.realm= -Djava.security.krb5.kdc=</argLine>
-          <includes>
-            <include>**/${system.test.prefix}Test*.java</include>
-          </includes>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <systemProperties>
-            <property>
-              <name>test.build.data</name>
-              <value>${basedir}/target/test/data</value>
-            </property>
-            <property>
-              <name>hadoop.log.dir</name>
-              <value>target/test/logs</value>
-            </property>
-            <property>
-              <name>org.apache.commons.logging.Log</name>
-              <value>org.apache.commons.logging.impl.SimpleLog</value>
-            </property>
-            <property>
-              <name>org.apache.commons.logging.simplelog.defaultlog</name>
-              <value>info</value>
-            </property>
-          </systemProperties>
-        </configuration>
-      </plugin>
-  
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.9</version>
-        <configuration>
-          <enableRulesSummary>true</enableRulesSummary>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.4</version>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <archive>
-            <manifest>
-              <mainClass>org.apache.hadoop.tools.DistCp</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <version>2.0.4</version>
-        <configuration>
-          <attach>true</attach>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    <!--   <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pdf-plugin</artifactId> 
-        <executions>
-          <execution>
-            <id>pdf</id>
-            <phase>package</phase>
-            <goals>
-              <goal>pdf</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin> -->
-    </plugins>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-pdf-plugin</artifactId>
-          <version>2.5.1</version>
-          <configuration>
-            <outputDirectory>${project.reporting.outputDirectory}</outputDirectory>
-            <includeReports>false</includeReports>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
-  <profiles>
-    <!-- added for cdh4 update -->
-    <profile>
-      <id>hadoop-1.0</id>
-      <activation>
-        <property>
-          <name>hadoop.profile</name>
-          <value>1</value>
-        </property>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <hadoop.version>0.20.2-cdh3u5</hadoop.version>
-        <slf4j.version>1.4.3</slf4j.version>
-        <hadoop.env.version>cdh3</hadoop.env.version>
-        <deb.tag>cdh3</deb.tag>
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-core</artifactId>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-test</artifactId>
-          <scope>provided</scope>
-        </dependency>
-      </dependencies>
-
-    </profile>
-
-
-
-    <profile>
-      <id>hadoop-2.0</id>
-      <activation>
-        <property>
-          <name>hadoop.profile</name>
-          <value>2</value>
-        </property>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-      <properties>
-        <hadoop.version>2.0.0-cdh4.3.0</hadoop.version>
-        <hadoop2mr1.version>2.0.0-mr1-cdh4.3.0</hadoop2mr1.version>
-        <slf4j.version>1.4.3</slf4j.version>
-        <hadoop.env.version>cdh4</hadoop.env.version>
-        <deb.tag>cdh4</deb.tag>
-      </properties>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-hdfs</artifactId>
-          <version>${hadoop.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-core</artifactId>
-          <version>${hadoop2mr1.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-common</artifactId>
-          <version>${hadoop.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-test</artifactId>
-          <version>${hadoop2mr1.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-minicluster</artifactId>
-          <version>${hadoop2mr1.version}</version>
-          <scope>provided</scope>
-        </dependency>
-      </dependencies>
-
-    </profile>
-  </profiles>
-
-
 
 </project>

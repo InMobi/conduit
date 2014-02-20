@@ -1,13 +1,17 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>conduit-audit</artifactId>
+  <name>Conduit Audit</name>
+  <packaging>jar</packaging>
 
-	<parent>
-		<artifactId>conduit-parent</artifactId>
-		<groupId>com.inmobi.conduit</groupId>
-		<version>2.2.8-SNAPSHOT</version>
-	</parent>
+  <parent>
+    <artifactId>conduit-parent</artifactId>
+    <groupId>com.inmobi.conduit</groupId>
+    <version>2.2.8-SNAPSHOT</version>
+  </parent>
 
-	<profiles>
+  <profiles>
     <!-- added for cdh4 update -->
     <profile>
       <id>hadoop-1.0</id>
@@ -70,84 +74,80 @@
         </dependency>
       </dependencies>
     </profile>
-	</profiles>
+  </profiles>
 
-	<artifactId>conduit-audit</artifactId>
-    <name>Conduit Audit</name>
-	<packaging>jar</packaging>
-
-	<dependencies>
+  <dependencies>
     <dependency>
       <groupId>com.inmobi.conduit</groupId>
       <artifactId>conduit-core</artifactId>
       <version>${project.version}</version>
     </dependency>
-		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>5.1.25</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.codahale.metrics</groupId>
-			<artifactId>metrics-core</artifactId>
-			<version>3.0.0-RC1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.codahale.metrics</groupId>
-			<artifactId>metrics-ganglia</artifactId>
-			<version>3.0.0-RC1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20070829</version>
-                </dependency>
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-			<version>2.2.9</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.inmobi.messaging</groupId>
-			<artifactId>messaging-client-databus</artifactId>
-			<version>${messaging-client-version}</version>
-		</dependency>
-		<dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.25</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>3.0.0-RC1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.codahale.metrics</groupId>
+      <artifactId>metrics-ganglia</artifactId>
+      <version>3.0.0-RC1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20070829</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hsqldb</groupId>
+      <artifactId>hsqldb</artifactId>
+      <version>2.2.9</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-databus</artifactId>
+      <version>${messaging-client-version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-		<dependency>
-			<groupId>postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>9.1-901.jdbc4</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-		 <groupId>commons-codec</groupId>
-     <artifactId>commons-codec</artifactId>
-     <version>1.4</version>
-   </dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.7.5</version>
-		</dependency>
-	</dependencies>
-	
-	<build>
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>9.1-901.jdbc4</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.5</version>
+    </dependency>
+  </dependencies>
+
+  <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -161,6 +161,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
         <configuration>
           <ignoreDirFormatExtensions>true</ignoreDirFormatExtensions>
           <descriptors>
@@ -211,7 +212,7 @@
                     <filemode>755</filemode>
                   </mapper>
                 </data>
-                 <data>
+                <data>
                   <src>target/${artifactId}-${project.version}-audit/sql/</src>
                   <type>directory</type>
                   <mapper>
