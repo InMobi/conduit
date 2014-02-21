@@ -172,8 +172,8 @@ public class TestAuditDBHelper extends  AuditDBUtil {
     Iterator<Tuple> tupleSetIter = tupleSet.iterator();
     Assert.assertTrue(tupleSetIter.hasNext());
     Tuple returnedTuple = tupleSetIter.next();
-    Assert.assertEquals(null, returnedTuple.getTopic());
+    Assert.assertEquals(null, returnedTuple.getHostname());
     returnedTuple = tupleSetIter.next();
-    Assert.assertEquals(null, returnedTuple.getTopic());
+    Assert.assertEquals(null, returnedTuple.getHostname());
   }
 }
