@@ -405,11 +405,32 @@ function expand(id, text, isButton, tier, stream, cluster) {
 function showPointDetails(d, xcoord, ycoord) {
   isClicked = true;
   popupDiv.html("");
-  popupDiv.transition()
-    .duration(0)
-    .style("top", (ycoord - 10) + "px")
-    .style("left", (xcoord + 10) + "px")
-    .style("opacity", 1);
+  var timelinepaneltopOffset = document.getElementById("timelinePanel").offsetTop;
+  var finalycoord;
+  if (ycoord - timelinepaneltopOffset > 250) {
+    finalycoord = timelinepaneltopOffset + 250;
+  } else {
+    finalycoord = ycoord;
+  }
+  if (xcoord > 1000) {
+    popupDiv.transition()
+      .duration(0)
+      .style("height", "300px")
+      .style("width", "250px")
+      .style("top", (finalycoord - 10) + "px")
+      .style("left", (xcoord - 260) + "px")
+      .style("overflow", "auto")
+      .style("opacity", 0.9);
+  } else {    
+    popupDiv.transition()
+      .duration(0)
+      .style("height", "300px")
+      .style("width", "250px")
+      .style("top", (finalycoord - 10) + "px")
+      .style("left", (xcoord + 10) + "px")
+      .style("overflow", "auto")
+      .style("opacity", 0.9);
+  }
   var table = document.createElement('table');
   var currentRow = 0;
   var num;
@@ -644,6 +665,8 @@ function mouseOverOnGraph(xcoord) {
   svg.selectAll(".bigindicator").data([]).exit().remove();
   popupDiv.transition()
     .duration(200)
+    .style("height", "auto")
+    .style("width", "auto")
     .style("opacity", 0.9)
     .style("top", (document.getElementById("timelinePanel").offsetTop + margin.top +
       125) + "px")
