@@ -1,0 +1,47 @@
+
+---+ Overview
+
+---+++ What is Conduit used for
+
+   * High throughput, distributed streaming event collection at scale conforming to latencies by conduit. Read the DISCLAIMER below for you need to be extra vigilant using Conduit
+*DISCLAIMER:*
+   * In extremely rare scenarios (listed below), there can be message replay/loss.
+   * Conduit does not gaurantee *strict* exactly-once and inorder mesasage arrival semantics.
+
+---+++ Near real time latencies through Client Library
+
+   * Conduit supports consuming data for near real time latiences using message consumer library.
+   * Latiences within datacenters are upto 10 sec
+---+++ Batch Consumer Latencies/SLA's
+
+   * 2-3 mins for data in local cluster
+   * 4-5 mins for data in merged cluster
+   * 6-7 mins for data in mirrored cluster
+   * All latiences are applicable when the system is operational/healthy
+---+++ Data Delay Scenarios (Batch/Near real time Consumers)
+
+   * Grid is running slow/down, capacity issues on grid
+   * Both data workers are down
+   * Sudden spike in traffic causing conduit collectors enabling flow control
+   * Conduit Collectors are down
+   * Network Link cross colos is down causing merge/mirror data delays
+
+---+++ DataLoss Scenarios
+---++++ Probability of the following scenarios is extremely low however for completness we are enlisting all scenarios below where it can happen
+| *Scenario* | *How to capture* | *Extent of Data Loss* |
+| Application Bug causes it to crash | recieved_good at agent isn't going up | <p>Inflight messages will be lost as communication between producer library and ConduitAgent is ASYNC</p> <p> </p> |
+| Conduit Agent is down | monitoring of agent, success count from producer library | <p>Application won't be able to connect to agent and messages are lost. Amount of message loss can be measured through app throughput and down time of agent</p> <p> </p> |
+| Agent is running under-capacity, spikes upto 50-100x in traffic | monitor denied_for_rate, denied_for_queue_size from agent | Application throughput and interval during which the agent was sending TRY_LATER can be used to measure the extent of loss |
+| Non gracefull shutdown/Crash of Agent | Process/Education to Operations team | <p>Atmost 1 minute of data which can be cached in memory can get lost</p> <p> </p> |
+| Non graceful shutdown/Crash of Collector | Process/Education to Operations team | <p>Atmost 1 second of data can get lost</p> <p> </p> |
+| <p>No space on Agent to Spool Data and all</p> <p>conduit Collectors are down</p> | Spool space alerting | Again dataloss can be measured by how long all collectors were down and agent started to fail spool data |
+| No space on Collector to spool and HDFS is down | Spool space alerting | <p>Collector will push back to agents after they reach their memory cache peak, agent spools and then it doesn't have disk.</p> <p>To measure dataloss here we need to find when the agent stopped spooling and what was the application througput</p> |
+| <p>HDFS all three datanodes went bonkers which have</p> <p>a particular file and they haven't flushed all to disk</p> | HDFS monitoring | <p>Since HDFS doesn't have a POSIX complaint fsync() api this scenario is possible, however the probability is rare as we have a replication factor of 3</p> <p>Atmost 1 minute of data can be lost in this scenario</p> |
+| <p>Data is spooled at agent/collector and before it gets despooled the hard-disk of the box goes bad</p> | monitoring disk for bad sectors/other issues | Dataloss is equal to the amount of data spooled |
+---+++ Data Replay Scenarios
+---++++ Probability of the following scenarios is extremely low however for completness we are enlisting all scenarios below where it can happen
+| *Scenario* | *Extent of data replay* |
+| HDFS write() doesn't throw exception, but sync() fails | to avoid dataloss we will call sync() again and in this case atmost 1sec worth of data can be replayed |
+| Conduit worker failures due to HDFS errors | <p>If in a run we publish certain set of files and fail before committing the transaction, the same set can be replayed again</p> <p>in the next run to avoid data-loss. In most cases the number of files would be equal to number of collectors in LocalStream, number of collectors multiplied</p> <p>by number of clusters in mergedstream and mirror stream. However if we are processing a backlog and publish a large number of files and fail to commit</p> <p>the transaction due to HDFS unavalibity then the number could be higher.</p> |
+| | |
+

@@ -1,4 +1,7 @@
-# What is Conduit?
+# Conduit
+
+[![Build Status](https://travis-ci.org/InMobi/conduit.png?branch=master)](https://travis-ci.org/InMobi/conduit)
+
   Yet another streaming data transport system
 
 # Why do we need when scribe, kafka, flume and other system exist?

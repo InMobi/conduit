@@ -1,0 +1,21 @@
+jdbc.driver.class.name=org.postgresql.Driver
+db.url=jdbc:postgresql://<host>:<port>/<Db_name>
+db.username=abc
+db.password=abc
+
+#Number of messages to batched for DB operations .Default value is 5000
+messages.batch.num=1000
+
+messaging.consumer.checkpoint.dir=\tmp
+#defines the start date from which the feeder should start,Default is start of the stream
+messaging.consumer.absolute.starttime=2013/06/20/00/00
+#path to databus.xml
+feeder.databus.conf=\tmp\conduit.xml
+#name of master  table.Master table is the parent of all partition tables
+audit.table.master=audit
+#hostname of the ganglia.If not specified  ganglia metrics would be disabled
+feeder.ganglia.host=
+#port of ganglia.Default value is 8649
+feeder.ganglia.port=
+#Default value is /tmp
+feeder.csv.report.dir=/tmp
