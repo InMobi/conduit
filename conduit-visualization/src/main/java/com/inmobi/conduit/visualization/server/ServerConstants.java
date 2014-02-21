@@ -3,6 +3,8 @@ package com.inmobi.conduit.visualization.server;
 public class ServerConstants {
   public static final String FEEDER_PROPERTIES_DEFAULT_PATH =
       "/usr/local/conduit-visualization/conf/audit-feeder.properties";
+  public static final String LOG4J_PROPERTIES_DEFAULT_PATH =
+      "/usr/local/conduit-visualization/conf/log4j.properties";
 
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
   public static final String GROUPBY_TIMELINE_STRING ="TIER,TOPIC,CLUSTER,TIMEINTERVAL";
@@ -19,6 +21,7 @@ public class ServerConstants {
       "/usr/local/conduit-visualization/conf/visualization.properties";
 
   public static final String CONDUIT_XML_PATH = "xmlPath";
+  public static final String LOG4J_PROPERTIES_PATH = "log4jPath";
   public static final String PERCENTILE_STRING = "percentileString";
   public static final String PUBLISHER_SLA = "publisherSla";
   public static final String AGENT_SLA = "agentSla";

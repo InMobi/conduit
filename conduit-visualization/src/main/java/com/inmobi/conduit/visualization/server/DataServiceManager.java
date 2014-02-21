@@ -10,6 +10,7 @@ import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
 import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -35,6 +36,16 @@ public class DataServiceManager {
     }
     feederConfig = ClientConfig.load(feederPropertiesPath);
     properties = new VisualizationProperties(visualizationPropertiesPath);
+
+    String log4jFilePath = properties.get(ServerConstants
+        .LOG4J_PROPERTIES_PATH);
+    if (log4jFilePath == null || log4jFilePath.length() == 0 || !new File
+        (log4jFilePath).exists()) {
+      log4jFilePath = ServerConstants.LOG4J_PROPERTIES_DEFAULT_PATH;
+    }
+    PropertyConfigurator.configureAndWatch(log4jFilePath);
+    LOG.info("Log4j Property File [" + log4jFilePath + "]");
+
     if (init) {
       String folderPath = properties.get(ServerConstants.CONDUIT_XML_PATH);
       initConfig(folderPath);
