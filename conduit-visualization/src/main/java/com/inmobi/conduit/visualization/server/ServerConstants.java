@@ -3,7 +3,12 @@ package com.inmobi.conduit.visualization.server;
 public class ServerConstants {
   public static final String FEEDER_PROPERTIES_DEFAULT_PATH =
       "/usr/local/conduit-visualization/conf/audit-feeder.properties";
+
   public static final String GROUPBY_STRING = "CLUSTER,TIER,HOSTNAME,TOPIC";
+  public static final String GROUPBY_TIMELINE_STRING ="TIER,TOPIC,CLUSTER,TIMEINTERVAL";
+  public static final String GROUPBY_CLUSTER_AGG_TIMELINE_STR ="TIER,CLUSTER,TIMEINTERVAL";
+  public static final String GROUPBY_ALL_AGG_TIMELINE_STR ="TIER,TIMEINTERVAL";
+
   public static final String TIMEZONE = "GMT";
   public static final String AUDIT_STREAM = "_audit";
   public static final String STREAM_FILTER = "stream";

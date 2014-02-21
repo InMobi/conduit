@@ -14,8 +14,21 @@ public class DataServiceWrapper {
     target.setServiceEntryPoint(moduleRelativeURL);
   }
 
-  public void getData(String clientJson, final AsyncCallback<String> callback) {
-    service.getData(clientJson, new AsyncCallback<String>() {
+  public void getTopologyData(String clientJson, final AsyncCallback<String> callback) {
+    service.getTopologyData(clientJson, new AsyncCallback<String>() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess(String result) {
+        callback.onSuccess(result);
+      }
+    });
+  }
+
+  public void getTierLatencyData(String clientJson, final AsyncCallback<String> callback) {
+    service.getTierLatencyData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -29,6 +42,19 @@ public class DataServiceWrapper {
 
   public void getStreamAndClusterList(final AsyncCallback<String> callback) {
     service.getStreamAndClusterList(new AsyncCallback<String>() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess(String result) {
+        callback.onSuccess(result);
+      }
+    });
+  }
+
+  public void getTimeLineData(String clientJson, final AsyncCallback<String> callback) {
+    service.getTimeLineData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);

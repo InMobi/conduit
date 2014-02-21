@@ -1,3 +1,7 @@
+html, body {
+  background-color: #D8EAF3;
+}
+
 #page {
   background-color: #D8EAF3;
 }
@@ -15,12 +19,16 @@
 #filterContainer {
     background-color: #4596b8;
     color: #fff;
-    padding: 0px 0px 0px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
-#viewPanelContainer {
+#topologyPanelContainer {
        padding: 0px 0px 0px;
-       background-color: #d8eaf3;
+       background-color: #EBF4F8;
+	display: none;
 }
 
 #header {
@@ -35,11 +43,24 @@
   width:100%;
 }
 
-#viewPanel {
+/*#viewPanel {
   margin:0 auto;
   height:940px;
   background-color:#D8EAF3;
+}*/
+
+#fullGraphContainer {
+	display: none;
+	padding-top: 2px;
+	width: 99%;
 }
+
+/*#graphContainer {
+	border-left: #ccc solid 2px;
+	border-right: #ccc solid 2px;
+	border-bottom: #ccc solid 2px;
+	padding : 2px;
+}*/
 
 #goButton {
   width:75px;
@@ -50,24 +71,24 @@
   width:150px;
 }
 
-#graphInfoContainer > div
+#topologyInfoContainer > div
 {
   display: inline-block;
 }
 
-#graphInfoContainer {
+#topologyInfoContainer {
   text-align: center;
   width:100%;
-  background-color: #D8EAF3;
+  background-color: #EBF4F8;
 }
 
-#graphPanel {
+#topologyPanel {
   border-style:solid;
   border-width:2px;
   border-color:#ccc;
   height:900px;
   width:71%;
-  background-color: #D8EAF3;
+  background-color: #EBF4F8;
 }
 
 #summaryAndInfoPanel {
@@ -77,13 +98,13 @@
   border-color:#ccc;
   height:900px;
   width:28%;
-  background-color: #D8EAF3;
+  background-color: #EBF4F8;
 }
 
 #summaryPanel {
   border-bottom:2px solid #ccc;
   width:100%;
-  background-color: #D8EAF3;
+  background-color: #EBF4F8;
   text-align:left;
   padding-bottom:10px;
 }
@@ -91,7 +112,7 @@
 #infoPanel {
   padding-top:10px;
   width:100%;
-  background-color: #D8EAF3;
+  background-color: #EBF4F8;
   text-align:left;
 }
 
@@ -113,29 +134,98 @@ div.tooltip {
   width: 200px;
 }
 
-#tabs {
-    width: 71.5%;
+ul.tabs {
+ margin: 0;
+ padding: 0;
+ float: right;
+ list-style: none;
+ height: 32px; /*--Set height of tabs--*//*
+ border-bottom: 1px solid #ccc;*/
+ border-right: 1px solid #ccc;
+ width: 100%;
+}
+ul.tabs li {
+ float: right;
+ margin: 0;
+ padding: 0;
+ height: 31px; /*--Subtract 1px from the height of the unordered list--*/
+ line-height: 31px; /*--Vertically aligns the text within the tab--*/
+ border: 1px solid #ccc;
+ border-right: none;
+ margin-bottom: -1px; /*--Pull the list item down 1px--*/
+ overflow: hidden;
+ position: relative;
+ background: #D8EAF3;
+}
+ul.tabs li a {
+ text-decoration: none;
+ font-weight: bold;
+ color: #444444;
+ display: block;
+ font-size: 1.2em;
+ padding: 0 20px;/*
+ border: 1px solid #D8EAF3;*/ /*--Gives the bevel look with a 1px white border inside the list item--*/
+ outline: none;
+ text-align: center;
+}
+ul.tabs li a:hover {
+	background:#EBF4F8;
+  cursor: pointer;
+  cursor: hand;
+}/*
+ul.tabs li a.active {
+    background:#EBF4F8;
+}*/
+html ul.tabs li.active, html ul.tabs li.active a:hover  { /*--Makes sure that the active tab does not listen to the hover properties--*/
+ background: #EBF4F8;
+ border-bottom: 1px solid #EBF4F8; /*--Makes the active tab look like it's connected with its content--*/
+}
+
+#graphContainer {
+ padding : 2px;
+ padding-top: 10px;
+ padding-right: 5px;
+ padding-left: 5px;
+ border: 1px solid #ccc;/*
+ border-top: none;*/
+ overflow: hidden;
+ clear: both;
+ float: left;
+ width: 100%;
+ background: #EBF4F8;
+}
+
+#tabsContainer {
+	padding-top: 5px;
+}
+/*.viewTabs {
+    width: 100%;
     margin: auto;
     overflow: hidden;
     background: #D8EAF3;
+    border-bottom: #000 solid 2px;
+    border-left: #D8EAF3 solid 2px;
+    border-right: #D8EAF3 solid 2px;
+    border-bottom: #D8EAF3 solid 2px;
+    *//*
     display: none;
-    float:left;
+    float:left;*//*
 }
 
-#tabs ul {
+.viewTabs ul {
     list-style: none;
     overflow: hidden;
     padding: 0;
     margin: 0;
 }
 
-#tabs li {
+.viewTabs li {
     float: right;
     border: 1px solid #ccc;
     border-bottom: none;
 }
 
-#tabs li a {
+.viewTabs li a {
     color: #444444;
     font-weight: bold;
     display: block;
@@ -144,15 +234,15 @@ div.tooltip {
     text-decoration: none;
 }
 
-#tabs li a:hover {
+.viewTabs li a:hover {
     background:#EBF4F8;
     cursor: pointer;
     cursor: hand;
 }
 
-#tabs li a.active {
+.viewTabs li a.active {
     background:#EBF4F8;
-}
+}*/
 
 .valuesTable {
 	border-collapse:collapse;
@@ -187,8 +277,98 @@ div.healthtooltip {
   height:100%;
   text-decoration:none;
   text-align:left;
-  background:#d8eaf3;
-  border:#d8eaf3;
+  background:#EBF4F8;
+  border:#EBF4F8;
   padding:0px;
   margin:0px;
+}
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	stroke-width : 1px;
+	shape-rendering: crispEdges;
+}
+
+.x.axis path {
+	/*display: none;*/
+}
+
+.line {
+	fill: none;
+	stroke: steelblue;
+	stroke-width: 1.5px;
+}
+
+.grid .tick {
+	stroke: lightgrey;
+	opacity: 0.7;
+}
+
+.grid path {
+	fill: none;
+	stroke: darkgrey;
+	stroke-width: 1.5px;
+}
+
+#timelinePanelContainer {
+	display: none;
+}
+
+#timelinePanel {
+  border-style:solid;
+  border-width:2px;
+  border-color:#ccc;
+	margin-top: 25px;
+	height: 505px;
+	/*padding-top: 25px;*/
+}
+
+#tierButtonPanel {
+	padding-top: 10px;
+	padding-right: 100px;
+	float: right;
+}
+
+.tierButton {
+	float: right;
+	width: 100px;
+}
+
+.brush .extent {
+	stroke: #fff;
+	fill-opacity: .125;
+	shape-rendering: crispEdges;
+}
+
+.collapsed {
+  display: none;
+}
+
+.expanded {
+  display: table-row;
+}
+
+.popuptransparentButton {
+  cursor: pointer;
+  color:#00f;
+  display:block;
+  width:100%;
+  height:100%;
+  text-align:left;
+  background:transparent;
+  border:transparent;
+  padding:0px;
+}
+
+div.timelinetooltip {
+  position:absolute;
+  text-align:left;
+  padding:2px;
+  font:12px sans-serif;
+  background:#ccc;
+  border:0px;
+  border-radius:8px;
+  z-index: 1;
 }

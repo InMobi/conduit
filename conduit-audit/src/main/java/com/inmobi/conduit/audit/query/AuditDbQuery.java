@@ -41,7 +41,7 @@ public class AuditDbQuery {
   private String timeZone, filterString, groupByString, toTimeString,
       fromTimeString, percentileString;
 
-  Map<Tuple, Map<Float, Integer>> percentile = new HashMap<Tuple, Map<Float, Integer>>();
+  Map<Tuple, Map<Float, Integer>> percentile;
   Date fromTime;
   Date toTime;
   GroupBy groupBy;
@@ -51,6 +51,7 @@ public class AuditDbQuery {
   Map<GroupBy.Group, Long> received;
   Map<GroupBy.Group, Long> sent;
   private final ClientConfig config;
+  private AuditDBHelper dbHelper;
 
   public AuditDbQuery(String toTimeString, String fromTimeString,
       String filterString, String groupByString, String timeZone) {
@@ -81,13 +82,24 @@ public class AuditDbQuery {
     else {
       this.config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     }
+    this.dbHelper = new AuditDBHelper(this.config);
+
+  }
+  
+  public AuditDbQuery(String toTimeString, String fromTimeString,
+      String filterString, String groupByString, String timeZone,
+      String percentileString, ClientConfig config, AuditDBHelper helper) {
+    this(toTimeString, fromTimeString, filterString, groupByString, timeZone,
+        percentileString, config);
+    if (helper != null) {
+      this.dbHelper = helper;
+    }
 
   }
 
   void aggregateStats() {
     LOG.debug("To time:" + toTime);
     LOG.debug("From time:" + fromTime);
-    AuditDBHelper dbHelper = new AuditDBHelper(config);
     Set<Tuple> tuples = dbHelper.retrieve(toTime, fromTime, filter, groupBy);
     if (tuples != null) {
       tupleSet.addAll(tuples);
@@ -96,11 +108,11 @@ public class AuditDbQuery {
           "method");
       return;
     }
-    LOG.debug("Tuple set retrieved from DB: " + tupleSet);
+    LOG.debug("Tuple set retrieved from DB size : " + tupleSet.size());
     setReceivedAndSentStats();
     if (percentileSet != null) {
       LOG.debug("Creating percentile map for all tuples");
-      populatePercentileMap();
+      percentile = populatePercentileMap(this.tupleSet , this.percentileSet);
     }
   }
 
@@ -114,7 +126,9 @@ public class AuditDbQuery {
     }
   }
 
-  private void populatePercentileMap() {
+  public static Map<Tuple, Map<Float, Integer>> populatePercentileMap
+      (Set<Tuple> tupleSet, Set<Float> percentileSet) {
+    Map<Tuple, Map<Float, Integer>> percentile = new HashMap<Tuple, Map<Float, Integer>>();
     for (Tuple tuple : tupleSet) {
       LOG.debug("Creating percentile map for tuple :" + tuple.toString());
       Long totalCount = tuple.getReceived() - tuple.getLostCount();
@@ -142,6 +156,7 @@ public class AuditDbQuery {
         currentCount += value;
       }
     }
+    return percentile;
   }
 
   private Date getDate(String date) throws ParseException {

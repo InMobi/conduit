@@ -10,5 +10,9 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 public interface DataService extends RemoteService {
   public String getStreamAndClusterList();
 
-  public String getData(String filterValues);
+  public String getTopologyData(String filterValues);
+
+  public String getTierLatencyData(String filterValues);
+
+  public String getTimeLineData(String filterValues);
 }

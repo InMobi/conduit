@@ -258,7 +258,7 @@ public class TestUtil {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    String jsonString = response.getGraphDataResponse().getJsonString();
+    String jsonString = response.getTopologyDataResponse().getJsonString();
     try {
       JSONObject dataObject = new JSONObject(jsonString);
       JSONArray nodeArray = dataObject.getJSONArray("nodes");

@@ -1,19 +1,19 @@
 package com.inmobi.conduit.visualization.server;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.util.*;
-
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.audit.Tier;
+import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
+import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
+import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
 
-import com.inmobi.conduit.ConduitConfig;
-import com.inmobi.conduit.audit.Tier;
-import com.inmobi.conduit.audit.Tuple;
-import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
+import java.io.File;
+import java.io.FileFilter;
+import java.util.*;
 
 public class DataServiceManager {
 
@@ -93,7 +93,7 @@ public class DataServiceManager {
     return serverJson;
   }
 
-  public String getData(String filterValues) {
+  public String getTopologyData(String filterValues) {
     Map<NodeKey, Node> nodeMap = new HashMap<NodeKey, Node>();
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
@@ -107,32 +107,20 @@ public class DataServiceManager {
     } catch (Exception e) {
       LOG.error("Exception while executing query: ", e);
     }
-    LOG.info("Audit query: " + dbQuery.toString());
-    try {
-      dbQuery.displayResults();
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
-    }
+    LOG.info("Audit topology query: " + dbQuery.toString());
     Set<Tuple> tupleSet = dbQuery.getTupleSet();
     Set<Float> percentileSet = dbQuery.getPercentileSet();
     Map<Tuple, Map<Float, Integer>> tuplesPercentileMap =
         dbQuery.getPercentile();
-    LOG.debug("Percentile Set:" + percentileSet);
-    LOG.debug("Tuples Percentile Map:" + tuplesPercentileMap);
+    LOG.info("Percentile Set:" + percentileSet);
+    LOG.info("Tuples Percentile Map length:" + tuplesPercentileMap.size());
     for (Tuple tuple : tupleSet) {
       createNode(tuple, nodeMap, percentileSet, tuplesPercentileMap.get(tuple));
     }
     buildPercentileMapOfAllNodes(nodeMap);
     addVIPNodesToNodesList(nodeMap, percentileSet);
-    LOG.debug("Printing node list");
-    for (Node node : nodeMap.values()) {
-      LOG.debug("Final node :" + node);
-    }
-    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
-        (filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
-    return ServerDataHelper.getInstance().setGraphDataResponse(nodeMap,
-        tierLatencyMap, properties);
+    LOG.info("Final node list length:"+nodeMap.size());
+    return ServerDataHelper.getInstance().setTopologyDataResponse(nodeMap);
   }
 
   protected Map<String, String> getFilterMap(String filterValues) {
@@ -153,7 +141,7 @@ public class DataServiceManager {
   protected void createNode(Tuple tuple, Map<NodeKey, Node> nodeMap,
                           Set<Float> percentileSet,
                           Map<Float, Integer> tuplePercentileMap) {
-    LOG.info("Creating node from tuple :" + tuple);
+    LOG.debug("Creating node from tuple :" + tuple);
     String name, hostname = null;
     if (tuple.getTier().equalsIgnoreCase(Tier.HDFS.toString())) {
       name = tuple.getCluster();
@@ -228,27 +216,6 @@ public class DataServiceManager {
     }
     LOG.info("Set source list for tuple " + tuple + "as:" + sourceList);
     return sourceList;
-  }
-
-  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
-                                                            String startTime,
-                                                            String
-                                                                filterString) {
-    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
-        "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
-        .PERCENTILE_FOR_SLA), feederConfig);
-    try {
-      dbQuery.execute();
-    } catch (Exception e) {
-      LOG.error("Exception while executing query: ", e);
-    }
-    LOG.info("Audit query: " + dbQuery.toString());
-    try {
-      dbQuery.displayResults();
-    } catch (Exception e) {
-      LOG.error("Exception while displaying results: ", e);
-    }
-    return dbQuery.getPercentile();
   }
 
   protected String setFilterString(Map<String, String> filterMap) {
@@ -338,5 +305,54 @@ public class DataServiceManager {
 
   public List<ConduitConfig> getConduitConfig() {
     return Collections.unmodifiableList(conduitConfig);
+  }
+  public String getTierLatencyData(String filterValues) {
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
+    Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
+        (filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
+    return ServerDataHelper.getInstance().setTierLatencyResponseObject(tierLatencyMap, properties);
+  }
+
+  private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
+                                                            String startTime,
+                                                            String
+                                                                filterString) {
+    AuditDbQuery dbQuery = new AuditDbQuery(endTime, startTime, filterString,
+        "TIER", ServerConstants.TIMEZONE, properties.get(ServerConstants
+        .PERCENTILE_FOR_SLA), feederConfig);
+    try {
+      dbQuery.execute();
+    } catch (Exception e) {
+      LOG.error("Exception while executing query: ", e);
+    }
+    LOG.info("Audit latency summary query: " + dbQuery.toString());
+    return dbQuery.getPercentile();
+  }
+
+  /**
+   * Will retrieve the timeseries information for a date range
+   */
+  public String getTimeLineData(String filterValues) {
+    Map<String, String> filterMap = getFilterMap(filterValues);
+    String filterString = setFilterString(filterMap);
+    AuditDbQuery dbQuery =
+        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
+            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+            ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
+            properties.get(ServerConstants.PERCENTILE_STRING), feederConfig,
+            new TimeLineAuditDBHelper(feederConfig));
+    try {
+      LOG.debug("Executing time line query");
+      dbQuery.execute();
+      LOG.info("Audit Time line query: " + dbQuery.toString());
+      LOG.debug("Executed time line query");
+    } catch (Exception e) {
+      LOG.error("Exception while executing time line query: ", e);
+      return null;
+    }
+    return ServerDataHelper.setTimeLineDataResponse(ServerDataHelper
+        .convertToJson(dbQuery));
   }
 }

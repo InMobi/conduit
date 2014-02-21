@@ -6,6 +6,7 @@ public class ClientConstants {
   public static final String QUERY_FROM_TIME = "qstart";
   public static final String QUERY_TO_TIME = "qend";
   public static final String SELECTED_TAB = "selectedTab";
+  public static final String QUERY_VIEW = "qview";
   public static final String GWT_DEVLOPMENT_MODE = "gwt.codesvr";
 
   public static final String PUBLISHER = "publisher";
@@ -24,4 +25,14 @@ public class ClientConstants {
   public static final String LOSS_WARN_THRESHOLD_DIFF =
       "lossWarnThresholdDiff";
   public static final String ROLLEDUP_TILL_DAYS = "rollup.tilldays";
+
+  public static final String TOPOLOGY_VIEW = "Topology";
+  public static final String TIMELINE_VIEW = "TimeLine";
+  public static final String TOPOLOGY_TIMELINE_VIEW = "Topology + TimeLine";
+  public static final String CURRENT_TREND_VIEW = "Current Trend";
+
+  public static final int TOPOLOGY_VIEW_ID = 1;
+  public static final int TIMELINE_VIEW_ID = 2;
+  public static final int TOPOLOGY_TIMELINE_VIEW_ID = 3;
+  public static final int CURRENT_TREND_VIEW_ID = 4;
 }

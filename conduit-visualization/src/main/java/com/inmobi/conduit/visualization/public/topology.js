@@ -5,18 +5,11 @@ var yDiff = 40;
 var fullTreeList = []; // Full list of Node objects grouped by respective cluster name
 var degToRadFactor = Math.PI / 180;
 var radToDegFactor = 180 / Math.PI;
-var publisherSla, agentSla, vipSla, collectorSla, hdfsSla, localSla, mergeSla, mirrorSla, percentileForSla,
-  percentageForLoss, percentageForWarn, lossWarnThresholdDiff;
-var publisherLatency = 0, agentLatency = 0, collectorLatency = 0, hdfsLatency = 0, localLatency = 0, mergeLatency = 0, mirrorLatency = 0;
-var qStream, qCluster, qstart, qend;
-var hexcodeList = ["#FF9C42", "#DD75DD", "#C69C6E", "#FF86C2", "#F7977A", "#AE8886", "#FB6183", "#8E4804"];
-var tierList = ["Publisher", "Agent", "VIP", "Collector", "HDFS", "Local", "Merge", "Mirror"];
 var isNodeColored = false;
 var rootNodes = [];
 var pathLinkCache = [], lineLinkCache = [];
 var aggCollectorNodeList= [];
 var isVipNodeHighlighed = false; //this variable is used so that when loaing default view, same vip child tree need not be highlighted for every collector
-var isCountView = true;
 
 /*
 When creating the full graph, 3 different types of trees are created.
@@ -34,11 +27,6 @@ function TopicStats(topic, messages, hostname) {
   this.topic = topic;
   this.messages = messages;
   this.hostname = hostname;
-}
-
-function PercentileLatency(percentile, latency) {
-  this.percentile = percentile;
-  this.latency = latency;
 }
 
 function TopicLatency(topic) {
@@ -66,10 +54,6 @@ function Node(name, clusterName, tier, aggregatemessagesreceived,
   this.overallLatency = [];
   this.allTopicsLatency = [];
   this.point = new Point(0, 0);
-}
-
-String.prototype.equalsIgnoreCase = function (s) {
-    return s.toLowerCase() == this.toLowerCase();
 }
 
 function buildNodeList() {
@@ -445,7 +429,7 @@ function addListToInfoPanel(n) {
   c.innerHTML = "clusterName:";
   c = r.insertCell(1);
   if (isCountView) {
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + n.clusterName + "</button>";
+    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + n.clusterName + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Aggregate Received:";
@@ -463,7 +447,7 @@ function addListToInfoPanel(n) {
     c.innerHTML = "Message Count Table:";
     c.style.fontWeight = "bold";
   } else {
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + n.clusterName + "</button>";
+    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + n.clusterName + "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Latency Table:";
@@ -513,7 +497,7 @@ function nodeclick(n) {
       });
       r = t.insertRow(currentRow);
       c = r.insertCell(0);
-      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + receivedStats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + receivedStats.topic + "</button>";
+      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + receivedStats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + receivedStats.topic + "</button>";
       if (sent != received) {
         c.firstChild.style.color = "#ff0000";
       } else {
@@ -556,7 +540,7 @@ function nodeclick(n) {
         r = t.insertRow(currentRow);
         var cell = 0;
         c = r.insertCell(cell);
-        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
+        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
         cell++;
         c = r.insertCell(cell);
         c.innerHTML = topicstats.messages;
@@ -567,7 +551,7 @@ function nodeclick(n) {
         r = t.insertRow(currentRow);
         var cell = 0;
         c = r.insertCell(cell);
-        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
+        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
         cell++;
         c = r.insertCell(cell);
         c.innerHTML = topicstats.messages;
@@ -620,7 +604,7 @@ function latencynodeclick(n) {
     r = t.insertRow(currentRow++);
     var currentColumn = 0;
     c = r.insertCell(currentColumn++);
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + topic + "', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + topic + "</button>";
+    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topic + "', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + topic + "</button>";
     percentileSet.forEach(function (p) {
       var currentPercentile = p;
       l.latencyList.forEach(function (pl) {
@@ -798,7 +782,7 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Source cluster:";
   c = r.insertCell(1);
-  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + l.target.clusterName + "', 1)\" class=\"transparentButton\">" + l.target.clusterName + "</button>";
+  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.target.clusterName + "', 1)\" class=\"transparentButton\">" + l.target.clusterName + "</button>";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Target Name:";
@@ -813,7 +797,7 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Target Cluster:";
   c = r.insertCell(1);
-  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('All', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + l.source.clusterName + "</button>";
+  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + l.source.clusterName + "</button>";
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
     r = t.insertRow(currentRow++);
@@ -822,7 +806,7 @@ function linkclick(l) {
     streams.forEach(function (s) {
       r = t.insertRow(currentRow++);
       c = r.insertCell(0);
-      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndLoadGraph('" + s + "', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + s + "</button>";
+      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + s + "', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + s + "</button>";
     });
   }
   document.getElementById("infoPanel")
@@ -956,7 +940,7 @@ function getTierList(clusterNodeList, tier) {
   return returnArray;
 }
 
-function addClusterName(clusterName, tree, angle, graphsvg, selectedTabID) {
+function addClusterName(clusterName, tree, angle, graphsvg) {
   var clusternamenode = new Node(clusterName, clusterName, "clusterName");
   clusterNameTreeNode = tree.nodes(clusternamenode);
   clusterNameTreeNode[0].x = angle;
@@ -990,7 +974,7 @@ function addClusterName(clusterName, tree, angle, graphsvg, selectedTabID) {
     .style("cursor", "hand")
     .style("cursor", "pointer")
     .on("click", function (d) {
-      saveHistoryAndLoadGraph('All', d.name, selectedTabID);
+      saveHistoryAndReload('All', d.name);
     });
 }
 
@@ -1033,304 +1017,6 @@ function addColorsToNodes() {
       }
       return color;
     });
-}
-
-function isWarn(count1, count2) {
-  var marginAllowed = parseFloat(parseInt(percentageForWarn * count2) / 100);
-  if (count1 < (count2 - marginAllowed))
-    return true;
-  else
-    return false;
-}
-
-function getHealth(count1, count2) {
-  if (count1 == 0) {
-    return 4;
-  } else if (count1 > count2) {
-    return 3;
-  } else if (isWarn(count1, count2) && !isLoss(count1, count2)) {
-    return 1;
-  } else if (isLoss(count1, count2)) {
-    return 2;
-  } else {
-    return 0;
-  }
-}
-
-function appendHealthStatusIndicator(id, health) {
-  /*
-    Color indicators:
-    Green - Healthy
-    Yellow - Warn
-    Red - Unhealthy
-    Orange - Excess
-    Blue - No Data
-  */
-  var svg = d3.select("#" + id)
-    .append("svg:svg")
-    .attr("width", 12)
-    .attr("height", 12)
-    .style("display", "block")
-    .append("svg:g");
-  var div = d3.select("body")
-    .append("div")
-    .attr("class", "healthtooltip")
-    .style("opacity", 0);
-  var circle = svg.append("svg:circle")
-    .attr("r", 5)
-    .attr("cx", 6)
-    .attr("cy", 6)
-    .style("display", "block")
-    .style("cursor", "pointer")
-    .on("mouseout", function () {
-      div.transition()
-        .duration(500)
-        .style("opacity", 0);
-    });
-  var color, status;
-  switch (health) {
-  case 0:
-    color = "#0f0";
-    status = "Healthy";
-    break;
-  case 1:
-    color = "#ff0";
-    status = "Warn";
-    break;
-  case 2:
-    color = "#f00";
-    status = "Unhealthy";
-    break;
-  case 3:
-    color = "#FFA500";
-    status = "Excess";
-    break;
-  case 4:
-    color = "#b4d7e8";
-    status = "No Data";
-    break;
-  }
-  circle.style("fill", color)
-    .style("stroke", color)
-    .on("mouseover", function () {
-      div.transition()
-        .duration(200)
-        .style("opacity", 0.8)
-        .style("background", color);
-      div.html(status)
-        .style("left", (d3.event.pageX) + "px")
-        .style("top", (d3.event.pageY - 14) + "px");
-    });
-}
-
-function addTierCountDetailsToSummary(div, currentRow, tier, received, sent,
-  childCount) {
-  var health;
-  if (tier == 'Publisher' && received != 0) {
-    health = 0;
-  } else if (tier == 'Publisher' && received == 0) {
-    health = 4;
-  } else {
-    health = getHealth(received, childCount);
-  }
-  var id = "counthealthCell" + tier;
-  var t = div.firstChild;
-  var r, c, currentCol = 0;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(currentCol++);
-  c.innerHTML = tier;
-  c = r.insertCell(currentCol++);
-  c.id = id;
-  c.style.width = "15px";
-  c.style.height = "15px";
-  if (received != 0) {
-    c = r.insertCell(currentCol++);
-    c.innerHTML = received + "(R)";
-  }
-  if (sent != 0) {
-    c = r.insertCell(currentCol++);
-    c.innerHTML = sent + "(S)";
-  }
-  appendHealthStatusIndicator(id, health);
-  return currentRow;
-}
-
-function getComparableCountValue(sourceTier, targetTier, treeList) {
-  var count = -1;
-  for (var i = 0; i < rootNodes.length; i++) {
-    if (rootNodes[i].tier.equalsIgnoreCase(targetTier)) {
-      if (count == -1) {
-        count = 0;
-      }
-      var tnode = rootNodes[i];
-      tnode.streamSourceList.forEach(function (topicList) {
-        var topic = topicList.topic;
-        topicList.source.forEach(function (cluster) {
-          var isFound = false;
-          for (var i = 0; i < rootNodes.length; i++) {
-            if (rootNodes[i].tier.equalsIgnoreCase(sourceTier) && rootNodes[i].clusterName == cluster) {
-              isFound = true;
-              rootNodes[i].allreceivedtopicstats.forEach(function (stats) {
-                if (stats.topic == topic) {
-                  count += stats.messages;
-                }
-              });
-            }
-          }
-          if (!isFound) {
-            return -1;
-          }
-        });
-      });
-    }
-  }
-  return count;
-}
-
-function loadCountSummary(treeList) {
-  var publisherCount = 0,
-    agentReceivedCount = 0,
-    agentSentCount = 0,
-    collectorReceivedCount = 0,
-    collectorSentCount = 0,
-    hdfsCount = 0,
-    localCount = 0,
-    mergeCount = 0,
-    mirrorCount = 0;
-  treeList.forEach(function (cl) {
-    cl.forEach(function (n) {
-      switch (n.tier.toLowerCase()) {
-      case 'publisher':
-        publisherCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'agent':
-        agentReceivedCount += parseInt(n.aggregatemessagesreceived, 10);
-        agentSentCount += parseInt(n.aggregatemessagesent, 10);
-        break;
-      case 'collector':
-        collectorReceivedCount += parseInt(n.aggregatemessagesreceived, 10);
-        collectorSentCount += parseInt(n.aggregatemessagesent, 10);
-        break;
-      case 'hdfs':
-        hdfsCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'local':
-        localCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'merge':
-        mergeCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'mirror':
-        mirrorCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      }
-    });
-  });
-  document.getElementById("summaryPanel")
-    .innerHTML = "";
-  var div = document.createElement('div');
-  var t = document.createElement('table');
-  var currentRow = 0;
-  t.insertRow(currentRow++)
-    .insertCell(0)
-    .innerHTML = "<b>Summary:</b>";
-  div.appendChild(t);
-  document.getElementById("summaryPanel")
-    .appendChild(div);
-
-  currentRow = addTierCountDetailsToSummary(div, currentRow, "Publisher",
-    publisherCount, 0, 0, false);
-  currentRow = addTierCountDetailsToSummary(div, currentRow, "Agent",
-    agentReceivedCount, agentSentCount, publisherCount, false);
-  currentRow = addTierCountDetailsToSummary(div, currentRow, "Collector",
-    collectorReceivedCount, collectorSentCount, agentSentCount, false);
-  currentRow = addTierCountDetailsToSummary(div, currentRow, "HDFS",
-    hdfsCount, 0, collectorSentCount, false);
-  currentRow = addTierCountDetailsToSummary(div, currentRow, "Local",
-    localCount, 0, hdfsCount, false);
-
-  var comparableLocalNum = getComparableCountValue("local", "merge", treeList);
-  var comparableMergeNum = getComparableCountValue("merge", "mirror", treeList);
-  currentRow = addTierCountDetailsToSummary(div, currentRow, "Merge",
-    mergeCount, 0, comparableLocalNum, true);
-  currentRow = addTierCountDetailsToSummary(div, currentRow, "Mirror",
-    mirrorCount, 0, comparableMergeNum, true);
-}
-
-function addTierLatencyDetailsToSummary(div, currentRow, tier, expectedLatency,  actualLatency) {
-  var health;
-  /*
-    If expectedLatency = 1 and lossWarnThresholdDiff = 1 (minimum values),
-    then
-      status = healthy for latency <= 0(diff)
-      status = warn for 0(diff) < latency <= 1(expected)
-      status = unhealthy for latency > 1(expected)
-      status = no data if no latency information is available
-  */
-  if (actualLatency == -1) {
-    health = 4;
-  } else if (actualLatency <= expectedLatency - lossWarnThresholdDiff) {
-    health = 0;
-  } else if (actualLatency <= expectedLatency && actualLatency >
-  expectedLatency - lossWarnThresholdDiff) {
-    health = 1;
-  } else if (actualLatency > expectedLatency) {
-    health = 2;
-  }
-  var id = "counthealthCell" + tier;
-  var t = div.firstChild;
-  var r, c, currentCol = 0;
-  r = t.insertRow(currentRow++);
-  c = r.insertCell(currentCol++);
-  c.innerHTML = tier;
-  c = r.insertCell(currentCol++);
-  c.id = id;
-  c.style.width = "15px";
-  c.style.height = "15px";
-  appendHealthStatusIndicator(id, health);
-  if (health != 4) {
-    c = r.insertCell(currentCol++);
-    c.innerHTML = actualLatency + "(A)";
-    c = r.insertCell(currentCol++);
-    c.innerHTML = expectedLatency + "(E)";
-  }
-  return currentRow;
-}
-
-function loadLatencySummary() {
-  document.getElementById("summaryPanel")
-    .innerHTML = "";
-  var div = document.createElement('div');
-  var t = document.createElement('table');
-  var currentRow = 0;
-  t.insertRow(currentRow++)
-    .insertCell(0)
-    .innerHTML = "<b>Summary:</b>";
-  div.appendChild(t);
-  document.getElementById("summaryPanel")
-    .appendChild(div);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Publisher",
-    publisherSla, publisherLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Agent",
-    agentSla, agentLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Collector",
-    collectorSla, collectorLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "HDFS",
-    hdfsSla, hdfsLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Local",
-    localSla, localLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Merge",
-    mergeSla, mergeLatency);
-  currentRow = addTierLatencyDetailsToSummary(div, currentRow, "Mirror",
-    mirrorSla, mirrorLatency);
-}
-
-function addSummaryBox(treeList) {
-  if (isCountView) {
-    loadCountSummary(treeList);
-  } else {
-    loadLatencySummary();
-  }
 }
 
 function addLegendBox(graphsvg) {
@@ -1409,52 +1095,8 @@ function loadDefaultView() {
 
 function clearHistory() {}
 
-function clearPreviousGraph() {
-  document.getElementById("summaryPanel")
-    .innerHTML = "";
-  document.getElementById("summaryPanel")
-    .style.backgroundColor = "#D8EAF3";
-  document.getElementById("infoPanel")
-    .innerHTML = "";
-  document.getElementById("infoPanel")
-    .style.backgroundColor = "#D8EAF3";
-  d3.select("#graphsvg")
-    .remove();
-}
-
-function saveHistory(streamName, clusterName, selectedTabID, start, end) {
-  if (start == undefined || end == undefined) {
-    start = qstart;
-    end = qend;
-  }
-  var History = window.History;
-  if (History.enabled) {
-    var selectedTab = selectedTabID.toString();
-    /*
-    To run in GWT developement mode, The URL of the page should have an
-    additional parameter gwt.codesvr=127.0.0.1:9997
-    */
-      History.pushState({
-          qstream: streamName,
-          qcluster: clusterName,
-          selectedTab: selectedTab
-        }, "Conduit Visualization", "?qstart="+ start + "&qend=" + end + "&qstream=" +
-        streamName + "&qcluster=" + clusterName + "&selectedTab=" +
-        selectedTabID);
-  } else {
-    console.log("History not enabled");
-  }
-  History.Adapter.bind(window, 'statechange', function () {
-    loadGraph(History.getState()
-      .data.qstream, History.getState()
-      .data.qcluster, History.getState()
-      .data.selectedTab);
-  });
-}
-
-function saveHistoryAndLoadGraph(streamName, clusterName, selectedTabID) {
-  saveHistory(streamName, clusterName, selectedTabID);
-  loadGraph(streamName, clusterName, selectedTabID);
+function clearTopologyGraph() {
+  d3.select("#graphsvg").remove();
 }
 
 function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
@@ -1771,20 +1413,6 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
     drawnode.on("click", latencynodeclick);
 }
 
-function checkCountView(selectedTabID) {
-  var isCountView;
-  if (parseInt(selectedTabID, 10) == 1)
-    isCountView = true;
-  else if (parseInt(selectedTabID, 10) == 2)
-    isCountView = false;
-  return isCountView;
-}
-
-function Point(x, y) {
-  this.x = x;
-  this.y = y;
-}
-
 function setCoordinatesOfNode(n) {
   var angle = parseInt(n.x, 10);
   var rad = parseInt(n.y, 10);
@@ -1841,23 +1469,21 @@ function cacheLinks() {
   lineLinkCache = d3.selectAll("line.link");
 }
 
-function loadGraph(streamName, clusterName, selectedTabID) {
-  highlightTab(selectedTabID);
+function loadGraph(streamName, clusterName) {
   isNodeColored = false;
   rootNodes.length = 0;
   lineLinkCache.length = 0;
   pathLinkCache.length = 0;
-  isCountView = checkCountView(selectedTabID);
-  clearPreviousGraph();
+  clearTopologyGraph();
   var treeList = getTreeList(streamName, clusterName);
   console.log("AAAA");
   console.log(treeList);
-  var graphsvg = d3.select("#graphPanel")
+  var graphsvg = d3.select("#topologyPanel")
     .append("svg:svg")
     .style("stroke", "gray")
     .attr("width", r * 5)
     .attr("height", r * 5)
-    .style("background", "#D8EAF3")
+    .style("background", "#EBF4F8")
     .attr("id", "graphsvg")
     .append("svg:g")
     .attr("transform", "translate(" + r * 2.5 + "," + (r * 2.5) + ")");
@@ -1922,13 +1548,13 @@ function loadGraph(streamName, clusterName, selectedTabID) {
     var currentCluster = clusterNodeList[0].clusterName;
     var startindex = getStartIndex(clusterNodeList);
     if (startindex === undefined) {
-      addClusterName(currentCluster, tree, angle, graphsvg, selectedTabID);
+      addClusterName(currentCluster, tree, angle, graphsvg);
       angle += diff/2;
       continue;
     }
     appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, startindex,
       angle, diff, currentCluster);
-    addClusterName(currentCluster, tree, angle, graphsvg, selectedTabID);
+    addClusterName(currentCluster, tree, angle, graphsvg);
     angle += diff/2;
   }
 
@@ -2007,85 +1633,35 @@ function loadGraph(streamName, clusterName, selectedTabID) {
   addSummaryBox(treeList);
 }
 
-function drawGraph(result, cluster, stream, start, end, selectedTab, publisher, agent, vip, collector, hdfs, local, merge, mirror, percentileFrSla, percentageFrLoss, percentageFrWarn, lWThresholdDiff) {
-  publisherSla = publisher;
-  agentSla = agent;
-  vipSla = vip;
-  collectorSla = collector;
-  hdfsSla = hdfs;
-  localSla = local;
-  mergeSla = merge;
-  mirrorSla = mirror;
-  percentileForSla = percentileFrSla;
-  percentageForLoss = percentageFrLoss;
-  percentageForWarn = percentageFrWarn;
-  lossWarnThresholdDiff = lWThresholdDiff;
-  document.getElementById("tabs").style.display = "block";
-  qStream = stream;
-  qCluster = cluster;
-  qstart = start;
-  qend = end;
+function drawGraph(result) {
   fullTreeList.length = 0;
   aggCollectorNodeList.length = 0;
 
+	console.log("topology result:"+result);
   jsonresponse = JSON.parse(result);
   clearHistory();
   buildNodeList();
-  loadGraph(stream, cluster, selectedTab);
+  loadGraph(qStream, qCluster, qSelectedTab);
 }
 
 function clearSvgAndAddLoadSymbol() {
-  clearPreviousGraph();
-  var graphsvg = d3.select("#graphPanel")
+  clearTopologyGraph();
+  clearSummary();
+  var graphsvg = d3.select("#topologyPanel")
     .append("svg:svg")
-    .style("stroke",
-      "gray")
+    .style("stroke", "gray")
     .attr("width", r * 5)
     .attr("height", r * 5)
-    .style("background", "#D8EAF3")
+    .style("background", "#EBF4F8")
     .attr("id", "graphsvg")
     .append("svg:g")
-  var imgpath = "Visualization/bar-ajax-loader.gif";
-  var imgs = graphsvg.append("svg:image")
-    .attr("xlink:href", imgpath)
+  graphsvg.append("svg:image")
+    .attr("xlink:href", "Visualization/bar-ajax-loader.gif")
     .attr("x",
       r * 2.5 - 100)
     .attr("y", r * 2.5)
     .attr("width", "200")
     .attr("height", "40");
-}
-
-function highlightTab(selectedTabID) {
-  if (parseInt(selectedTabID) == 1) {
-    document.getElementById("count")
-      .className = "active";
-    document.getElementById("latency")
-      .className = "";
-  } else if (parseInt(selectedTabID) == 2) {
-    document.getElementById("count")
-      .className = "";
-    document.getElementById("latency")
-      .className = "active";
-  }
-}
-
-function tabSelected(selectedTabID, stream, cluster) {
-  if (stream == 'null' && cluster == 'null') {
-    stream = qStream;
-    cluster = qCluster;
-  }
-  clearSvgAndAddLoadSymbol();
-  saveHistoryAndLoadGraph(stream, cluster, selectedTabID);
-}
-
-Array.prototype.contains = function (obj) {
-  var i = this.length;
-  while (i--) {
-    if (this[i] == obj) {
-      return true;
-    }
-  }
-  return false;
 }
 
 function checkAndClearList(treeList) {
@@ -2229,15 +1805,4 @@ function getStartIndex(nodeList) {
     }
   }
   return startindex;
-}
-
-function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency, meLatency, miLatency) {
-  publisherLatency = pLatency;
-  agentLatency = aLatency;
-  collectorLatency = cLatency;
-  hdfsLatency = hLatency;
-  localLatency = lLatency;
-  mergeLatency = meLatency;
-  mirrorLatency = miLatency;
-  loadLatencySummary();
 }
