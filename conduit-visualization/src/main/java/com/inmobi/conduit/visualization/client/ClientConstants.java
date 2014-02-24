@@ -26,13 +26,9 @@ public class ClientConstants {
       "lossWarnThresholdDiff";
   public static final String ROLLEDUP_TILL_DAYS = "rollup.tilldays";
 
-  public static final String TOPOLOGY_VIEW = "Topology";
-  public static final String TIMELINE_VIEW = "TimeLine";
-  public static final String TOPOLOGY_TIMELINE_VIEW = "Topology + TimeLine";
-  public static final String CURRENT_TREND_VIEW = "Current Trend";
+  public static final String TREND_VIEW = "Trend";
+  public static final String TOPOLOGY_TREND_VIEW = "Topology & Trend";
 
-  public static final int TOPOLOGY_VIEW_ID = 1;
-  public static final int TIMELINE_VIEW_ID = 2;
-  public static final int TOPOLOGY_TIMELINE_VIEW_ID = 3;
-  public static final int CURRENT_TREND_VIEW_ID = 4;
+  public static final int TREND_VIEW_ID = 1;
+  public static final int TOPOLOGY_TREND_VIEW_ID = 2;
 }

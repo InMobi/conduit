@@ -7,10 +7,10 @@ var degToRadFactor = Math.PI / 180;
 var radToDegFactor = 180 / Math.PI;
 var isNodeColored = false;
 var rootNodes = [];
-var pathLinkCache = [], lineLinkCache = [];
-var aggCollectorNodeList= [];
+var pathLinkCache = [],
+  lineLinkCache = [];
+var aggCollectorNodeList = [];
 var isVipNodeHighlighed = false; //this variable is used so that when loaing default view, same vip child tree need not be highlighted for every collector
-
 /*
 When creating the full graph, 3 different types of trees are created.
 1) First tree is till LOCAL tier. In this tree, dummy nodes of VIP tier are
@@ -70,14 +70,14 @@ function buildNodeList() {
       }
       if (aggNodeObj == undefined) {
         aggNodeObj = {
-        	clusterName: node.clusterName,
-        	received: 0,
-        	sent: 0
+          clusterName: node.clusterName,
+          received: 0,
+          sent: 0
         };
         aggCollectorNodeList.push(aggNodeObj);
       }
-      aggNodeObj.received += node.aggregatemessagesreceived;
-      aggNodeObj.sent += node.aggregatemessagesent;
+      aggNodeObj.received += parseInt(node.aggregatemessagesreceived, 10);
+      aggNodeObj.sent += parseInt(node.aggregatemessagesent, 10);
     }
     n.receivedtopicStatsList.forEach(function (t) {
       if (t.hostname !== undefined)
@@ -148,31 +148,32 @@ function highlightChildNodes(n, isLoadDefaultView) {
   if (n.tier.equalsIgnoreCase("hdfs")) {
     highlightHDFSNode(n);
   } else {
-    if (n.tier.equalsIgnoreCase("vip") && isVipNodeHighlighed && isLoadDefaultView) {
+    if (n.tier.equalsIgnoreCase("vip") && isVipNodeHighlighed &&
+      isLoadDefaultView) {
+      //Return without further action if vip is already highlighted since
+      //all collectors have same vip as child and same part of tree is
+      //highlighted multiple times if not returned here
       return;
     }
     var totalaggregatechild = 0;
     var totalaggregateparent = 0;
-    totalaggregateparent = n.aggregatemessagesreceived;
-    n.children.forEach(function (c) {
-      totalaggregatechild += parseInt(c.aggregatemessagesreceived, 10);
-    });
-    if (n.tier.equalsIgnoreCase("vip") || n.tier.equalsIgnoreCase("local") || n.tier.equalsIgnoreCase("merge")) {
-      if (n.children.length === 0) {
-        for (var i = 0; i < rootNodes.length; i++) {
-          if (rootNodes[i].tier.equalsIgnoreCase(n.tier) && rootNodes[i].clusterName == n.clusterName) {
-            n = rootNodes[i];
-            break;
-          }
+    totalaggregateparent = parseInt(n.aggregatemessagesreceived, 10);
+    if ((n.tier.equalsIgnoreCase("vip") || n.tier.equalsIgnoreCase("local")
+    || n.tier.equalsIgnoreCase("merge")) && n.children.length === 0) {
+      for (var i = 0; i < rootNodes.length; i++) {
+        if (rootNodes[i].tier.equalsIgnoreCase(n.tier) && rootNodes[i].clusterName ==
+          n.clusterName) {
+          n = rootNodes[i];
+          break;
         }
       }
       if (n.children.length == 0) {
+        // Even after replacing n with non-dummy node it has no
+        //children which indicates that tree stops at this point
         return;
       }
-      n.children.forEach(function (c) {
-        totalaggregatechild += parseInt(c.aggregatemessagessent, 10);
-      });
-    } else if (n.tier.equalsIgnoreCase("collector")) {
+    }
+    if (n.tier.equalsIgnoreCase("collector")) {
       for (var i = 0; i < aggCollectorNodeList.length; i++) {
         if (aggCollectorNodeList[i].clusterName == n.clusterName) {
           totalaggregateparent = aggCollectorNodeList[i].received;
@@ -180,28 +181,54 @@ function highlightChildNodes(n, isLoadDefaultView) {
         }
       }
     }
+    if (n.tier.equalsIgnoreCase("mirror") || n.tier.equalsIgnoreCase("merge")) {
+      n.streamSourceList.forEach(function (s) {
+        var currentStream = s.topic;
+        s.source.forEach(function (c) {
+          for (var i = 0; i < n.children.length; i++) {
+            if (n.children[i].clusterName == c) {
+              for (var j = 0; j < n.children[i].allreceivedtopicstats.length; j++) {
+                if (n.children[i].allreceivedtopicstats[j].topic == currentStream) {
+                  totalaggregatechild += n.children[i].allreceivedtopicstats[j].messages;
+                  break;
+                }
+              }
+              break;
+            }
+          }
+        });
+      });
+    } else {
+      n.children.forEach(function (c) {
+        totalaggregatechild += parseInt(c.aggregatemessagesreceived, 10);
+      });
+    }
     n.children.forEach(function (c) {
       var currentLink;
-      if (n.tier.equalsIgnoreCase("merge") || n.tier.equalsIgnoreCase("mirror")) {
+      if (n.tier.equalsIgnoreCase("merge") || n.tier.equalsIgnoreCase(
+        "mirror")) {
         currentLink = lineLinkCache
-        .filter(function (d) {
-          return d.source.clusterName == n.clusterName && d.source.name ==
-            n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name == c.name;
-        })
-        .transition()
-        .duration(100);
+          .filter(function (d) {
+            return d.source.clusterName == n.clusterName && d.source.name ==
+              n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name ==
+              c.name;
+          })
+          .transition()
+          .duration(100);
       } else {
         currentLink = pathLinkCache
-        .filter(function (d) {
-          return d.source.clusterName == n.clusterName && d.source.name ==
-            n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name == c.name;
-        })
-        .transition()
-        .duration(100);
+          .filter(function (d) {
+            return d.source.clusterName == n.clusterName && d.source.name ==
+              n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name ==
+              c.name;
+          })
+          .transition()
+          .duration(100);
       }
-      if (n.allreceivedtopicstats.length === 0 || ((c.tier.equalsIgnoreCase
-      ("agent") || c.tier.equalsIgnoreCase("collector")) && c
-      .allsenttopicstats.length === 0) || c.allreceivedtopicstats.length === 0) {
+      if (n.allreceivedtopicstats.length === 0 || ((c.tier.equalsIgnoreCase(
+            "agent") || c.tier.equalsIgnoreCase("collector")) && c
+          .allsenttopicstats.length === 0) || c.allreceivedtopicstats.length ===
+        0) {
         currentLink.style("fill", "none")
           .style("stroke", "#dedede")
           .each(function (d) {
@@ -226,9 +253,9 @@ function highlightChildNodes(n, isLoadDefaultView) {
     }
   }
   if (n.allTopicsLatency.length > 0) {
-	  n.children.forEach(function (c) {
-	    highlightChildNodes(c, isLoadDefaultView);
-	  });
+    n.children.forEach(function (c) {
+      highlightChildNodes(c, isLoadDefaultView);
+    });
   }
 }
 
@@ -239,16 +266,17 @@ function highlightHDFSNode(n) {
     var link = pathLinkCache
       .filter(function (d) {
         return d.source.clusterName == n.clusterName && d.source.name ==
-          n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name == c.name;
+          n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name ==
+          c.name;
       })
       .transition()
       .duration(100);
     if (c.allsenttopicstats.length === 0)
       link.style("fill", "none")
         .style("stroke", "#dedede")
-          .each(function (d) {
-            d.status = "nofill";
-          });
+        .each(function (d) {
+          d.status = "nofill";
+        });
     else {
       n.allreceivedtopicstats.forEach(function (t) {
         if (t.hostname == c.name) {
@@ -302,38 +330,15 @@ function nodeover(n, clear, isLoadDefaultView) {
 }
 
 function latencyhighlightChildNodes(n, isLoadDefaultView) {
-  if (n.tier.equalsIgnoreCase("vip") && isVipNodeHighlighed && isLoadDefaultView) {
+  if (n.tier.equalsIgnoreCase("vip") && isVipNodeHighlighed &&
+    isLoadDefaultView) {
     return;
   }
   var color;
   for (var i = 0; i < n.overallLatency.length; i++) {
     l = n.overallLatency[i];
     if (l.percentile == percentileForSla) {
-      var sla;
-      switch (n.tier.toLowerCase()) {
-      case 'agent':
-        sla = agentSla;
-        break;
-      case 'vip':
-        sla = vipSla;
-        break;
-      case 'collector':
-        sla = collectorSla;
-        break;
-      case 'hdfs':
-        sla = hdfsSla;
-        break;
-      case 'local':
-        sla = localSla;
-        break;
-      case 'merge':
-        sla = mergeSla;
-        break;
-      case 'mirror':
-        sla = mirrorSla;
-        break;
-      }
-      if (l.latency > sla)
+      if (l.latency > tierLatencySlaMap[n.tier.toLowerCase()])
         color = '#ff0000';
       break;
     }
@@ -341,7 +346,8 @@ function latencyhighlightChildNodes(n, isLoadDefaultView) {
   if (color !== undefined) {
     d3.selectAll("g.node")
       .filter(function (d) {
-        return d.name == n.name && d.clusterName == n.clusterName && d.tier.equalsIgnoreCase(n.tier);
+        return d.name == n.name && d.clusterName == n.clusterName && d.tier.equalsIgnoreCase(
+          n.tier);
       })
       .select("circle")
       .transition()
@@ -349,9 +355,10 @@ function latencyhighlightChildNodes(n, isLoadDefaultView) {
       .style("fill", color);
   }
   if (n.children.length === 0 && (n.tier.equalsIgnoreCase("vip") || n.tier
-  .equalsIgnoreCase("local") || n.tier.equalsIgnoreCase("merge"))) {
+    .equalsIgnoreCase("local") || n.tier.equalsIgnoreCase("merge"))) {
     for (var i = 0; i < rootNodes.length; i++) {
-      if (rootNodes[i].tier.equalsIgnoreCase(n.tier) && rootNodes[i].clusterName == n.clusterName) {
+      if (rootNodes[i].tier.equalsIgnoreCase(n.tier) && rootNodes[i].clusterName ==
+        n.clusterName) {
         n = rootNodes[i];
         break;
       }
@@ -365,42 +372,44 @@ function latencyhighlightChildNodes(n, isLoadDefaultView) {
   }
   if (isLoadDefaultView) {
     lineLinkCache.each(function (d) {
-    	d.status = "nofill";
+      d.status = "nofill";
     });
     pathLinkCache.filter(function (d) {
-    	d.status = "nofill";
+      d.status = "nofill";
     });
   }
   n.children.forEach(function (c) {
     if (n.tier.equalsIgnoreCase("mirror") || n.tier.equalsIgnoreCase("merge")) {
       lineLinkCache.filter(function (d) {
-          return d.source.clusterName == n.clusterName && d.source.name ==
-            n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name == c.name &&
-            n.allTopicsLatency.length > 0 && c.allTopicsLatency.length > 0;
-        })
+        return d.source.clusterName == n.clusterName && d.source.name ==
+          n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name ==
+          c.name &&
+          n.allTopicsLatency.length > 0 && c.allTopicsLatency.length > 0;
+      })
         .transition()
         .duration(100)
         .style("fill", "none")
         .style("stroke", "#ADBCE6")
         .each(function (d) {
-	        d.status = "healthy";
+          d.status = "healthy";
         });
     } else {
       pathLinkCache.filter(function (d) {
-          return d.source.clusterName == n.clusterName && d.source.name ==
-            n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name == c.name &&
-            n.allTopicsLatency.length > 0 && c.allTopicsLatency.length > 0;
-        })
+        return d.source.clusterName == n.clusterName && d.source.name ==
+          n.name && d.source.tier.equalsIgnoreCase(n.tier) && d.target.name ==
+          c.name &&
+          n.allTopicsLatency.length > 0 && c.allTopicsLatency.length > 0;
+      })
         .transition()
         .duration(100)
         .style("fill", "none")
         .style("stroke", "#ADBCE6")
         .each(function (d) {
-	        d.status = "healthy";
+          d.status = "healthy";
         });
     }
     if (n.allTopicsLatency.length > 0) {
-    	latencyhighlightChildNodes(c, isLoadDefaultView);
+      latencyhighlightChildNodes(c, isLoadDefaultView);
     }
   });
 }
@@ -429,7 +438,10 @@ function addListToInfoPanel(n) {
   c.innerHTML = "clusterName:";
   c = r.insertCell(1);
   if (isCountView) {
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + n.clusterName + "</button>";
+    c.innerHTML =
+      "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName +
+      "','all', 1)\" class=\"transparentButton\">" + n.clusterName +
+      "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Aggregate Received:";
@@ -447,7 +459,10 @@ function addListToInfoPanel(n) {
     c.innerHTML = "Message Count Table:";
     c.style.fontWeight = "bold";
   } else {
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + n.clusterName + "</button>";
+    c.innerHTML =
+      "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + n.clusterName +
+      "', 'all', 2)\" class=\"transparentButton\">" + n.clusterName +
+      "</button>";
     r = t.insertRow(currentRow++);
     c = r.insertCell(0);
     c.innerHTML = "Latency Table:";
@@ -470,7 +485,8 @@ function nodeclick(n) {
     .attr("r", 5);
   d3.selectAll("g.node")
     .filter(function (d) {
-      return d.clusterName == n.clusterName && d.name == n.name && d.tier.equalsIgnoreCase(n.tier);
+      return d.clusterName == n.clusterName && d.name == n.name && d.tier.equalsIgnoreCase(
+        n.tier);
     })
     .select("circle")
     .attr("r", 7);
@@ -497,7 +513,11 @@ function nodeclick(n) {
       });
       r = t.insertRow(currentRow);
       c = r.insertCell(0);
-      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + receivedStats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + receivedStats.topic + "</button>";
+      c.innerHTML =
+        "<button type=\"button\" onclick=\"saveHistoryAndReload('" +
+        receivedStats.topic + "', '" + n.clusterName +
+        "', 'all', 1)\" class=\"transparentButton\">" + receivedStats.topic +
+        "</button>";
       if (sent != received) {
         c.firstChild.style.color = "#ff0000";
       } else {
@@ -540,7 +560,11 @@ function nodeclick(n) {
         r = t.insertRow(currentRow);
         var cell = 0;
         c = r.insertCell(cell);
-        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
+        c.innerHTML =
+          "<button type=\"button\" onclick=\"saveHistoryAndReload('" +
+          topicstats.topic + "', '" + n.clusterName +
+          "', 'all', 1)\" class=\"transparentButton\">" + topicstats.topic +
+          "</button>";
         cell++;
         c = r.insertCell(cell);
         c.innerHTML = topicstats.messages;
@@ -551,7 +575,11 @@ function nodeclick(n) {
         r = t.insertRow(currentRow);
         var cell = 0;
         c = r.insertCell(cell);
-        c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topicstats.topic + "', '" + n.clusterName + "', 1)\" class=\"transparentButton\">" + topicstats.topic + "</button>";
+        c.innerHTML =
+          "<button type=\"button\" onclick=\"saveHistoryAndReload('" +
+          topicstats.topic + "', '" + n.clusterName +
+          "', 'all', 1)\" class=\"transparentButton\">" + topicstats.topic +
+          "</button>";
         cell++;
         c = r.insertCell(cell);
         c.innerHTML = topicstats.messages;
@@ -576,7 +604,8 @@ function latencynodeclick(n) {
     .attr("r", 5);
   d3.selectAll("g.node")
     .filter(function (d) {
-      return d.clusterName == n.clusterName && d.name == n.name && d.tier.equalsIgnoreCase(n.tier);
+      return d.clusterName == n.clusterName && d.name == n.name && d.tier.equalsIgnoreCase(
+        n.tier);
     })
     .select("circle")
     .attr("r", 7);
@@ -604,7 +633,9 @@ function latencynodeclick(n) {
     r = t.insertRow(currentRow++);
     var currentColumn = 0;
     c = r.insertCell(currentColumn++);
-    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + topic + "', '" + n.clusterName + "', 2)\" class=\"transparentButton\">" + topic + "</button>";
+    c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" +
+      topic + "', '" + n.clusterName +
+      "', 'all', 2)\" class=\"transparentButton\">" + topic + "</button>";
     percentileSet.forEach(function (p) {
       var currentPercentile = p;
       l.latencyList.forEach(function (pl) {
@@ -689,10 +720,11 @@ function getStreamsCausingDataLoss(l) {
         streamslist.push(t.topic);
       isstreampresent = false;
     });
-  } else if (l.source.tier.equalsIgnoreCase("merge") || l.source.tier.equalsIgnoreCase("mirror")) {
+  } else if (l.source.tier.equalsIgnoreCase("merge") || l.source.tier.equalsIgnoreCase(
+    "mirror")) {
     var targetNodeStreams = [];
-    l.target.allreceivedtopicstats.forEach(function(s) {
-    	targetNodeStreams.push(s.topic);
+    l.target.allreceivedtopicstats.forEach(function (s) {
+      targetNodeStreams.push(s.topic);
     });
     l.source.allreceivedtopicstats.forEach(function (s) {
       var topic = s.topic;
@@ -711,7 +743,8 @@ function getStreamsCausingDataLoss(l) {
             }
           }
         });
-        if (!isstreampresent && !(streamslist.contains(topic)) && targetNodeStreams.contains(topic)) {
+        if (!isstreampresent && !(streamslist.contains(topic)) &&
+          targetNodeStreams.contains(topic)) {
           streamslist.push(topic);
         }
         isstreampresent = false;
@@ -744,20 +777,25 @@ function linkclick(l) {
   d3.selectAll("g.node")
     .select("circle")
     .attr("r", 5);
-  if (l.source.tier.equalsIgnoreCase("merge") || l.source.tier.equalsIgnoreCase("mirror")) {
+  if (l.source.tier.equalsIgnoreCase("merge") || l.source.tier.equalsIgnoreCase(
+    "mirror")) {
     lineLinkCache
       .filter(function (d) {
         return d.target.clusterName == l.target.clusterName && d.target.name ==
-          l.target.name && d.target.tier.equalsIgnoreCase(l.target.tier) && d.source.clusterName ==
-          l.source.clusterName && d.source.name == l.source.name && d.source.tier.equalsIgnoreCase(l.source.tier);
+          l.target.name && d.target.tier.equalsIgnoreCase(l.target.tier) && d
+          .source.clusterName ==
+          l.source.clusterName && d.source.name == l.source.name && d.source.tier
+          .equalsIgnoreCase(l.source.tier);
       })
       .style("stroke-width", "5px");
   } else {
     pathLinkCache
       .filter(function (d) {
         return d.target.clusterName == l.target.clusterName && d.target.name ==
-          l.target.name && d.target.tier.equalsIgnoreCase(l.target.tier) && d.source.clusterName ==
-          l.source.clusterName && d.source.name == l.source.name && d.source.tier.equalsIgnoreCase(l.source.tier);
+          l.target.name && d.target.tier.equalsIgnoreCase(l.target.tier) && d
+          .source.clusterName ==
+          l.source.clusterName && d.source.name == l.source.name && d.source.tier
+          .equalsIgnoreCase(l.source.tier);
       })
       .style("stroke-width", "5px");
   }
@@ -782,7 +820,10 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Source cluster:";
   c = r.insertCell(1);
-  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.target.clusterName + "', 1)\" class=\"transparentButton\">" + l.target.clusterName + "</button>";
+  c.innerHTML =
+    "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.target
+    .clusterName + "', 'all', 1)\" class=\"transparentButton\">" + l.target.clusterName +
+    "</button>";
   r = t.insertRow(currentRow++);
   c = r.insertCell(0);
   c.innerHTML = "Target Name:";
@@ -797,7 +838,10 @@ function linkclick(l) {
   c = r.insertCell(0);
   c.innerHTML = "Target Cluster:";
   c = r.insertCell(1);
-  c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + l.source.clusterName + "</button>";
+  c.innerHTML =
+    "<button type=\"button\" onclick=\"saveHistoryAndReload('All', '" + l.source
+    .clusterName + "', 'all', 1)\" class=\"transparentButton\">" + l.source.clusterName +
+    "</button>";
   var streams = getStreamsCausingDataLoss(l);
   if (streams.length > 0) {
     r = t.insertRow(currentRow++);
@@ -806,7 +850,10 @@ function linkclick(l) {
     streams.forEach(function (s) {
       r = t.insertRow(currentRow++);
       c = r.insertCell(0);
-      c.innerHTML = "<button type=\"button\" onclick=\"saveHistoryAndReload('" + s + "', '" + l.source.clusterName + "', 1)\" class=\"transparentButton\">" + s + "</button>";
+      c.innerHTML =
+        "<button type=\"button\" onclick=\"saveHistoryAndReload('" + s +
+        "', '" + l.source.clusterName +
+        "', 'all', 1)\" class=\"transparentButton\">" + s + "</button>";
     });
   }
   document.getElementById("infoPanel")
@@ -815,16 +862,16 @@ function linkclick(l) {
 
 function createNewObjectForTree(c, clusterNodeList, p) {
   var h = {
-  	name : c.name,
-  	tier : c.tier,
-  	clusterName : c.clusterName,
-  	aggregatemessagesreceived : c.aggregatemessagesreceived,
-  	allreceivedtopicstats : c.allreceivedtopicstats,
-  	aggregatemessagesent : c.aggregatemessagesent,
-  	allsenttopicstats : c.allsenttopicstats,
-  	overallLatency : c.overallLatency,
-  	allTopicsLatency : c.allTopicsLatency,
-  	point : c.point
+    name: c.name,
+    tier: c.tier,
+    clusterName: c.clusterName,
+    aggregatemessagesreceived: c.aggregatemessagesreceived,
+    allreceivedtopicstats: c.allreceivedtopicstats,
+    aggregatemessagesent: c.aggregatemessagesent,
+    allsenttopicstats: c.allsenttopicstats,
+    overallLatency: c.overallLatency,
+    allTopicsLatency: c.allTopicsLatency,
+    point: c.point
   }
   if (p.tier.equalsIgnoreCase("collector") && c.tier.equalsIgnoreCase("vip")) {
     if (collectorIndex == 0) {
@@ -842,17 +889,17 @@ function createNewObjectForTree(c, clusterNodeList, p) {
 
 function createNewObjectForMergeMirrorTree(c) {
   var h = {
-  	name : c.name,
-  	tier : c.tier,
-  	clusterName : c.clusterName,
-  	aggregatemessagesreceived : c.aggregatemessagesreceived,
-  	allreceivedtopicstats : c.allreceivedtopicstats,
-  	aggregatemessagesent : c.aggregatemessagesent,
-  	allsenttopicstats : c.allsenttopicstats,
-  	overallLatency : c.overallLatency,
-  	allTopicsLatency : c.allTopicsLatency,
-  	point : c.point,
-    children : []
+    name: c.name,
+    tier: c.tier,
+    clusterName: c.clusterName,
+    aggregatemessagesreceived: c.aggregatemessagesreceived,
+    allreceivedtopicstats: c.allreceivedtopicstats,
+    aggregatemessagesent: c.aggregatemessagesent,
+    allsenttopicstats: c.allsenttopicstats,
+    overallLatency: c.overallLatency,
+    allTopicsLatency: c.allTopicsLatency,
+    point: c.point,
+    children: []
   }
   return h;
 }
@@ -864,14 +911,17 @@ function travelTree(root, clusterNodeList) {
     var createNode = false;
     if (root.tier.equalsIgnoreCase("local") && c.tier.equalsIgnoreCase("hdfs")) {
       createNode = true;
-    } else if (root.tier.equalsIgnoreCase("hdfs") && c.tier.equalsIgnoreCase("collector")) {
+    } else if (root.tier.equalsIgnoreCase("hdfs") && c.tier.equalsIgnoreCase(
+      "collector")) {
       createNode = true;
-    } else if (root.tier.equalsIgnoreCase("collector") && c.tier.equalsIgnoreCase("vip")) {
+    } else if (root.tier.equalsIgnoreCase("collector") && c.tier.equalsIgnoreCase(
+      "vip")) {
       createNode = true;
-    } else if (root.tier.equalsIgnoreCase("vip") && c.tier.equalsIgnoreCase("agent")) {
+    } else if (root.tier.equalsIgnoreCase("vip") && c.tier.equalsIgnoreCase(
+      "agent")) {
       createNode = true;
-    } else if (root.tier.equalsIgnoreCase("agent") && c.tier.equalsIgnoreCase
-    ("publisher") && root.name == c.name) {
+    } else if (root.tier.equalsIgnoreCase("agent") && c.tier.equalsIgnoreCase(
+      "publisher") && root.name == c.name) {
       createNode = true;
     }
     if (createNode)
@@ -974,7 +1024,7 @@ function addClusterName(clusterName, tree, angle, graphsvg) {
     .style("cursor", "hand")
     .style("cursor", "pointer")
     .on("click", function (d) {
-      saveHistoryAndReload('All', d.name);
+      saveHistoryAndReload('All', d.name, 'all');
     });
 }
 
@@ -983,37 +1033,28 @@ function addColorsToNodes() {
     .select("circle")
     .style("fill", function (d) {
       var color = "#ccc";
-      switch (d.tier.toLowerCase()) {
-      case "publisher":
-        color = hexcodeList[0];
-        break;
-      case "agent":
-        if (d.aggregatemessagesent < d.aggregatemessagesreceived)
-          color = "#ff0000";
-        else
-          color = hexcodeList[1];
-        break;
-      case "vip":
-        color = hexcodeList[2];
-        break;
-      case "collector":
-        if (d.aggregatemessagesent < d.aggregatemessagesreceived)
-          color = "#ff0000";
-        else
-          color = hexcodeList[3];
-        break;
-      case "hdfs":
-        color = hexcodeList[4];
-        break;
-      case "local":
-        color = hexcodeList[5];
-        break;
-      case "merge":
-        color = hexcodeList[6];
-        break;
-      case "mirror":
-        color = hexcodeList[7];
-        break;
+      if (d.tier.toLowerCase().equalsIgnoreCase("collector") || d.tier
+        .toLowerCase().equalsIgnoreCase("agent")) {
+        if (isCountView) {
+          if (parseInt(d.aggregatemessagesent, 10) < parseInt(d.aggregatemessagesreceived, 10)) {
+            color = "#ff0000";
+          } else {
+            color = tierColorMap[d.tier.toLowerCase()];
+          }
+        } else {
+          for (var i = 0; i < d.overallLatency.length; i++) {
+            if (d.overallLatency[i].percentile == percentileForSla) {
+              if (d.overallLatency[i].latency > tierLatencySlaMap[d.tier.toLowerCase()]) {
+                color = "#ff0000";
+              } else {
+                color = tierColorMap[d.tier.toLowerCase()];
+              }
+              break;
+            }
+          }
+        }
+      } else {
+        color = tierColorMap[d.tier.toLowerCase()];
       }
       return color;
     });
@@ -1021,17 +1062,20 @@ function addColorsToNodes() {
 
 function addLegendBox(graphsvg) {
   var inc = 100;
-  for (var i = 0; i < tierList.length; i++) {
+  for (var tier in tierColorMap) {
+    if (tier.equalsIgnoreCase("all")) {
+      continue;
+    }
     graphsvg.append("circle")
       .attr("class", "legendColor")
       .attr("r", 5)
       .attr("cx", -r * 2.5 + 10 + (i) * inc)
       .attr("cy", -r * 2.5 + 10)
-      .style("fill", hexcodeList[i])
-      .style("stroke", hexcodeList[i]);
+      .style("fill", tierColorMap[tier])
+      .style("stroke", tierColorMap[tier]);
     graphsvg.append("text")
       .attr("class", "legend")
-      .text(tierList[i])
+      .text(tier)
       .attr("x", -r * 2.5 + 20 + (i) * inc)
       .attr("y", -r * 2.5 + 15);
   }
@@ -1053,51 +1097,46 @@ function loadDefaultView() {
     addColorsToNodes();
     isNodeColored = true;
   } else {
-    pathLinkCache.each(function(d) {
+    pathLinkCache.each(function (d) {
       var color;
       switch (d.status) {
-        case "loss":
-          color = "#ff0000";
-          break;
-        case "healthy":
-        	if (isCountView) {
-        		color = "#00ff00";
-        	} else {
-        		color = "#ADBCE6";
-        	}
-          break;
-        default:
-          color = "#dedede";
+      case "loss":
+        color = "#ff0000";
+        break;
+      case "healthy":
+        if (isCountView) {
+          color = "#00ff00";
+        } else {
+          color = "#ADBCE6";
         }
+        break;
+      default:
+        color = "#dedede";
+      }
       d3.select(this).style("fill", "none").style("stroke", color);
     });
-
-    lineLinkCache.each(function(d) {
+    lineLinkCache.each(function (d) {
       var color;
       switch (d.status) {
-        case "loss":
-          color = "#ff0000";
-          break;
-        case "healthy":
-          if (isCountView) {
-        		color = "#00ff00";
-        	} else {
-        		color = "#ADBCE6";
-        	}
-          break;
-        default:
-            color = "#dedede";
-      	}
+      case "loss":
+        color = "#ff0000";
+        break;
+      case "healthy":
+        if (isCountView) {
+          color = "#00ff00";
+        } else {
+          color = "#ADBCE6";
+        }
+        break;
+      default:
+        color = "#dedede";
+      }
       d3.select(this).style("fill", "none").style("stroke", color);
     });
   }
 }
 
 function clearHistory() {}
-
-function clearTopologyGraph() {
-  d3.select("#graphsvg").remove();
-}
 
 function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
   treeList.forEach(function (n) {
@@ -1135,13 +1174,18 @@ function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
           t.latencyList.forEach(function (l) {
             topicLateny.latencyList.push(new PercentileLatency(l.percentile,
               l.latency));
-            overallLatency.push(new PercentileLatency(l.percentile, l.latency));
           });
           allTopicsLatency.push(topicLateny);
           break;
         }
       }
     });
+    if (n.allTopicsLatency.length == 1) {
+      n.allTopicsLatency[0].latencyList.forEach(function (l) {
+        overallLatency.push(new PercentileLatency(l.percentile, l.latency));
+      });
+      n.overallLatency = overallLatency;
+    }
     n.streamSourceList.forEach(function (s) {
       var topic = s.topic;
       for (var i = 0; i < streams.length; i++) {
@@ -1149,9 +1193,9 @@ function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
           var streamSource = new StreamSource(topic);
           s.source.forEach(function (sourceObj) {
             streamSource.source.push(sourceObj);
-          	if (!allSourceList.contains(sourceObj)) {
-            	allSourceList.push(sourceObj);
-          	}
+            if (!allSourceList.contains(sourceObj)) {
+              allSourceList.push(sourceObj);
+            }
           });
           topicSourceList.push(streamSource);
           break;
@@ -1161,7 +1205,6 @@ function popAllTopicStatsNotBelongingToStreamList(streams, treeList) {
     n.allreceivedtopicstats = newReceivedStats;
     n.allsenttopicstats = newSentStats;
     n.allTopicsLatency = allTopicsLatency;
-    n.overallLatency = overallLatency;
     n.streamSourceList = topicSourceList;
     n.source = allSourceList;
   });
@@ -1172,17 +1215,21 @@ function cloneNode(n) {
     n.aggregatemessagesent);
   n.allreceivedtopicstats.forEach(function (t) {
     if (t.hostname !== undefined)
-      newNode.allreceivedtopicstats.push(new TopicStats(t.topic, parseInt(t.messages, 10),
+      newNode.allreceivedtopicstats.push(new TopicStats(t.topic, parseInt(t.messages,
+          10),
         t.hostname));
     else
-      newNode.allreceivedtopicstats.push(new TopicStats(t.topic, parseInt(t.messages, 10)));
+      newNode.allreceivedtopicstats.push(new TopicStats(t.topic, parseInt(t.messages,
+        10)));
   });
   n.allsenttopicstats.forEach(function (t) {
     if (t.hostname !== undefined)
-      newNode.allsenttopicstats.push(new TopicStats(t.topic, parseInt(t.messages, 10),
+      newNode.allsenttopicstats.push(new TopicStats(t.topic, parseInt(t.messages,
+          10),
         t.hostname));
     else
-      newNode.allsenttopicstats.push(new TopicStats(t.topic, parseInt(t.messages, 10)));
+      newNode.allsenttopicstats.push(new TopicStats(t.topic, parseInt(t.messages,
+        10)));
   });
   if (n.tier.equalsIgnoreCase("merge") || n.tier.equalsIgnoreCase("mirror")) {
     n.streamSourceList.forEach(function (s) {
@@ -1210,11 +1257,11 @@ function cloneNode(n) {
   return newNode;
 }
 
-function appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, startindex, angle, diff, clusterName) {
+function appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList,
+  startindex, angle, diff, clusterName) {
   var root = cloneNode(clusterNodeList[startindex]);
   root.children = travelTree(root, clusterNodeList);
   rootNodes.push(root);
-
   var diagonal = d3.svg.diagonal.radial()
     .projection(function (d) {
       return [d.y, d.x / 180 * Math.PI];
@@ -1222,7 +1269,6 @@ function appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, starti
   var nodes = tree.nodes(root);
   var links = tree.links(nodes);
   setNodesAngles(angle, diff, nodes);
-
   var drawlink = graphsvg.selectAll("path.link")
     .filter(function (d, i) {
       return d.clusterName == clusterName;
@@ -1313,7 +1359,8 @@ function setNodeAnglesForLocalNodes(angle, diff, nodes) {
   nodes.forEach(function (n) {
     var arr = d3.selectAll('g.node')
       .filter(function (d) {
-        return d.name == n.name && d.clusterName == n.clusterName && d.tier.equalsIgnoreCase(n.tier);
+        return d.name == n.name && d.clusterName == n.clusterName && d.tier
+          .equalsIgnoreCase(n.tier);
       })
       .data();
     if (arr.length > 0) {
@@ -1327,7 +1374,8 @@ function setNodeAnglesForLocalNodes(angle, diff, nodes) {
   });
 }
 
-function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, diff) {
+function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName,
+  diff) {
   var diagonal = d3.svg.diagonal.radial()
     .projection(function (d) {
       return [d.y, d.x / 180 * Math.PI];
@@ -1339,7 +1387,6 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
   var root = cloneNode(node);
   root.children = constructTreeForMergeMirror(root);
   rootNodes.push(root);
-
   var nodes = tree.nodes(root);
   var links = tree.links(nodes);
   setNodeAnglesForLocalNodes(angle, diff, nodes);
@@ -1348,7 +1395,8 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
   });
   var drawlink = graphsvg.selectAll("line.link")
     .filter(function (l) {
-      return l.source.clusterName == node.clusterName && l.source.tier.equalsIgnoreCase(node.tier) && l.name == node.name;
+      return l.source.clusterName == node.clusterName && l.source.tier.equalsIgnoreCase(
+        node.tier) && l.name == node.name;
     })
     .data(links).enter()
     .append("svg:g")
@@ -1375,7 +1423,8 @@ function appendMergeMirrorTreesToSVG(graphsvg, tree, node, angle, clusterName, d
     .style("fill", 'none');
   var drawnode = graphsvg.selectAll("g.node")
     .filter(function (d) {
-      return d.clusterName == clusterName && d.tier.equalsIgnoreCase(node.tier) && d.name == node.name;
+      return d.clusterName == clusterName && d.tier.equalsIgnoreCase(node.tier) &&
+        d.name == node.name;
     })
     .data(nodes)
     .enter()
@@ -1488,10 +1537,9 @@ function loadGraph(streamName, clusterName) {
     .append("svg:g")
     .attr("transform", "translate(" + r * 2.5 + "," + (r * 2.5) + ")");
   var divisions = treeList.length;
-
   var totalNumPub = 0;
   var clustersWithoutPub = 0;
-  treeList.forEach(function(l) {
+  treeList.forEach(function (l) {
     var numPublishers = getNumOfNodes(l, "publisher");
     if (numPublishers == 0) {
       clustersWithoutPub++;
@@ -1499,16 +1547,14 @@ function loadGraph(streamName, clusterName) {
       totalNumPub += numPublishers;
     }
   });
-
   var linelength = 9 * yDiff;
   var angleLeft = 360 - 20 * clustersWithoutPub;
-  var eachPubAngle = angleLeft/totalNumPub;
-
-  var diff = 0, angle = 0, lineAngle = 0;
-
+  var eachPubAngle = angleLeft / totalNumPub;
+  var diff = 0,
+    angle = 0,
+    lineAngle = 0;
   //first append all nodes till local to the svg so that when merge nodes are appended all local nodes are available when retrieving them from the svg using d3.selectAll(). Similarly append all merge nodes before appending mirror nodes
   for (var index = 0; index < treeList.length; index++) {
-
     if (divisions == 1) {
       angle = 90;
       diff = 90;
@@ -1519,9 +1565,8 @@ function loadGraph(streamName, clusterName) {
       } else {
         diff = numPub * eachPubAngle;
       }
-      angle += diff/2 ;
+      angle += diff / 2;
     }
-
     var tree = d3.layout.tree()
       .separation(function (a, b) {
         if (a.region != b.region) {
@@ -1530,7 +1575,6 @@ function loadGraph(streamName, clusterName) {
           return (a.children == b.children ? 3 : 3) / a.depth;
         }
       }).size([diff, r]);
-
     if (treeList.length != 1) {
       lineAngle += diff;
       var xcoord = linelength * Math.cos((lineAngle - 90) * degToRadFactor);
@@ -1542,22 +1586,20 @@ function loadGraph(streamName, clusterName) {
         .attr("y2", ycoord)
         .attr("stroke", "#ccc");
     }
-
     collectorIndex = 0;
     var clusterNodeList = treeList[index];
     var currentCluster = clusterNodeList[0].clusterName;
     var startindex = getStartIndex(clusterNodeList);
     if (startindex === undefined) {
       addClusterName(currentCluster, tree, angle, graphsvg);
-      angle += diff/2;
+      angle += diff / 2;
       continue;
     }
     appendClusterTreeTillLocalToSVG(graphsvg, tree, clusterNodeList, startindex,
       angle, diff, currentCluster);
     addClusterName(currentCluster, tree, angle, graphsvg);
-    angle += diff/2;
+    angle += diff / 2;
   }
-
   angle = 0;
   diff = 0;
   for (index = 0; index < treeList.length; index++) {
@@ -1571,9 +1613,8 @@ function loadGraph(streamName, clusterName) {
       } else {
         diff = numPub * eachPubAngle;
       }
-      angle += diff/2 ;
+      angle += diff / 2;
     }
-
     var tree = d3.layout.tree()
       .separation(function (a, b) {
         if (a.region != b.region) {
@@ -1582,16 +1623,15 @@ function loadGraph(streamName, clusterName) {
           return (a.children == b.children ? 3 : 3) / a.depth;
         }
       }).size([diff, r]);
-
     var clusterNodeList = treeList[index];
     if (getNumOfNodes(clusterNodeList, "merge") != 0) {
       var currentCluster = clusterNodeList[0].clusterName;
       var mergeList = getTierList(clusterNodeList, "merge");
-      appendMergeMirrorTreesToSVG(graphsvg, tree, mergeList[0], angle, clusterName, diff);
+      appendMergeMirrorTreesToSVG(graphsvg, tree, mergeList[0], angle,
+        clusterName, diff);
     }
-    angle += diff/2;
+    angle += diff / 2;
   }
-
   angle = 0;
   diff = 0;
   for (index = 0; index < treeList.length; index++) {
@@ -1605,9 +1645,8 @@ function loadGraph(streamName, clusterName) {
       } else {
         diff = numPub * eachPubAngle;
       }
-      angle += diff/2 ;
+      angle += diff / 2;
     }
-
     var tree = d3.layout.tree()
       .separation(function (a, b) {
         if (a.region != b.region) {
@@ -1616,16 +1655,15 @@ function loadGraph(streamName, clusterName) {
           return (a.children == b.children ? 3 : 3) / a.depth;
         }
       }).size([diff, r]);
-
     var clusterNodeList = treeList[index];
     if (getNumOfNodes(clusterNodeList, "mirror") != 0) {
       var currentCluster = clusterNodeList[0].cluster;
       var mirrorList = getTierList(clusterNodeList, "mirror");
-      appendMergeMirrorTreesToSVG(graphsvg, tree, mirrorList[0], angle, clusterName, diff);
+      appendMergeMirrorTreesToSVG(graphsvg, tree, mirrorList[0], angle,
+        clusterName, diff);
     }
-    angle += diff/2;
+    angle += diff / 2;
   }
-
   cacheLinks();
   appendArrowMarkersToLinks(graphsvg);
   loadDefaultView();
@@ -1636,32 +1674,10 @@ function loadGraph(streamName, clusterName) {
 function drawGraph(result) {
   fullTreeList.length = 0;
   aggCollectorNodeList.length = 0;
-
-	console.log("topology result:"+result);
   jsonresponse = JSON.parse(result);
   clearHistory();
   buildNodeList();
   loadGraph(qStream, qCluster, qSelectedTab);
-}
-
-function clearSvgAndAddLoadSymbol() {
-  clearTopologyGraph();
-  clearSummary();
-  var graphsvg = d3.select("#topologyPanel")
-    .append("svg:svg")
-    .style("stroke", "gray")
-    .attr("width", r * 5)
-    .attr("height", r * 5)
-    .style("background", "#EBF4F8")
-    .attr("id", "graphsvg")
-    .append("svg:g")
-  graphsvg.append("svg:image")
-    .attr("xlink:href", "Visualization/bar-ajax-loader.gif")
-    .attr("x",
-      r * 2.5 - 100)
-    .attr("y", r * 2.5)
-    .attr("width", "200")
-    .attr("height", "40");
 }
 
 function checkAndClearList(treeList) {
@@ -1669,7 +1685,8 @@ function checkAndClearList(treeList) {
     var clusterList = treeList[k];
     for (var i = 0; i < clusterList.length; i++) {
       var currentNode = clusterList[i];
-      if (currentNode.tier.equalsIgnoreCase("local") && currentNode.allreceivedtopicstats.length == 0) {
+      if (currentNode.tier.equalsIgnoreCase("local") && currentNode.allreceivedtopicstats
+        .length == 0) {
         treeList.splice(k, 1);
       }
     }
@@ -1682,25 +1699,37 @@ function getTreeList(streamName, clusterName) {
     if (fullTreeList.length != 0) {
       var clusterList = [];
       var streams = [];
-      var mirrorSourceList;
+      var mirrorSourceList = [];
       var mergeSourceList = [];
       for (var i = 0; i < fullTreeList.length; i++) {
         var l = fullTreeList[i];
         if (l[0] != undefined && l[0].clusterName == clusterName) {
           l.forEach(function (nodeInCluster) {
             var clonedNode = cloneNode(nodeInCluster);
-            if (clonedNode.tier.equalsIgnoreCase("merge") || clonedNode.tier.equalsIgnoreCase("mirror")) {
-              if (clonedNode.tier.equalsIgnoreCase("mirror")) {
+            if (clonedNode.tier.equalsIgnoreCase("merge") || clonedNode.tier.equalsIgnoreCase(
+              "mirror")) {
+              var isPresent = false;
+              if (streamName.equalsIgnoreCase("all")) {
+                isPresent = true;
+              } else {
+                for (var j = 0; j < clonedNode.streamSourceList.length; j++) {
+                  if(clonedNode.streamSourceList[j].topic == streamName) {
+                    isPresent = true;
+                    break;
+                  }
+                }
+              }
+              if (clonedNode.tier.equalsIgnoreCase("mirror") && isPresent) {
                 mirrorSourceList = clonedNode.source;
               }
-              if (clonedNode.tier.equalsIgnoreCase("merge")) {
+              if (clonedNode.tier.equalsIgnoreCase("merge") && isPresent) {
                 clonedNode.source.forEach(function (s) {
                   if (!mergeSourceList.contains(s) && s != clusterName) {
                     mergeSourceList.push(s);
                   }
                 });
               }
-              clonedNode.streamSourceList.forEach(function(s) {
+              clonedNode.streamSourceList.forEach(function (s) {
                 if (!streams.contains(s.topic)) {
                   streams.push(s.topic);
                 }
@@ -1714,7 +1743,8 @@ function getTreeList(streamName, clusterName) {
       }
       if (getNumOfNodes(clusterList, "mirror") != 0) {
         fullTreeList.forEach(function (l) {
-          if (l[0] != undefined && l[0].clusterName != clusterName && mirrorSourceList.contains(l[0].clusterName)) {
+          if (l[0] != undefined && l[0].clusterName != clusterName &&
+            mirrorSourceList.contains(l[0].clusterName)) {
             var mirrorClusterList = [];
             for (var i = 0; i < l.length; i++) {
               var nodeInCluster = l[i];
@@ -1760,8 +1790,8 @@ function getTreeList(streamName, clusterName) {
           fullTreeList.forEach(function (lst) {
             if (lst[0] != undefined && lst[0].clusterName == sourceCluster) {
               lst.forEach(function (nodeInCluster) {
-                if (!nodeInCluster.tier.equalsIgnoreCase("mirror") &&
-                  !nodeInCluster.tier.equalsIgnoreCase("merge")) {
+                if (!nodeInCluster.tier.equalsIgnoreCase("mirror") && !
+                  nodeInCluster.tier.equalsIgnoreCase("merge")) {
                   tree.push(cloneNode(nodeInCluster));
                 }
               });

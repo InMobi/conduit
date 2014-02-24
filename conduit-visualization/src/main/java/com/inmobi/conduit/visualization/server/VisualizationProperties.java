@@ -24,6 +24,8 @@ public class VisualizationProperties {
       p.load(new FileInputStream(new File(filePath)));
       propMap.put(ServerConstants.CONDUIT_XML_PATH, p.get("conduit.xml.path")
           .toString());
+      propMap.put(ServerConstants.LOG4J_PROPERTIES_PATH, p.get("log4j.path")
+          .toString());
       propMap.put(ServerConstants.PERCENTILE_STRING,
           p.get("percentile.string").toString());
       propMap.put(ServerConstants.PUBLISHER_SLA, p.get("publisher.sla")
