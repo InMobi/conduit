@@ -13,7 +13,6 @@ var tierbuttonList = ["Mirror", "Merge", "Local", "HDFS", "Collector", "Agent",
 var svg;
 var dateFormat = d3.time.format.utc("%b %d,%Y %I:%M %p");
 var dateHighlighted;
-var isClicked = false;
 var uniqId = 1;
 
 function TimeLineTopicStats(topic) {
@@ -209,7 +208,6 @@ var callCount = 0;
 function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
   minDate = 0, maxDate = 0, minCount = 0, maxCount = 0;
   clearTrendSVG();
-  isClicked = false;
   buildDataPointMap(tier, stream, cluster);
   svg = d3.select("#timelinePanel").append("svg")
     .attr("width", trendwidth + margin.left + margin.right)
@@ -227,12 +225,10 @@ function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
     .attr("class", "x grid")
     .attr("transform", "translate(0," + trendheight + ")")
     .call(xAxis)
-    .on("click", resetIsClicked)
     .style("z-index", "1");
   svg.append("g")
     .attr("class", "y grid")
     .call(yAxis)
-    .on("click", resetIsClicked)
     .style("z-index", "1");
   /*svg.append("g")
         .attr("class", "x brush")
@@ -284,18 +280,10 @@ function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
   }
   svg.on("mouseover", function () {
     mouseOverOnGraph(d3.event.pageX);
-  })
-    .on("click", resetIsClicked);
-}
-
-function resetIsClicked() {
-  isClicked = false;
+  });
 }
 
 function highlighPathMouseOver(xcoord, tier) {
-  if (isClicked) {
-    return;
-  };
   svg.selectAll(".smallindicator").data([]).exit().remove();
   svg.selectAll(".bigindicator").data([]).exit().remove();
   popupDiv.transition()
@@ -403,7 +391,6 @@ function expand(id, text, isButton, tier, stream, cluster) {
 }
 
 function showPointDetails(d, xcoord, ycoord) {
-  isClicked = true;
   popupDiv.html("");
   var timelinepaneltopOffset = document.getElementById("timelinePanel").offsetTop;
   var finalycoord;
@@ -646,9 +633,6 @@ function getNearestDate(xcoord) {
 }
 
 function mouseOverOnGraph(xcoord) {
-  if (isClicked) {
-    return;
-  }
   var date = getNearestDate(xcoord);
   if (date == undefined) {
     popupDiv.transition()
@@ -817,6 +801,8 @@ function renderTimeLine(result, timeticklength) {
   }
   if (result != undefined && result.length != 0) {
     timelinejson = JSON.parse(result);
+  } else {
+  	timelinejson = undefined;
   }
   clearTrendGraph();
   appendTierButtonPanel();
