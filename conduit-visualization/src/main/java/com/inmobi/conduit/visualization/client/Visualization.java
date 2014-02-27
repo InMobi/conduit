@@ -594,6 +594,9 @@ public class Visualization implements EntryPoint, ClickHandler {
     } else if (clusterList.getSelectedIndex() < 1) {
       Window.alert("Select Cluster");
       return false;
+    } else if (viewList.getSelectedIndex() < 1) {
+      Window.alert("Select View");
+      return false;
     }
     return true;
   }
