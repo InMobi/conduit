@@ -20,9 +20,12 @@ cd $TMP
 git checkout gh-pages || die "unable to checkout gh-pages"
 
 mkdir -p current || die "unable to create dir current"
-mkdir -p versions/$VERSION || due "unable to create dir versions/$VERSION"
+mkdir -p versions/$VERSION || die "unable to create dir versions/$VERSION"
 
 find current -type f -exec git rm {} \;
+
+mkdir -p current || die "unable to create dir current"
+mkdir -p versions/$VERSION || die "unable to create dir versions/$VERSION"
 
 cp -r $STAGE/* current/ || die "unable to copy to current"
 cp -r $STAGE/* versions/$VERSION/ || die "unable to copy to versions/$VERSION"
