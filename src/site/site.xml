@@ -12,6 +12,7 @@
     </menu>
 
     <menu ref="modules" />
+    <menu ref="reports"/>
     <breadcrumbs>
       <item name="InMobi" href="http://github.com/inmobi/" />
       <item name="Conduit" href="http://github.com/inmobi/conduit"/>
