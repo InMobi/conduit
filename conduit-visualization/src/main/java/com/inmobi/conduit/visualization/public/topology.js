@@ -1062,6 +1062,7 @@ function addColorsToNodes() {
 
 function addLegendBox(graphsvg) {
   var inc = 100;
+  var i = 0;
   for (var tier in tierColorMap) {
     if (tier.equalsIgnoreCase("all")) {
       continue;
@@ -1078,6 +1079,7 @@ function addLegendBox(graphsvg) {
       .text(tier)
       .attr("x", -r * 2.5 + 20 + (i) * inc)
       .attr("y", -r * 2.5 + 15);
+    i++;
   }
 }
 
