@@ -124,8 +124,7 @@ function buildDataPointMap(tier, stream, cluster) {
           if (datapoint.clusterStatsList.length == 0) {
             continue;
           }
-          if (stream.toLowerCase() == 'all' && cluster.toLowerCase() == 'all' && !
-            isCountView) {
+          if (!isCountView && cluster.toLowerCase() == 'all') {
             p.overallLatency.forEach(function (pl) {
             	if (parseFloat(pl.percentile) == percentileForSla && parseInt(pl.latency, 10) > maxLatency) {
               	maxLatency = parseInt(pl.latency, 10);
@@ -214,7 +213,7 @@ function brushed() {
 var callCount = 0;
 
 function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
-  minDate = 0, maxDate = 0, minCount = 0, maxCount = 0;
+  minDate = 0, maxDate = 0, minCount = 0, maxCount = 0, maxLatency = 0;
   clearTrendSVG();
   buildDataPointMap(tier, stream, cluster);
   svg = d3.select("#timelinePanel").append("svg")
