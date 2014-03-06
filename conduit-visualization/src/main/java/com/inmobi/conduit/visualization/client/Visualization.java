@@ -34,6 +34,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private HorizontalPanel filterPanel;
   private Label stTimeLabel, etTimeLabel, streamLabel, clusterLabel,
       currentTimeLabel, viewLabel;
+  private Button goButton;
   private PopupPanel stcalendarPopup, etcalendarPopup;
   private boolean isDevMode = false;
 
@@ -217,7 +218,7 @@ public class Visualization implements EntryPoint, ClickHandler {
     streamLabel = new Label("Stream");
     clusterLabel = new Label("Cluster");
     viewLabel = new Label("Select View");
-    Button goButton = new Button("Go");
+    goButton = new Button("Go");
 
     startTime.getElement().setId("stTextBox");
     endtime.getElement().setId("etTextBox");
@@ -511,6 +512,8 @@ public class Visualization implements EntryPoint, ClickHandler {
 
     streamsList.setEnabled(true);
     clusterList.setEnabled(true);
+    viewList.setEnabled(true);
+    goButton.setEnabled(true);
 
   }
 
@@ -525,6 +528,9 @@ public class Visualization implements EntryPoint, ClickHandler {
 
     streamsList.setEnabled(false);
     clusterList.setEnabled(false);
+    viewList.setEnabled(false);
+    goButton.setEnabled(false);
+
   }
 
   private native void saveHistory(String stTime, String edTime,
