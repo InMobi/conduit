@@ -440,7 +440,7 @@ function showPointDetails(d, xcoord, ycoord) {
   c.innerHTML = "Tier:";
   c = r.insertCell(1);
   c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndReload('all', 'all', '" +
+    "<button type=\"button\" onclick=\"saveHistoryAndReload('"+currentStream+"', '"+currentCluster+"', '" +
     d.tier.toLowerCase() + "')\" class=\"popuptransparentButton\">" + d.tier +
     "</button>";
   if (isCountView) {
