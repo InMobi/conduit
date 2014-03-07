@@ -1685,11 +1685,28 @@ function drawGraph(result) {
 function checkAndClearList(treeList) {
   for (var k = 0; k < treeList.length; k++) {
     var clusterList = treeList[k];
+    var hasMergeMirror = false, spliceFromLocal = false;
+    if (getNumOfNodes(clusterList, "mirror") != 0 || getNumOfNodes
+    (clusterList, "merge") != 0) {
+    	hasMergeMirror = true;
+    }
     for (var i = 0; i < clusterList.length; i++) {
       var currentNode = clusterList[i];
-      if (currentNode.tier.equalsIgnoreCase("local") && currentNode.allreceivedtopicstats
-        .length == 0) {
-        treeList.splice(k, 1);
+      if (currentNode.tier.equalsIgnoreCase("local") && currentNode
+      .allreceivedtopicstats.length == 0) {
+      	spliceFromLocal = true;
+      	break;
+      }
+    }
+    if (spliceFromLocal && !hasMergeMirror) {
+    	treeList.splice(k, 1);
+    }	else if (spliceFromLocal && hasMergeMirror){
+    	for (var i = 0; i < clusterList.length; i++) {
+      	var currentNode = clusterList[i];
+        if (!currentNode.tier.equalsIgnoreCase("mirror") && !currentNode.tier
+        .equalsIgnoreCase("merge")) {
+        	clusterList.splice(i, 1);
+        }
       }
     }
   }

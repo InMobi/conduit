@@ -5,7 +5,6 @@ var minDate = 0,
   maxDate = 0,
   minCount = 0,
   maxCount = 0,
-  minLatency = 0,
   maxLatency = 0;
 var tierbuttonList = ["Mirror", "Merge", "Local", "HDFS", "Collector", "Agent",
   "Publisher", "All"
@@ -95,6 +94,9 @@ function buildDataPointMap(tier, stream, cluster) {
                     if (cluster.toLowerCase() != 'all' && cluster ==
                       currentCluster && !isCountView) {
                       topicEntry.topicLatency.forEach(function (pl) {
+                      	if (parseFloat(pl.percentile) == percentileForSla && parseInt(pl.latency, 10) > maxLatency) {
+                      		maxLatency = parseInt(pl.latency, 10);
+                      	}
                         datapoint.overallLatency.push(new PercentileLatency(
                           parseFloat(pl.percentile), parseInt(pl.latency,
                             10)));
@@ -108,6 +110,9 @@ function buildDataPointMap(tier, stream, cluster) {
               if (cluster.toLowerCase() != 'all' && cluster == currentCluster) {
                 if (stream.toLowerCase() == 'all' && !isCountView) {
                   clusterEntry.clusterLatency.forEach(function (pl) {
+                  	if (parseFloat(pl.percentile) == percentileForSla && parseInt(pl.latency, 10) > maxLatency) {
+											maxLatency = parseInt(pl.latency, 10);
+                    }
                     datapoint.overallLatency.push(new PercentileLatency(
                       parseFloat(pl.percentile), parseInt(pl.latency, 10)));
                   });
@@ -119,9 +124,11 @@ function buildDataPointMap(tier, stream, cluster) {
           if (datapoint.clusterStatsList.length == 0) {
             continue;
           }
-          if (stream.toLowerCase() == 'all' && cluster.toLowerCase() == 'all' && !
-            isCountView) {
+          if (!isCountView && cluster.toLowerCase() == 'all') {
             p.overallLatency.forEach(function (pl) {
+            	if (parseFloat(pl.percentile) == percentileForSla && parseInt(pl.latency, 10) > maxLatency) {
+              	maxLatency = parseInt(pl.latency, 10);
+              }
               datapoint.overallLatency.push(new PercentileLatency(parseFloat(
                 pl.percentile), parseInt(pl.latency, 10)));
             });
@@ -206,7 +213,7 @@ function brushed() {
 var callCount = 0;
 
 function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
-  minDate = 0, maxDate = 0, minCount = 0, maxCount = 0;
+  minDate = 0, maxDate = 0, minCount = 0, maxCount = 0, maxLatency = 0;
   clearTrendSVG();
   buildDataPointMap(tier, stream, cluster);
   svg = d3.select("#timelinePanel").append("svg")
@@ -219,7 +226,7 @@ function renderTimeLineForTierStreamCluster(tier, stream, cluster) {
   if (isCountView) {
     y.domain(d3.extent([minCount, maxCount]));
   } else {
-    y.domain(d3.extent([0, 20]));
+    y.domain(d3.extent([0, maxLatency]));
   }
   svg.append("g")
     .attr("class", "x grid")
@@ -408,7 +415,7 @@ function showPointDetails(d, xcoord, ycoord) {
       .style("left", (xcoord - 260) + "px")
       .style("overflow", "auto")
       .style("opacity", 0.9);
-  } else {    
+  } else {
     popupDiv.transition()
       .duration(0)
       .style("height", "300px")
@@ -432,7 +439,7 @@ function showPointDetails(d, xcoord, ycoord) {
   c.innerHTML = "Tier:";
   c = r.insertCell(1);
   c.innerHTML =
-    "<button type=\"button\" onclick=\"saveHistoryAndReload('all', 'all', '" +
+    "<button type=\"button\" onclick=\"saveHistoryAndReload('"+currentStream+"', '"+currentCluster+"', '" +
     d.tier.toLowerCase() + "')\" class=\"popuptransparentButton\">" + d.tier +
     "</button>";
   if (isCountView) {
