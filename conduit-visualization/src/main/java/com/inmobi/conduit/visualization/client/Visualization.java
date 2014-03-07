@@ -402,7 +402,6 @@ public class Visualization implements EntryPoint, ClickHandler {
     if (!validateParameters(stTime, edTime)) {
       return;
     }
-    disableFilterSelection();
     DOM.getElementById("topologyPanelContainer").getStyle().setDisplay(
         Style.Display.NONE);
     sendRequests(stTime, edTime, clusterList.getItemText(clusterList
@@ -451,7 +450,6 @@ public class Visualization implements EntryPoint, ClickHandler {
         String topologyJson = ClientDataHelper.getInstance()
             .getJsonFromTopologyDataResponse(result);
         drawGraph(topologyJson);
-        enableFilterSelection();
       }
     });
   }
@@ -482,7 +480,6 @@ public class Visualization implements EntryPoint, ClickHandler {
         String timeLineJson = ClientDataHelper.getInstance()
             .getTimeLineJSONFromResponse(result);
         renderTimeLineGraph(timeLineJson);
-        enableFilterSelection();
       }
     });
   }
@@ -490,48 +487,6 @@ public class Visualization implements EntryPoint, ClickHandler {
   private native void renderTimeLineGraph(String timeLineJson)/*-{
     $wnd.renderTimeLine(timeLineJson, 60);
   }-*/;
-
-  private void enableFilterSelection() {
-    startTime.setEnabled(true);
-    stTimeHour.setEnabled(true);
-    if (DateUtils.checkSelectedDateRolledUp(startTime.getText(),
-        rolledUpTillDays, false)) {
-      stTimeMinute.setEnabled(false);
-    } else {
-      stTimeMinute.setEnabled(true);
-    }
-
-    endtime.setEnabled(true);
-    edTimeHour.setEnabled(true);
-    if (DateUtils.checkSelectedDateRolledUp(endtime.getText(),
-        rolledUpTillDays, false)) {
-      edTimeMinute.setEnabled(false);
-    } else {
-      edTimeMinute.setEnabled(true);
-    }
-
-    streamsList.setEnabled(true);
-    clusterList.setEnabled(true);
-    viewList.setEnabled(true);
-    goButton.setEnabled(true);
-
-  }
-
-  private void disableFilterSelection() {
-    startTime.setEnabled(false);
-    stTimeHour.setEnabled(false);
-    stTimeMinute.setEnabled(false);
-
-    endtime.setEnabled(false);
-    edTimeHour.setEnabled(false);
-    edTimeMinute.setEnabled(false);
-
-    streamsList.setEnabled(false);
-    clusterList.setEnabled(false);
-    viewList.setEnabled(false);
-    goButton.setEnabled(false);
-
-  }
 
   private native void saveHistory(String stTime, String edTime,
                             String selectedCluster, String selectedStream,
