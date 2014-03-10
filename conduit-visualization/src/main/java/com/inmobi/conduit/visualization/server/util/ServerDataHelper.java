@@ -8,6 +8,7 @@ import com.inmobi.conduit.visualization.server.Node;
 import com.inmobi.conduit.visualization.server.NodeKey;
 import com.inmobi.conduit.visualization.server.ServerConstants;
 import com.inmobi.conduit.visualization.server.VisualizationProperties;
+import com.inmobi.conduit.visualization.shared.CommonConstants;
 import com.inmobi.conduit.visualization.shared.RequestResponse;
 import com.inmobi.conduit.audit.LatencyColumns;
 import com.inmobi.conduit.audit.Tuple;
@@ -91,7 +92,8 @@ public class ServerDataHelper {
     return endTime;
   }
 
-  public String setTopologyDataResponse(Map<NodeKey, Node> nodeMap) {
+  public String setTopologyDataResponse(Map<NodeKey, Node> nodeMap,
+                                        Map<String, String> filterMap) {
     JSONObject newObject = new JSONObject();
     JSONArray nodeArray = new JSONArray();
     try {
@@ -180,11 +182,13 @@ public class ServerDataHelper {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder().setTopologyDataResponse(
             RequestResponse.TopologyDataResponse.newBuilder()
-                .setJsonString(newObject.toString())).build());
+                .setJsonString(newObject.toString()).setRequestParams
+                (getRequestParametersObject(filterMap))).build());
   }
 
   public String setTierLatencyResponseObject(Map<Tuple, Map<Float,
-      Integer>> tierLatencyMap,VisualizationProperties properties) {
+      Integer>> tierLatencyMap, VisualizationProperties properties,
+                                             Map<String, String> filterMap) {
     Float percentileForSla = Float.valueOf(properties.get(ServerConstants
         .PERCENTILE_FOR_SLA));
     List<RequestResponse.TierLatencyObj> tierLatencyObjList = new ArrayList
@@ -200,7 +204,8 @@ public class ServerDataHelper {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
         RequestResponse.Response.newBuilder().setTierLatencyResponse(
             RequestResponse.TierLatencyResponse.newBuilder()
-                .addAllTierLatencyObjList(tierLatencyObjList)).build());
+                .addAllTierLatencyObjList(tierLatencyObjList)
+                .setRequestParams(getRequestParametersObject(filterMap))).build());
   }
 
   public String setLoadMainPanelResponse(List<String> streamList,
@@ -242,13 +247,22 @@ public class ServerDataHelper {
             .setLoadMainPanelResponse(loadMainPanelResponse).build());
   }
 
-  public static String setTimeLineDataResponse(String jsonResult) {
+  public static String setTimeLineDataResponse(String jsonResult,
+                                               Map<String, String> filterMap) {
     return ServerJsonStreamFactory.getInstance().serializeMessage(
-        RequestResponse.Response
-            .newBuilder()
-            .setTimeLineGraphResponse(
+        RequestResponse.Response.newBuilder().setTimeLineGraphResponse(
                 RequestResponse.TimeLineGraphResponse.newBuilder()
-                    .setJsonString(jsonResult)).build());
+                    .setJsonString(jsonResult).setRequestParams
+                    (getRequestParametersObject(filterMap))).build());
+  }
+
+  private static RequestResponse.GraphDataRequest getRequestParametersObject
+      (Map<String, String> filterMap) {
+    return RequestResponse.GraphDataRequest.newBuilder().setStartTime(filterMap.get
+            (CommonConstants.START_TIME_FILTER)).setEndTime(filterMap.get
+            (CommonConstants.END_TIME_FILTER)).setColo(filterMap.get(
+            CommonConstants.CLUSTER_FILTER)).setStream(filterMap.get
+            (CommonConstants.STREAM_FILTER)).build();
   }
   
   private static final String TIER = "tier";

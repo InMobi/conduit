@@ -2,6 +2,7 @@ package com.inmobi.conduit.visualization.client.util;
 
 import com.google.protobuf.gwt.client.ClientJsonStreamFactory;
 import com.inmobi.conduit.visualization.client.ClientConstants;
+import com.inmobi.conduit.visualization.shared.CommonConstants;
 import com.inmobi.conduit.visualization.shared.RequestResponse;
 
 import java.io.IOException;
@@ -140,5 +141,55 @@ public class ClientDataHelper {
       e.printStackTrace();
     }
     return response.getTimeLineGraphResponse().getJsonString();
+  }
+
+  public Map<String, String> getRequestParametersMap(RequestResponse
+                                                         .GraphDataRequest requestParams) {
+    Map<String, String> filterMap = new HashMap<String, String>();
+    filterMap.put(CommonConstants.START_TIME_FILTER,
+        requestParams.getStartTime());
+    filterMap.put(CommonConstants.END_TIME_FILTER, requestParams.getEndTime());
+    filterMap.put(CommonConstants.CLUSTER_FILTER, requestParams.getColo());
+    filterMap.put(CommonConstants.STREAM_FILTER, requestParams.getStream());
+    return filterMap;
+  }
+
+  public RequestResponse.GraphDataRequest getRequestParamsFromTopologyResponse(
+      String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom
+          (ClientJsonStreamFactory.getInstance().createNewStreamFromJson
+              (serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getTopologyDataResponse().getRequestParams();
+  }
+
+  public RequestResponse.GraphDataRequest
+  getRequestParamsFromTierLatencyResponse(String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom
+          (ClientJsonStreamFactory.getInstance().createNewStreamFromJson
+              (serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getTierLatencyResponse().getRequestParams();
+  }
+
+  public RequestResponse.GraphDataRequest getRequestParamsFromTimeLineResponse(
+      String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom
+          (ClientJsonStreamFactory.getInstance().createNewStreamFromJson
+              (serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getTimeLineGraphResponse().getRequestParams();
   }
 }

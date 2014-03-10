@@ -3,6 +3,7 @@ package com.inmobi.conduit.visualization.server;
 import com.inmobi.conduit.audit.LatencyColumns;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.visualization.server.util.TestUtil;
+import com.inmobi.conduit.visualization.shared.CommonConstants;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -283,20 +284,20 @@ public class TestDataServiceManager {
     String filterValues = TestUtil.getFilterStringFromParameters(start, end,
         stream, cluster);
     Map<String, String> filterMap = serviceManager.getFilterMap(filterValues);
-    Assert.assertEquals(start, filterMap.get(ServerConstants.START_TIME_FILTER));
-    Assert.assertEquals(end, filterMap.get(ServerConstants.END_TIME_FILTER));
-    Assert.assertEquals(stream, filterMap.get(ServerConstants.STREAM_FILTER));
-    Assert.assertEquals(cluster, filterMap.get(ServerConstants.CLUSTER_FILTER));
+    Assert.assertEquals(start, filterMap.get(CommonConstants.START_TIME_FILTER));
+    Assert.assertEquals(end, filterMap.get(CommonConstants.END_TIME_FILTER));
+    Assert.assertEquals(stream, filterMap.get(CommonConstants.STREAM_FILTER));
+    Assert.assertEquals(cluster, filterMap.get(CommonConstants.CLUSTER_FILTER));
     stream = "stream2";
     filterValues = TestUtil.getFilterStringFromParameters(start, end,
         stream, cluster);
     filterMap = serviceManager.getFilterMap(filterValues);
-    Assert.assertEquals(stream, filterMap.get(ServerConstants.STREAM_FILTER));
+    Assert.assertEquals(stream, filterMap.get(CommonConstants.STREAM_FILTER));
     cluster = "cluster1";
     filterValues = TestUtil.getFilterStringFromParameters(start, end,
         stream, cluster);
     filterMap = serviceManager.getFilterMap(filterValues);
-    Assert.assertEquals(cluster, filterMap.get(ServerConstants.CLUSTER_FILTER));
+    Assert.assertEquals(cluster, filterMap.get(CommonConstants.CLUSTER_FILTER));
   }
 
   @Test
