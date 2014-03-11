@@ -31,4 +31,8 @@ public class ClientConstants {
 
   public static final int TREND_VIEW_ID = 1;
   public static final int TOPOLOGY_TREND_VIEW_ID = 2;
+
+  public static final String TOPOLOGY_REQUEST = "topologyRequest";
+  public static final String SUMMARY_REQUEST = "summaryRequest";
+  public static final String TREND_REQUEST = "trendRequest";
 }
