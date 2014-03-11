@@ -13,10 +13,6 @@ public class ServerConstants {
 
   public static final String TIMEZONE = "GMT";
   public static final String AUDIT_STREAM = "_audit";
-  public static final String STREAM_FILTER = "stream";
-  public static final String CLUSTER_FILTER = "cluster";
-  public static final String START_TIME_FILTER = "startTime";
-  public static final String END_TIME_FILTER = "endTime";
   public static final String VISUALIZATION_PROPERTIES_DEFAULT_PATH =
       "/usr/local/conduit-visualization/conf/visualization.properties";
 

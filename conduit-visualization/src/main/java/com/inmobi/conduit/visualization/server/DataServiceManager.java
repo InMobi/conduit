@@ -8,6 +8,7 @@ import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
 import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
 import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
+import com.inmobi.conduit.visualization.shared.CommonConstants;
 import com.inmobi.messaging.ClientConfig;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -109,8 +110,8 @@ public class DataServiceManager {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
     AuditDbQuery dbQuery =
-        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+        new AuditDbQuery(filterMap.get(CommonConstants.END_TIME_FILTER),
+            filterMap.get(CommonConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_STRING, ServerConstants.TIMEZONE,
             properties.get(ServerConstants.PERCENTILE_STRING), feederConfig);
     try {
@@ -131,20 +132,21 @@ public class DataServiceManager {
     buildPercentileMapOfAllNodes(nodeMap);
     addVIPNodesToNodesList(nodeMap, percentileSet);
     LOG.info("Final node list length:"+nodeMap.size());
-    return ServerDataHelper.getInstance().setTopologyDataResponse(nodeMap);
+    return ServerDataHelper.getInstance().setTopologyDataResponse(nodeMap,
+        filterMap);
   }
 
   protected Map<String, String> getFilterMap(String filterValues) {
     Map<String, String> filterMap = new HashMap<String, String>();
-    filterMap.put(ServerConstants.STREAM_FILTER, ServerDataHelper.getInstance()
+    filterMap.put(CommonConstants.STREAM_FILTER, ServerDataHelper.getInstance()
         .getStreamFromGraphDataReq(filterValues));
-    filterMap.put(ServerConstants.CLUSTER_FILTER, ServerDataHelper.getInstance()
+    filterMap.put(CommonConstants.CLUSTER_FILTER, ServerDataHelper.getInstance()
         .getColoFromGraphDataReq(filterValues));
     filterMap
-        .put(ServerConstants.START_TIME_FILTER, ServerDataHelper.getInstance()
+        .put(CommonConstants.START_TIME_FILTER, ServerDataHelper.getInstance()
             .getStartTimeFromGraphDataReq(filterValues));
     filterMap
-        .put(ServerConstants.END_TIME_FILTER, ServerDataHelper.getInstance()
+        .put(CommonConstants.END_TIME_FILTER, ServerDataHelper.getInstance()
             .getEndTimeFromGraphDataReq(filterValues));
     return filterMap;
   }
@@ -231,8 +233,8 @@ public class DataServiceManager {
 
   protected String setFilterString(Map<String, String> filterMap) {
     String filterString;
-    String selectedStream = filterMap.get(ServerConstants.STREAM_FILTER);
-    String selectedCluster = filterMap.get(ServerConstants.CLUSTER_FILTER);
+    String selectedStream = filterMap.get(CommonConstants.STREAM_FILTER);
+    String selectedCluster = filterMap.get(CommonConstants.CLUSTER_FILTER);
     if (selectedStream.compareTo("All") == 0) {
       filterString = null;
     } else {
@@ -321,9 +323,10 @@ public class DataServiceManager {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
     Map<Tuple, Map<Float, Integer>> tierLatencyMap = getTierLatencyMap
-        (filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString);
-    return ServerDataHelper.getInstance().setTierLatencyResponseObject(tierLatencyMap, properties);
+        (filterMap.get(CommonConstants.END_TIME_FILTER),
+            filterMap.get(CommonConstants.START_TIME_FILTER), filterString);
+    return ServerDataHelper.getInstance().setTierLatencyResponseObject
+        (tierLatencyMap, properties, filterMap);
   }
 
   private Map<Tuple, Map<Float, Integer>> getTierLatencyMap(String endTime,
@@ -349,8 +352,8 @@ public class DataServiceManager {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
     AuditDbQuery dbQuery =
-        new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
-            filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
+        new AuditDbQuery(filterMap.get(CommonConstants.END_TIME_FILTER),
+            filterMap.get(CommonConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
             properties.get(ServerConstants.PERCENTILE_STRING), feederConfig,
             new TimeLineAuditDBHelper(feederConfig));
@@ -364,6 +367,6 @@ public class DataServiceManager {
       return null;
     }
     return ServerDataHelper.setTimeLineDataResponse(ServerDataHelper
-        .convertToJson(dbQuery));
+        .convertToJson(dbQuery), filterMap);
   }
 }

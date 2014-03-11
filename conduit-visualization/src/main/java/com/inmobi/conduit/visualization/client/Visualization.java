@@ -1,6 +1,7 @@
 package com.inmobi.conduit.visualization.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -16,6 +17,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.datepicker.client.DatePicker;
 import com.inmobi.conduit.visualization.client.util.ClientDataHelper;
 import com.inmobi.conduit.visualization.client.util.DateUtils;
+import com.inmobi.conduit.visualization.shared.CommonConstants;
 
 import java.util.*;
 
@@ -453,13 +455,44 @@ public class Visualization implements EntryPoint, ClickHandler {
       }
 
       public void onSuccess(String result) {
-        String topologyJson = ClientDataHelper.getInstance()
-            .getJsonFromTopologyDataResponse(result);
-        drawGraph(topologyJson);
+        if (validateResponse(ClientDataHelper.getInstance()
+            .getRequestParametersMap(ClientDataHelper.getInstance()
+                .getRequestParamsFromTopologyResponse(result)))) {
+          String topologyJson = ClientDataHelper.getInstance()
+              .getJsonFromTopologyDataResponse(result);
+          drawGraph(topologyJson);
+        } else {
+          GWT.log("Invalid topology response");
+        }
       }
     });
 
     currentRequests.put(ClientConstants.TOPOLOGY_REQUEST, currentRequest);
+  }
+
+  private boolean validateResponse(Map<String, String> requestParametersMap) {
+    if (!requestParametersMap.get(CommonConstants.CLUSTER_FILTER)
+        .equalsIgnoreCase(clusterList.getItemText(clusterList
+            .getSelectedIndex()))) {
+      return false;
+    } else if (!requestParametersMap.get(CommonConstants.STREAM_FILTER)
+        .equalsIgnoreCase(streamsList.getItemText(streamsList
+            .getSelectedIndex()))) {
+      return false;
+    } else if (!DateUtils.constructDateString(startTime.getText(),
+        stTimeHour.getItemText(stTimeHour.getSelectedIndex()),
+        stTimeMinute.getItemText(stTimeMinute.getSelectedIndex()))
+        .equalsIgnoreCase(requestParametersMap.get(CommonConstants
+            .START_TIME_FILTER))) {
+      return false;
+    } else if (!DateUtils.constructDateString(endtime.getText(),
+        edTimeHour.getItemText(edTimeHour.getSelectedIndex()),
+        edTimeMinute.getItemText(edTimeMinute.getSelectedIndex()))
+        .equalsIgnoreCase(requestParametersMap.get(CommonConstants
+            .END_TIME_FILTER))) {
+      return false;
+    }
+    return true;
   }
 
   public void getTierLatencyData(String clientJson) {
@@ -477,9 +510,15 @@ public class Visualization implements EntryPoint, ClickHandler {
       }
 
       public void onSuccess(String result) {
-        Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
-            .getTierLatencyObjListFromResponse(result);
-        setTierLatencyValues(tierLatencyMap);
+        if (validateResponse(ClientDataHelper.getInstance()
+            .getRequestParametersMap(ClientDataHelper.getInstance()
+                .getRequestParamsFromTierLatencyResponse(result)))) {
+          Map<String, Integer> tierLatencyMap = ClientDataHelper.getInstance()
+              .getTierLatencyObjListFromResponse(result);
+          setTierLatencyValues(tierLatencyMap);
+        } else {
+          GWT.log("Invalid tier latency response");
+        }
       }
     });
 
@@ -499,9 +538,15 @@ public class Visualization implements EntryPoint, ClickHandler {
       }
 
       public void onSuccess(String result) {
-        String timeLineJson = ClientDataHelper.getInstance()
-            .getTimeLineJSONFromResponse(result);
-        renderTimeLineGraph(timeLineJson);
+        if (validateResponse(ClientDataHelper.getInstance()
+            .getRequestParametersMap(ClientDataHelper.getInstance()
+                .getRequestParamsFromTimeLineResponse(result)))) {
+          String timeLineJson = ClientDataHelper.getInstance()
+              .getTimeLineJSONFromResponse(result);
+          renderTimeLineGraph(timeLineJson);
+        } else {
+          GWT.log("Invalid trend response");
+        }
       }
     });
 

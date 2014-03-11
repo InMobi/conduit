@@ -20,14 +20,17 @@ message Response {
 
 message TimeLineGraphResponse {
 	optional string jsonString = 1;
+	optional GraphDataRequest requestParams = 2;
 }
 
 message TopologyDataResponse {
 	optional string jsonString = 1;
+	optional GraphDataRequest requestParams = 2;
 }
 
 message TierLatencyResponse {
 	repeated TierLatencyObj tierLatencyObjList = 1;
+	optional GraphDataRequest requestParams = 2;
 }
 
 message TierLatencyObj {
