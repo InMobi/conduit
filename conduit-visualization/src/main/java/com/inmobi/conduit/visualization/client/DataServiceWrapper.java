@@ -1,6 +1,7 @@
 package com.inmobi.conduit.visualization.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.Request;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
@@ -14,8 +15,9 @@ public class DataServiceWrapper {
     target.setServiceEntryPoint(moduleRelativeURL);
   }
 
-  public void getTopologyData(String clientJson, final AsyncCallback<String> callback) {
-    service.getTopologyData(clientJson, new AsyncCallback<String>() {
+  public Request getTopologyData(String clientJson, final AsyncCallback<String>
+      callback) {
+    Request request = service.getTopologyData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -25,10 +27,12 @@ public class DataServiceWrapper {
         callback.onSuccess(result);
       }
     });
+    return request;
   }
 
-  public void getTierLatencyData(String clientJson, final AsyncCallback<String> callback) {
-    service.getTierLatencyData(clientJson, new AsyncCallback<String>() {
+  public Request getTierLatencyData(String clientJson, final AsyncCallback<String>
+      callback) {
+    Request request = service.getTierLatencyData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -38,6 +42,7 @@ public class DataServiceWrapper {
         callback.onSuccess(result);
       }
     });
+    return request;
   }
 
   public void getStreamAndClusterList(final AsyncCallback<String> callback) {
@@ -53,8 +58,9 @@ public class DataServiceWrapper {
     });
   }
 
-  public void getTimeLineData(String clientJson, final AsyncCallback<String> callback) {
-    service.getTimeLineData(clientJson, new AsyncCallback<String>() {
+  public Request getTimeLineData(String clientJson, final AsyncCallback<String>
+      callback) {
+    Request request = service.getTimeLineData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         callback.onFailure(caught);
@@ -64,5 +70,6 @@ public class DataServiceWrapper {
         callback.onSuccess(result);
       }
     });
+    return request;
   }
 }

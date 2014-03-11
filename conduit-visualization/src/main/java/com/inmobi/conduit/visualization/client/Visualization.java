@@ -8,6 +8,7 @@ import com.google.gwt.event.logical.shared.ShowRangeEvent;
 import com.google.gwt.event.logical.shared.ShowRangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.http.client.Request;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -16,10 +17,7 @@ import com.google.gwt.user.datepicker.client.DatePicker;
 import com.inmobi.conduit.visualization.client.util.ClientDataHelper;
 import com.inmobi.conduit.visualization.client.util.DateUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Visualization implements EntryPoint, ClickHandler {
 
@@ -37,6 +35,7 @@ public class Visualization implements EntryPoint, ClickHandler {
   private Button goButton;
   private PopupPanel stcalendarPopup, etcalendarPopup;
   private boolean isDevMode = false;
+  private Map<String, Request> currentRequests = new HashMap<String, Request>();
 
   List<String> streams = new ArrayList<String>(), clusters =
       new ArrayList<String>();
@@ -440,7 +439,14 @@ public class Visualization implements EntryPoint, ClickHandler {
   }
 
   public void getTopologyData(String clientJson) {
-    serviceInstance.getTopologyData(clientJson, new AsyncCallback<String>() {
+    Request currentRequest = currentRequests.get(
+        ClientConstants.TOPOLOGY_REQUEST);
+    if (currentRequest != null) {
+      currentRequest.cancel();
+    }
+
+    currentRequest = serviceInstance.getTopologyData(clientJson,
+        new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         caught.printStackTrace();
@@ -452,10 +458,19 @@ public class Visualization implements EntryPoint, ClickHandler {
         drawGraph(topologyJson);
       }
     });
+
+    currentRequests.put(ClientConstants.TOPOLOGY_REQUEST, currentRequest);
   }
 
   public void getTierLatencyData(String clientJson) {
-    serviceInstance.getTierLatencyData(clientJson, new AsyncCallback<String>() {
+    Request currentRequest = currentRequests.get(ClientConstants
+        .SUMMARY_REQUEST);
+    if (currentRequest != null) {
+      currentRequest.cancel();
+    }
+
+    currentRequest = serviceInstance.getTierLatencyData(clientJson,
+        new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         caught.printStackTrace();
@@ -467,10 +482,17 @@ public class Visualization implements EntryPoint, ClickHandler {
         setTierLatencyValues(tierLatencyMap);
       }
     });
+
+    currentRequests.put(ClientConstants.SUMMARY_REQUEST, currentRequest);
   }
 
   public void getTimeLineData(String clientJson) {
-    serviceInstance.getTimeLineData(clientJson, new AsyncCallback<String>() {
+    Request currentRequest = currentRequests.get(ClientConstants.TREND_REQUEST);
+    if (currentRequest != null) {
+      currentRequest.cancel();
+    }
+
+    currentRequest = serviceInstance.getTimeLineData(clientJson, new AsyncCallback<String>() {
 
       public void onFailure(Throwable caught) {
         caught.printStackTrace();
@@ -482,6 +504,8 @@ public class Visualization implements EntryPoint, ClickHandler {
         renderTimeLineGraph(timeLineJson);
       }
     });
+
+    currentRequests.put(ClientConstants.TREND_REQUEST, currentRequest);
   }
 
   private native void renderTimeLineGraph(String timeLineJson)/*-{
