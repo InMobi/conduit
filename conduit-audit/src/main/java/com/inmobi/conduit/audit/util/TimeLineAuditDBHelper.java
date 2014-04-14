@@ -41,6 +41,7 @@ public class TimeLineAuditDBHelper extends AuditDBHelper {
                             String endTime) {
     if (startTime == null || endTime == null) {
       timeGroup = timebucketConfig * 60000;
+      return;
     }
     Date startDate, endDate;
     try {

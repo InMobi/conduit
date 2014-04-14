@@ -189,4 +189,56 @@ public class TestTimeLineAuditDBHelper extends AuditDBUtil {
 
   }
 
+  @Test
+  public void testTimeGroup() {
+    ClientConfig conf =
+        ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
+
+    //TimeRange of query < 3 days
+    TimeLineAuditDBHelper helper = new TimeLineAuditDBHelper(conf,
+        "01-01-2014-00:00", "03-01-2014-00:00");
+    Assert.assertEquals(60 * 60000, helper.getTimeGroup());
+
+    //TimeRange of query > 3 days but < 1 week
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "06-01-2014-00:00");
+    Assert.assertEquals(120 * 60000, helper.getTimeGroup());
+
+    //TimeRange of query > 1 week but < 2 week
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "13-01-2014-00:00");
+    Assert.assertEquals(240 * 60000, helper.getTimeGroup());
+
+    //TimeRange of query > 2 weeks but < 3 weeks
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "20-01-2014-00:00");
+    Assert.assertEquals(360 * 60000, helper.getTimeGroup());
+
+    //TimeRange of query > 3 weeks but < 4 weeks
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "27-01-2014-00:00");
+    Assert.assertEquals(480 * 60000, helper.getTimeGroup());
+
+    //TimeRange of query > 4 weeks but < 8 weeks
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "15-02-2014-00:00");
+    Assert.assertEquals(720 * 60000, helper.getTimeGroup());
+
+    //TimeRange of query > 8 weeks
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "03-03-2014-00:00");
+    Assert.assertEquals(1440 * 60000, helper.getTimeGroup());
+
+    //Default time is less than timeinterval bucket set in conf
+    conf.set(TimeLineAuditDBHelper.TIMEBUCKET, "180");
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "06-01-2014-00:00");
+    Assert.assertEquals(180 * 60000, helper.getTimeGroup());
+
+    //Default time is greater than timeinterval bucket set in conf
+    helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
+        "23-01-2014-00:00");
+    Assert.assertEquals(480 * 60000, helper.getTimeGroup());
+  }
+
 }
