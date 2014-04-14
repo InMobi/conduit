@@ -69,7 +69,7 @@ public class TestTimeLineAuditDBHelper extends AuditDBUtil {
     ClientConfig conf =
         ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     setupDB(false);
-    TimeLineAuditDBHelper helper = new TimeLineAuditDBHelper(conf);
+    TimeLineAuditDBHelper helper = new TimeLineAuditDBHelper(conf, null, null);
     helper.update(tupleSet);
 
     GroupBy groupBy = new GroupBy("TIER,HOSTNAME,CLUSTER,TIMEINTERVAL");
@@ -125,7 +125,7 @@ public class TestTimeLineAuditDBHelper extends AuditDBUtil {
         ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     conf.set(TimeLineAuditDBHelper.TIMEBUCKET, "1");
     setupDB(false);
-    TimeLineAuditDBHelper helper = new TimeLineAuditDBHelper(conf);
+    TimeLineAuditDBHelper helper = new TimeLineAuditDBHelper(conf, null, null);
     helper.update(tupleSet);
 
     GroupBy groupBy = new GroupBy("TIER,HOSTNAME,CLUSTER,TIMEINTERVAL");

@@ -943,6 +943,14 @@ public final class RequestResponse {
     public boolean hasJsonString() { return hasJsonString; }
     public java.lang.String getJsonString() { return jsonString_; }
     
+    // optional int32 timebucket = 2;
+    public static final int TIMEBUCKET_FIELD_NUMBER = 2;
+    private boolean hasTimebucket;
+    @com.google.protobuf.gwt.shared.FieldNumber(2)
+    private int timebucket_ = 0;
+    public boolean hasTimebucket() { return hasTimebucket; }
+    public int getTimebucket() { return timebucket_; }
+    
     private void initFields() {
     }
     
@@ -955,6 +963,10 @@ public final class RequestResponse {
       
       if (hasJsonString()) {
         output.writeString(1, "jsonString", getJsonString());
+      }
+      
+      if (hasTimebucket()) {
+        output.writeInteger(2, "timebucket", getTimebucket());
       }
     }
     
@@ -1044,6 +1056,10 @@ public final class RequestResponse {
         if (other.hasJsonString()) {
           setJsonString(other.getJsonString());
         }
+        
+        if (other.hasTimebucket()) {
+          setTimebucket(other.getTimebucket());
+        }
       
         return this;
       }
@@ -1054,6 +1070,11 @@ public final class RequestResponse {
         java.lang.String jsonString = input.readString(1);
         if (jsonString != null) {
           setJsonString(jsonString);
+        }
+        
+        java.lang.Integer timebucket = input.readInteger(2);
+        if (timebucket != null) {
+          setTimebucket(timebucket);
         }
         
         return this;
@@ -1083,6 +1104,30 @@ public final class RequestResponse {
       public Builder clearJsonString() {
         result.hasJsonString = false;
         result.jsonString_ = getDefaultInstance().getJsonString();
+        return this;
+      }
+      
+      // optional int32 timebucket = 2;
+      public boolean hasTimebucket() {
+        return result.hasTimebucket();
+      }
+      public int getTimebucket() {
+        return result.getTimebucket();
+      }
+      public Builder setTimebucketIgnoreIfNull(java.lang.Integer value) {
+        if (value != null) {
+          setTimebucket(value);
+        }
+        return this;
+      }
+      public Builder setTimebucket(int value) {
+        result.hasTimebucket = true;
+        result.timebucket_ = value;
+        return this;
+      }
+      public Builder clearTimebucket() {
+        result.hasTimebucket = false;
+        result.timebucket_ = 0;
         return this;
       }
       

@@ -804,7 +804,7 @@ function highlightTierButton(tier) {
 
 function renderTimeLine(result, timeticklength) {
   if (timeticklength != undefined && parseInt(timeticklength, 10) != 0) {
-    timeinterval = parseInt(timeticklength, 10) * 60000;
+    timeinterval = parseInt(timeticklength, 10);
   }
   if (result != undefined && result.length != 0) {
     timelinejson = JSON.parse(result);

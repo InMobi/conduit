@@ -1,7 +1,11 @@
 package com.inmobi.conduit.audit.util;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
+import com.inmobi.messaging.util.AuditUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -15,12 +19,55 @@ public class TimeLineAuditDBHelper extends AuditDBHelper {
 
   private static final Log LOG = LogFactory.getLog(TimeLineAuditDBHelper.class);
   public static final String TIMEBUCKET = "visualization.timebucket";
+  private static final long ONE_DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
+  private static final long THREE_DAY_LIMIT = 3 * ONE_DAY_IN_MILLISECONDS;
+  private static final long WEEK_LIMIT = 7 * ONE_DAY_IN_MILLISECONDS;
+  private static final long TWO_WEEK_LIMIT = 14 * ONE_DAY_IN_MILLISECONDS;
+  private static final long THREE_WEEK_LIMIT = 21 * ONE_DAY_IN_MILLISECONDS;
+  private static final long MONTH_LIMIT = 30 * ONE_DAY_IN_MILLISECONDS;
+  private static final long TWO_MONTH_LIMIT = 2 * 30 * ONE_DAY_IN_MILLISECONDS;
+  public static final SimpleDateFormat auditDateFormatter = new
+      SimpleDateFormat(AuditUtil.DATE_FORMAT);
   private int timeGroup;
 
-  public TimeLineAuditDBHelper(ClientConfig config) {
+  public TimeLineAuditDBHelper(ClientConfig config, String startTime,
+                               String endTime) {
     super(config);
     int timebucketConfig = config.getInteger(TIMEBUCKET, 60);
-    timeGroup = timebucketConfig * 60000;
+    setTimeGroup(timebucketConfig, startTime, endTime);
+  }
+
+  private void setTimeGroup(int timebucketConfig, String startTime,
+                            String endTime) {
+    if (startTime == null || endTime == null) {
+      timeGroup = timebucketConfig * 60000;
+    }
+    Date startDate, endDate;
+    try {
+      startDate = auditDateFormatter.parse(startTime);
+      endDate = auditDateFormatter.parse(endTime);
+      long rangeDiff = endDate.getTime() - startDate.getTime();
+      int optimalTimeBucket;
+      if (rangeDiff <= THREE_DAY_LIMIT) {
+        optimalTimeBucket = 60;
+      } else if (rangeDiff > THREE_DAY_LIMIT && rangeDiff <= WEEK_LIMIT) {
+        optimalTimeBucket = 2 * 60;
+      } else if (rangeDiff > WEEK_LIMIT && rangeDiff <= TWO_WEEK_LIMIT) {
+        optimalTimeBucket = 4 * 60;
+      } else if (rangeDiff > TWO_WEEK_LIMIT && rangeDiff <= THREE_WEEK_LIMIT) {
+        optimalTimeBucket = 6 * 60;
+      } else if (rangeDiff > THREE_WEEK_LIMIT && rangeDiff <= MONTH_LIMIT) {
+        optimalTimeBucket = 8 * 60;
+      } else if (rangeDiff > MONTH_LIMIT && rangeDiff <= TWO_MONTH_LIMIT) {
+        optimalTimeBucket = 12 * 60;
+      } else {
+        optimalTimeBucket = 24 * 60;
+      }
+      timeGroup = ((timebucketConfig < optimalTimeBucket) ? optimalTimeBucket :
+          timebucketConfig) * 60000;
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -66,6 +113,10 @@ public class TimeLineAuditDBHelper extends AuditDBHelper {
     }
     LOG.debug("Select statement " + statement);
     return statement;
+  }
+
+  public int getTimeGroup() {
+    return timeGroup;
   }
 
 }

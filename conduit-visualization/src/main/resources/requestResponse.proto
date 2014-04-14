@@ -20,6 +20,7 @@ message Response {
 
 message TimeLineGraphResponse {
 	optional string jsonString = 1;
+	optional int32 timebucket = 2;
 }
 
 message TopologyDataResponse {
