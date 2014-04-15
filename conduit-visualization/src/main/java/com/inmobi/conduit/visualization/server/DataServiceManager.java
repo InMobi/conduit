@@ -6,6 +6,7 @@ import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.audit.Tier;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
+import com.inmobi.conduit.audit.util.AuditDBHelper;
 import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
 import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
@@ -348,12 +349,15 @@ public class DataServiceManager {
   public String getTimeLineData(String filterValues) {
     Map<String, String> filterMap = getFilterMap(filterValues);
     String filterString = setFilterString(filterMap);
+    TimeLineAuditDBHelper helper = new TimeLineAuditDBHelper(feederConfig,
+        filterMap.get(ServerConstants.START_TIME_FILTER),
+        filterMap.get(ServerConstants.END_TIME_FILTER));
     AuditDbQuery dbQuery =
         new AuditDbQuery(filterMap.get(ServerConstants.END_TIME_FILTER),
             filterMap.get(ServerConstants.START_TIME_FILTER), filterString,
             ServerConstants.GROUPBY_TIMELINE_STRING, ServerConstants.TIMEZONE,
             properties.get(ServerConstants.PERCENTILE_STRING), feederConfig,
-            new TimeLineAuditDBHelper(feederConfig));
+            helper);
     try {
       LOG.debug("Executing time line query");
       dbQuery.execute();
@@ -364,6 +368,6 @@ public class DataServiceManager {
       return null;
     }
     return ServerDataHelper.setTimeLineDataResponse(ServerDataHelper
-        .convertToJson(dbQuery));
+        .convertToJson(dbQuery), helper);
   }
 }

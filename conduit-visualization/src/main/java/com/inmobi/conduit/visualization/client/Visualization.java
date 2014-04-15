@@ -501,15 +501,17 @@ public class Visualization implements EntryPoint, ClickHandler {
       public void onSuccess(String result) {
         String timeLineJson = ClientDataHelper.getInstance()
             .getTimeLineJSONFromResponse(result);
-        renderTimeLineGraph(timeLineJson);
+        int timeBucket = ClientDataHelper.getInstance().getTimeBucketForTrend
+            (result);
+        renderTimeLineGraph(timeLineJson, timeBucket);
       }
     });
 
     currentRequests.put(ClientConstants.TREND_REQUEST, currentRequest);
   }
 
-  private native void renderTimeLineGraph(String timeLineJson)/*-{
-    $wnd.renderTimeLine(timeLineJson, 60);
+  private native void renderTimeLineGraph(String timeLineJson, int timeBucket)/*-{
+    $wnd.renderTimeLine(timeLineJson, timeBucket);
   }-*/;
 
   private native void saveHistory(String stTime, String edTime,
