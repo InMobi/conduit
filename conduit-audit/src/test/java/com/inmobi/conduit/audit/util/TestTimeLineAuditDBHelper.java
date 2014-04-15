@@ -239,6 +239,13 @@ public class TestTimeLineAuditDBHelper extends AuditDBUtil {
     helper = new TimeLineAuditDBHelper(conf, "01-01-2014-00:00",
         "23-01-2014-00:00");
     Assert.assertEquals(480 * 60000, helper.getTimeGroup());
+
+    //Pass date of wrong format
+    conf.set(TimeLineAuditDBHelper.TIMEBUCKET, "60");
+    helper = new TimeLineAuditDBHelper(conf, "01/01/2014-00:00",
+        "23-01-2014-00:00");
+    Assert.assertNotNull(helper.getTimeGroup());
+    Assert.assertEquals(60 * 60000, helper.getTimeGroup());
   }
 
 }

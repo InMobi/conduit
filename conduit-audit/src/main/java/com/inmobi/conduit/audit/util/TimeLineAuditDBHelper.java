@@ -34,11 +34,11 @@ public class TimeLineAuditDBHelper extends AuditDBHelper {
                                String endTime) {
     super(config);
     int timebucketConfig = config.getInteger(TIMEBUCKET, 60);
-    setTimeGroup(timebucketConfig, startTime, endTime);
+    setTimeGroupBasedOnTimeRange(timebucketConfig, startTime, endTime);
   }
 
-  private void setTimeGroup(int timebucketConfig, String startTime,
-                            String endTime) {
+  private void setTimeGroupBasedOnTimeRange(int timebucketConfig,
+                                            String startTime, String endTime) {
     if (startTime == null || endTime == null) {
       timeGroup = timebucketConfig * 60000;
       return;
@@ -67,7 +67,10 @@ public class TimeLineAuditDBHelper extends AuditDBHelper {
       timeGroup = ((timebucketConfig < optimalTimeBucket) ? optimalTimeBucket :
           timebucketConfig) * 60000;
     } catch (ParseException e) {
-      e.printStackTrace();
+      LOG.error("Encountered ParseException while parsing passed start/end " +
+          "date", e);
+      timeGroup = timebucketConfig * 60000;
+      return;
     }
   }
 
