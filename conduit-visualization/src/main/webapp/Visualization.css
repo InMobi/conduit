@@ -307,3 +307,36 @@ html ul.tabs li.active, html ul.tabs li.active a:hover  {
   border-radius: 8px;
   z-index: 1;
 }
+
+ul, li {
+	list-style-type:none;
+	padding:0;
+	margin:0;
+}
+
+#crumbs {
+	border:1px solid #dedede;
+	height:2.3em;
+}
+
+#crumbs li {
+	float:left;
+	line-height:2.3em;
+	padding-left:.75em;
+	color:#777;
+}
+
+#crumbs li a {
+	display:block;
+	padding:0 15px 0 0;
+	background:url(Visualization/crumbs.gif) no-repeat right center;
+}
+
+#crumbs li a:link, #crumbs li a:visited {
+	text-decoration:none;
+	color:#777;
+}
+
+#crumbs li a:hover, #crumbs li a:focus {
+	color:#dd2c0d;
+}
