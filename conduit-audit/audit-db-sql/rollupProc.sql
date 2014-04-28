@@ -9,6 +9,7 @@ DECLARE
  rec record;
  selectquery text;
  valueString text;
+ disinherit text;
  dropTable text;
  inherit text;
  destRowsRet integer;
@@ -31,10 +32,12 @@ END LOOP;
 tmpstart=tmpend;
 tmpend=tmpend+intervalLength;
 END LOOP;
-dropTable = 'DROP TABLE ' || srcTable ;
-EXECUTE dropTable;
+disinherit = 'ALTER TABLE ' || destTable || ' NO INHERIT ' || masterTable ;
+EXECUTE disinherit;
 inherit = 'ALTER TABLE ' || destTable || ' INHERIT ' || masterTable ;
 EXECUTE inherit;
+dropTable = 'DROP TABLE ' || srcTable ;
+EXECUTE dropTable;
 END IF;
 END;
 $BODY$
