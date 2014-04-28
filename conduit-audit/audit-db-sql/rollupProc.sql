@@ -32,7 +32,7 @@ END LOOP;
 tmpstart=tmpend;
 tmpend=tmpend+intervalLength;
 END LOOP;
-disinherit = 'ALTER TABLE ' || destTable || ' NO INHERIT ' || masterTable ;
+disinherit = 'ALTER TABLE ' || srcTable || ' NO INHERIT ' || masterTable ;
 EXECUTE disinherit;
 inherit = 'ALTER TABLE ' || destTable || ' INHERIT ' || masterTable ;
 EXECUTE inherit;
