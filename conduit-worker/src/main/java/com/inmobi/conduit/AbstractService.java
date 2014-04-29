@@ -320,8 +320,8 @@ public abstract class AbstractService implements Service, Runnable {
           prevRuntime += MILLISECONDS_IN_MINUTE;
         }
       }
-      prevRuntimeForCategory.put(categoryName, commitTime);
     }
+    prevRuntimeForCategory.put(categoryName, commitTime);
   }
 
   /*

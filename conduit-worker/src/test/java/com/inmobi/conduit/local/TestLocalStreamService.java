@@ -245,8 +245,8 @@ public class TestLocalStreamService extends LocalStreamService implements
         // Make sure all the paths from dummy to mindir are created
         PublishMissingPathsTest.VerifyMissingPublishPaths(fs,
             todaysdate.getTime(), behinddate,
-            srcCluster.getLocalFinalDestDirRoot()
-                + sstream.getValue().getName());
+            srcCluster.getLocalFinalDestDirRoot() + sstream.getValue()
+                .getName(), 180000);
   
         try {
           String streams_local_dir = latestPath + File.separator + srcCluster.getName(); 
