@@ -258,6 +258,9 @@ public class MirrorCheckPointTest {
     String checkPointString = new String(value);
     assert (fStatusList.get(7).getPath().getParent().toString()
         .equals(checkPointString));
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FAILURES,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 8);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
@@ -309,6 +312,9 @@ public class MirrorCheckPointTest {
     assert (fStatusList.get(7).getPath().getParent().toString()
         .equals(checkPointValue));
 
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FAILURES,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 7);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
@@ -325,6 +331,9 @@ public class MirrorCheckPointTest {
     Cluster destnCluster = config.getClusters().get("testcluster2");
     FileSystem remoteFs = FileSystem.get(destnCluster.getHadoopConf());
     assert (!remoteFs.exists(new Path(destnCluster.getFinalDestDirRoot())));
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FAILURES,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
@@ -345,6 +354,9 @@ public class MirrorCheckPointTest {
         destFs.getFileStatus(new Path(streamLevelDir)), results);
     assert (results.size() == 2);
 
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FAILURES,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
@@ -379,6 +391,9 @@ public class MirrorCheckPointTest {
     String checkPointString = new String(value);
     assert (fStatus1.get(7).getPath().getParent().toString()
         .equals(checkPointString));
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FAILURES,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 4);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
@@ -401,6 +416,9 @@ public class MirrorCheckPointTest {
         remoteFs2.getFileStatus(emptyPath), results);
     assert (results.size() == 8);
 
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FAILURES,"test1").getValue().longValue() , 0);
+    Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 8);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);

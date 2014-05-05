@@ -68,6 +68,11 @@ public class MergedStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_RENAME, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.EMPTYDIR_CREATE, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.FILES_COPIED_COUNT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RUNTIME, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
+          eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          COMMIT_TIME, eachStream);
     }
   }
 
@@ -240,8 +245,10 @@ public class MergedStreamService extends DistcpBaseService {
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     LOG.debug("Committed " + commitPaths.size() + " paths.");
-    ConduitMetrics.updateSWGuage(getServiceType(), AbstractService.COMMIT_TIME,
-        Thread.currentThread().getName(), elapsedTime);
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
+          eachStream, elapsedTime);
+    }
 
   }
 

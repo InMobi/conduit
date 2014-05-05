@@ -115,6 +115,11 @@ public class LocalStreamService extends AbstractService implements
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_RENAME, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), EMPTYDIR_CREATE, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FILES_COPIED_COUNT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RUNTIME, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
+          eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          COMMIT_TIME, eachStream);
     }
   }
 
@@ -283,9 +288,10 @@ public class LocalStreamService extends AbstractService implements
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     LOG.debug("Committed " + commitPaths.size() + " paths.");
-    ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
-        Thread.currentThread().getName(), elapsedTime);
-
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
+          eachStream, elapsedTime);
+    }
   }
 
   protected long createMRInput(Path inputPath,Map<FileStatus, String> fileListing,

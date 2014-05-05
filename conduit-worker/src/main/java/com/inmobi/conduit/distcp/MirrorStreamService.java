@@ -64,6 +64,11 @@ public class MirrorStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_RENAME, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), EMPTYDIR_CREATE, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FILES_COPIED_COUNT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RUNTIME, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
+          eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          COMMIT_TIME, eachStream);
     }
   }
 
@@ -167,8 +172,10 @@ public class MirrorStreamService extends DistcpBaseService {
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     LOG.debug("Committed " + commitPaths.size() + " paths.");
-    ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
-        Thread.currentThread().getName(), elapsedTime);
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
+          eachStream, elapsedTime);
+    }
   }
 
   /*
