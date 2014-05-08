@@ -185,6 +185,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
     InputStream compressedIn = null;
     OutputStream commpressedOut = null;
     BufferedReader reader = null;
+    long numberOfLinesRead = 0;
 
     try {
       inStream = getInputStream(source, HadoopCompat.getTaskConfiguration(context));
@@ -195,9 +196,11 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       reader = new BufferedReader(new InputStreamReader(compressedIn));
       byte[] bytesRead = readLine(reader);
       while (bytesRead != null) {
+        numberOfLinesRead++;
         commpressedOut.write(bytesRead);
         commpressedOut.write("\n".getBytes());
-        updateContextStatus(inStream.getTotalBytesRead(), context, sourceFileStatus);
+        updateContextStatus(inStream.getTotalBytesRead(), context,
+            sourceFileStatus, numberOfLinesRead);
         if (received != null) {
           byte[] decodedMsg = Base64.decodeBase64(bytesRead);
           incrementReceived(decodedMsg, received);
@@ -247,14 +250,15 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private void updateContextStatus(long totalBytesRead, Mapper.Context context,
-      FileStatus sourceFileStatus) {
+      FileStatus sourceFileStatus, long numberOfLinesRead) {
     StringBuilder message = new StringBuilder(DistCpUtils.getFormatter()
         .format(totalBytesRead * 100.0f / sourceFileStatus.getLen()));
     message.append("% ").append(description).append(" [")
         .append(DistCpUtils.getStringDescriptionFor(totalBytesRead))
         .append('/')
         .append(DistCpUtils.getStringDescriptionFor(sourceFileStatus.getLen()))
-        .append(']');
+        .append(']')
+        .append(" number of lines read: ").append(String.valueOf(numberOfLinesRead));
     HadoopCompat.setStatus(context, message.toString());
   }
 
