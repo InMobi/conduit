@@ -181,7 +181,6 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       Map<Long, Long> received) throws IOException {
     Path source = sourceFileStatus.getPath();
     ThrottledInputStream inStream = null;
-    long totalBytesRead = 0;
     final CompressionCodec codec = compressionCodecs.getCodec(source);
     InputStream compressedIn = null;
     OutputStream commpressedOut = null;
@@ -198,7 +197,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       while (bytesRead != null) {
         commpressedOut.write(bytesRead);
         commpressedOut.write("\n".getBytes());
-        updateContextStatus(totalBytesRead, context, sourceFileStatus);
+        updateContextStatus(inStream.getTotalBytesRead(), context, sourceFileStatus);
         if (received != null) {
           byte[] decodedMsg = Base64.decodeBase64(bytesRead);
           incrementReceived(decodedMsg, received);
