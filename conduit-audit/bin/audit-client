@@ -27,6 +27,7 @@
 CLIENT_AUDIT_QUERY_CLASS="com.inmobi.conduit.audit.query.AuditDbQuery"
 CLIENT_FEEDER_CLASS="com.inmobi.conduit.audit.AuditStats"
 CLIENT_ADMIN_CLASS="com.inmobi.conduit.audit.AuditAdmin"
+CLIENT_VALIDATOR_CLASS="com.inmobi.conduit.audit.validator.AuditValidator"
 
 ################################
 # functions
@@ -66,6 +67,7 @@ Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>]
        $0 admin -checkpoint -date <dd-mm-yyyy> --conf <confdir>
        $0 admin -check -rolledup -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
        $0 admin -check -created -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
+       $0 validate [--publish] [--consume [--numPublishers <num of publishers> --collector <file name of conf for collector consumer> --local <file name of conf for local consumer> --startTime <in dd-MM-yyyy-HH:mm>]] --topic <audit validator stream name> [-n|--numMessages <number of messages published per time interval>] [-t|--interval <Time interval in minutes to publish messages to test stream>] -c|--conf <path to conf dir>
 EOF
 }
 
@@ -111,6 +113,9 @@ case "$mode" in
     ;;
   admin)
     opt_admin=1
+    ;;
+  validate)
+    opt_validate=1
     ;;
   *)
     error "Unknown or unspecified command '$mode'"
@@ -197,6 +202,9 @@ if [ -n "$opt_audit" ] ; then
 fi
 if [ -n "$opt_feeder" ] ; then
   run_client $CLIENT_FEEDER_CLASS $args
+fi
+if [ -n "$opt_validate" ] ; then
+  run_client $CLIENT_VALIDATOR_CLASS $args
 fi
 if [ -n "$opt_admin" ] ; then
   run_client $CLIENT_ADMIN_CLASS $args

@@ -119,6 +119,16 @@
     </dependency>
     <dependency>
       <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-core</artifactId>
+      <version>${messaging-client-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.inmobi.messaging</groupId>
+      <artifactId>messaging-client-scribe</artifactId>
+      <version>${messaging-client-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-databus</artifactId>
       <version>${messaging-client-version}</version>
     </dependency>
