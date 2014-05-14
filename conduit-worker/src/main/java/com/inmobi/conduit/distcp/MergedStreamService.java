@@ -86,6 +86,7 @@ public class MergedStreamService extends DistcpBaseService {
 
   @Override
   public void execute() throws Exception {
+    lastProcessedFile.clear();
     List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     try {
@@ -114,6 +115,12 @@ public class MergedStreamService extends DistcpBaseService {
             + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
         finalizeCheckPoints();
+        for (String eachStream : streamsToProcess) {
+          if (lastProcessedFile.get(eachStream) != null) {
+            ConduitMetrics.updateAbsoluteGauge(getServiceType(),
+                LAST_FILE_PROCESSED, eachStream, lastProcessedFile.get(eachStream));
+          }
+        }
         return;
       }
       LOG.info("Starting a distcp pull from Cluster ["
@@ -147,6 +154,12 @@ public class MergedStreamService extends DistcpBaseService {
           doLocalCommit(commitPaths, auditMsgList, parsedCounters);
         }
         finalizeCheckPoints();
+        for (String eachStream : streamsToProcess) {
+          if (lastProcessedFile.get(eachStream) != null) {
+            ConduitMetrics.updateAbsoluteGauge(getServiceType(),
+                LAST_FILE_PROCESSED, eachStream, lastProcessedFile.get(eachStream));
+          }
+        }
       }
       // rmv tmpOut cleanup
       getDestFs().delete(tmpOut, true);

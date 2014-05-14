@@ -64,6 +64,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
       "yyyy/MM/dd, hh:mm");
   protected final Set<String> streamsToProcess;
+  protected final Map<String, Long> lastProcessedFile;
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
   protected Path tmpCounterOutputPath;
@@ -76,6 +77,7 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String RETRY_CHECKPOINT = "retry.checkPoint";
   public final static String FILES_COPIED_COUNT = "filesCopied.count";
   public final static String DATAPURGER_SERVICE = "DataPurgerService";
+  public final static String LAST_FILE_PROCESSED = "lastfile.processed";
 
   protected static String hostname;
   static {
@@ -101,6 +103,7 @@ public abstract class AbstractService implements Service, Runnable {
     this.runIntervalInMsec = runIntervalInMsec;
     String retries = System.getProperty(ConduitConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
+    this.lastProcessedFile = new HashMap<String, Long>();
     if (retries == null) {
       numOfRetries = Integer.MAX_VALUE;
     } else {

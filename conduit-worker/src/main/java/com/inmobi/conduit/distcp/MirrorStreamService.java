@@ -88,6 +88,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected void execute() throws Exception {
+    lastProcessedFile.clear();
     List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     try {
@@ -106,6 +107,12 @@ public class MirrorStreamService extends DistcpBaseService {
         LOG.warn("No data to pull from " + "Cluster ["
             + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
+        for (String eachStream : streamsToProcess) {
+          if (lastProcessedFile.get(eachStream) != null) {
+            ConduitMetrics.updateAbsoluteGauge(getServiceType(),
+                LAST_FILE_PROCESSED, eachStream, lastProcessedFile.get(eachStream));
+          }
+        }
         finalizeCheckPoints();
         return;
       }
@@ -126,6 +133,12 @@ public class MirrorStreamService extends DistcpBaseService {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
         doLocalCommit(commitPaths, auditMsgList);
         finalizeCheckPoints();
+        for (String eachStream : streamsToProcess) {
+          if (lastProcessedFile.get(eachStream) != null) {
+            ConduitMetrics.updateAbsoluteGauge(getServiceType(),
+                LAST_FILE_PROCESSED, eachStream, lastProcessedFile.get(eachStream));
+          }
+        }
       }
       getDestFs().delete(tmpOut, true);
       LOG.debug("Cleanup [" + tmpOut + "]");
