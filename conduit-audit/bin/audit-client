@@ -196,7 +196,49 @@ if [ -n "$opt_audit" ] ; then
   run_client $CLIENT_AUDIT_QUERY_CLASS $args
 fi
 if [ -n "$opt_feeder" ] ; then
+  envfile=$opt_conf/conduit-audit.env
+
+  #check env existence
+  if ! [ -r $envfile ]; then
+     echo $envfile " not found."
+     exit 1
+  fi
+
+  . $envfile
+
+	#create PID dir
+  if [ "$CONDUIT_FEEDER_PID_DIR" = "" ]; then
+    CONDUIT_FEEDER_PID_DIR=/tmp/conduit-feeder
+  fi
+  export _CONDUIT_FEEDER_DAEMON_PIDFILE=$CONDUIT_FEEDER_PID_DIR/conduit-feeder.pid
+
+  mkdir -p "$CONDUIT_FEEDER_PID_DIR"
+
+  if [ -f $_CONDUIT_FEEDER_DAEMON_PIDFILE ]; then
+    if kill -0 `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE` > /dev/null 2>&1; then
+      echo FEEDER running as process `cat $_CONDUIT_DAEMON_PIDFILE`.  Stop it first.
+      exit 1
+    fi
+  fi
+
+  args="$args -pidDir $_CONDUIT_FEEDER_DAEMON_PIDFILE"
+
   run_client $CLIENT_FEEDER_CLASS $args
+
+  if [ $? -eq 0 ]
+  then
+    if /bin/echo -n $! > "$_CONDUIT_FEEDER_DAEMON_PIDFILE"
+    then
+      sleep 1
+      echo FEEDER STARTED
+    else
+      echo FAILED TO WRITE PID
+      exit 1
+    fi
+  else
+    echo FEEDER DID NOT START
+    exit 1
+  fi
 fi
 if [ -n "$opt_admin" ] ; then
   run_client $CLIENT_ADMIN_CLASS $args
