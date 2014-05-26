@@ -135,7 +135,11 @@ public class ConduitMetrics {
                                                     String counterType,
                                                     String context) {
     final String metricName = createName(serviceName, counterType, context);
-    return registerAbsoluteGauge(metricName, 0);
+    AbsoluteGauge metric = registerAbsoluteGauge(metricName, 0);
+    if (metric != null) {
+      addToCache(serviceName, counterType, context, metric);
+    }
+    return metric;
   }
 
   /**

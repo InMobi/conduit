@@ -413,21 +413,25 @@ public class LocalStreamService extends AbstractService implements
         LOG.debug("last file " + currentFile + " in the collector directory "
             + collector.getPath());
 
-        long lastEmptyFileDeleted = -1;
+        long minEmptyFileDeleted = -1;
 
         for (FileStatus file : files) {
           LOG.debug("Processing " + file.getPath());
-          lastEmptyFileDeleted = processFile(file, currentFile,
+          long deletedFileTimeStamp = processFile(file, currentFile,
               checkPointValue, fs, results, collectorPaths);
+          if (deletedFileTimeStamp != -1 && (minEmptyFileDeleted == -1 ||
+              deletedFileTimeStamp < minEmptyFileDeleted)) {
+            minEmptyFileDeleted = deletedFileTimeStamp;
+          }
         }
         populateTrash(collectorPaths, trashSet);
         populateCheckpointPathForCollector(checkpointPaths, collectorPaths);
 
         long lastDateProcessed;
-        if (collectorPaths.isEmpty()) {
+        if (!collectorPaths.isEmpty()) {
           lastDateProcessed = getLastProcessedFileDate(collectorPaths);
         } else {
-          lastDateProcessed = lastEmptyFileDeleted;
+          lastDateProcessed = minEmptyFileDeleted;
         }
         if (minLastDateProcessed == -1 || (lastDateProcessed != -1 &&
             lastDateProcessed < minLastDateProcessed)) {
@@ -443,7 +447,7 @@ public class LocalStreamService extends AbstractService implements
   private long getLastProcessedFileDate(TreeMap<String,
       FileStatus> collectorPaths) {
     if (collectorPaths != null && collectorPaths.size() > 0) {
-      Entry<String, FileStatus> entry = collectorPaths.lastEntry();
+      Entry<String, FileStatus> entry = collectorPaths.firstEntry();
       Path filePath = entry.getValue().getPath();
       return getDateFromFileName(filePath.getName());
     }
@@ -451,11 +455,14 @@ public class LocalStreamService extends AbstractService implements
   }
 
   private long getDateFromFileName(String name) {
-    String[] splits = name.split("-");
-    if (splits.length == 7) {
-      return CalendarHelper.getDateHourMinute(Integer.parseInt(splits[1]),
-          Integer.parseInt(splits[2]), Integer.parseInt(splits[3]),
-          Integer.parseInt(splits[4]), Integer.parseInt(splits[5])).getTimeInMillis();
+    String[] splitOnUnderScore = name.split("_");
+    if (splitOnUnderScore.length == 2) {
+      String[] splits = splitOnUnderScore[0].split("-");
+      if (splits.length == 6) {
+        return CalendarHelper.getDateHourMinute(Integer.parseInt(splits[1]),
+            Integer.parseInt(splits[2]), Integer.parseInt(splits[3]),
+            Integer.parseInt(splits[4]), Integer.parseInt(splits[5])).getTimeInMillis();
+      }
     }
     return -1;
   }
@@ -475,10 +482,7 @@ public class LocalStreamService extends AbstractService implements
           results.put(file, destDir);
         collectorPaths.put(fileName, file);
       } else {
-        long fileTime = getDateFromFileName(fileName);
-        if (lastFileDeleted == -1 || fileTime > lastFileDeleted) {
-          lastFileDeleted = fileTime;
-        }
+        lastFileDeleted = getDateFromFileName(fileName);
         LOG.info("Empty File [" + file.getPath() + "] found. " + "Deleting it");
         fs.delete(file.getPath(), false);
       }

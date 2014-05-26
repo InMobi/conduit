@@ -73,6 +73,8 @@ public class MergedStreamService extends DistcpBaseService {
           eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           COMMIT_TIME, eachStream);
+      ConduitMetrics.registerAbsoluteGauge(getServiceType(),
+          LAST_FILE_PROCESSED, eachStream);
     }
   }
 

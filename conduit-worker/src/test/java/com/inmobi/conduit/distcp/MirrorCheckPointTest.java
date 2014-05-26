@@ -23,6 +23,7 @@ import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
+import com.inmobi.conduit.metrics.AbsoluteGauge;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.DatePathComparator;
 import com.inmobi.conduit.utils.FileUtil;
@@ -263,6 +264,7 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 8);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MirrorStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
@@ -317,6 +319,7 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 7);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MirrorStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
@@ -396,6 +399,7 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 4);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MirrorStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
@@ -421,6 +425,7 @@ public class MirrorCheckPointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RUNTIME,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 8);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MirrorStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }

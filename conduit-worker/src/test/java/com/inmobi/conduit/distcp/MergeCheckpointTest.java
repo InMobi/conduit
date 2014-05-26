@@ -18,6 +18,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.metrics.AbsoluteGauge;
 import com.inmobi.conduit.utils.CalendarHelper;
 
 import org.apache.commons.logging.Log;
@@ -53,7 +54,7 @@ public class MergeCheckpointTest {
       .getLog(MergeCheckpointTest.class);
   private Path auditUtilJarDestPath;
   private Path jarsPath;
-  private static final NumberFormat idFormat = NumberFormat.getInstance();
+  public static final NumberFormat idFormat = NumberFormat.getInstance();
   static {
     idFormat.setGroupingUsed(false);
     idFormat.setMinimumIntegerDigits(5);
@@ -331,6 +332,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 7);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MergedStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -419,6 +421,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 6);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MergedStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -473,6 +476,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 4);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MergedStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
@@ -535,6 +539,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 1);
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MergedStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 

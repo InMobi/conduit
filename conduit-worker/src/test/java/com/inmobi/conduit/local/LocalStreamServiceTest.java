@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.ConduitConstants;
+import com.inmobi.conduit.metrics.AbsoluteGauge;
 import com.inmobi.conduit.utils.FileUtil;
 
 import org.apache.commons.codec.binary.Base64;
@@ -434,6 +435,7 @@ cluster.getCheckpointDir()),
         AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",
         AbstractService.RUNTIME,"test1").getValue().longValue(), 0 );
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("LocalStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() ,9 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() ,0 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() ,0 );
@@ -451,6 +453,7 @@ cluster.getCheckpointDir()),
         AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",
         AbstractService.RUNTIME,"test1").getValue().longValue(), 0 );
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("LocalStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
@@ -461,6 +464,7 @@ cluster.getCheckpointDir()),
         AbstractService.COMMIT_TIME,"test2").getValue().longValue() < 60000 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",
         AbstractService.RUNTIME,"test2").getValue().longValue(), 0 );
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("LocalStreamService", AbstractService.LAST_FILE_PROCESSED, "test2").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getValue().longValue() , 0);
@@ -471,6 +475,7 @@ cluster.getCheckpointDir()),
         AbstractService.COMMIT_TIME,"test3").getValue().longValue() < 60000 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",
         AbstractService.RUNTIME,"test3").getValue().longValue(), 0 );
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("LocalStreamService", AbstractService.LAST_FILE_PROCESSED, "test3").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getValue().longValue() , 0);
@@ -488,6 +493,7 @@ cluster.getCheckpointDir()),
         AbstractService.COMMIT_TIME,"test1").getValue().longValue() < 60000 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",
         AbstractService.RUNTIME,"test1").getValue().longValue(), 0 );
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("LocalStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
@@ -498,6 +504,7 @@ cluster.getCheckpointDir()),
         AbstractService.COMMIT_TIME,"test2").getValue().longValue() < 60000 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",
         AbstractService.RUNTIME,"test2").getValue().longValue(), 0 );
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("LocalStreamService", AbstractService.LAST_FILE_PROCESSED, "test2").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test2").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test2").getValue().longValue() , 0);
@@ -508,6 +515,7 @@ cluster.getCheckpointDir()),
         AbstractService.COMMIT_TIME,"test3").getValue().longValue() < 60000 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",
         AbstractService.RUNTIME,"test3").getValue().longValue(), 0 );
+    Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("LocalStreamService", AbstractService.LAST_FILE_PROCESSED, "test3").getValue().longValue() > 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test3").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getValue().longValue() , 0);
