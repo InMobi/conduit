@@ -37,15 +37,13 @@ public class AuditStats {
   private final ClientConfig config;
   private List<ConduitConfig> conduitConfigList;
   private Map<String, Cluster> clusterMap;
-  private final String pidDir;
 
-  public AuditStats(String pidDir) throws Exception {
+  public AuditStats() throws Exception {
     config = ClientConfig.loadFromClasspath(AuditDBConstants.FEEDER_CONF_FILE);
     config.set(MessagingConsumerConfig.hadoopConfigFileKey,
         "audit-core-site.xml");
     String conduitConfFolder = config.getString(AuditDBConstants
         .CONDUIT_CONF_FILE_KEY);
-    this.pidDir = pidDir;
     loadConfigFiles(conduitConfFolder);
     createClusterMap();
     for (Entry<String, Cluster> cluster : clusterMap.entrySet()) {
@@ -144,29 +142,10 @@ public class AuditStats {
     } catch (Exception e) {
       LOG.warn("Error in shutting down feeder and rollup services", e);
     }
-
-    if (pidDir != null) {
-      File pidDirFile = new File(pidDir);
-      File[] files = pidDirFile.listFiles();
-      for (File file : files) {
-        file.delete();
-      }
-      pidDirFile.delete();
-    }
   }
 
   public static void main(String args[]) throws Exception {
-    String pidDir = null;
-    int i = 0;
-    while (i < args.length) {
-      if (args[i].equals("-pidDir")) {
-        pidDir = args[i + 1];
-        i = i + 2;
-      } else {
-        i++;
-      }
-    }
-    final AuditStats stats = new AuditStats(pidDir);
+    final AuditStats stats = new AuditStats();
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {

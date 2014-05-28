@@ -60,7 +60,7 @@ display_help() {
   cat <<EOF
 Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>] 
           [-filter <TIER=xxx,HOSTNAME=xxx,TOPIC=xxx,CLUSTER=xxx>] [-percentile <comma separated list of percentiles>] <dd-mm-yyyy-HH:mm> <dd-mm-yyyy-HH:mm> --conf <confdir>
-       $0 feeder --conf <confdir>
+       $0 feeder start|stop --conf <confdir>
        $0 admin -rollup -date <dd-mm-yyyy> [-n <number of days] --conf <confdir>
        $0 admin -create -date <dd-mm-yyyy> [-n <number of days] --conf <confdir>
        $0 admin -checkpoint -date <dd-mm-yyyy> --conf <confdir>
@@ -108,6 +108,8 @@ case "$mode" in
     ;;
   feeder)
     opt_feeder=1
+    startStop=$1
+    shift
     ;;
   admin)
     opt_admin=1
@@ -194,55 +196,84 @@ done
 # finally, invoke the appropriate command
 if [ -n "$opt_audit" ] ; then
   run_client $CLIENT_AUDIT_QUERY_CLASS $args
-fi
-if [ -n "$opt_feeder" ] ; then
-  envfile=$opt_conf/conduit-audit.env
-
-  #check env existence
-  if ! [ -r $envfile ]; then
-     echo $envfile " not found."
-     exit 1
-  fi
-
-  . $envfile
-
-	#create PID dir
-  if [ "$CONDUIT_FEEDER_PID_DIR" = "" ]; then
-    CONDUIT_FEEDER_PID_DIR=/tmp/conduit-feeder
-  fi
-  export _CONDUIT_FEEDER_DAEMON_PIDFILE=$CONDUIT_FEEDER_PID_DIR/conduit-feeder.pid
-
-  mkdir -p "$CONDUIT_FEEDER_PID_DIR"
-
-  if [ -f $_CONDUIT_FEEDER_DAEMON_PIDFILE ]; then
-    if kill -0 `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE` > /dev/null 2>&1; then
-      echo FEEDER running as process `cat $_CONDUIT_DAEMON_PIDFILE`.  Stop it first.
-      exit 1
-    fi
-  fi
-
-  args="$args -pidDir $_CONDUIT_FEEDER_DAEMON_PIDFILE"
-
-  run_client $CLIENT_FEEDER_CLASS $args
-
-  if [ $? -eq 0 ]
-  then
-    if /bin/echo -n $! > "$_CONDUIT_FEEDER_DAEMON_PIDFILE"
-    then
-      sleep 1
-      echo FEEDER STARTED
-    else
-      echo FAILED TO WRITE PID
-      exit 1
-    fi
-  else
-    echo FEEDER DID NOT START
-    exit 1
-  fi
-fi
-if [ -n "$opt_admin" ] ; then
-  run_client $CLIENT_ADMIN_CLASS $args
 else
-  error "This message should never appear" 1
+  if [ -n "$opt_feeder" ] ; then
+    envfile=$opt_conf/conduit-audit.env
+
+    #check env existence
+    if ! [ -r $envfile ]; then
+      echo $envfile " not found."
+      exit 1
+    fi
+
+    . $envfile
+
+    #create PID dir
+    if [ "$CONDUIT_FEEDER_PID_DIR" = "" ]; then
+      CONDUIT_FEEDER_PID_DIR=/tmp/conduit-feeder
+    fi
+    export _CONDUIT_FEEDER_DAEMON_PIDFILE=$CONDUIT_FEEDER_PID_DIR/conduit-feeder.pid
+
+    case $startStop in
+
+      (start)
+
+        mkdir -p "$CONDUIT_FEEDER_PID_DIR"
+
+        if [ -f $_CONDUIT_FEEDER_DAEMON_PIDFILE ]; then
+          if kill -0 `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE` > /dev/null 2>&1; then
+            echo FEEDER running as process `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE`.  Stop it first.
+            exit 1
+          fi
+        fi
+
+        echo starting FEEDER
+
+        exec $JAVA_HOME/bin/java $JAVA_OPTS  -Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=60000 -cp "$CLIENT_CLASSPATH" \
+									 "$CLIENT_FEEDER_CLASS" $* &
+
+        if [ $? -eq 0 ]; then
+          if /bin/echo -n $! > "$_CONDUIT_FEEDER_DAEMON_PIDFILE";
+          then
+            sleep 1
+            echo FEEDER STARTED
+          else
+            echo FAILED TO WRITE PID
+            exit 1
+          fi
+        else
+          echo FEEDER DID NOT START
+          exit 1
+        fi
+        ;;
+
+      (stop)
+
+        if [ -f $_CONDUIT_FEEDER_DAEMON_PIDFILE ]; then
+          if kill -0 `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE` > /dev/null 2>&1; then
+            echo -n Stopping FEEDER
+            kill -s SIGTERM `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE`
+            rm -rf  $_CONDUIT_FEEDER_DAEMON_PIDFILE
+            echo -n DONE
+          else
+            echo no FEEDER to stop
+          fi
+        else
+          echo no FEEDER to stop
+        fi
+        ;;
+
+        (*)
+        echo $usage
+        exit 1
+        ;;
+    esac
+  else
+    if [ -n "$opt_admin" ] ; then
+      run_client $CLIENT_ADMIN_CLASS $args
+    else
+      error "This message should never appear" 1
+    fi
+  fi
 fi
 exit 0
