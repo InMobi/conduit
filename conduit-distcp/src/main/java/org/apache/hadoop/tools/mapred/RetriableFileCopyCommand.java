@@ -130,7 +130,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
             tmpTargetPath, true, BUFFER_SIZE,
             getReplicationFactor(fileAttributes, sourceFileStatus, targetFS),
             getBlockSize(fileAttributes, sourceFileStatus, targetFS), context));
-    return copyBytes(sourceFileStatus, outStream, BUFFER_SIZE, true, context,
+    return copyBytes(sourceFileStatus, outStream, BUFFER_SIZE, context,
         received);
   }
 
@@ -177,8 +177,8 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private long copyBytes(FileStatus sourceFileStatus, OutputStream outStream,
-      int bufferSize, boolean mustCloseStream, Mapper.Context context,
-      Map<Long, Long> received) throws IOException {
+      int bufferSize, Mapper.Context context, Map<Long, Long> received)
+          throws IOException {
     Path source = sourceFileStatus.getPath();
     ThrottledInputStream inStream = null;
     final CompressionCodec codec = compressionCodecs.getCodec(source);
@@ -211,21 +211,19 @@ public class RetriableFileCopyCommand extends RetriableCommand {
           CopyMapper.Counter.SLEEP_TIME_MS), inStream.getTotalSleepTime()); 
       LOG.info("STATS: " + inStream);
     } finally {
-      if (mustCloseStream) {
-        IOUtils.cleanup(LOG, inStream);
-        try {
-          if (reader != null)
-            reader.close();
-          if (compressedIn != null)
-            compressedIn.close();
-          if (commpressedOut != null)
-            commpressedOut.close();
-          outStream.close();
-        }
-        catch(IOException exception) {
-          LOG.error("Could not close output-stream. ", exception);
-          throw exception;
-        }
+      IOUtils.cleanup(LOG, inStream);
+      try {
+        if (reader != null)
+          reader.close();
+        if (compressedIn != null)
+          compressedIn.close();
+        if (commpressedOut != null)
+          commpressedOut.close();
+        outStream.close();
+      }
+      catch(IOException exception) {
+        LOG.error("Could not close output-stream. ", exception);
+        throw exception;
       }
     }
 
