@@ -12,8 +12,6 @@ public interface AuditDBConstants {
 
   public static final String TIMESTAMP = "TIMEINTERVAL";
   public static final String SENT = "SENT";
-  public static final String RECEIVED = "RECEIVED";
-
 
   public static final String GANGLIA_HOST = "feeder.ganglia.host";
   public static final String GANGLIA_PORT = "feeder.ganglia.port";
@@ -29,5 +27,13 @@ public interface AuditDBConstants {
   public static final String NUM_DAYS_AHEAD_TABLE_CREATION =
       "num.of.days.ahead.table.creation";
 
+  public static final String DAILY_ROLLUP_CHECKPOINT_KEY = "daily.rollup" +
+      ".checkpoint.key";
+  public static final String DAILY_ROLLUP_TILLDAYS_KEY = "daily.rollup" +
+      ".tilldays";
+
   public static final String DEFAULT_CHECKPOINT_KEY = "rollupChkPt";
+  public static final String DEFAULT_DAILY_CHECKPOINT_KEY = "dailyRollupChkPt";
+  public static final int DEFAULT_GAP_BTW_ROLLUP_TILLDAYS = 30;
+  public static final int DEFAULT_HOURLY_ROLLUP_TILLDAYS = 5;
 }

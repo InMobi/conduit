@@ -52,8 +52,10 @@ public class AuditStats {
           config);
       dbServices.add(feeder);
     }
-    AuditDBService rollup = new AuditRollUpService(config);
-    dbServices.add(rollup);
+    AuditDBService hourlyRollup = new AuditRollUpService(config, false);
+    dbServices.add(hourlyRollup);
+    AuditDBService dailyRollup = new AuditRollUpService(config, true);
+    dbServices.add(dailyRollup);
   }
 
   private void createClusterMap() {

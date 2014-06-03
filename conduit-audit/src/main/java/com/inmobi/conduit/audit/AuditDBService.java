@@ -7,29 +7,60 @@ import com.inmobi.messaging.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 public abstract class AuditDBService implements Runnable {
-  protected final String rollupChkPtDir, rollupChkPtKey;
+  // Rollup check point directory and key are added to parent class since
+  // Feeder service also needs to read last rolled up table time from the
+  // checkpoint to determine whether or not to add message to tables (in case
+  // of messages read after rollup of that day's table i.e. late messages)
+  protected String rollupChkPtDir, rollupChkPtKey;
   protected final ClientConfig config;
   protected FSCheckpointProvider rollupProvider;
+  protected boolean isDailyRollup = false;
+  protected int hourlyTilldays, dailyTillDays;
 
   protected Thread thread;
   protected volatile boolean isStop = false;
   private static final Log LOG = LogFactory.getLog(AuditDBService.class);
 
   public AuditDBService (ClientConfig config) {
+    this(config, false);
+  }
+
+  public AuditDBService(ClientConfig config, boolean isDailyRollup) {
+    this.isDailyRollup = isDailyRollup;
     this.config = config;
+    hourlyTilldays = config.getInteger(AuditDBConstants.TILLDAYS_KEY,
+        AuditDBConstants.DEFAULT_HOURLY_ROLLUP_TILLDAYS);
+    dailyTillDays = config.getInteger(AuditDBConstants
+        .DAILY_ROLLUP_TILLDAYS_KEY, hourlyTilldays + AuditDBConstants
+        .DEFAULT_GAP_BTW_ROLLUP_TILLDAYS);
+    if (dailyTillDays <= hourlyTilldays) {
+      LOG.error("Passed configs for daily.rollup.tilldays[" + dailyTillDays +
+      "] is less than rollup.tilldays[" + hourlyTilldays + "]");
+      dailyTillDays = hourlyTilldays + AuditDBConstants.DEFAULT_GAP_BTW_ROLLUP_TILLDAYS;
+      LOG.info("Reset daily.rollup.tilldays to " + dailyTillDays);
+    }
     rollupChkPtDir = config.getString(AuditDBConstants.CHECKPOINT_DIR_KEY);
-    rollupChkPtKey = config.getString(AuditDBConstants.CHECKPOINT_KEY,
-        AuditDBConstants.DEFAULT_CHECKPOINT_KEY);
+    if (isDailyRollup) {
+      rollupChkPtKey = config.getString(AuditDBConstants.DAILY_ROLLUP_CHECKPOINT_KEY,
+          AuditDBConstants.DEFAULT_DAILY_CHECKPOINT_KEY);
+      if (rollupChkPtKey.length() == 0) {
+        rollupChkPtKey = AuditDBConstants.DEFAULT_DAILY_CHECKPOINT_KEY;
+      }
+    } else {
+      rollupChkPtKey = config.getString(AuditDBConstants.CHECKPOINT_KEY,
+          AuditDBConstants.DEFAULT_CHECKPOINT_KEY);
+      if (rollupChkPtKey.length() == 0) {
+        rollupChkPtKey = AuditDBConstants.DEFAULT_CHECKPOINT_KEY;
+      }
+    }
     if (rollupChkPtDir != null && rollupChkPtDir.length() > 0) {
       rollupProvider = new FSCheckpointProvider(rollupChkPtDir);
     }
@@ -122,9 +153,18 @@ public abstract class AuditDBService implements Runnable {
         LOG.debug("Table dates corresponding to first entry:" +
             AuditDBHelper.DAY_CHK_FORMATTER.format(firstDate) + " and last " +
             "entry:" + AuditDBHelper.DAY_CHK_FORMATTER.format(lastDate));
+        if ((isDailyRollup && firstDate.after(AuditDBHelper
+            .addDaysToCurrentDate(-dailyTillDays))) || (!isDailyRollup &&
+            firstDate.after(AuditDBHelper.addDaysToCurrentDate
+                (-hourlyTilldays)))) {
+          LOG.error("First Date of the table is after the till days limit " +
+              "for the service, returning null start date");
+          return null;
+        }
         Date currentDate = lastDate;
         while (!currentDate.before(firstDate)) {
-          if (checkTableExists(connection, createTableName(currentDate, true)))
+          if (checkTableExists(connection, createTableName(currentDate, true,
+              isDailyRollup)))
             return AuditDBHelper.addDaysToGivenDate(currentDate, 1);
           currentDate = AuditDBHelper.addDaysToGivenDate(currentDate, -1);
         }
@@ -222,9 +262,18 @@ public abstract class AuditDBService implements Runnable {
   }
 
   public String createTableName(Date currentDate, boolean isRollupTable) {
+    return createTableName(currentDate, isRollupTable, false);
+  }
+
+  public String createTableName(Date currentDate, boolean isRollupTable,
+                                boolean isDailyRolledUpTable) {
     String tableName = "";
     if (isRollupTable) {
-      tableName += "hourly_";
+      if (isDailyRolledUpTable) {
+        tableName += "daily_";
+      } else {
+        tableName += "hourly_";
+      }
     }
     tableName += config.getString(AuditDBConstants.MASTER_TABLE_NAME) +
         AuditDBHelper.TABLE_DATE_FORMATTER.format(currentDate);

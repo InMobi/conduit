@@ -15,22 +15,28 @@ import java.util.Date;
 
 public class AuditRollUpService extends AuditDBService {
 
-  final private int rollUpHourOfDay, tilldays;
+  final private int rollUpHourOfDay;
   final private long intervalLength;
   final private String masterTable;
   private static final Log LOG = LogFactory.getLog(AuditRollUpService.class);
 
   public AuditRollUpService(ClientConfig config) {
-    super(config);
+    this(config, false);
+  }
+
+  public AuditRollUpService(ClientConfig config, boolean isDailyRollup) {
+    super(config, isDailyRollup);
     rollUpHourOfDay = config.getInteger(AuditDBConstants.ROLLUP_HOUR_KEY, 0);
-    intervalLength = config.getLong(AuditDBConstants.INTERVAL_LENGTH_KEY,
-        3600000l);
     masterTable = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
-    tilldays = config.getInteger(AuditDBConstants.TILLDAYS_KEY);
-    LOG.info("Initialized AuditRollupService with configs rollup hour " +
+    if (isDailyRollup) {
+      intervalLength = 24 * 60 * 60 * 1000;
+    } else {
+      intervalLength = config.getLong(AuditDBConstants.INTERVAL_LENGTH_KEY,
+          3600000l);
+    }
+    LOG.info("Initialized " + getServiceName() + " with configs rollup hour " +
         "as:" + rollUpHourOfDay + ", interval length as:" + intervalLength +
-        ", checkpoint directory as " + rollupChkPtDir + " and till days as:" +
-        tilldays);
+        ", checkpoint directory as " + rollupChkPtDir);
   }
 
   @Override
@@ -102,7 +108,10 @@ public class AuditRollUpService extends AuditDBService {
 
         try {
           if (!isStop) {
-            boolean isCreated = createDailyTable(connection);
+            boolean isCreated = true;
+            if (!isDailyRollup) {
+              isCreated = createDailyTable(connection);
+            }
             if (isCreated) {
               Date markTime = rollupTables(connection);
               if (markTime != null) {
@@ -219,7 +228,16 @@ public class AuditRollUpService extends AuditDBService {
   private Date rollupTables(Connection connection) throws SQLException {
     if (!isStop) {
       Date fromTime = getRollupTime();
-      Date toDate = AuditDBHelper.addDaysToCurrentDate(-tilldays);
+      Date toDate;
+      if (isDailyRollup) {
+        toDate = AuditDBHelper.addDaysToCurrentDate(-dailyTillDays);
+      } else {
+        if (fromTime.before(AuditDBHelper.addDaysToCurrentDate
+            (-dailyTillDays))) {
+          fromTime = AuditDBHelper.addDaysToCurrentDate(-dailyTillDays);
+        }
+        toDate = AuditDBHelper.addDaysToCurrentDate(-hourlyTilldays);
+      }
       if (fromTime != null && !fromTime.after(toDate)) {
         return rollupTables(fromTime, toDate, connection);
       } else {
@@ -252,8 +270,20 @@ public class AuditRollUpService extends AuditDBService {
         LOG.info("Starting roll up of tables from:"+currentDate+" till:"+toDate);
         while (currentDate.before(toDate) && !isStop) {
           Date nextDay = AuditDBHelper.addDaysToGivenDate(currentDate, 1);
-          String srcTable = createTableName(currentDate, false);
-          String destTable = createTableName(currentDate, true);
+          String srcTable;
+          if (isDailyRollup) {
+            // Check if hourly table of currentDate exits,
+            // if it dosen't then srcTable is minutely table
+            String temp = createTableName(currentDate, true, false);
+            if (checkTableExists(connection, temp)) {
+              srcTable = temp;
+            } else {
+              srcTable = createTableName(currentDate, false);
+            }
+          } else {
+            srcTable = createTableName(currentDate, false);
+          }
+          String destTable = createTableName(currentDate, true, isDailyRollup);
           Long firstMillisOfDay = AuditDBHelper.getFirstMilliOfDay(currentDate);
           Long firstMillisOfNextDay = AuditDBHelper.getFirstMilliOfDay(nextDay);
           int index = 1;
@@ -291,6 +321,9 @@ public class AuditRollUpService extends AuditDBService {
 
   @Override
   public String getServiceName() {
+    if (isDailyRollup) {
+      return "DailyRollUpService";
+    }
     return "RollUpService";
   }
 }
