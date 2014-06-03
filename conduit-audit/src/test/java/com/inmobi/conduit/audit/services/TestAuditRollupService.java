@@ -74,6 +74,8 @@ public class TestAuditRollupService extends AuditRollupTestUtil {
     Assert.assertEquals("audit20130808", srcTable);
     String destTable = rollUpService.createTableName(currentDate, true);
     Assert.assertEquals("hourly_audit20130808", destTable);
+    String destTable2 = rollUpService.createTableName(currentDate, true, true);
+    Assert.assertEquals("daily_audit20130808", destTable2);
   }
 
   @AfterClass
