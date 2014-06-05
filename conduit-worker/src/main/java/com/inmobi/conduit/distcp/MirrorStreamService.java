@@ -28,6 +28,7 @@ import java.util.Set;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
@@ -85,9 +86,9 @@ public class MirrorStreamService extends DistcpBaseService {
   protected void execute() throws Exception {
     List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
+    Path tmpOut = getDistCpTargetPath();
     try {
       boolean skipCommit = false;
-      Path tmpOut = getDistCpTargetPath();
       // CleanuptmpOut before every run
       if (getDestFs().exists(tmpOut))
         getDestFs().delete(tmpOut, true);
@@ -115,19 +116,19 @@ public class MirrorStreamService extends DistcpBaseService {
           skipCommit = true;
       } catch (Throwable e) {
         LOG.warn("Problem in Mirrored distcp..skipping commit for this run", e);
-        skipCommit = true;
+        throw new Exception(e);
       }
       if (!skipCommit) {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
         doLocalCommit(commitPaths, auditMsgList);
         finalizeCheckPoints();
       }
-      getDestFs().delete(tmpOut, true);
-      LOG.debug("Cleanup [" + tmpOut + "]");
     } catch (Exception e) {
       LOG.warn("Error in MirrorStream Service..skipping RUN ", e);
-      throw new Exception(e);
+      throw e;
     } finally {
+      getDestFs().delete(tmpOut, true);
+      LOG.debug("Cleanup [" + tmpOut + "]");
       publishAuditMessages(auditMsgList);
     }
   }

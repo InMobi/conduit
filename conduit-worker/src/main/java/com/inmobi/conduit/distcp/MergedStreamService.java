@@ -83,10 +83,10 @@ public class MergedStreamService extends DistcpBaseService {
   public void execute() throws Exception {
     List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
+    Path tmpOut = getDistCpTargetPath();
     try {
       boolean skipCommit = false;
 
-      Path tmpOut = getDistCpTargetPath();
       // CleanuptmpOut before every run
       // the dest is a misnomer here. The service runs on the destination, so
       //all the meaning of dest is actually local cluster.
@@ -122,7 +122,7 @@ public class MergedStreamService extends DistcpBaseService {
       } catch (Throwable e) {
         LOG.warn("Error in distcp", e);
         LOG.warn("Problem in MergedStream distcp PULL..skipping commit for this run");
-        skipCommit = true;
+        throw new Exception(e);
       }
       Map<Path, Path> commitPaths = new HashMap<Path, Path>();
       // if success
@@ -143,13 +143,13 @@ public class MergedStreamService extends DistcpBaseService {
         }
         finalizeCheckPoints();
       }
+    } catch (Exception e) {
+      LOG.warn("Error in run ", e);
+      throw e;
+    } finally {
       // rmv tmpOut cleanup
       getDestFs().delete(tmpOut, true);
       LOG.debug("Deleting [" + tmpOut + "]");
-    } catch (Exception e) {
-      LOG.warn("Error in run ", e);
-      throw new Exception(e);
-    } finally {
       publishAuditMessages(auditMsgList);
     }
   }
