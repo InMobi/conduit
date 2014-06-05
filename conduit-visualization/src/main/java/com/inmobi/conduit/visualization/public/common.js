@@ -21,6 +21,8 @@ tierColorMap["merge"] = "#FB6183";
 tierColorMap["mirror"] = "#8E4804";
 var tierLatencySlaMap = {};
 var currentStream, currentCluster;
+var breadcrumbs = d3.select("#crumbs");
+
 String.prototype.equalsIgnoreCase = function (s) {
   return s.toLowerCase() == this.toLowerCase();
 }
@@ -70,6 +72,55 @@ function setConfiguration(pSla, aSla, vSla, cSla, hSla, lSla, meSla, miSla,
   lossWarnThresholdDiff = lossWarnThreshold;
   isGWTDevMode = devMode;
 }
+
+function resetBreadCrumbsList() {
+  breadcrumbs.selectAll("li")
+    .filter(function() {
+      return this.id != "home";
+    })
+    .remove();
+}
+
+function appendBreadCrumbs(cluster, stream, tier) {
+  resetBreadCrumbsList();
+  if (!cluster.equalsIgnoreCase("all")) {
+    breadcrumbs.append("li")
+      .text(">");
+    var listEl = breadcrumbs.append("li");
+    listEl.append("a")
+      .attr("id", cluster)
+      .attr("xlink:href", "javascript:void(0)")
+      .text(cluster)      
+      .style("cursor", "pointer")
+      .on("click", function(d) {
+        saveHistoryAndReload("All", this.id, "All");
+      });
+  }
+  if (!stream.equalsIgnoreCase("all")) {
+    breadcrumbs.append("li")
+      .text(">");
+    var listEl = breadcrumbs.append("li");
+    listEl.append("a")
+      .attr("id", cluster+"-"+stream)
+      .attr("xlink:href", "javascript:void(0)")
+      .text(stream)
+      .style("cursor", "pointer")
+      .on("click", function(d) {
+        var splits = this.id.split("-");
+        saveHistoryAndReload(splits[1], splits[0], "All");
+      });
+  }
+  if (!tier.equalsIgnoreCase("all")) {
+    breadcrumbs.append("li")
+      .text(">");
+    var listEl = breadcrumbs.append("li");
+    listEl.append("a")
+      .attr("id", cluster+"-"+stream+"-"+tier)
+      .attr("xlink:href", "javascript:void(0)")
+      .text(tier);
+  }
+}
+
 /* selectedTabID, viewId, start, end are optional and are set only on changing
 the query */
 function saveHistory(changeParams, streamName, clusterName, tier,
@@ -78,6 +129,7 @@ function saveHistory(changeParams, streamName, clusterName, tier,
     clusterName + "start:" + start + " end:" + end);
   currentStream = streamName;
   currentCluster = clusterName;
+  resetBreadCrumbsList();
   if (changeParams) {
     console.log("change parameters of url");
     qstart = start;
@@ -120,16 +172,13 @@ function saveHistory(changeParams, streamName, clusterName, tier,
     if (!isReloadComplete) {
       setCountLatencyView(History.getState().data.selectedTab);
       highlightTab();
-      if (qView == 1) {
-        highlightTierButton(History.getState().data.qtier);
-        renderTimeLineForTierStreamCluster(History.getState().data.qtier,
-          History.getState().data.qstream, History.getState().data.qcluster);
-      } else {
+      appendBreadCrumbs(History.getState().data.qcluster, History.getState().data.qstream, History.getState().data.qtier);
+      if (qView == 2) {
         loadGraph(History.getState().data.qstream, History.getState().data.qcluster);
-        highlightTierButton(History.getState().data.qtier);
-        renderTimeLineForTierStreamCluster(History.getState().data.qtier,
-          History.getState().data.qstream, History.getState().data.qcluster);
       }
+      highlightTierButton(History.getState().data.qtier);
+      renderTimeLineForTierStreamCluster(History.getState().data.qtier,
+          History.getState().data.qstream, History.getState().data.qcluster);
       isReloadComplete = true;
     }
   });
@@ -147,17 +196,19 @@ function saveHistoryAndReload(streamName, clusterName, tier, selectedTabID) {
   isReloadComplete = false;
   saveHistory(false, streamName, clusterName, tier, selectedTabID);
   if (!isReloadComplete) {
-    if (qView == 1) {
-      highlightTierButton('all');
-      renderTimeLineForTierStreamCluster(tier, streamName, clusterName);
-    } else {
+    appendBreadCrumbs(clusterName, streamName, tier);
+    if (qView == 2) {
       loadGraph(streamName, clusterName);
-      highlightTierButton('all');
-      renderTimeLineForTierStreamCluster(tier, streamName, clusterName);
     }
+    highlightTierButton('all');
+    renderTimeLineForTierStreamCluster(tier, streamName, clusterName);
     isReloadComplete = true;
   }
   isReloading = false;
+}
+
+function loadFullGraph() {
+  saveHistoryAndReload(qStream, qCluster, 'all');  
 }
 
 function setCountLatencyView(selectedTabID) {
