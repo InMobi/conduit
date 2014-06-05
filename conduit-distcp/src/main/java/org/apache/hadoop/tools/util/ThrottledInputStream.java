@@ -101,6 +101,11 @@ public class ThrottledInputStream extends InputStream {
   }
 
   @Override
+  public void close() throws IOException {
+    rawStream.close();
+  }
+
+  @Override
   public String toString() {
     return "ThrottledInputStream{" +
         "bytesRead=" + bytesRead +

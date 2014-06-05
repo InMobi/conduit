@@ -27,6 +27,20 @@ public class TestDataServiceManager {
   }
 
   @Test
+  public void testPercentileProperty() {
+    Exception exception = null;
+    try {
+    serviceManager = DataServiceManagerTest.get("" +
+        "./src/test/resources/xmlfolder1",
+        "./src/test/resources/visualization-percentile-wrong.properties",
+        "./src/test/resources/audit-feeder.properties");
+    } catch (Exception e) {
+      exception = e;
+    }
+    Assert.assertTrue(exception instanceof RuntimeException);
+  }
+
+  @Test
   public void testMultipleXmls() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder1",

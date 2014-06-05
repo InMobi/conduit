@@ -167,6 +167,9 @@ public class LocalStreamService extends AbstractService implements
         commit(populateTrashCommitPaths(trashSet), true, null);
         LOG.info("Committed successfully at " + getLogDateString(commitTime));
 
+      } else {
+        throw new IOException("LocaStreamService job failure: Job "
+            + job.getJobID() + " has failed. ");
       }
     } catch (Exception e) {
       LOG.warn("Error in running LocalStreamService " + e);
