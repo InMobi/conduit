@@ -85,7 +85,7 @@ public class LocalStreamService extends AbstractService implements
   protected long BYTES_PER_MAPPER = 512 * 1024 * 1024;
   private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
   private DataInputBuffer in = new DataInputBuffer();
-  
+
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
