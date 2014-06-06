@@ -443,6 +443,11 @@ public class Conduit implements Service, ConduitConstants {
         System.setProperty(NUM_RETRIES, numRetries);
       }
 
+      String numFilesPerLocalStream = prop.getProperty(FILES_PER_COLLECETOR_PER_LOCAL_STREAM);
+      if (numFilesPerLocalStream != null) {
+        System.setProperty(FILES_PER_COLLECETOR_PER_LOCAL_STREAM, numFilesPerLocalStream);
+      }
+
       //Init Conduit metrics
       try {
         ConduitMetrics.init(prop);

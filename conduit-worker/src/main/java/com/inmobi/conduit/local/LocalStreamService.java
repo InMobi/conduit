@@ -76,6 +76,7 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
+  private int filesPerCollector = 10;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -107,6 +108,11 @@ public class LocalStreamService extends AbstractService implements
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "conduit-distcp-current.jar");
     auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
+    String numOfFilesPerCollector = System.getProperty(
+        ConduitConstants.FILES_PER_COLLECETOR_PER_LOCAL_STREAM);
+    if (numOfFilesPerCollector != null) {
+      filesPerCollector = Integer.parseInt(numOfFilesPerCollector);
+    }
 	
     //register metrics
     for (String eachStream : streamsToProcess) {
@@ -144,7 +150,7 @@ public class LocalStreamService extends AbstractService implements
           srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
       Map<FileStatus, String> fileListing = new TreeMap<FileStatus, String>();
       Set<FileStatus> trashSet = new HashSet<FileStatus>();
-      /* checkpointPaths table contains streamaname as rowkey,
+      /* checkpointPaths table contains streamname as rowkey,
       source(collector) name as column key and checkpoint value as value */
       Table<String, String, String> checkpointPaths = HashBasedTable.create();
 
@@ -389,15 +395,21 @@ public class LocalStreamService extends AbstractService implements
               + " Skipping Directory");
           continue;
         }
-
-        String currentFile = getCurrentFile(fs, files);
+        TreeSet<FileStatus> sortedFiles = new TreeSet<FileStatus>(
+            new FileTimeStampComparator());
+        String currentFile = getCurrentFile(fs, files, sortedFiles);
         LOG.debug("last file " + currentFile + " in the collector directory "
             + collector.getPath());
         
-        for (FileStatus file : files) {
+        Iterator<FileStatus> it = sortedFiles.iterator();
+        int numberOfFilesProcessed = 0;
+        while (it.hasNext() && numberOfFilesProcessed < filesPerCollector) {
+          FileStatus file = it.next();
           LOG.debug("Processing " + file.getPath());
-          processFile(file, currentFile, checkPointValue, fs, results,
-              collectorPaths);
+          if (processFile(file, currentFile, checkPointValue, fs, results,
+              collectorPaths)) {
+            numberOfFilesProcessed++;
+          }
         }
         populateTrash(collectorPaths, trashSet);
         populateCheckpointPathForCollector(checkpointPaths, collectorPaths);
@@ -405,24 +417,27 @@ public class LocalStreamService extends AbstractService implements
     }
   }
 
-  private void processFile(FileStatus file, String currentFile,
+  private boolean processFile(FileStatus file, String currentFile,
       String checkPointValue, FileSystem fs, Map<FileStatus, String> results,
       Map<String, FileStatus> collectorPaths) throws IOException {
-
+    boolean processed = false;
     String fileName = file.getPath().getName();
     if (fileName != null && !fileName.equalsIgnoreCase(currentFile)) {
       if (!isEmptyFile(file, fs)) {
         Path src = file.getPath().makeQualified(fs);
         String destDir = getCategoryJobOutTmpPath(getCategoryFromSrcPath(src))
             .toString();
-        if (aboveCheckpoint(checkPointValue, fileName))
+        if (aboveCheckpoint(checkPointValue, fileName)) {
           results.put(file, destDir);
+          processed = true;
+        }
         collectorPaths.put(fileName, file);
       } else {
         LOG.info("Empty File [" + file.getPath() + "] found. " + "Deleting it");
         fs.delete(file.getPath(), false);
       }
     }
+    return processed;
   }
 
   /*
@@ -501,31 +516,31 @@ public class LocalStreamService extends AbstractService implements
       return false;
   }
 
+  class FileTimeStampComparator implements Comparator<FileStatus> {
+    public int compare(FileStatus file1, FileStatus file2) {
+      long file1Time = file1.getModificationTime();
+      long file2Time = file2.getModificationTime();
+      if ((file1Time < file2Time))
+        return -1;
+      else
+        return 1;
+
+    }
+  }
+
   /*
    * @returns null: if there are no files
    */
-  protected String getCurrentFile(FileSystem fs, FileStatus[] files) {
+  protected String getCurrentFile(FileSystem fs, FileStatus[] files,
+      TreeSet<FileStatus> sortedFiles) {
     // Proposed Algo :-> Sort files based on timestamp
     // if there are no files)
     // then null (implying process this file as non-current file)
     // else
     // return last file as the current file
-    class FileTimeStampComparator implements Comparator<FileStatus> {
-      public int compare(FileStatus file1, FileStatus file2) {
-        long file1Time = file1.getModificationTime();
-        long file2Time = file2.getModificationTime();
-        if ((file1Time < file2Time))
-          return -1;
-        else
-          return 1;
-
-      }
-    }
-
+    
     if (files == null || files.length == 0)
       return null;
-    TreeSet<FileStatus> sortedFiles = new TreeSet<FileStatus>(
-        new FileTimeStampComparator());
     for (FileStatus file : files) {
       sortedFiles.add(file);
     }

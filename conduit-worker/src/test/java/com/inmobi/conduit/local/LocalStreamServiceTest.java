@@ -395,8 +395,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     streamsToProcess.addAll(conduitConfig.getSourceStreams().keySet());
     TestLocalStreamService service = new TestLocalStreamService(
         conduitConfig, cluster, null, new FSCheckpointProvider(
-cluster.getCheckpointDir()),
-        streamsToProcess);
+            cluster.getCheckpointDir()), streamsToProcess);
 
     Map<Path, Path> trashCommitPaths = service
         .populateTrashCommitPaths(trashSet);
@@ -426,7 +425,7 @@ cluster.getCheckpointDir()),
   @Test
   public void testMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-conduit.xml");
-    testMapReduce("test-lss-conduit.xml", 1);
+    testMapReduce("test-lss-conduit.xml", 1, false);
 
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() ,9 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() ,0 );
@@ -437,7 +436,7 @@ cluster.getCheckpointDir()),
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduce() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-conduit.xml");
-    testMapReduce("test-lss-multiple-conduit.xml", 1);
+    testMapReduce("test-lss-multiple-conduit.xml", 1, false);
 
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
@@ -456,7 +455,7 @@ cluster.getCheckpointDir()),
   @Test(groups = { "integration" })
   public void testMultipleStreamMapReduceWithMultipleRuns() throws Exception {
     LOG.info("Running LocalStreamIntegration for filename test-lss-multiple-conduit.xml, Running Twice");
-    testMapReduce("test-lss-multiple-conduit1.xml", 2);
+    testMapReduce("test-lss-multiple-conduit1.xml", 2, false);
 
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
@@ -470,6 +469,15 @@ cluster.getCheckpointDir()),
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test3").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test3").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.FILES_COPIED_COUNT,"test3").getValue().longValue() , 19);
+  }
+
+  @Test
+  public void testThrottle() throws Exception {
+    System.setProperty(ConduitConstants.FILES_PER_COLLECETOR_PER_LOCAL_STREAM,
+        String.valueOf(((NUMBER_OF_FILES + 1) / 2)));
+    LOG.info("Running LocalStreamIntegration for filename test-lss-conduit.xml");
+    testMapReduce("test-lss-conduit.xml", 1, true);
+    System.clearProperty(ConduitConstants.FILES_PER_COLLECETOR_PER_LOCAL_STREAM);
   }
 
   private static class NullCheckPointProvider implements CheckpointProvider {
@@ -636,7 +644,8 @@ cluster.getCheckpointDir()),
 
   }
 
-  private void testMapReduce(String fileName, int timesToRun) throws Exception {
+  private void testMapReduce(String fileName, int timesToRun, boolean throttle)
+      throws Exception {
 
     ConduitConfigParser parser = new ConduitConfigParser(fileName);
     ConduitConfig config = parser.getConfig();
@@ -669,6 +678,12 @@ cluster.getCheckpointDir()),
         // set BYTES_PER_MAPPER to a lower value for test
         service.setBytesPerMapper(100);
         service.execute();
+        /* If throttle is true then need to run the LocalStreamService
+           max(total num of files per stream / files per stream) times to process all files
+         */
+        if (throttle) {
+          service.execute();
+        }
         long finishTime = System.currentTimeMillis();
         service.postExecute();
         Thread.sleep(1000);
