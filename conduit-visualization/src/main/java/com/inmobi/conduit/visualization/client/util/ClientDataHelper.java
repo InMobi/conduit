@@ -29,7 +29,7 @@ public class ClientDataHelper {
     return ClientJsonStreamFactory.getInstance().serializeMessage(request);
   }
 
-  public String getJsonStringFromGraphDataResponse(String serverJson) {
+  public String getJsonFromTopologyDataResponse(String serverJson) {
     RequestResponse.Response response = null;
     try {
       response = RequestResponse.Response.newBuilder().readFrom(
@@ -38,7 +38,7 @@ public class ClientDataHelper {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    return response.getGraphDataResponse().getJsonString();
+    return response.getTopologyDataResponse().getJsonString();
   }
 
   public List<String> getStreamsListFromLoadMainPanelResponse(
@@ -123,11 +123,34 @@ public class ClientDataHelper {
       e.printStackTrace();
     }
     for (RequestResponse.TierLatencyObj tierLatencyObj : response
-        .getGraphDataResponse().getTierLatencyResponse()
-        .getTierLatencyObjListList()) {
+        .getTierLatencyResponse().getTierLatencyObjListList()) {
        tierLatencyMap.put(tierLatencyObj.getTier().toLowerCase(),
            tierLatencyObj.getLatency());
     }
     return tierLatencyMap;
+  }
+
+  public String getTimeLineJSONFromResponse(String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance()
+              .createNewStreamFromJson(serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getTimeLineGraphResponse().getJsonString();
+  }
+
+  public int getTimeBucketForTrend(String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance()
+              .createNewStreamFromJson(serverJson)).build();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return response.getTimeLineGraphResponse().getTimebucket();
   }
 }

@@ -1,258 +1,249 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>conduit-visualization</artifactId>
+  <packaging>war</packaging>
+  <name>Conduit Visualization</name>
 
-    <parent>
-        <artifactId>conduit-parent</artifactId>
-        <groupId>com.inmobi.conduit</groupId>
-        <version>2.2.8-SNAPSHOT</version>
-    </parent>
+  <parent>
+    <artifactId>conduit-parent</artifactId>
+    <groupId>com.inmobi.conduit</groupId>
+    <version>2.3.0</version>
+  </parent>
 
-    <artifactId>conduit-visualization</artifactId>
-    <packaging>war</packaging>
-    <name>Conduit Visualization</name>
+  <properties>
+    <gwtVersion>2.5.1</gwtVersion>
+    <webappDirectory>${project.build.directory}/${project.build.finalName}
+    </webappDirectory>
+  </properties>
 
-    <properties>
-        <gwtVersion>2.5.1</gwtVersion>
-        <webappDirectory>${project.build.directory}/${project.build.finalName}
-        </webappDirectory>
-    </properties>
-
-    <repositories>
-        <repository>
-            <id>releases</id>
-            <name>Releases</name>
-            <url>
-                http://maven.scm.corp.inmobi.com/content/repositories/releases/
-            </url>
-        </repository>
-    </repositories>
-
-    <profiles>
-      <!-- added for cdh4 update -->
-      <profile>
-        <id>hadoop-1.0</id>
-        <activation>
-          <property>
-            <name>hadoop.profile</name>
-            <value>1</value>
-          </property>
-          <activeByDefault>true</activeByDefault>
-        </activation>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <scope>provided</scope>
-            <exclusions>
-              <exclusion>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-              </exclusion>
-              <exclusion>
-                <groupId>hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-              </exclusion>
-              <exclusion>
-                <artifactId>core</artifactId>
-                <groupId>org.eclipse.jdt</groupId>
-              </exclusion>
-            </exclusions>
-          </dependency>
-        </dependencies>
-      </profile>
-
-      <profile>
-        <id>hadoop-2.0</id>
-        <activation>
-          <property>
-            <name>hadoop.profile</name>
-            <value>2</value>
-          </property>
-          <activeByDefault>false</activeByDefault>
-        </activation>
-
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <scope>provided</scope>
-            <exclusions>
-              <exclusion>
-                <groupId>org.hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-              </exclusion>
-              <exclusion>
-                <groupId>hsqldb</groupId>
-                <artifactId>hsqldb</artifactId>
-              </exclusion>
-              <exclusion>
-                <artifactId>core</artifactId>
-                <groupId>org.eclipse.jdt</groupId>
-              </exclusion>
-            </exclusions>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-hdfs</artifactId>
-            <scope>provided</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
-            <scope>provided</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-test</artifactId>
-            <scope>provided</scope>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-minicluster</artifactId>
-            <scope>provided</scope>
-          </dependency>
-        </dependencies>
-      </profile>
-    </profiles>
-
-    <dependencies>
+  <profiles>
+    <!-- added for cdh4 update -->
+    <profile>
+      <id>hadoop-1.0</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>1</value>
+        </property>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
         <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>2.4.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.2.2</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-servlet</artifactId>
-            <version>${gwtVersion}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>${gwtVersion}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-        	<groupId>com.inmobi.conduit</groupId>
-        	<artifactId>conduit-audit</artifactId>
-        	<version>${project.version}</version>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+          <scope>provided</scope>
           <exclusions>
             <exclusion>
               <groupId>org.hsqldb</groupId>
               <artifactId>hsqldb</artifactId>
             </exclusion>
+            <exclusion>
+              <groupId>hsqldb</groupId>
+              <artifactId>hsqldb</artifactId>
+            </exclusion>
+            <exclusion>
+              <artifactId>core</artifactId>
+              <groupId>org.eclipse.jdt</groupId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <profile>
+      <id>hadoop-2.0</id>
+      <activation>
+        <property>
+          <name>hadoop.profile</name>
+          <value>2</value>
+        </property>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+          <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.hsqldb</groupId>
+              <artifactId>hsqldb</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>hsqldb</groupId>
+              <artifactId>hsqldb</artifactId>
+            </exclusion>
+            <exclusion>
+              <artifactId>core</artifactId>
+              <groupId>org.eclipse.jdt</groupId>
+            </exclusion>
           </exclusions>
         </dependency>
         <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>9.1-901.jdbc4</version>
-            <scope>runtime</scope>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+          <scope>provided</scope>
         </dependency>
         <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-test</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-minicluster</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>2.4.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.2.2</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-servlet</artifactId>
+      <version>${gwtVersion}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-user</artifactId>
+      <version>${gwtVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.inmobi.conduit</groupId>
+      <artifactId>conduit-audit</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
           <groupId>org.hsqldb</groupId>
           <artifactId>hsqldb</artifactId>
-          <version>2.2.9</version>
-          <scope>test</scope>
-        </dependency>
-        <dependency>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-          <version>4.10</version>
-        </dependency>
-    </dependencies>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>9.1-901.jdbc4</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hsqldb</groupId>
+      <artifactId>hsqldb</artifactId>
+      <version>2.2.9</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+    </dependency>
+  </dependencies>
 
-    <build>
-        <!-- Generate compiled stuff in the folder used for developing mode -->
-        <outputDirectory>${webappDirectory}/WEB-INF/classes</outputDirectory>
+  <build>
+    <!-- Generate compiled stuff in the folder used for developing mode -->
+    <outputDirectory>${webappDirectory}/WEB-INF/classes</outputDirectory>
 
-        <plugins>
+    <plugins>
 
-            <!-- GWT Maven Plugin -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>gwt-maven-plugin</artifactId>
-                <version>2.5.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <runTarget>Visualization.html</runTarget>
-                    <hostedWebapp>${webappDirectory}</hostedWebapp>
-                </configuration>
-            </plugin>
+      <!-- GWT Maven Plugin -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>gwt-maven-plugin</artifactId>
+        <version>2.5.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <runTarget>Visualization.html</runTarget>
+          <hostedWebapp>${webappDirectory}</hostedWebapp>
+        </configuration>
+      </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>2.4</version>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>exploded</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <webappDirectory>${webappDirectory}</webappDirectory>
-                    <warName>conduit-visualization</warName>
-                </configuration>
-            </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>exploded</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <webappDirectory>${webappDirectory}</webappDirectory>
+          <warName>conduit-visualization</warName>
+        </configuration>
+      </plugin>
 
 
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generate-sources</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <tasks>
-                              <!-- Modifying the task to skip protocol recompilation-->
-                              <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="maven.plugin.classpath" />
-                              <if>
-                                <equals arg1="${skipProtoc}" arg2="true" />
-                                <then>
-                                  <echo message="skipping protocol generation" />
-                                </then>
-                                <else>
-                                <exec executable="protoc">
-                                    <arg value="--gwt_out=src/main/java" />
-                                    <arg value="src/main/resources/requestResponse.proto" />
-                                </exec>
-                                </else>
-                              </if>
-                            </tasks>
-                            <sourceRoot>${artifactId}/src/main/java
-                            </sourceRoot>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-              <dependencies>
-                <dependency>
-                  <groupId>ant-contrib</groupId>
-                  <artifactId>ant-contrib</artifactId>
-                  <version>20020829</version>
-                </dependency>
-              </dependencies>
-            </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <tasks>
+                <!-- Modifying the task to skip protocol recompilation-->
+                <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="maven.plugin.classpath" />
+                <if>
+                  <equals arg1="${skipProtoc}" arg2="true" />
+                  <then>
+                    <echo message="skipping protocol generation" />
+                  </then>
+                  <else>
+                    <exec executable="protoc">
+                      <arg value="--gwt_out=src/main/java" />
+                      <arg value="src/main/resources/requestResponse.proto" />
+                    </exec>
+                  </else>
+                </if>
+              </tasks>
+              <sourceRoot>${artifactId}/src/main/java
+              </sourceRoot>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>ant-contrib</groupId>
+            <artifactId>ant-contrib</artifactId>
+            <version>20020829</version>
+          </dependency>
+        </dependencies>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
@@ -265,6 +256,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
         <configuration>
           <ignoreDirFormatExtensions>true</ignoreDirFormatExtensions>
           <descriptors>
@@ -288,7 +280,7 @@
         <groupId>org.vafer</groupId>
         <version>0.9</version>
         <executions>
-           <execution>
+          <execution>
             <id>visualization</id>
             <phase>package</phase>
             <goals>
@@ -313,6 +305,6 @@
       </plugin>
 
     </plugins>
-  
-    </build>
+
+  </build>
 </project>

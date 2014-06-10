@@ -27,6 +27,20 @@ public class TestDataServiceManager {
   }
 
   @Test
+  public void testPercentileProperty() {
+    Exception exception = null;
+    try {
+    serviceManager = DataServiceManagerTest.get("" +
+        "./src/test/resources/xmlfolder1",
+        "./src/test/resources/visualization-percentile-wrong.properties",
+        "./src/test/resources/audit-feeder.properties");
+    } catch (Exception e) {
+      exception = e;
+    }
+    Assert.assertTrue(exception instanceof RuntimeException);
+  }
+
+  @Test
   public void testMultipleXmls() {
     serviceManager = DataServiceManagerTest.get("" +
         "./src/test/resources/xmlfolder1",
@@ -317,13 +331,13 @@ public class TestDataServiceManager {
       String cluster = "All";
       String filterValues = TestUtil.getFilterStringFromParameters(startDate,
           endDate, stream, cluster);
-      String response = serviceManager.getData(filterValues);
+      String response = serviceManager.getTopologyData(filterValues);
       List<Node> nodeList = TestUtil.getNodeListFromResponse(response);
       Assert.assertEquals(6, nodeList.size());
       stream = "testTopic2";
       filterValues = TestUtil.getFilterStringFromParameters(startDate,
           endDate, stream, cluster);
-      response = serviceManager.getData(filterValues);
+      response = serviceManager.getTopologyData(filterValues);
       nodeList = TestUtil.getNodeListFromResponse(response);
       Assert.assertEquals(5, nodeList.size());
     } catch (Exception e) {
@@ -351,7 +365,7 @@ public class TestDataServiceManager {
       String cluster = "All";
       String filterValues = TestUtil.getFilterStringFromParameters(startDate,
           endDate, stream, cluster);
-      String response = serviceManager.getData(filterValues);
+      String response = serviceManager.getTopologyData(filterValues);
       List<Node> nodeList = TestUtil.getNodeListFromResponse(response);
       Assert.assertEquals(8, nodeList.size());
     } catch (Exception e) {

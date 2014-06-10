@@ -12,13 +12,19 @@ message GraphDataRequest {
 }
 
 message Response {
-	optional GraphDataResponse graphDataResponse = 1;
+	optional TopologyDataResponse topologyDataResponse = 1;
 	optional LoadMainPanelResponse loadMainPanelResponse = 2;
+	optional TimeLineGraphResponse timeLineGraphResponse = 3;
+	optional TierLatencyResponse tierLatencyResponse = 4;
 }
 
-message GraphDataResponse {
+message TimeLineGraphResponse {
 	optional string jsonString = 1;
-	optional TierLatencyResponse tierLatencyResponse = 2;
+	optional int32 timebucket = 2;
+}
+
+message TopologyDataResponse {
+	optional string jsonString = 1;
 }
 
 message TierLatencyResponse {
@@ -52,4 +58,5 @@ message ClientConfiguration {
 	optional string mergeSla = 13;
 	optional string mirrorSla = 14;
 	optional string rolleduptilldays = 15;
+	optional string timeTickInterval = 16;
 }

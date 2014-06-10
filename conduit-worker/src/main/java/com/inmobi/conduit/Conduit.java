@@ -443,6 +443,12 @@ public class Conduit implements Service, ConduitConstants {
         System.setProperty(NUM_RETRIES, numRetries);
       }
 
+      String timeoutToProcessLastCollectorFile = prop.getProperty(
+          TIMEOUT_TO_PROCESS_LAST_COLLECTOR_FILE);
+      if (timeoutToProcessLastCollectorFile != null) {
+        System.setProperty(TIMEOUT_TO_PROCESS_LAST_COLLECTOR_FILE,
+            timeoutToProcessLastCollectorFile);
+      }
       //Init Conduit metrics
       try {
         ConduitMetrics.init(prop);

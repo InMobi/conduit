@@ -546,13 +546,13 @@ public final class RequestResponse {
       return defaultInstance;
     }
     
-    // optional .GraphDataResponse graphDataResponse = 1;
-    public static final int GRAPHDATARESPONSE_FIELD_NUMBER = 1;
-    private boolean hasGraphDataResponse;
+    // optional .TopologyDataResponse topologyDataResponse = 1;
+    public static final int TOPOLOGYDATARESPONSE_FIELD_NUMBER = 1;
+    private boolean hasTopologyDataResponse;
     @com.google.protobuf.gwt.shared.FieldNumber(1)
-    private com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse graphDataResponse_;
-    public boolean hasGraphDataResponse() { return hasGraphDataResponse; }
-    public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse getGraphDataResponse() { return graphDataResponse_; }
+    private com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse topologyDataResponse_;
+    public boolean hasTopologyDataResponse() { return hasTopologyDataResponse; }
+    public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse getTopologyDataResponse() { return topologyDataResponse_; }
     
     // optional .LoadMainPanelResponse loadMainPanelResponse = 2;
     public static final int LOADMAINPANELRESPONSE_FIELD_NUMBER = 2;
@@ -562,9 +562,27 @@ public final class RequestResponse {
     public boolean hasLoadMainPanelResponse() { return hasLoadMainPanelResponse; }
     public com.inmobi.conduit.visualization.shared.RequestResponse.LoadMainPanelResponse getLoadMainPanelResponse() { return loadMainPanelResponse_; }
     
+    // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+    public static final int TIMELINEGRAPHRESPONSE_FIELD_NUMBER = 3;
+    private boolean hasTimeLineGraphResponse;
+    @com.google.protobuf.gwt.shared.FieldNumber(3)
+    private com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse timeLineGraphResponse_;
+    public boolean hasTimeLineGraphResponse() { return hasTimeLineGraphResponse; }
+    public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() { return timeLineGraphResponse_; }
+    
+    // optional .TierLatencyResponse tierLatencyResponse = 4;
+    public static final int TIERLATENCYRESPONSE_FIELD_NUMBER = 4;
+    private boolean hasTierLatencyResponse;
+    @com.google.protobuf.gwt.shared.FieldNumber(4)
+    private com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse tierLatencyResponse_;
+    public boolean hasTierLatencyResponse() { return hasTierLatencyResponse; }
+    public com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() { return tierLatencyResponse_; }
+    
     private void initFields() {
-      graphDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
+      topologyDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance();
       loadMainPanelResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.LoadMainPanelResponse.getDefaultInstance();
+      timeLineGraphResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+      tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
     }
     
     public final boolean isInitialized() {
@@ -574,12 +592,20 @@ public final class RequestResponse {
     public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
       throws java.io.IOException {
       
-      if (hasGraphDataResponse()) {
-        output.writeMessage(1, "graphDataResponse", getGraphDataResponse());
+      if (hasTopologyDataResponse()) {
+        output.writeMessage(1, "topologyDataResponse", getTopologyDataResponse());
       }
       
       if (hasLoadMainPanelResponse()) {
         output.writeMessage(2, "loadMainPanelResponse", getLoadMainPanelResponse());
+      }
+      
+      if (hasTimeLineGraphResponse()) {
+        output.writeMessage(3, "timeLineGraphResponse", getTimeLineGraphResponse());
+      }
+      
+      if (hasTierLatencyResponse()) {
+        output.writeMessage(4, "tierLatencyResponse", getTierLatencyResponse());
       }
     }
     
@@ -666,12 +692,20 @@ public final class RequestResponse {
       public Builder mergeFrom(com.inmobi.conduit.visualization.shared.RequestResponse.Response other) {
         if (other == com.inmobi.conduit.visualization.shared.RequestResponse.Response.getDefaultInstance()) return this;
         
-        if (other.hasGraphDataResponse()) {
-          mergeGraphDataResponse(other.getGraphDataResponse());
+        if (other.hasTopologyDataResponse()) {
+          mergeTopologyDataResponse(other.getTopologyDataResponse());
         }
         
         if (other.hasLoadMainPanelResponse()) {
           mergeLoadMainPanelResponse(other.getLoadMainPanelResponse());
+        }
+        
+        if (other.hasTimeLineGraphResponse()) {
+          mergeTimeLineGraphResponse(other.getTimeLineGraphResponse());
+        }
+        
+        if (other.hasTierLatencyResponse()) {
+          mergeTierLatencyResponse(other.getTierLatencyResponse());
         }
       
         return this;
@@ -680,14 +714,14 @@ public final class RequestResponse {
       public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
         throws java.io.IOException {
         
-        com.google.protobuf.gwt.shared.JsonStream graphDataResponseJson = input.readStream(1);
-        if (graphDataResponseJson != null) {
-          com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.Builder graphDataResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.newBuilder();
-          if (hasGraphDataResponse()) {
-            graphDataResponseBuilder.mergeFrom(getGraphDataResponse());
+        com.google.protobuf.gwt.shared.JsonStream topologyDataResponseJson = input.readStream(1);
+        if (topologyDataResponseJson != null) {
+          com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.Builder topologyDataResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.newBuilder();
+          if (hasTopologyDataResponse()) {
+            topologyDataResponseBuilder.mergeFrom(getTopologyDataResponse());
           }
-          graphDataResponseBuilder.readFrom(graphDataResponseJson);
-          setGraphDataResponse(graphDataResponseBuilder.buildParsed());
+          topologyDataResponseBuilder.readFrom(topologyDataResponseJson);
+          setTopologyDataResponse(topologyDataResponseBuilder.buildParsed());
         }
         
         com.google.protobuf.gwt.shared.JsonStream loadMainPanelResponseJson = input.readStream(2);
@@ -700,43 +734,63 @@ public final class RequestResponse {
           setLoadMainPanelResponse(loadMainPanelResponseBuilder.buildParsed());
         }
         
+        com.google.protobuf.gwt.shared.JsonStream timeLineGraphResponseJson = input.readStream(3);
+        if (timeLineGraphResponseJson != null) {
+          com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder timeLineGraphResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder();
+          if (hasTimeLineGraphResponse()) {
+            timeLineGraphResponseBuilder.mergeFrom(getTimeLineGraphResponse());
+          }
+          timeLineGraphResponseBuilder.readFrom(timeLineGraphResponseJson);
+          setTimeLineGraphResponse(timeLineGraphResponseBuilder.buildParsed());
+        }
+        
+        com.google.protobuf.gwt.shared.JsonStream tierLatencyResponseJson = input.readStream(4);
+        if (tierLatencyResponseJson != null) {
+          com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.Builder tierLatencyResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder();
+          if (hasTierLatencyResponse()) {
+            tierLatencyResponseBuilder.mergeFrom(getTierLatencyResponse());
+          }
+          tierLatencyResponseBuilder.readFrom(tierLatencyResponseJson);
+          setTierLatencyResponse(tierLatencyResponseBuilder.buildParsed());
+        }
+        
         return this;
       }
       
-      // optional .GraphDataResponse graphDataResponse = 1;
-      public boolean hasGraphDataResponse() {
-        return result.hasGraphDataResponse();
+      // optional .TopologyDataResponse topologyDataResponse = 1;
+      public boolean hasTopologyDataResponse() {
+        return result.hasTopologyDataResponse();
       }
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse getGraphDataResponse() {
-        return result.getGraphDataResponse();
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse getTopologyDataResponse() {
+        return result.getTopologyDataResponse();
       }
-      public Builder setGraphDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse value) {
+      public Builder setTopologyDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse value) {
         if (value == null) {
           throw new java.lang.NullPointerException();
         }
-        result.hasGraphDataResponse = true;
-        result.graphDataResponse_ = value;
+        result.hasTopologyDataResponse = true;
+        result.topologyDataResponse_ = value;
         return this;
       }
-      public Builder setGraphDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.Builder builderForValue) {
-        result.hasGraphDataResponse = true;
-        result.graphDataResponse_ = builderForValue.build();
+      public Builder setTopologyDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.Builder builderForValue) {
+        result.hasTopologyDataResponse = true;
+        result.topologyDataResponse_ = builderForValue.build();
         return this;
       }
-      public Builder mergeGraphDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse value) {
-        if (result.hasGraphDataResponse() &&
-            result.graphDataResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance()) {
-          result.graphDataResponse_ =
-            com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.newBuilder(result.graphDataResponse_).mergeFrom(value).buildPartial();
+      public Builder mergeTopologyDataResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse value) {
+        if (result.hasTopologyDataResponse() &&
+            result.topologyDataResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance()) {
+          result.topologyDataResponse_ =
+            com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.newBuilder(result.topologyDataResponse_).mergeFrom(value).buildPartial();
         } else {
-          result.graphDataResponse_ = value;
+          result.topologyDataResponse_ = value;
         }
-        result.hasGraphDataResponse = true;
+        result.hasTopologyDataResponse = true;
         return this;
       }
-      public Builder clearGraphDataResponse() {
-        result.hasGraphDataResponse = false;
-        result.graphDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
+      public Builder clearTopologyDataResponse() {
+        result.hasTopologyDataResponse = false;
+        result.topologyDataResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance();
         return this;
       }
       
@@ -777,215 +831,44 @@ public final class RequestResponse {
         return this;
       }
       
-      // @@protoc_insertion_point(builder_scope:Response)
-    }
-    
-    static {
-      defaultInstance = new Response(true);
-      com.inmobi.conduit.visualization.shared.RequestResponse.internalForceInit();
-      defaultInstance.initFields();
-    }
-    
-    // @@protoc_insertion_point(class_scope:Response)
-  }
-  
-  public static final class GraphDataResponse extends
-      com.google.protobuf.gwt.shared.GeneratedMessage {
-    // Use GraphDataResponse.newBuilder() to construct.
-    private GraphDataResponse() {
-      initFields();
-    }
-    
-    private GraphDataResponse(boolean noInit) {}
-    
-    private static final GraphDataResponse defaultInstance;
-    public static GraphDataResponse getDefaultInstance() {
-      return defaultInstance;
-    }
-    
-    public GraphDataResponse getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-    
-    // optional string jsonString = 1;
-    public static final int JSONSTRING_FIELD_NUMBER = 1;
-    private boolean hasJsonString;
-    @com.google.protobuf.gwt.shared.FieldNumber(1)
-    private java.lang.String jsonString_ = "";
-    public boolean hasJsonString() { return hasJsonString; }
-    public java.lang.String getJsonString() { return jsonString_; }
-    
-    // optional .TierLatencyResponse tierLatencyResponse = 2;
-    public static final int TIERLATENCYRESPONSE_FIELD_NUMBER = 2;
-    private boolean hasTierLatencyResponse;
-    @com.google.protobuf.gwt.shared.FieldNumber(2)
-    private com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse tierLatencyResponse_;
-    public boolean hasTierLatencyResponse() { return hasTierLatencyResponse; }
-    public com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse getTierLatencyResponse() { return tierLatencyResponse_; }
-    
-    private void initFields() {
-      tierLatencyResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.getDefaultInstance();
-    }
-    
-    public final boolean isInitialized() {
-      return true;
-    }
-    
-    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
-      throws java.io.IOException {
-      
-      if (hasJsonString()) {
-        output.writeString(1, "jsonString", getJsonString());
+      // optional .TimeLineGraphResponse timeLineGraphResponse = 3;
+      public boolean hasTimeLineGraphResponse() {
+        return result.hasTimeLineGraphResponse();
       }
-      
-      if (hasTierLatencyResponse()) {
-        output.writeMessage(2, "tierLatencyResponse", getTierLatencyResponse());
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse getTimeLineGraphResponse() {
+        return result.getTimeLineGraphResponse();
       }
-    }
-    
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-    
-    public static final class Builder extends
-        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
-          com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse, Builder> {
-      
-      private com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse result;
-      
-      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.newBuilder()
-      private Builder() {}
-      
-      private static Builder create() {
-        Builder builder = new Builder();
-        builder.result = new com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse();
-        return builder;
-      }
-      
-      protected com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse internalGetResult() {
-        return result;
-      }
-      
-      public Builder clear() {
-        if (result == null) {
-          throw new java.lang.IllegalStateException(
-            "Cannot call clear() after build().");
-        }
-        result = new com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse();
-        return this;
-      }
-      
-      public Builder clone() {
-        return create().mergeFrom(result);
-      }
-      
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse getDefaultInstanceForType() {
-        return com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance();
-      }
-      
-      public boolean isInitialized() {
-        return result.isInitialized();
-      }
-      
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse build() {
-        if (result != null && !isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return buildPartial();
-      }
-      
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse buildParsed()
-          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
-        if (!isInitialized()) {
-          throw newUninitializedMessageException(
-            result).asInvalidProtocolBufferException();
-        }
-        return buildPartial();
-      }
-      
-      public com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse buildPartial() {
-        if (result == null) {
-          throw new java.lang.IllegalStateException(
-            "build() has already been called on this Builder.");
-        }
-        com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse returnMe = result;
-        result = null;
-        return returnMe;
-      }
-      
-      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
-        if (other instanceof com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse) {
-          return mergeFrom((com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse)other);
-        }
-        return this;
-      }
-      
-      public Builder mergeFrom(com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse other) {
-        if (other == com.inmobi.conduit.visualization.shared.RequestResponse.GraphDataResponse.getDefaultInstance()) return this;
-        
-        if (other.hasJsonString()) {
-          setJsonString(other.getJsonString());
-        }
-        
-        if (other.hasTierLatencyResponse()) {
-          mergeTierLatencyResponse(other.getTierLatencyResponse());
-        }
-      
-        return this;
-      }
-      
-      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
-        throws java.io.IOException {
-        
-        java.lang.String jsonString = input.readString(1);
-        if (jsonString != null) {
-          setJsonString(jsonString);
-        }
-        
-        com.google.protobuf.gwt.shared.JsonStream tierLatencyResponseJson = input.readStream(2);
-        if (tierLatencyResponseJson != null) {
-          com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.Builder tierLatencyResponseBuilder = com.inmobi.conduit.visualization.shared.RequestResponse.TierLatencyResponse.newBuilder();
-          if (hasTierLatencyResponse()) {
-            tierLatencyResponseBuilder.mergeFrom(getTierLatencyResponse());
-          }
-          tierLatencyResponseBuilder.readFrom(tierLatencyResponseJson);
-          setTierLatencyResponse(tierLatencyResponseBuilder.buildParsed());
-        }
-        
-        return this;
-      }
-      
-      // optional string jsonString = 1;
-      public boolean hasJsonString() {
-        return result.hasJsonString();
-      }
-      public java.lang.String getJsonString() {
-        return result.getJsonString();
-      }
-      public Builder setJsonStringIgnoreIfNull(java.lang.String value) {
-        if (value != null) {
-          setJsonString(value);
-        }
-        return this;
-      }
-      public Builder setJsonString(java.lang.String value) {
+      public Builder setTimeLineGraphResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
         if (value == null) {
-    throw new java.lang.NullPointerException();
-  }
-  result.hasJsonString = true;
-        result.jsonString_ = value;
+          throw new java.lang.NullPointerException();
+        }
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = value;
         return this;
       }
-      public Builder clearJsonString() {
-        result.hasJsonString = false;
-        result.jsonString_ = getDefaultInstance().getJsonString();
+      public Builder setTimeLineGraphResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.Builder builderForValue) {
+        result.hasTimeLineGraphResponse = true;
+        result.timeLineGraphResponse_ = builderForValue.build();
+        return this;
+      }
+      public Builder mergeTimeLineGraphResponse(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse value) {
+        if (result.hasTimeLineGraphResponse() &&
+            result.timeLineGraphResponse_ != com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance()) {
+          result.timeLineGraphResponse_ =
+            com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder(result.timeLineGraphResponse_).mergeFrom(value).buildPartial();
+        } else {
+          result.timeLineGraphResponse_ = value;
+        }
+        result.hasTimeLineGraphResponse = true;
+        return this;
+      }
+      public Builder clearTimeLineGraphResponse() {
+        result.hasTimeLineGraphResponse = false;
+        result.timeLineGraphResponse_ = com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
         return this;
       }
       
-      // optional .TierLatencyResponse tierLatencyResponse = 2;
+      // optional .TierLatencyResponse tierLatencyResponse = 4;
       public boolean hasTierLatencyResponse() {
         return result.hasTierLatencyResponse();
       }
@@ -1022,16 +905,423 @@ public final class RequestResponse {
         return this;
       }
       
-      // @@protoc_insertion_point(builder_scope:GraphDataResponse)
+      // @@protoc_insertion_point(builder_scope:Response)
     }
     
     static {
-      defaultInstance = new GraphDataResponse(true);
+      defaultInstance = new Response(true);
       com.inmobi.conduit.visualization.shared.RequestResponse.internalForceInit();
       defaultInstance.initFields();
     }
     
-    // @@protoc_insertion_point(class_scope:GraphDataResponse)
+    // @@protoc_insertion_point(class_scope:Response)
+  }
+  
+  public static final class TimeLineGraphResponse extends
+      com.google.protobuf.gwt.shared.GeneratedMessage {
+    // Use TimeLineGraphResponse.newBuilder() to construct.
+    private TimeLineGraphResponse() {
+      initFields();
+    }
+    
+    private TimeLineGraphResponse(boolean noInit) {}
+    
+    private static final TimeLineGraphResponse defaultInstance;
+    public static TimeLineGraphResponse getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public TimeLineGraphResponse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    // optional string jsonString = 1;
+    public static final int JSONSTRING_FIELD_NUMBER = 1;
+    private boolean hasJsonString;
+    @com.google.protobuf.gwt.shared.FieldNumber(1)
+    private java.lang.String jsonString_ = "";
+    public boolean hasJsonString() { return hasJsonString; }
+    public java.lang.String getJsonString() { return jsonString_; }
+    
+    // optional int32 timebucket = 2;
+    public static final int TIMEBUCKET_FIELD_NUMBER = 2;
+    private boolean hasTimebucket;
+    @com.google.protobuf.gwt.shared.FieldNumber(2)
+    private int timebucket_ = 0;
+    public boolean hasTimebucket() { return hasTimebucket; }
+    public int getTimebucket() { return timebucket_; }
+    
+    private void initFields() {
+    }
+    
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
+      throws java.io.IOException {
+      
+      if (hasJsonString()) {
+        output.writeString(1, "jsonString", getJsonString());
+      }
+      
+      if (hasTimebucket()) {
+        output.writeInteger(2, "timebucket", getTimebucket());
+      }
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
+          com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse, Builder> {
+      
+      private com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse result;
+      
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse();
+        return builder;
+      }
+      
+      protected com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse getDefaultInstanceForType() {
+        return com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse buildParsed()
+          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse buildPartial() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
+        if (other instanceof com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse) {
+          return mergeFrom((com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse)other);
+        }
+        return this;
+      }
+      
+      public Builder mergeFrom(com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse other) {
+        if (other == com.inmobi.conduit.visualization.shared.RequestResponse.TimeLineGraphResponse.getDefaultInstance()) return this;
+        
+        if (other.hasJsonString()) {
+          setJsonString(other.getJsonString());
+        }
+        
+        if (other.hasTimebucket()) {
+          setTimebucket(other.getTimebucket());
+        }
+      
+        return this;
+      }
+      
+      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
+        throws java.io.IOException {
+        
+        java.lang.String jsonString = input.readString(1);
+        if (jsonString != null) {
+          setJsonString(jsonString);
+        }
+        
+        java.lang.Integer timebucket = input.readInteger(2);
+        if (timebucket != null) {
+          setTimebucket(timebucket);
+        }
+        
+        return this;
+      }
+      
+      // optional string jsonString = 1;
+      public boolean hasJsonString() {
+        return result.hasJsonString();
+      }
+      public java.lang.String getJsonString() {
+        return result.getJsonString();
+      }
+      public Builder setJsonStringIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setJsonString(value);
+        }
+        return this;
+      }
+      public Builder setJsonString(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasJsonString = true;
+        result.jsonString_ = value;
+        return this;
+      }
+      public Builder clearJsonString() {
+        result.hasJsonString = false;
+        result.jsonString_ = getDefaultInstance().getJsonString();
+        return this;
+      }
+      
+      // optional int32 timebucket = 2;
+      public boolean hasTimebucket() {
+        return result.hasTimebucket();
+      }
+      public int getTimebucket() {
+        return result.getTimebucket();
+      }
+      public Builder setTimebucketIgnoreIfNull(java.lang.Integer value) {
+        if (value != null) {
+          setTimebucket(value);
+        }
+        return this;
+      }
+      public Builder setTimebucket(int value) {
+        result.hasTimebucket = true;
+        result.timebucket_ = value;
+        return this;
+      }
+      public Builder clearTimebucket() {
+        result.hasTimebucket = false;
+        result.timebucket_ = 0;
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:TimeLineGraphResponse)
+    }
+    
+    static {
+      defaultInstance = new TimeLineGraphResponse(true);
+      com.inmobi.conduit.visualization.shared.RequestResponse.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:TimeLineGraphResponse)
+  }
+  
+  public static final class TopologyDataResponse extends
+      com.google.protobuf.gwt.shared.GeneratedMessage {
+    // Use TopologyDataResponse.newBuilder() to construct.
+    private TopologyDataResponse() {
+      initFields();
+    }
+    
+    private TopologyDataResponse(boolean noInit) {}
+    
+    private static final TopologyDataResponse defaultInstance;
+    public static TopologyDataResponse getDefaultInstance() {
+      return defaultInstance;
+    }
+    
+    public TopologyDataResponse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+    
+    // optional string jsonString = 1;
+    public static final int JSONSTRING_FIELD_NUMBER = 1;
+    private boolean hasJsonString;
+    @com.google.protobuf.gwt.shared.FieldNumber(1)
+    private java.lang.String jsonString_ = "";
+    public boolean hasJsonString() { return hasJsonString; }
+    public java.lang.String getJsonString() { return jsonString_; }
+    
+    private void initFields() {
+    }
+    
+    public final boolean isInitialized() {
+      return true;
+    }
+    
+    public void writeTo(com.google.protobuf.gwt.shared.JsonStream output)
+      throws java.io.IOException {
+      
+      if (hasJsonString()) {
+        output.writeString(1, "jsonString", getJsonString());
+      }
+    }
+    
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+    
+    public static final class Builder extends
+        com.google.protobuf.gwt.shared.GeneratedMessage.Builder<
+          com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse, Builder> {
+      
+      private com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse result;
+      
+      // Construct using com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.newBuilder()
+      private Builder() {}
+      
+      private static Builder create() {
+        Builder builder = new Builder();
+        builder.result = new com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse();
+        return builder;
+      }
+      
+      protected com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse internalGetResult() {
+        return result;
+      }
+      
+      public Builder clear() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "Cannot call clear() after build().");
+        }
+        result = new com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse();
+        return this;
+      }
+      
+      public Builder clone() {
+        return create().mergeFrom(result);
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse getDefaultInstanceForType() {
+        return com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance();
+      }
+      
+      public boolean isInitialized() {
+        return result.isInitialized();
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse build() {
+        if (result != null && !isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse buildParsed()
+          throws com.google.protobuf.gwt.shared.InvalidProtocolBufferException {
+        if (!isInitialized()) {
+          throw newUninitializedMessageException(
+            result).asInvalidProtocolBufferException();
+        }
+        return buildPartial();
+      }
+      
+      public com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse buildPartial() {
+        if (result == null) {
+          throw new java.lang.IllegalStateException(
+            "build() has already been called on this Builder.");
+        }
+        com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse returnMe = result;
+        result = null;
+        return returnMe;
+      }
+      
+      public Builder mergeFrom(com.google.protobuf.gwt.shared.Message other) {
+        if (other instanceof com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse) {
+          return mergeFrom((com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse)other);
+        }
+        return this;
+      }
+      
+      public Builder mergeFrom(com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse other) {
+        if (other == com.inmobi.conduit.visualization.shared.RequestResponse.TopologyDataResponse.getDefaultInstance()) return this;
+        
+        if (other.hasJsonString()) {
+          setJsonString(other.getJsonString());
+        }
+      
+        return this;
+      }
+      
+      public Builder readFrom(com.google.protobuf.gwt.shared.JsonStream input)
+        throws java.io.IOException {
+        
+        java.lang.String jsonString = input.readString(1);
+        if (jsonString != null) {
+          setJsonString(jsonString);
+        }
+        
+        return this;
+      }
+      
+      // optional string jsonString = 1;
+      public boolean hasJsonString() {
+        return result.hasJsonString();
+      }
+      public java.lang.String getJsonString() {
+        return result.getJsonString();
+      }
+      public Builder setJsonStringIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setJsonString(value);
+        }
+        return this;
+      }
+      public Builder setJsonString(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasJsonString = true;
+        result.jsonString_ = value;
+        return this;
+      }
+      public Builder clearJsonString() {
+        result.hasJsonString = false;
+        result.jsonString_ = getDefaultInstance().getJsonString();
+        return this;
+      }
+      
+      // @@protoc_insertion_point(builder_scope:TopologyDataResponse)
+    }
+    
+    static {
+      defaultInstance = new TopologyDataResponse(true);
+      com.inmobi.conduit.visualization.shared.RequestResponse.internalForceInit();
+      defaultInstance.initFields();
+    }
+    
+    // @@protoc_insertion_point(class_scope:TopologyDataResponse)
   }
   
   public static final class TierLatencyResponse extends
@@ -1997,6 +2287,14 @@ public final class RequestResponse {
     public boolean hasRolleduptilldays() { return hasRolleduptilldays; }
     public java.lang.String getRolleduptilldays() { return rolleduptilldays_; }
     
+    // optional string timeTickInterval = 16;
+    public static final int TIMETICKINTERVAL_FIELD_NUMBER = 16;
+    private boolean hasTimeTickInterval;
+    @com.google.protobuf.gwt.shared.FieldNumber(16)
+    private java.lang.String timeTickInterval_ = "";
+    public boolean hasTimeTickInterval() { return hasTimeTickInterval; }
+    public java.lang.String getTimeTickInterval() { return timeTickInterval_; }
+    
     private void initFields() {
     }
     
@@ -2065,6 +2363,10 @@ public final class RequestResponse {
       
       if (hasRolleduptilldays()) {
         output.writeString(15, "rolleduptilldays", getRolleduptilldays());
+      }
+      
+      if (hasTimeTickInterval()) {
+        output.writeString(16, "timeTickInterval", getTimeTickInterval());
       }
     }
     
@@ -2210,6 +2512,10 @@ public final class RequestResponse {
         if (other.hasRolleduptilldays()) {
           setRolleduptilldays(other.getRolleduptilldays());
         }
+        
+        if (other.hasTimeTickInterval()) {
+          setTimeTickInterval(other.getTimeTickInterval());
+        }
       
         return this;
       }
@@ -2290,6 +2596,11 @@ public final class RequestResponse {
         java.lang.String rolleduptilldays = input.readString(15);
         if (rolleduptilldays != null) {
           setRolleduptilldays(rolleduptilldays);
+        }
+        
+        java.lang.String timeTickInterval = input.readString(16);
+        if (timeTickInterval != null) {
+          setTimeTickInterval(timeTickInterval);
         }
         
         return this;
@@ -2697,6 +3008,33 @@ public final class RequestResponse {
       public Builder clearRolleduptilldays() {
         result.hasRolleduptilldays = false;
         result.rolleduptilldays_ = getDefaultInstance().getRolleduptilldays();
+        return this;
+      }
+      
+      // optional string timeTickInterval = 16;
+      public boolean hasTimeTickInterval() {
+        return result.hasTimeTickInterval();
+      }
+      public java.lang.String getTimeTickInterval() {
+        return result.getTimeTickInterval();
+      }
+      public Builder setTimeTickIntervalIgnoreIfNull(java.lang.String value) {
+        if (value != null) {
+          setTimeTickInterval(value);
+        }
+        return this;
+      }
+      public Builder setTimeTickInterval(java.lang.String value) {
+        if (value == null) {
+    throw new java.lang.NullPointerException();
+  }
+  result.hasTimeTickInterval = true;
+        result.timeTickInterval_ = value;
+        return this;
+      }
+      public Builder clearTimeTickInterval() {
+        result.hasTimeTickInterval = false;
+        result.timeTickInterval_ = getDefaultInstance().getTimeTickInterval();
         return this;
       }
       

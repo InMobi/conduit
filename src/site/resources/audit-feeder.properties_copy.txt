@@ -1,0 +1,5 @@
+jdbc.driver.class.name=org.postgresql.Driver
+db.url=jdbc:postgresql://xx.yy.zz.aa:9000/auditTest
+db.username=abc
+db.password=abc
+audit.table.master=audit

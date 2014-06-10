@@ -1,35 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module rename-to='Visualization'>
-    <script src="d3graph.nocache.js"></script>
-    <!-- Inherit the core Web Toolkit stuff.                        -->
-    <inherits name='com.google.gwt.user.User'/>
+  <script src="common.js"></script>
+  <script src="timeline.js"></script>
+  <script src="summary.js"></script>
+  <script src="topology.js"></script>
+  <!-- Inherit the core Web Toolkit stuff.                        -->
+  <inherits name='com.google.gwt.user.User'/>
 
-    <!-- We need the JUnit module in the main module,               -->
-    <!-- otherwise eclipse complains (Google plugin bug?)           -->
-    <inherits name='com.google.gwt.junit.JUnit'/>
-    <inherits name="com.google.gwt.json.JSON"/>
-    <inherits name='com.google.protobuf.gwt.Protobuf'/>
+  <!-- We need the JUnit module in the main module,               -->
+  <!-- otherwise eclipse complains (Google plugin bug?)           -->
+  <inherits name='com.google.gwt.junit.JUnit'/>
+  <inherits name="com.google.gwt.json.JSON"/>
+  <inherits name='com.google.protobuf.gwt.Protobuf'/>
 
 
-    <!-- Inherit the default GWT style sheet.  You can change       -->
-    <!-- the theme of your GWT application by uncommenting          -->
-    <!-- any one of the following lines.                            -->
-    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
-    <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
-    <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
+  <!-- Inherit the default GWT style sheet.  You can change       -->
+  <!-- the theme of your GWT application by uncommenting          -->
+  <!-- any one of the following lines.                            -->
+  <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+  <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
+  <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
 
-    <!-- Other module inherits                                      -->
+  <!-- Other module inherits                                      -->
 
-    <!-- To speed up the compilation, instead of 6 browser combinations to -->
-    <!-- build, build only for the browser you need, for fast developement -->
-    <!-- only build for Chrome -->
-    <!-- <set-property name="user.agent" value="safari" />          -->
+  <!-- To speed up the compilation, instead of 6 browser combinations to -->
+  <!-- build, build only for the browser you need, for fast developement -->
+  <!-- only build for Chrome -->
+  <!-- <set-property name="user.agent" value="safari" />          -->
 
-    <!-- Specify the app entry point class.                         -->
-    <entry-point class='com.inmobi.conduit.visualization.client.Visualization'/>
+  <!-- Specify the app entry point class.                         -->
+  <entry-point class='com.inmobi.conduit.visualization.client.Visualization'/>
 
-    <!-- Specify the paths for translatable code                    -->
-    <source path='client'/>
-    <source path='shared'/>
+  <!-- Specify the paths for translatable code                    -->
+  <source path='client'/>
+  <source path='shared'/>
 
 </module>

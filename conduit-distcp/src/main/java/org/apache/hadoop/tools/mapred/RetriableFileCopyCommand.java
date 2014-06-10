@@ -130,7 +130,7 @@ public class RetriableFileCopyCommand extends RetriableCommand {
             tmpTargetPath, true, BUFFER_SIZE,
             getReplicationFactor(fileAttributes, sourceFileStatus, targetFS),
             getBlockSize(fileAttributes, sourceFileStatus, targetFS), context));
-    return copyBytes(sourceFileStatus, outStream, BUFFER_SIZE, true, context,
+    return copyBytes(sourceFileStatus, outStream, BUFFER_SIZE, context,
         received);
   }
 
@@ -177,15 +177,15 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private long copyBytes(FileStatus sourceFileStatus, OutputStream outStream,
-      int bufferSize, boolean mustCloseStream, Mapper.Context context,
-      Map<Long, Long> received) throws IOException {
+      int bufferSize, Mapper.Context context, Map<Long, Long> received)
+          throws IOException {
     Path source = sourceFileStatus.getPath();
     ThrottledInputStream inStream = null;
-    long totalBytesRead = 0;
     final CompressionCodec codec = compressionCodecs.getCodec(source);
     InputStream compressedIn = null;
     OutputStream commpressedOut = null;
     BufferedReader reader = null;
+    long numberOfLinesRead = 0;
 
     try {
       inStream = getInputStream(source, HadoopCompat.getTaskConfiguration(context));
@@ -196,9 +196,11 @@ public class RetriableFileCopyCommand extends RetriableCommand {
       reader = new BufferedReader(new InputStreamReader(compressedIn));
       byte[] bytesRead = readLine(reader);
       while (bytesRead != null) {
+        numberOfLinesRead++;
         commpressedOut.write(bytesRead);
         commpressedOut.write("\n".getBytes());
-        updateContextStatus(totalBytesRead, context, sourceFileStatus);
+        updateContextStatus(inStream.getTotalBytesRead(), context,
+            sourceFileStatus, numberOfLinesRead);
         if (received != null) {
           byte[] decodedMsg = Base64.decodeBase64(bytesRead);
           incrementReceived(decodedMsg, received);
@@ -209,16 +211,14 @@ public class RetriableFileCopyCommand extends RetriableCommand {
           CopyMapper.Counter.SLEEP_TIME_MS), inStream.getTotalSleepTime()); 
       LOG.info("STATS: " + inStream);
     } finally {
-      if (mustCloseStream) {
-        IOUtils.cleanup(LOG, inStream, reader, compressedIn);
-        try {
-          if (commpressedOut != null)
-            commpressedOut.close();
-          outStream.close();
-        } catch(IOException exception) {
-          LOG.error("Could not close output-stream. ", exception);
-          throw exception;
-        }
+      IOUtils.cleanup(LOG, inStream, reader, compressedIn);
+      try {
+        if (commpressedOut != null)
+          commpressedOut.close();
+        outStream.close();
+      } catch(IOException exception) {
+        LOG.error("Could not close output-stream. ", exception);
+        throw exception;
       }
     }
 
@@ -243,14 +243,15 @@ public class RetriableFileCopyCommand extends RetriableCommand {
   }
 
   private void updateContextStatus(long totalBytesRead, Mapper.Context context,
-      FileStatus sourceFileStatus) {
+      FileStatus sourceFileStatus, long numberOfLinesRead) {
     StringBuilder message = new StringBuilder(DistCpUtils.getFormatter()
         .format(totalBytesRead * 100.0f / sourceFileStatus.getLen()));
     message.append("% ").append(description).append(" [")
         .append(DistCpUtils.getStringDescriptionFor(totalBytesRead))
         .append('/')
         .append(DistCpUtils.getStringDescriptionFor(sourceFileStatus.getLen()))
-        .append(']');
+        .append(']')
+        .append(" number of lines read: ").append(String.valueOf(numberOfLinesRead));
     HadoopCompat.setStatus(context, message.toString());
   }
 

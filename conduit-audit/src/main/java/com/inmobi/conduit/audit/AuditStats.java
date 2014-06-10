@@ -47,7 +47,7 @@ public class AuditStats {
     loadConfigFiles(conduitConfFolder);
     createClusterMap();
     for (Entry<String, Cluster> cluster : clusterMap.entrySet()) {
-      String rootDir = cluster.getValue().getRootDir();
+      String rootDir = cluster.getValue().getReadUrlRootDir();
       AuditDBService feeder = new AuditFeederService(cluster.getKey(), rootDir,
           config);
       dbServices.add(feeder);

@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <artifactId>conduit-worker</artifactId>
+  <name>Conduit Worker</name>
+  <packaging>jar</packaging>
 
   <parent>
     <artifactId>conduit-parent</artifactId>
     <groupId>com.inmobi.conduit</groupId>
-    <version>2.2.8-SNAPSHOT</version>
+    <version>2.3.0</version>
   </parent>
-
-  <artifactId>conduit-worker</artifactId>
-  <name>Conduit Worker</name>
-  <packaging>jar</packaging>
 
   <profiles>
     <!-- added for cdh4 update -->
@@ -149,7 +148,7 @@
       <groupId>net.java.dev.jets3t</groupId>
       <artifactId>jets3t</artifactId>
     </dependency>
-      <dependency>
+    <dependency>
       <groupId>com.inmobi.messaging</groupId>
       <artifactId>messaging-client-core</artifactId>
       <type>jar</type>
@@ -164,15 +163,15 @@
       <type>test-jar</type>
     </dependency>
     <dependency>
-    <groupId>com.inmobi.conduit</groupId>
-    <artifactId>conduit-distcp</artifactId>
-    <version>${project.version}</version>
-    <type>jar</type>
+      <groupId>com.inmobi.conduit</groupId>
+      <artifactId>conduit-distcp</artifactId>
+      <version>${project.version}</version>
+      <type>jar</type>
     </dependency>
     <dependency>
-  <groupId>com.google.guava</groupId>
-  <artifactId>guava</artifactId>
-  <version>15.0-rc1</version>
-</dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>15.0-rc1</version>
+    </dependency>
   </dependencies>
 </project>

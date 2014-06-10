@@ -1,9 +1,13 @@
+html, body {
+  background-color: #D8EAF3;
+}
+
 #page {
   background-color: #D8EAF3;
 }
 
 #gwtPanel {
-  margin:0 auto;
+  margin: 0 auto;
 }
 
 #headerContainer {
@@ -13,18 +17,22 @@
 }
 
 #filterContainer {
-    background-color: #4596b8;
-    color: #fff;
-    padding: 0px 0px 0px;
+	background-color: #4596b8;
+  color: #fff;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
-#viewPanelContainer {
-       padding: 0px 0px 0px;
-       background-color: #d8eaf3;
+#topologyPanelContainer {
+  padding: 0px 0px 0px;
+  background-color: #EBF4F8;
+	display: none;
 }
 
 #header {
-  width:100%
+  width: 100%
 }
 
 #heading {
@@ -32,78 +40,79 @@
 }
 
 #filterPanel {
-  width:100%;
+  width: 100%;
 }
 
-#viewPanel {
-  margin:0 auto;
-  height:940px;
-  background-color:#D8EAF3;
+#fullGraphContainer {
+	display: none;
+	padding-top: 2px;
+	width: 99%;
 }
 
 #goButton {
-  width:75px;
-  float:right;
+  width: 75px;
+  float: right;
 }
 
 .gwt-ListBox {
-  width:150px;
+  width: 150px;
 }
 
-#graphInfoContainer > div
-{
+#topologyInfoContainer > div {
   display: inline-block;
 }
 
-#graphInfoContainer {
+#topologyInfoContainer {
   text-align: center;
-  width:100%;
-  background-color: #D8EAF3;
+  width: 100%;
+  background-color: #EBF4F8;
 }
 
-#graphPanel {
-  border-style:solid;
-  border-width:2px;
-  border-color:#ccc;
-  height:900px;
-  width:71%;
-  background-color: #D8EAF3;
+#topologyPanel {
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ccc;
+  height: 900px;
+  width: 71%;
+  background-color: #EBF4F8;
 }
 
 #summaryAndInfoPanel {
-  float:right;
-  border-style:solid;
-  border-width:2px;
-  border-color:#ccc;
-  height:900px;
-  width:28%;
-  background-color: #D8EAF3;
+  float: right;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ccc;
+  height: 900px;
+  width: 28%;
+  background-color: #EBF4F8;
 }
 
 #summaryPanel {
-  border-bottom:2px solid #ccc;
-  width:100%;
-  background-color: #D8EAF3;
-  text-align:left;
-  padding-bottom:10px;
+  border-bottom: 2px solid #ccc;
+  width: 100%;
+  background-color: #EBF4F8;
+  text-align: left;
+  padding-bottom: 10px;
 }
 
 #infoPanel {
-  padding-top:10px;
-  width:100%;
-  background-color: #D8EAF3;
-  text-align:left;
+  padding-top: 10px;
+  width: 100%;
+  height: 700px;
+  overflow-y: auto;
+  background-color: #EBF4F8;
+  text-align: left;
 }
 
 div.tooltip {
-  position:absolute;
-  text-align:center;
-  padding:2px;
-  font:12px sans-serif;
-  background:#ccc;
-  border:0px;
-  border-radius:8px;
-  pointer-events:none;
+  position: absolute;
+  text-align: center;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: #ccc;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .gwt-DatePicker {
@@ -113,82 +122,188 @@ div.tooltip {
   width: 200px;
 }
 
-#tabs {
-    width: 71.5%;
-    margin: auto;
-    overflow: hidden;
-    background: #D8EAF3;
-    display: none;
-    float:left;
+ul.tabs {
+ margin: 0;
+ padding: 0;
+ float: right;
+ list-style: none;
+ height: 32px;
+ border-right: 1px solid #ccc;
+ width: 100%;
 }
 
-#tabs ul {
-    list-style: none;
-    overflow: hidden;
-    padding: 0;
-    margin: 0;
+ul.tabs li {
+ float: right;
+ margin: 0;
+ padding: 0;
+ height: 31px;
+ line-height: 31px;
+ border: 1px solid #ccc;
+ border-right: none;
+ margin-bottom: -1px;
+ overflow: hidden;
+ position: relative;
+ background: #D8EAF3;
 }
 
-#tabs li {
-    float: right;
-    border: 1px solid #ccc;
-    border-bottom: none;
+ul.tabs li a {
+ text-decoration: none;
+ font-weight: bold;
+ color: #444444;
+ display: block;
+ font-size: 1.2em;
+ padding: 0 20px;
+ outline: none;
+ text-align: center;
 }
 
-#tabs li a {
-    color: #444444;
-    font-weight: bold;
-    display: block;
-    padding: 10px;
-    text-align: center;
-    text-decoration: none;
+ul.tabs li a:hover {
+	background: #EBF4F8;
+  cursor: pointer;
+  cursor: hand;
 }
 
-#tabs li a:hover {
-    background:#EBF4F8;
-    cursor: pointer;
-    cursor: hand;
+html ul.tabs li.active, html ul.tabs li.active a:hover  {
+ background: #EBF4F8;
+ border-bottom: 1px solid #EBF4F8;
 }
 
-#tabs li a.active {
-    background:#EBF4F8;
+#graphContainer {
+ padding : 2px;
+ padding-top: 10px;
+ padding-right: 5px;
+ padding-left: 5px;
+ border: 1px solid #ccc;
+ overflow: hidden;
+ clear: both;
+ float: left;
+ width: 100%;
+ background: #EBF4F8;
+}
+
+#tabsContainer {
+	padding-top: 5px;
 }
 
 .valuesTable {
-	border-collapse:collapse;
-	border:2px solid #ADADAD;
+	border-collapse: collapse;
+	border: 2px solid #ADADAD;
 }
 
 .valuesTable td, th {
-	border:2px solid #ADADAD;
+	border: 2px solid #ADADAD;
 }
 
-div.healthtooltip {
-  position:absolute;
-  text-align:center;
-  padding:2px;
-  font:12px sans-serif;
-  background:#ccc;
-  border:0px;
-  border-radius:8px;
+.healthtooltip {
+  position: absolute;
+  text-align: center;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: #ccc;
+  border: 0px;
+  border-radius: 8px;
 }
 
 #currentTimeLabel {
-  float:right;
-  text-align:right;
+  float: right;
+  text-align: right;
 }
 
 .transparentButton {
   cursor: pointer;
   cursor: hand;
-  color:#00f;
-  display:block;
-  width:100%;
-  height:100%;
-  text-decoration:none;
-  text-align:left;
-  background:#d8eaf3;
-  border:#d8eaf3;
-  padding:0px;
-  margin:0px;
+  color: #00f;
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  text-align: left;
+  background: #EBF4F8;
+  border: #EBF4F8;
+  padding: 0px;
+  margin: 0px;
+}
+
+.axis path, .axis line {
+	fill: none;
+	stroke: #000;
+	stroke-width : 1px;
+	shape-rendering: crispEdges;
+}
+
+.x.axis path {
+	/*display: none;*/
+}
+
+.line {
+	fill: none;
+	stroke: steelblue;
+	stroke-width: 1.5px;
+}
+
+.grid .tick {
+	stroke: lightgrey;
+	opacity: 0.7;
+}
+
+.grid path {
+	fill: none;
+	stroke: darkgrey;
+	stroke-width: 1.5px;
+}
+
+#timelinePanel {
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ccc;
+	margin-top: 25px;
+	height: 550px;
+}
+
+#tierButtonPanel {
+	padding-top: 10px;
+	padding-right: 100px;
+	float: right;
+}
+
+.tierButton {
+	float: right;
+	width: 100px;
+}
+
+.brush .extent {
+	stroke: #fff;
+	fill-opacity: .125;
+	shape-rendering: crispEdges;
+}
+
+.collapsed {
+  display: none;
+}
+
+.expanded {
+  display: table-row;
+}
+
+.popuptransparentButton {
+  cursor: pointer;
+  color: #00f;
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-align: left;
+  background: transparent;
+  border: transparent;
+  padding: 0px;
+}
+
+.timelinetooltip {
+  position: absolute;
+  text-align: left;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: #ccc;
+  border: 0px;
+  border-radius: 8px;
+  z-index: 1;
 }

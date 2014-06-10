@@ -11,13 +11,20 @@ public class DataServiceImpl extends RemoteServiceServlet
   private static final long serialVersionUID = 1L;
   DataServiceManager serviceManager = DataServiceManager.get(true);
 
-
-  public String getData(String filterValues) {
-    return serviceManager.getData(filterValues);
+  public String getTopologyData(String filterValues) {
+    return serviceManager.getTopologyData(filterValues);
   }
 
   public String getStreamAndClusterList() {
     return serviceManager.getStreamAndClusterList();
+  }
+
+  public String getTierLatencyData(String filterValues) {
+    return serviceManager.getTierLatencyData(filterValues);
+  }
+
+  public String getTimeLineData(String filterValues) {
+    return serviceManager.getTimeLineData(filterValues);
   }
 
 }
