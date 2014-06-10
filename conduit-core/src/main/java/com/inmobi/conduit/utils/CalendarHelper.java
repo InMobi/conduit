@@ -26,6 +26,8 @@ import org.apache.log4j.Logger;
 
 public class CalendarHelper {
   static Logger logger = Logger.getLogger(CalendarHelper.class);
+  public static final String FILENAME_DELIMITER = "-";
+  public static final String INDEX_DELIMITER = "_";
 
   static String minDirFormatStr = "yyyy" + File.separator + "MM" +
       File.separator + "dd" + File.separator + "HH" + File.separator +"mm";
@@ -175,6 +177,21 @@ public class CalendarHelper {
     calendar.setTime(date);
     calendar.add(Calendar.MINUTE, 1);
     return calendar.getTime();
+  }
+
+  public static long getDateFromCollectorFileName(String name) {
+    String[] splits = name.split(FILENAME_DELIMITER);
+    if (splits.length == 6) {
+      String[] splitOnUnderScore = splits[5].split("_");
+      if (splitOnUnderScore.length == 2) {
+        return getDateHourMinute(Integer.parseInt(splits[1]),
+            Integer.parseInt(splits[2]), Integer.parseInt(splits[3]),
+            Integer.parseInt(splits[4]),
+            Integer.parseInt(splitOnUnderScore[0]))
+            .getTimeInMillis();
+      }
+    }
+    return -1;
   }
 
 }
