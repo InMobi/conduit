@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DataInputBuffer;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
@@ -56,18 +57,23 @@ public class FileUtil {
         }
         compressedOut.write(msg);
         compressedOut.write("\n".getBytes());
-        compressedOut.flush();
-        
       }
-      // IOUtils.copyBytes(in, compressedOut, conf);
     } catch (Exception e) {
-      LOG.error("Error in compressing ", e);
+      throw new IOException("Error in compressing ", e);
     } finally {
-      compressedOut.close();
-      in.close();
-      out.close();
+      IOUtils.cleanup(LOG, in);
+      try {
+        if (compressedOut != null) {
+         compressedOut.close();
+        }
+        if (out != null) {
+          out.close();
+        }
+      } catch (IOException exception) {
+        LOG.error("Could not close output-stream. ", exception);
+        throw exception;
+      }
       CodecPool.returnCompressor(gzipCompressor);
-      
     }
   }
 

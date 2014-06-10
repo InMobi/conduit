@@ -211,17 +211,12 @@ public class RetriableFileCopyCommand extends RetriableCommand {
           CopyMapper.Counter.SLEEP_TIME_MS), inStream.getTotalSleepTime()); 
       LOG.info("STATS: " + inStream);
     } finally {
-      IOUtils.cleanup(LOG, inStream);
+      IOUtils.cleanup(LOG, inStream, reader, compressedIn);
       try {
-        if (reader != null)
-          reader.close();
-        if (compressedIn != null)
-          compressedIn.close();
         if (commpressedOut != null)
           commpressedOut.close();
         outStream.close();
-      }
-      catch(IOException exception) {
+      } catch(IOException exception) {
         LOG.error("Could not close output-stream. ", exception);
         throw exception;
       }
