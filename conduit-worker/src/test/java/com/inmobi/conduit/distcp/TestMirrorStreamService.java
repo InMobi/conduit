@@ -124,7 +124,7 @@ public class TestMirrorStreamService extends MirrorStreamService
           .getSourceStreams().entrySet()) {
         PublishMissingPathsTest.VerifyMissingPublishPaths(fs, mergeCommitTime,
             behinddate, this.destinationCluster.getFinalDestDirRoot()
-            + sstream.getValue().getName());
+            + sstream.getValue().getName(), 180000);
         
         List<String> filesList = files.get(sstream.getValue().getName());
         String commitpath = destinationCluster.getFinalDestDirRoot()

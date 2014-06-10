@@ -77,6 +77,8 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobInputPath;
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
+  private long timeoutToProcessLastCollectorFile = 60 * MILLISECONDS_IN_MINUTE;
+  private boolean processLastFile = false;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -84,6 +86,7 @@ public class LocalStreamService extends AbstractService implements
   protected long BYTES_PER_MAPPER = 512 * 1024 * 1024;
   private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(64);
   private DataInputBuffer in = new DataInputBuffer();
+
   // these paths are used to set the path of input format jar in job conf
   private final Path jarsPath;
   final Path inputFormatJarDestPath;
@@ -108,7 +111,12 @@ public class LocalStreamService extends AbstractService implements
     jarsPath = new Path(srcCluster.getTmpPath(), "jars");
     inputFormatJarDestPath = new Path(jarsPath, "conduit-distcp-current.jar");
     auditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
-	
+    String timeoutToProcessLastFile = System.getProperty(
+        ConduitConstants.TIMEOUT_TO_PROCESS_LAST_COLLECTOR_FILE);
+    if (timeoutToProcessLastFile != null) {
+      timeoutToProcessLastCollectorFile = Long.parseLong(timeoutToProcessLastFile);
+    }
+
     //register metrics
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_CHECKPOINT, eachStream);
@@ -187,6 +195,9 @@ public class LocalStreamService extends AbstractService implements
                 LAST_FILE_PROCESSED, eachStream, lastProcessedFile.get(eachStream));
           }
         }
+      } else {
+        throw new IOException("LocaStreamService job failure: Job "
+            + job.getJobID() + " has failed. ");
       }
     } catch (Exception e) {
       LOG.warn("Error in running LocalStreamService " + e);
@@ -460,7 +471,8 @@ public class LocalStreamService extends AbstractService implements
 
     long lastFileDeleted = -1;
     String fileName = file.getPath().getName();
-    if (fileName != null && !fileName.equalsIgnoreCase(currentFile)) {
+    if (fileName != null
+        && (!fileName.equalsIgnoreCase(currentFile) || processLastFile)) {
       if (!isEmptyFile(file, fs)) {
         Path src = file.getPath().makeQualified(fs);
         String destDir = getCategoryJobOutTmpPath(getCategoryFromSrcPath(src))
@@ -584,6 +596,13 @@ public class LocalStreamService extends AbstractService implements
 
     // get last file from set
     FileStatus lastFile = sortedFiles.last();
+    long currentTimeInMillis = System.currentTimeMillis();
+    if ((currentTimeInMillis - lastFile.getModificationTime())
+        > timeoutToProcessLastCollectorFile) {
+      processLastFile = true;
+    } else {
+      processLastFile = false;
+    }
     return lastFile.getPath().getName();
   }
 

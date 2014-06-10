@@ -157,7 +157,7 @@ public class TestMergedStreamService extends MergedStreamService implements
             PublishMissingPathsTest.VerifyMissingPublishPaths(fs,
                 todaysdate.getTime(), behinddate,
                 this.destinationCluster.getFinalDestDirRoot()
-                    + sstream);
+                    + sstream, 180000);
 
             String commitpath = destinationCluster.getFinalDestDirRoot()
                 + sstream;          
