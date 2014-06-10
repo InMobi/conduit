@@ -18,6 +18,16 @@
       <destinations>
       </destinations>
     </stream>
+    <stream name="test2">
+      <sources>
+        <source>
+          <name>testcluster1</name>
+          <retentioninhours>12</retentioninhours>
+        </source>
+      </sources>
+      <destinations>
+      </destinations>
+    </stream>
   </streams>
 
   <clusters>

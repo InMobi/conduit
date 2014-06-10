@@ -60,7 +60,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected CheckpointProvider checkpointProvider = null;
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   private final TSerializer serializer = new TSerializer();
-  private final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
+  protected final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
   private Map<String, Long> prevRuntimeForCategory = new HashMap<String, Long>();
   protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
       "yyyy/MM/dd, hh:mm");
@@ -320,8 +320,10 @@ public abstract class AbstractService implements Service, Runnable {
           prevRuntime += MILLISECONDS_IN_MINUTE;
         }
       }
-      prevRuntimeForCategory.put(categoryName, commitTime);
     }
+    // prevRuntimeForCategory map is updated with commitTime,
+    // even if prevRuntime is -1, since service did run at this point
+    prevRuntimeForCategory.put(categoryName, commitTime);
   }
 
   /*

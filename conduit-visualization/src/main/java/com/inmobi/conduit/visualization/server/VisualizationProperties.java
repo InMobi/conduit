@@ -16,6 +16,29 @@ public class VisualizationProperties {
     } else {
       loadPropMap(propertiesFilePath);
     }
+    if (!validateVisualizationProperties()) {
+      throw new RuntimeException("Error : percentile.for.sla is not"
+          + " present in percentile string");
+    }
+  }
+
+  private boolean validateVisualizationProperties() {
+    String percentileString = null;
+    String percentileSla = null;
+    if (propMap.containsKey(ServerConstants.PERCENTILE_STRING)) {
+      percentileString = propMap.get(ServerConstants.PERCENTILE_STRING);
+    }
+    if (propMap.containsKey(ServerConstants.PERCENTILE_FOR_SLA)) {
+      percentileSla = propMap.get(ServerConstants.PERCENTILE_FOR_SLA);
+    }
+    if (percentileSla != null && percentileString != null) {
+      for (String percentile : percentileString.split(",")) {
+        if (percentile.equals(percentileSla)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void loadPropMap(String filePath) {
