@@ -119,6 +119,10 @@ function saveHistory(changeParams, streamName, clusterName, tier,
     }
     if (!isReloadComplete) {
       setCountLatencyView(History.getState().data.selectedTab);
+      if (!isCountView) {
+      	fireLatencyQuery(qstart, qend, History.getState().data.qcluster,
+      	History.getState().data.qstream);
+      }
       highlightTab();
       if (qView == 1) {
         highlightTierButton(History.getState().data.qtier);
@@ -238,6 +242,10 @@ function clearAllAndAddLoadSymbol(viewId) {
 
 function tabSelected(selectedTabID) {
   setCountLatencyView(selectedTabID);
+  if (!isCountView) {
+   	fireLatencyQuery(qstart, qend, History.getState().data.qcluster,
+   	History.getState().data.qstream);
+  }
   highlightTab();
   clearAllAndAddLoadSymbol();
   saveHistoryAndReload(qStream, qCluster, 'all', selectedTabID);
