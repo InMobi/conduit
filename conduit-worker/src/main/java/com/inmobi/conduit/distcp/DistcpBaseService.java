@@ -256,6 +256,9 @@ public abstract class DistcpBaseService extends AbstractService {
       }
       if (lastPathAdded != null) {
         checkPointPaths.put(stream, lastPathAdded);
+        Date lastDateAdded = CalendarHelper.getDateFromStreamDir(inputPath,
+            lastPathAdded);
+        lastProcessedFile.put(stream, lastDateAdded.getTime());
       }
 
     }

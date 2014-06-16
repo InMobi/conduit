@@ -60,7 +60,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   private Calendar behinddate = null;
   private FileSystem fs = null;
   private Date todaysdate = null;
-  private static final NumberFormat idFormat = NumberFormat.getInstance();
+  public static final NumberFormat idFormat = NumberFormat.getInstance();
   
   static {
     idFormat.setGroupingUsed(false);
@@ -430,6 +430,10 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public FileSystem getFileSystem() {
     return fs;
+  }
+
+  public Map<String, Long> getLastProcessedMap() {
+    return lastProcessedFile;
   }
 }
 

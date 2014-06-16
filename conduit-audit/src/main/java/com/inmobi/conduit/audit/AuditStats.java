@@ -142,7 +142,6 @@ public class AuditStats {
     } catch (Exception e) {
       LOG.warn("Error in shutting down feeder and rollup services", e);
     }
-
   }
 
   public static void main(String args[]) throws Exception {

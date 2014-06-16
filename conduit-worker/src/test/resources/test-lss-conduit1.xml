@@ -1,0 +1,37 @@
+<conduit>
+  <defaults>
+    <rootdir>/conduittest</rootdir>
+    <retentioninhours>24</retentioninhours>
+    <trashretentioninhours>24</trashretentioninhours>
+  </defaults>
+
+  <!-- A stream can have only one primary and multiple mirrors as destinations
+    -->
+  <streams>
+    <stream name="test1">
+      <sources>
+        <source>
+          <name>testcluster1</name>
+          <retentioninhours>12</retentioninhours>
+        </source>
+      </sources>
+    </stream>
+    <stream name="test2">
+      <sources>
+        <source>
+          <name>testcluster1</name>
+          <retentioninhours>12</retentioninhours>
+        </source>
+      </sources>
+    </stream>
+  </streams>
+
+  <clusters>
+    <cluster name="testcluster1"
+             hdfsurl="file:///tmp/lsslastprocessedtest/testcluster1"
+             jturl="local"
+             jobqueuename="default"
+        >
+    </cluster>
+  </clusters>
+</conduit>

@@ -206,4 +206,8 @@ public class TestMirrorStreamService extends MirrorStreamService
   public FileSystem getFileSystem() {
     return fs;
   }
+
+  public Map<String, Long> getLastProcessedMap() {
+    return lastProcessedFile;
+  }
 }

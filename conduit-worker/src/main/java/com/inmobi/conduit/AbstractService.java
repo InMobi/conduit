@@ -42,7 +42,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.publisher.MessagePublisher;
 import com.inmobi.messaging.util.AuditUtil;
@@ -65,6 +64,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
       "yyyy/MM/dd, hh:mm");
   protected final Set<String> streamsToProcess;
+  protected final Map<String, Long> lastProcessedFile;
   private final static long TIME_RETRY_IN_MILLIS = 500;
   private int numOfRetries;
   protected Path tmpCounterOutputPath;
@@ -77,6 +77,7 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String RETRY_CHECKPOINT = "retry.checkPoint";
   public final static String FILES_COPIED_COUNT = "filesCopied.count";
   public final static String DATAPURGER_SERVICE = "DataPurgerService";
+  public final static String LAST_FILE_PROCESSED = "lastfile.processed";
 
   protected static String hostname;
   static {
@@ -102,6 +103,7 @@ public abstract class AbstractService implements Service, Runnable {
     this.runIntervalInMsec = runIntervalInMsec;
     String retries = System.getProperty(ConduitConstants.NUM_RETRIES);
     this.streamsToProcess=streamsToProcess;
+    this.lastProcessedFile = new HashMap<String, Long>();
     if (retries == null) {
       numOfRetries = Integer.MAX_VALUE;
     } else {
@@ -151,16 +153,6 @@ public abstract class AbstractService implements Service, Runnable {
   @Override
   public void run() {
     LOG.info("Starting Service [" + Thread.currentThread().getName() + "]");
-    SlidingTimeWindowGauge runtimeGauge =
-        ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RUNTIME,
-            Thread.currentThread().getName());
-    SlidingTimeWindowGauge failureJobGauge =
-        ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
-            Thread.currentThread().getName());
-    if(!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())) {
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), COMMIT_TIME,
-          Thread.currentThread().getName());
-    }
     while (!stopped) {
       long startTime = System.currentTimeMillis();
       try {
@@ -173,16 +165,28 @@ public abstract class AbstractService implements Service, Runnable {
         if (stopped)
           return;
       } catch (Throwable th) {
-        if(failureJobGauge!=null){
-          failureJobGauge.setValue(1l);
+        if (!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())) {
+          for (String eachStream : streamsToProcess) {
+            ConduitMetrics.updateSWGuage(getServiceType(), FAILURES,
+                eachStream, 1);
+          }
+        } else {
+          ConduitMetrics.updateSWGuage(getServiceType(), FAILURES,
+              Thread.currentThread().getName(), 1);
         }
         LOG.error("Thread: " + thread + " interrupt status: "
             + thread.isInterrupted() + " and Error in run: " + th);
       }
       long finishTime = System.currentTimeMillis();
       long elapsedTime = finishTime - startTime;
-      if(runtimeGauge!=null){
-        runtimeGauge.setValue(elapsedTime);
+      if (!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())) {
+        for (String eachStream : streamsToProcess) {
+          ConduitMetrics.updateSWGuage(getServiceType(), RUNTIME, eachStream,
+              elapsedTime);
+        }
+      } else {
+        ConduitMetrics.updateSWGuage(getServiceType(), RUNTIME,
+            Thread.currentThread().getName(), elapsedTime);
       }
       if (elapsedTime >= runIntervalInMsec)
         continue;
