@@ -80,6 +80,7 @@ public class LocalStreamService extends AbstractService implements
   private int filesPerCollector = 10;
   private long timeoutToProcessLastCollectorFile = 60 * MILLISECONDS_IN_MINUTE;
   private boolean processLastFile = false;
+  private int numberOfFilesProcessed = 0;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -432,28 +433,18 @@ public class LocalStreamService extends AbstractService implements
         String currentFile = getCurrentFile(fs, files, sortedFiles);
         LOG.debug("last file " + currentFile + " in the collector directory "
             + collector.getPath());
-<<<<<<< HEAD
         
         Iterator<FileStatus> it = sortedFiles.iterator();
-        int numberOfFilesProcessed = 0;
+        long minEmptyFileDeleted = -1;
+        numberOfFilesProcessed = 0;
         while (it.hasNext() && numberOfFilesProcessed < filesPerCollector) {
           FileStatus file = it.next();
-          LOG.debug("Processing " + file.getPath());
-          if (processFile(file, currentFile, checkPointValue, fs, results,
-              collectorPaths)) {
-            numberOfFilesProcessed++;
-=======
-
-        long minEmptyFileDeleted = -1;
-
-        for (FileStatus file : files) {
           LOG.debug("Processing " + file.getPath());
           long deletedFileTimeStamp = processFile(file, currentFile,
               checkPointValue, fs, results, collectorPaths);
           if (deletedFileTimeStamp != -1 && (minEmptyFileDeleted == -1 ||
               deletedFileTimeStamp < minEmptyFileDeleted)) {
             minEmptyFileDeleted = deletedFileTimeStamp;
->>>>>>> develop
           }
         }
         populateTrash(collectorPaths, trashSet);
@@ -486,10 +477,9 @@ public class LocalStreamService extends AbstractService implements
     return -1;
   }
 
-  private boolean processFile(FileStatus file, String currentFile,
+  private long processFile(FileStatus file, String currentFile,
       String checkPointValue, FileSystem fs, Map<FileStatus, String> results,
       Map<String, FileStatus> collectorPaths) throws IOException {
-    boolean processed = false;
     long lastFileDeleted = -1;
 
     String fileName = file.getPath().getName();
@@ -501,7 +491,7 @@ public class LocalStreamService extends AbstractService implements
             .toString();
         if (aboveCheckpoint(checkPointValue, fileName)) {
           results.put(file, destDir);
-          processed = true;
+          numberOfFilesProcessed++;
         }
         collectorPaths.put(fileName, file);
       } else {
@@ -510,11 +500,7 @@ public class LocalStreamService extends AbstractService implements
         fs.delete(file.getPath(), false);
       }
     }
-<<<<<<< HEAD
-    return processed;
-=======
     return lastFileDeleted;
->>>>>>> develop
   }
 
   /*
