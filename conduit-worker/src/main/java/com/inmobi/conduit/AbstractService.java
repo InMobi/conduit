@@ -647,7 +647,7 @@ public abstract class AbstractService implements Service, Runnable {
     for (AuditMessage auditMsg : auditMsgList) {
       try {
         LOG.debug("Publishing audit message " + auditMsg.toString() + " from "
-            + this.getClass().getSimpleName() + " service");
+            + this.getClass().getSimpleName());
         MessagePublisher publisher = Conduit.getPublisher();
         publisher.publish(AuditUtil.AUDIT_STREAM_TOPIC_NAME,
             new Message(ByteBuffer.wrap(serializer.serialize(auditMsg))));
