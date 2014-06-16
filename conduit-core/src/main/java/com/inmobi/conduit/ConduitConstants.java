@@ -43,4 +43,6 @@ public interface ConduitConstants {
   public static final String AUDIT_COUNTER_NAME_DELIMITER = "#";
   public static final String FILES_PER_COLLECETOR_PER_LOCAL_STREAM = "com.inmobi.conduit."
       + "filesPerCollectorPerLocalStream";
+  public static final String TIMEOUT_TO_PROCESS_LAST_COLLECTOR_FILE =
+      "com.inmobi.conduit.timeoutToProcessLastCollectorFile";
 }
