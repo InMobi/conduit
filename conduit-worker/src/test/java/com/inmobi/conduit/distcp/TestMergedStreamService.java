@@ -249,4 +249,7 @@ public class TestMergedStreamService extends MergedStreamService implements
     return fs;
   }
 
+  public Map<String, Long> getLastProcessedMap() {
+    return lastProcessedFile;
+  }
 }

@@ -65,6 +65,13 @@ public class MirrorStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_RENAME, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), EMPTYDIR_CREATE, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FILES_COPIED_COUNT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RUNTIME, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
+          eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          COMMIT_TIME, eachStream);
+      ConduitMetrics.registerAbsoluteGauge(getServiceType(),
+          LAST_FILE_PROCESSED, eachStream);
     }
   }
 
@@ -84,6 +91,7 @@ public class MirrorStreamService extends DistcpBaseService {
 
   @Override
   protected void execute() throws Exception {
+    lastProcessedFile.clear();
     List<AuditMessage> auditMsgList = new ArrayList<AuditMessage>();
     LOG.info("Starting a run of service " + getName());
     Path tmpOut = getDistCpTargetPath();
@@ -102,6 +110,12 @@ public class MirrorStreamService extends DistcpBaseService {
         LOG.warn("No data to pull from " + "Cluster ["
             + getSrcCluster().getReadUrl() + "]" + " to Cluster ["
             + getDestCluster().getHdfsUrl() + "]");
+        for (String eachStream : streamsToProcess) {
+          if (lastProcessedFile.get(eachStream) != null) {
+            ConduitMetrics.updateAbsoluteGauge(getServiceType(),
+                LAST_FILE_PROCESSED, eachStream, lastProcessedFile.get(eachStream));
+          }
+        }
         finalizeCheckPoints();
         return;
       }
@@ -122,6 +136,12 @@ public class MirrorStreamService extends DistcpBaseService {
         LinkedHashMap<FileStatus, Path> commitPaths = prepareForCommit(tmpOut);
         doLocalCommit(commitPaths, auditMsgList);
         finalizeCheckPoints();
+        for (String eachStream : streamsToProcess) {
+          if (lastProcessedFile.get(eachStream) != null) {
+            ConduitMetrics.updateAbsoluteGauge(getServiceType(),
+                LAST_FILE_PROCESSED, eachStream, lastProcessedFile.get(eachStream));
+          }
+        }
       }
     } catch (Exception e) {
       LOG.warn("Error in MirrorStream Service..skipping RUN ", e);
@@ -168,8 +188,10 @@ public class MirrorStreamService extends DistcpBaseService {
     }
     long elapsedTime = System.currentTimeMillis() - startTime;
     LOG.debug("Committed " + commitPaths.size() + " paths.");
-    ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
-        Thread.currentThread().getName(), elapsedTime);
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
+          eachStream, elapsedTime);
+    }
   }
 
   /*
