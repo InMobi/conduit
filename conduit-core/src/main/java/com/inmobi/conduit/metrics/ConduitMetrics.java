@@ -1,7 +1,11 @@
 package com.inmobi.conduit.metrics;
 
+import com.codahale.metrics.*;
+import com.codahale.metrics.ganglia.GangliaReporter;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -9,28 +13,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.ScheduledReporter;
-import com.codahale.metrics.ganglia.GangliaReporter;
-
 /**
  * Metrics manager class. Will use codahale metrics as the implementation.
  * Contains functions to register Gauges/Counters and start/stop reporters
- * 
- * 
  */
 public class ConduitMetrics {
-
-  private static final Log LOG = LogFactory.getLog(ConduitMetrics.class);
-
-  private static MetricRegistry registry;
 
   private final static String GANGLIA = "com.inmobi.conduit.metrics.ganglia";
   private final static String CONSOLE = "com.inmobi.conduit.metrics.console";
@@ -47,6 +34,13 @@ public class ConduitMetrics {
 
   private final static Map<String, ScheduledReporter> reporterMap =
       new HashMap<String, ScheduledReporter>();
+  private static final Log LOG = LogFactory.getLog(ConduitMetrics.class);
+
+  private static boolean isEnabled =false;
+  private static int timeBetweenPolls = 10;
+  private static int slidingwindowtime= 0;
+  private static MetricRegistry registry;
+
   /*
    *The three level cache. every counter would be accessed as 
    *(Service,counterType,(Context)StreamName/ServiceName) => counter
@@ -56,14 +50,8 @@ public class ConduitMetrics {
   private final static Map<String, Map<String, Map<String, Metric>>> threeLevelCache =
       new HashMap<String, Map<String, Map<String, Metric>>>();
 
-  private static boolean isEnabled =false;
-  private static int timeBetweenPolls = 10;
-  private static int slidingwindowtime= 0;
   /**
    * Will create reporters based on config
-   * 
-   * @param config
-   * @throws IOException
    */
   public static void init(Properties config) throws IOException {
 
@@ -143,13 +131,19 @@ public class ConduitMetrics {
 
   }
 
+  public static AbsoluteGauge registerAbsoluteGauge(String serviceName,
+                                                    String counterType,
+                                                    String context) {
+    final String metricName = createName(serviceName, counterType, context);
+    AbsoluteGauge metric = registerAbsoluteGauge(metricName, 0);
+    if (metric != null) {
+      addToCache(serviceName, counterType, context, metric);
+    }
+    return metric;
+  }
+
   /**
-   * Create a Gauge where a value can be set by using the AbsoluteGauge
-   * methods
-   * 
-   * @param name
-   * @param initalValue
-   * @return
+   * Create an AbsoluteGauge
    */
   public static AbsoluteGauge registerAbsoluteGauge(String name,
       Number initalValue) {
@@ -163,16 +157,19 @@ public class ConduitMetrics {
     }
 
     final AbsoluteGauge codahalegaugeInst = new AbsoluteGauge(initalValue);
-    Gauge<Number> gauge = new Gauge<Number>() {
-      public Number getValue() {
-        return codahalegaugeInst.getValue();
-      }
-    };
-
-    registry.register(name, gauge);
-
+    registry.register(name, codahalegaugeInst);
     return codahalegaugeInst;
+  }
 
+  public static void updateAbsoluteGauge(String serviceName,
+                                         String counterType,
+                                         String context, Number value) {
+    LOG.info("absolute gauge value " + serviceName + "." + counterType + "." +
+        context +"= " + value);
+    AbsoluteGauge c = getMetric(serviceName, counterType, context);
+    if (c != null) {
+      c.setValue(value);
+    }
   }
 
   /*
@@ -187,20 +184,12 @@ public class ConduitMetrics {
     if (registry.getGauges().get(name) != null) {
       LOG.warn("Gauge with name " + name + " already exsits");
       return null;
-
     }
-
     return registry.register(name, gaugeInst);
-
   }
-
-
 
   /**
    * Register a counter
-   * 
-   * @param name
-   * @return
    */
   synchronized public static Counter registerCounter(String serviceName,
       String counterType, String context) {
@@ -320,6 +309,5 @@ public class ConduitMetrics {
 		if (c != null) {
 			c.setValue(value);
 		}
-	  }
-
+	}
 }

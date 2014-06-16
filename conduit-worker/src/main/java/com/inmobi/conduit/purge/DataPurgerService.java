@@ -71,8 +71,14 @@ public class DataPurgerService extends AbstractService {
     this.defaultstreamPathRetentioninHours = new Integer(
         Integer.parseInt(conduitConfig.getDefaults().get(
             ConduitConfigParser.RETENTION_IN_HOURS)));
-    ConduitMetrics.registerSlidingWindowGauge(getServiceType(), PURGEPATHS_COUNT, getName());
-    ConduitMetrics.registerSlidingWindowGauge(getServiceType(), DELETE_FAILURES_COUNT, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        PURGEPATHS_COUNT, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        DELETE_FAILURES_COUNT, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RUNTIME,
+        getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
+        getName());
   }
 
   @Override
