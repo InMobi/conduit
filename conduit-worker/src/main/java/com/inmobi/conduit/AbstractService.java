@@ -175,7 +175,7 @@ public abstract class AbstractService implements Service, Runnable {
               Thread.currentThread().getName(), 1);
         }
         LOG.error("Thread: " + thread + " interrupt status: "
-            + thread.isInterrupted() + " and Error in run: " + th);
+            + thread.isInterrupted() + " and Error in run: ", th);
       }
       long finishTime = System.currentTimeMillis();
       long elapsedTime = finishTime - startTime;

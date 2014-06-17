@@ -209,7 +209,7 @@ public class LocalStreamService extends AbstractService implements
             + job.getJobID() + " has failed. ");
       }
     } catch (Exception e) {
-      LOG.warn("Error in running LocalStreamService " + e);
+      LOG.warn("Error in running LocalStreamService ", e);
       throw e;
     } finally {
       publishAuditMessages(auditMsgList);
