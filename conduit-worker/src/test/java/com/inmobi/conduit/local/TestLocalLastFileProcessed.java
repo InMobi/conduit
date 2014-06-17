@@ -10,7 +10,9 @@ import com.inmobi.conduit.metrics.AbsoluteGauge;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
+
 import junit.framework.Assert;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -21,6 +23,7 @@ import org.apache.log4j.Logger;
 import org.testng.annotations.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class TestLocalLastFileProcessed {
@@ -76,6 +79,32 @@ public class TestLocalLastFileProcessed {
     return calendar.getTimeInMillis();
   }
 
+  private void createFiles(Calendar calendar, String streamName,
+      String collectorName, int numOfFiles, boolean isDataFile)
+          throws IOException, InterruptedException {
+    String path = cluster.getDataDir() + File.separator + streamName +
+        File.separator + collectorName + File.separator;
+    localFs.mkdirs(new Path(path));
+    for (int i = 0; i < numOfFiles; i++) {
+      calendar.add(Calendar.MINUTE, 1);
+      String filenameStr = streamName + "-" + TestLocalStreamService
+          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
+          TestLocalStreamService.idFormat.format(0);
+      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
+      FSDataOutputStream streamout = localFs.create(new Path(path, filenameStr));
+      if (isDataFile) {
+        String content = "Creating Test data for teststream";
+        Message msg = new Message(content.getBytes());
+        long currentTimestamp = new Date().getTime();
+        AuditUtil.attachHeaders(msg, currentTimestamp);
+        byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
+        streamout.write(encodeMsg);
+      }
+      streamout.close();
+      Thread.sleep(1000);
+    }
+  }
+
   @Test
   public void testEmptyDirectory() throws Exception {
     String path1 = cluster.getDataDir() + File.separator + stream1 +
@@ -103,48 +132,23 @@ public class TestLocalLastFileProcessed {
     calendar.add(Calendar.MINUTE, -7);
     Date firstDate = calendar.getTime();
 
-    String path1 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path1));
-    long firstAddedDateStream1 = getMinute(calendar.getTimeInMillis() + 60000);
-    for (int i = 0; i < numFiles; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName(), numFiles, false);
+    long lastAddedDateStream1 = getMinute(calendar.getTimeInMillis() - 60000);
 
-    String path2 = cluster.getDataDir() + File.separator + stream2 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path2));
     calendar.setTime(firstDate);
-    long firstAddedDateStream2 = getMinute(calendar.getTimeInMillis() + 60000);
-    for (int i = 0; i < numFiles; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream2 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path2,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream2, cluster.getName(), numFiles, false);
+
+    long lastAddedDateStream2 = getMinute(calendar.getTimeInMillis() - 60000);
 
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
         cluster.getSourceStreams());
     service.execute();
-    Assert.assertEquals(firstAddedDateStream1, ConduitMetrics.<AbsoluteGauge
+    Assert.assertEquals(lastAddedDateStream1, ConduitMetrics.<AbsoluteGauge
         >getMetric(
-        service.getServiceType(), AbstractService.LAST_FILE_PROCESSED,
-        stream1).getValue().longValue());
-    Assert.assertEquals(firstAddedDateStream2, ConduitMetrics
+            service.getServiceType(), AbstractService.LAST_FILE_PROCESSED,
+            stream1).getValue().longValue());
+    Assert.assertEquals(lastAddedDateStream2, ConduitMetrics
         .<AbsoluteGauge>getMetric(
             service.getServiceType(), AbstractService.LAST_FILE_PROCESSED,
             stream2).getValue().longValue());
@@ -155,52 +159,12 @@ public class TestLocalLastFileProcessed {
     int numFiles = 6;
     Calendar calendar = Calendar.getInstance();
     calendar.add(Calendar.MINUTE, -7);
-    Date firstDate = calendar.getTime();
 
-    String path1 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path1));
-    for (int i = 0; i < numFiles; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      String content = "Creating Test data for teststream";
-      Message msg = new Message(content.getBytes());
-      long currentTimestamp = new Date().getTime();
-      AuditUtil.attachHeaders(msg, currentTimestamp);
-      byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
-      streamout.write(encodeMsg);
-      streamout.close();
-      Thread.sleep(1000);
-    }
-    Long lastAddedDateStream1 = getMinute(firstDate.getTime() + 60000);
+    createFiles(calendar, stream1, cluster.getName(), numFiles, true);
+    Long lastAddedDateStream1 = getMinute(calendar.getTimeInMillis() - 60000);
 
-    String path2 = cluster.getDataDir() + File.separator + stream2 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path2));
-    Date secondDate = calendar.getTime();
-    for (int i = 0; i < numFiles; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream2 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path2,
-          filenameStr));
-      String content = "Creating Test data for teststream";
-      Message msg = new Message(content.getBytes());
-      long currentTimestamp = new Date().getTime();
-      AuditUtil.attachHeaders(msg, currentTimestamp);
-      byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
-      streamout.write(encodeMsg);
-      streamout.close();
-      Thread.sleep(1000);
-    }
-    Long lastAddedDateStream2 = getMinute(secondDate.getTime() + 60000);
+    createFiles(calendar, stream2, cluster.getName(), numFiles, true);
+    Long lastAddedDateStream2 = getMinute(calendar.getTimeInMillis() - 60000);
 
     Map<FileStatus, String> results = new HashMap<FileStatus, String>();
     Set<FileStatus> trashSet = new HashSet<FileStatus>();
@@ -222,37 +186,9 @@ public class TestLocalLastFileProcessed {
     Calendar calendar = Calendar.getInstance();
     calendar.add(Calendar.MINUTE, -7);
 
-    String path1 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path1));
-    for (int i = 0; i < numFiles - 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
-    for (int i = 0; i < 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      String content = "Creating Test data for teststream";
-      Message msg = new Message(content.getBytes());
-      long currentTimestamp = new Date().getTime();
-      AuditUtil.attachHeaders(msg, currentTimestamp);
-      byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
-      streamout.write(encodeMsg);
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName(), numFiles - 2, false);
+    createFiles(calendar, stream1, cluster.getName(), 2, true);
+
     Long lastAddedDateStream1 = getMinute(calendar.getTimeInMillis() - 60000);
     Set<String> newStreamToProcess = new HashSet<String>();
     newStreamToProcess.add(stream1);
@@ -267,7 +203,6 @@ public class TestLocalLastFileProcessed {
         ()), results, trashSet, checkpointPaths);
     Assert.assertEquals(lastAddedDateStream1, service.getLastProcessedMap()
         .get(stream1));
-
   }
 
   @Test
@@ -276,36 +211,10 @@ public class TestLocalLastFileProcessed {
     Calendar calendar = Calendar.getInstance();
     calendar.add(Calendar.MINUTE, -7);
 
-    String path1 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path1));
-    long firstAddedDateStream = getMinute(calendar.getTimeInMillis() + 60000);
-    for (int i = 0; i < numFiles; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName(), numFiles, false);
+    long lastFileAddedInFirstCollector = getMinute(calendar.getTimeInMillis() - 60000);
 
-    String path2 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + "testcollector" + File.separator;
-    localFs.mkdirs(new Path(path2));
-    for (int i = 0; i < numFiles; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path2,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName() + "_1", numFiles, false);
 
     Set<String> newStreamToProcess = new HashSet<String>();
     newStreamToProcess.add(stream1);
@@ -314,7 +223,10 @@ public class TestLocalLastFileProcessed {
         cluster, null, new FSCheckpointProvider(checkpointDir),
         newStreamToProcess);
     service.execute();
-    Assert.assertEquals(firstAddedDateStream, ConduitMetrics
+    /*
+     * Value of metric is minimum(latest file time stamp for each collector).
+     */
+    Assert.assertEquals(lastFileAddedInFirstCollector, ConduitMetrics
         .<AbsoluteGauge>getMetric(
             service.getServiceType(), AbstractService.LAST_FILE_PROCESSED,
             stream1).getValue().longValue());
@@ -327,53 +239,16 @@ public class TestLocalLastFileProcessed {
     calendar.add(Calendar.MINUTE, -7);
     Date firstDate = calendar.getTime();
 
-    String path1 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path1));
-    for (int i = 0; i < numFiles - 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
-    for (int i = 0; i < 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      String content = "Creating Test data for teststream";
-      Message msg = new Message(content.getBytes());
-      long currentTimestamp = new Date().getTime();
-      AuditUtil.attachHeaders(msg, currentTimestamp);
-      byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
-      streamout.write(encodeMsg);
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName(), numFiles - 2, false);
+    createFiles(calendar, stream1, cluster.getName(), 2, true);
+    Long latestFileTimeStampInFirstCollector = getMinute(calendar.getTimeInMillis() - 60000);
 
-    String path2 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + "testcollector" + File.separator;
-    localFs.mkdirs(new Path(path2));
     calendar.setTime(firstDate);
-    for (int i = 0; i < numFiles; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path2,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName() + "_1", numFiles, false);
+    Long latestFileTimeStampInSecondCollector = getMinute(calendar.getTimeInMillis() - 60000);
+
+    Long fileTimeStamp = (latestFileTimeStampInFirstCollector < latestFileTimeStampInSecondCollector) ?
+        latestFileTimeStampInFirstCollector : latestFileTimeStampInSecondCollector;
 
     Set<String> newStreamToProcess = new HashSet<String>();
     newStreamToProcess.add(stream1);
@@ -386,8 +261,7 @@ public class TestLocalLastFileProcessed {
         newStreamToProcess);
     service.createListing(localFs, localFs.getFileStatus(cluster.getDataDir
         ()), results, trashSet, checkpointPaths);
-    Assert.assertEquals(getMinute(firstDate.getTime() + 60000),
-        service.getLastProcessedMap().get(stream1));
+    Assert.assertEquals(fileTimeStamp, service.getLastProcessedMap().get(stream1));
   }
 
   @Test
@@ -397,70 +271,18 @@ public class TestLocalLastFileProcessed {
     calendar.add(Calendar.MINUTE, -7);
     Date firstDate = calendar.getTime();
 
-    String path1 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + cluster.getName() + File.separator;
-    localFs.mkdirs(new Path(path1));
-    for (int i = 0; i < numFiles - 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
-    for (int i = 0; i < 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path1,
-          filenameStr));
-      String content = "Creating Test data for teststream";
-      Message msg = new Message(content.getBytes());
-      long currentTimestamp = new Date().getTime();
-      AuditUtil.attachHeaders(msg, currentTimestamp);
-      byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
-      streamout.write(encodeMsg);
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName(), 2, false);
+    createFiles(calendar, stream1, cluster.getName(), 2, true);
+    Long latestFileTimeStampInFirstCollector = getMinute(calendar.getTimeInMillis() - 60000);
 
-    String path2 = cluster.getDataDir() + File.separator + stream1 +
-        File.separator + "testcollector" + File.separator;
-    localFs.mkdirs(new Path(path2));
     calendar.setTime(firstDate);
-    for (int i = 0; i < 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path2,
-          filenameStr));
-      String content = "Creating Test data for teststream";
-      Message msg = new Message(content.getBytes());
-      long currentTimestamp = new Date().getTime();
-      AuditUtil.attachHeaders(msg, currentTimestamp);
-      byte[] encodeMsg = Base64.encodeBase64(msg.getData().array());
-      streamout.write(encodeMsg);
-      streamout.close();
-      Thread.sleep(1000);
-    }
-    for (int i = 0; i < numFiles - 2; i++) {
-      calendar.add(Calendar.MINUTE, 1);
-      String filenameStr = stream1 + "-" + TestLocalStreamService
-          .getDateAsYYYYMMDDHHmm(calendar.getTime()) + "_" +
-          TestLocalStreamService.idFormat.format(0);
-      LOG.debug("Creating Test Data with filename [" + filenameStr + "]");
-      FSDataOutputStream streamout = localFs.create(new Path(path2,
-          filenameStr));
-      streamout.close();
-      Thread.sleep(1000);
-    }
+    createFiles(calendar, stream1, cluster.getName() + "_1", 2, true);
+    createFiles(calendar, stream1, cluster.getName() + "_1", numFiles - 2, false);
+
+    Long latestFileTimeStampInsecondCollector = getMinute(calendar.getTimeInMillis() - 60000);
+
+    Long fileTimeStamp = (latestFileTimeStampInFirstCollector < latestFileTimeStampInsecondCollector) ?
+        latestFileTimeStampInFirstCollector : latestFileTimeStampInsecondCollector;
 
     Set<String> newStreamToProcess = new HashSet<String>();
     newStreamToProcess.add(stream1);
@@ -473,7 +295,7 @@ public class TestLocalLastFileProcessed {
         newStreamToProcess);
     service.createListing(localFs, localFs.getFileStatus(cluster.getDataDir
         ()), results, trashSet, checkpointPaths);
-    Assert.assertEquals(getMinute(firstDate.getTime() + 60000),
+    Assert.assertEquals(fileTimeStamp,
         service.getLastProcessedMap().get(stream1));
   }
 }
