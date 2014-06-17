@@ -396,7 +396,7 @@ public class LocalStreamService extends AbstractService implements
       } catch (FileNotFoundException ex) {
         collectors = new FileStatus[0];
       }
-      long minLastDateProcessed = -1;
+      long minOfLatestCollectorTimeStamp = -1;
       for (FileStatus collector : collectors) {
         TreeMap<String, FileStatus> collectorPaths = new TreeMap<String, FileStatus>();
         // check point for this collector
@@ -435,52 +435,41 @@ public class LocalStreamService extends AbstractService implements
             + collector.getPath());
         
         Iterator<FileStatus> it = sortedFiles.iterator();
-        long minEmptyFileDeleted = -1;
         numberOfFilesProcessed = 0;
+        long latestCollectorFileTimeStamp = -1;
         while (it.hasNext() && numberOfFilesProcessed < filesPerCollector) {
           FileStatus file = it.next();
           LOG.debug("Processing " + file.getPath());
-          long deletedFileTimeStamp = processFile(file, currentFile,
+          /*
+           * fileTimeStamp value will be -1 for the files which are already processed
+           */
+          long fileTimeStamp = processFile(file, currentFile,
               checkPointValue, fs, results, collectorPaths);
-          if (deletedFileTimeStamp != -1 && (minEmptyFileDeleted == -1 ||
-              deletedFileTimeStamp < minEmptyFileDeleted)) {
-            minEmptyFileDeleted = deletedFileTimeStamp;
+          if (fileTimeStamp > latestCollectorFileTimeStamp) {
+            latestCollectorFileTimeStamp = fileTimeStamp;
           }
         }
         populateTrash(collectorPaths, trashSet);
         populateCheckpointPathForCollector(checkpointPaths, collectorPaths);
 
-        long lastDateProcessed;
-        if (!collectorPaths.isEmpty()) {
-          lastDateProcessed = getLastProcessedFileDate(collectorPaths);
-        } else {
-          lastDateProcessed = minEmptyFileDeleted;
-        }
-        if (minLastDateProcessed == -1 || (lastDateProcessed != -1 &&
-            lastDateProcessed < minLastDateProcessed)) {
-          minLastDateProcessed = lastDateProcessed;
+        if ((latestCollectorFileTimeStamp < minOfLatestCollectorTimeStamp
+            || minOfLatestCollectorTimeStamp == -1)
+            && latestCollectorFileTimeStamp != -1) {
+          minOfLatestCollectorTimeStamp = latestCollectorFileTimeStamp;
         }
       } // all files in a collector
-      if (minLastDateProcessed != -1) {
-        lastProcessedFile.put(streamName, minLastDateProcessed);
+      if (minOfLatestCollectorTimeStamp != -1) {
+        lastProcessedFile.put(streamName, minOfLatestCollectorTimeStamp);
+      } else {
+        LOG.warn("No new files in " + streamName + " stream");
       }
     }
-  }
-
-  private long getLastProcessedFileDate(TreeMap<String,
-      FileStatus> collectorPaths) {
-    if (collectorPaths != null && collectorPaths.size() > 0) {
-      Entry<String, FileStatus> entry = collectorPaths.firstEntry();
-      Path filePath = entry.getValue().getPath();
-      return CalendarHelper.getDateFromCollectorFileName(filePath.getName());
-    }
-    return -1;
   }
 
   private long processFile(FileStatus file, String currentFile,
       String checkPointValue, FileSystem fs, Map<FileStatus, String> results,
       Map<String, FileStatus> collectorPaths) throws IOException {
-    long lastFileDeleted = -1;
+    long fileTimeStamp = -1;
 
     String fileName = file.getPath().getName();
     if (fileName != null
@@ -491,16 +480,17 @@ public class LocalStreamService extends AbstractService implements
             .toString();
         if (aboveCheckpoint(checkPointValue, fileName)) {
           results.put(file, destDir);
+          fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
           numberOfFilesProcessed++;
         }
         collectorPaths.put(fileName, file);
       } else {
-        lastFileDeleted = CalendarHelper.getDateFromCollectorFileName(fileName);
+        fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
         LOG.info("Empty File [" + file.getPath() + "] found. " + "Deleting it");
         fs.delete(file.getPath(), false);
       }
     }
-    return lastFileDeleted;
+    return fileTimeStamp;
   }
 
   /*
