@@ -23,7 +23,6 @@ import java.util.GregorianCalendar;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
-import org.mortbay.log.Log;
 
 public class CalendarHelper {
   static Logger logger = Logger.getLogger(CalendarHelper.class);
