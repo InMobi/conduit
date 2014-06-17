@@ -452,9 +452,9 @@ public class LocalStreamService extends AbstractService implements
         populateTrash(collectorPaths, trashSet);
         populateCheckpointPathForCollector(checkpointPaths, collectorPaths);
 
-        if (latestCollectorFileTimeStamp != -1
-            && (minOfLatestCollectorTimeStamp == -1
-            || latestCollectorFileTimeStamp < minOfLatestCollectorTimeStamp)) {
+        if ((latestCollectorFileTimeStamp < minOfLatestCollectorTimeStamp
+            || minOfLatestCollectorTimeStamp == -1)
+            && latestCollectorFileTimeStamp != -1) {
           minOfLatestCollectorTimeStamp = latestCollectorFileTimeStamp;
         }
       } // all files in a collector
