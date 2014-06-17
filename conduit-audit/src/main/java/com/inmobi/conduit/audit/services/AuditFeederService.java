@@ -339,6 +339,11 @@ public class AuditFeederService extends AuditDBService {
   }
 
   @Override
+  public String createRolledTableNameForService(Date date) {
+    return createHourTableName(config, date);
+  }
+
+  @Override
   public void execute() {
     if (config.getString(START_TIME_KEY) != null) {
       LOG.info("Starting the run of audit feeder for cluster " + clusterName

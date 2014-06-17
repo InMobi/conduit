@@ -16,13 +16,13 @@ import java.sql.Connection;
 import java.util.Calendar;
 import java.util.Date;
 
-public class TestAuditRollupService extends AuditRollupTestUtil {
+public class TestHourRollupGetFromTime extends AuditRollupTestUtil {
   private AuditRollUpService rollUpService;
 
   @BeforeClass
   public void setup() {
     super.setup();
-    rollUpService = new AuditRollUpService(config);
+    rollUpService = new HourlyRollupService(config);
     cleanUp();
   }
 
@@ -61,21 +61,6 @@ public class TestAuditRollupService extends AuditRollupTestUtil {
     calendar.add(Calendar.MINUTE, -5);
     fromTime = rollUpService.getTimeEnrtyDailyTable(connection, true);
     Assert.assertEquals(calendar.getTime(), fromTime);
-  }
-
-  @Test
-  public void testGetTableNames() {
-    Calendar calendar = Calendar.getInstance();
-    calendar.set(Calendar.YEAR, 2013);
-    calendar.set(Calendar.MONTH, 7);
-    calendar.set(Calendar.DAY_OF_MONTH, 8);
-    Date currentDate = calendar.getTime();
-    String srcTable = rollUpService.createTableName(currentDate, false);
-    Assert.assertEquals("audit20130808", srcTable);
-    String destTable = rollUpService.createTableName(currentDate, true);
-    Assert.assertEquals("hourly_audit20130808", destTable);
-    String destTable2 = rollUpService.createTableName(currentDate, true, true);
-    Assert.assertEquals("daily_audit20130808", destTable2);
   }
 
   @AfterClass

@@ -3,6 +3,8 @@ package com.inmobi.conduit.audit;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.audit.services.AuditRollUpService;
+import com.inmobi.conduit.audit.services.DailyRollupService;
+import com.inmobi.conduit.audit.services.HourlyRollupService;
 import info.ganglia.gmetric4j.gmetric.GMetric;
 import info.ganglia.gmetric4j.gmetric.GMetric.UDPAddressingMode;
 
@@ -52,9 +54,9 @@ public class AuditStats {
           config);
       dbServices.add(feeder);
     }
-    AuditDBService hourlyRollup = new AuditRollUpService(config, false);
+    AuditDBService hourlyRollup = new HourlyRollupService(config);
     dbServices.add(hourlyRollup);
-    AuditDBService dailyRollup = new AuditRollUpService(config, true);
+    AuditDBService dailyRollup = new DailyRollupService(config);
     dbServices.add(dailyRollup);
   }
 

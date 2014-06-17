@@ -197,7 +197,7 @@ public class TestAuditFeeder extends AuditFeederTestUtil {
     AuditFeederService feeder = new AuditFeederServiceTest(cluster, "mock",
         config, publisher);
     feeder.consumer.mark();
-    AuditRollUpService rollUpService = new AuditRollUpService(config);
+    AuditRollUpService rollUpService = new HourlyRollupService(config);
     Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(oldMsgReceived);
     calendar.add(Calendar.DATE, 1);
