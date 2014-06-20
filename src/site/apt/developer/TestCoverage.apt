@@ -1,0 +1,245 @@
+ -----
+ Publish Missing Path Cases 
+ -----
+ -----
+ -----
+
+Publish Missing Path Cases 
+
+
+
+*Common Scenarios
+
+
+ 
+
+ [[1]] no traffic on any of the threads
+
+ [[1]] job taking more time to run \-\> pause job tracker, task tracker to cause job to take more time.
+
+ [[1]] worker is down for sometime.
+
+ [[1]] conduit worker fails to commit for 2\-3 runs \-\> change permissions for /conduit/streams_local/ from w\+
+
+ [[1]] kill \-9 on conduit worker
+
+ []
+
+
+
+
+**LocalStreamService 
+
+
+ 
+
+ [[1]] All the above common scenarios applicable
+
+ []
+
+
+
+
+**MergedStream  
+
+
+ 
+
+ [[1]] no traffic on both the threads
+
+ [[1]] no traffic to one of the threads
+
+ [[1]] traffic to both of them
+
+ [[1]] failure in distcp job because the actual data doesn't exist
+
+ [[1]] doLocalCommit stage failure in merged stream service by changing the permissions of actual destination
+
+ [[1]] do {{{./FinalCommit.html}FinalCommit}} failure by again changing permissions of the right folder.
+
+ []
+
+
+
+
+**MirrorStream 
+
+
+ 1. check that mirror and merged stream are exactly same in all the above scenarios
+
+
+ 
+*----*--*--*--*--*
+|Test Case Scenario||Test Case Type||Implemented||Expected Output||Input Data/Files|
+<p>ConduitConfigParser should parse the XML correctly</p> <p>and populate all the values, should have correct</p> <p></p><p>List of All Streams,Clusters,</p> <p>Source and Destination Streams</p> <p></p><p>Predefined xml as input</p> <p>{{{}}}</p>*----*--*--*--*--*
+cluster objects, defaults and streams|+ve|Yes|as specified in pre defined xml|to ./ConduitConfigParser.htmlConduitConfigParser|
+<p> </p> <p>ConduitConfigParser should throw an Exception for</p> <p></p><p>Exception for unknown values</p> <p>undefined clusters, two merge streams</p> <p></p><p>Malformed xml, xml with invalid</p> <p></p>*----*--*--*--*--*
+incorrect values in XML|-ve|No|other invalid values|values|
+<p> </p> <p>ConduitConfigParser should load conduit.xml found</p> <p>in classpath if null filename is passed, if not found</p> <p></p>*----*--*--*--*--*
+should throw Exception|+ve|Yes|||
+<p> </p> <p>Cluster should have all the fields as per Contract,</p> <p></p>{{{}}}*----*--*--*--*--*
+e.g: hdfsUrl, rootdir etc|+ve|Yes|Part of ./ConduitConfigParser.htmlConduitConfigParser Tests||
+<p> </p> <p>Checkpoint should be created correctly, written and</p> <p></p><p>checkpoint predefined value is read</p> <p></p><p>provide checkpoints with predefined</p> <p></p>*----*--*--*--*--*
+Read Correctly|+ve|Yes|and written correctly|value|
+<p> </p> <p>Conduit should read cfg file correctly, should populate</p> <p>services correctly as per xml, local, merge and purger</p> <p></p><p>should populate correct services</p> <p></p><p>pre defined xml with list of services</p> <p></p>*----*--*--*--*--*
+services|+ve|Yes|as per predefined xml|needs to be populated|
+<p>should return milliseconds to run until</p> <p></p>*----*--*--*--*--*
+Services should return expected Milliseconds to run|+ve|Yes|next minute boundry|provide pre defined commit time|
+<p> </p> <p>Services should create/publish all the Missing Paths,</p> <p></p><p>all the missing paths are published</p> <p>correctly from the dummy path</p> <p></p><p>create a pre defined path at an</p> <p></p>*----*--*--*--*--*
+local/merge/mirror streams|+ve|Yes|creation to now|earlier date aka dummy path|
+<p> </p> <p>Create a LocalStreamService for one of the clusters</p> <p></p><p>End to End Local Stream Service</p> <p></p><p>Pre defined xml for localstream</p> <p></p>*----*--*--*--*--*
+for integration Tests|+ve|Yes|contracts is validated|service only.|
+<p> </p> <p>Create dummy paths in data directory and verify</p> <p>all the paths are correctly listed by localstreamservice</p> <p></p><p>CreateListing returns all the expected</p> <p></p><p>Create dummy paths in data</p> <p>directory and expected results.</p> <p></p>*----*--*--*--*--*
+createlisting|+ve|Yes|paths| |
+<p> </p> <p>Run the service using MiniMRCluster should create</p> <p>all the paths except currentfile in streams_local</p> <p></p><p>End to End LocalStream Service</p> <p></p>*----*--*--*--*--*
+directory and make sure current file is not part of it|+ve|Yes|same as above||
+<p> </p> <p>After running the service check that trash paths are</p> <p>populated correctly with all the paths except current</p> <p></p><p>Make sure there are all files but 6</p> <p></p><p>create dummy data and run</p> <p></p>*----*--*--*--*--*
+file + 6 files|+ve|Yes|present in trash directory|localstream service|
+<p> </p> <p>Make sure only 6 + current file is present in the</p> <p></p><p>Make sure 6 + current file is present</p> <p></p><p>create dummy data and</p> <p></p>*----*--*--*--*--*
+data directory|+ve|Yes|in data directory|run localstream service|
+<p> </p> <p>Make sure the checkpoint file is the last file in the</p> <p></p><p>Make sure that current file - 1 is</p> <p></p>*----*--*--*--*--*
+streams_local directory|+ve|Yes|the checkpoint||
+<p> </p> <p>Repeat the above localstream service for additional</p> <p></p><p>verify that there is no data replay</p> <p></p>*----*--*--*--*--*
+files in data directory|+ve|Yes|all the above tests are repeated||
+<p> </p> <p>Using the above LocalStreamService as the basis,</p> <p>test MergedStream service by defining only merged</p> <p></p>*----*--*--*--*--*
+stream cluster|+ve|Yes|verify contract for merged stream||
+<p> </p> <p>Run the MergedStreamService after localstreamservice</p> <p>make sure all the paths are present in streams</p> <p></p>*----*--*--*--*--*
+directory|+ve|Yes|same as above||
+{{{}}}*----*--*--*--*--*
+Verify about the ./MissingPaths.htmlMissingPaths|+ve|Yes|||
+<p> </p> <p>Repeat the same above for another cycle for</p> <p></p>*----*--*--*--*--*
+mergedstreamservice|+ve|No|||
+<p> </p> <p>Define a MirrorStream service in another xml</p> <p>{{{}}}</p>*----*--*--*--*--*
+and run Local and ./MergedStream.htmlMergedStream service|+ve|Yes|Verify contract for mirror stream||
+{{{}}}*----*--*--*--*--*
+Verify the paths in streams folder for ./MirrorStreamService.htmlMirrorStreamService|+ve|Yes|||
+{{{}}}*----*--*--*--*--*
+Verify publishing of missing paths for ./MirrorStreamService.htmlMirrorStreamService|+ve|Yes|||
+*----*--*--*--*--*
+Make sure there are no exceptions for any runs above|+ve|Yes|||
+*----*--*--*--*--*
+Repeat the above for another run with new data|+ve|No|||
+*----*--*--*--*--*
+Repeat above for another run without new data|+ve|No|||
+<p> </p> <p>Create a Purger Test Service and verify that purging</p> <p>is done correctly for date and retentioninhours should return</p> <p></p>*----*--*--*--*--*
+true/false respectively|+ve|Yes|||
+<p> </p> <p>Run end to end service tests for purger service, create paths in</p> <p>streams_local and run the purger service for different times and</p> <p>verify that paths are deleted or retained depending</p> <p></p>*----*--*--*--*--*
+on retentionperiod|+ve|Yes|||
+<p> </p> <p>Run end to end service tests for purger service, create paths in</p> <p>streams and run the purger service for different times and</p> <p></p>*----*--*--*--*--*
+verify that paths are deleted or retained depending|+ve|Yes|||
+<p> </p> <p>Run end to end service tests for purger service, create paths in</p> <p>streams and run the purger service for different times and</p> <p></p>*----*--*--*--*--*
+verify that paths are deleted or retained depending|+ve|Yes|||
+*----*--*--*--*--*
+Run the purger service again with new data|+ve|No|||
+<p> </p> <p>Run the purger service again with no new data, shouldnt throw</p> <p></p>*----*--*--*--*--*
+and exception|-ve|No|||
+*----*--*--*--*--*
+We have following Test Cases for Respective Services Covering Different Scenarios
+
+
+
+*Conduit\-Core
+
+
+ Has 64% Coverage for following Scenarios
+
+
+ \* {{{./TestCluster.html}TestCluster}}.java \- testBasicCluster \- Uses test\-conduit.xml and makes sure that teh cluster values are correctly populated with known values. For e.g hdfsurl, etc. Defines only a single cluster. Improvement of having multiple clusters defined in xml.
+
+
+ \* {{{./TestConduitConfigParser.html}TestConduitConfigParser}} \- Builds a localcluster of known xml test\-conduit.xml and compares it to known values. Creates a new xml of known values and compares the same making sure all the values are correctly parsed.
+
+
+ \* {{{./TestFileCheckpointProvider.html}TestFileCheckpointProvider}} \- Creates a checkpoint and reads it making sure the checkpoint is saved correctly.
+
+
+ \* TestFSCheckpointProvider \- Tests the same as above with and without HDFS.
+
+
+
+*Conduit\-Worker
+
+
+ Has 68% Coverage for following Scenarios
+
+
+ \* {{{./AbstractServiceTest.html}AbstractServiceTest}} \- Makes sure that milliseconds to next run fall on next minute boundry.
+
+
+ \* {{{./DataPurgerServiceTest.html}DataPurgerServiceTest}} \- Covers the following
+
+
+ 
+
+ * isPurgeTest\* \- Covers various scenarious where the time is advanced and forwarded and made sure isPurge method returns the correct status.
+
+ []
+
+
+
+ 
+
+ * testDefaultRetentionTimes \- Parses the xml test\-retention\-conduit.xml and makes sure the retention times are as mentioned in the xml and also verifies that for streams not defined in the xml a default value as mentioned in xml is returned.
+
+ []
+
+
+
+ 
+
+ * testPurgerService \- Creates services with different values from xml and creates test files and makes sure that merge,local and trash are cleared appropriately. Using different current times.
+
+ []
+\* {{{./LocalStreamServiceTest.html}LocalStreamServiceTest}} \- Covers the following
+
+
+ \* {{{./TestCreateListing.html}TestCreateListing}} \- Verfies that created files are populated correctly, trashset and checkpoints doesnt run the Mapper. Calls {{{./LocalStreamService.html}LocalStreamService}} {{{./CreateListing.html}CreateListing}} Method to Verify.
+
+
+ \* testMapReduce \- Does a Integration test for LocalStreamService, End to End. Creates the data in data folder, Runs the mapper, Verfies that all the compressed files are created, verfies that 6 files are present from checkpoint backwards, makes sure that current file is not moved. Checks for Missing Paths. Makes sure that all trash contains the expected files totalnumberoffiles \- 6 \- currentfile.
+
+
+ \* {{{./MergeMirrorStreamTest.html}MergeMirrorStreamTest}} \- Covers the following
+
+
+ 
+
+ * testMergeMirrorStream \- Runs the service End to End for 2 xml one which defines only the MergeStream and MirrorStream for 1 cluster each and other one 1 Merge and 2 Mirror Streams, Makes sure that LocalStreamService works correctly, Makes sure that data for MergeStream is correctly published and the same for MirrorStream. Tests for Missing Paths for MergedStreamService only.
+
+ []
+The following are performed during the manual tests for conduit
+
+
+ 1. Makes sure the debian package is correctly installed on both the dev machines.
+
+
+ 2. Define xml which contains {{{./MergedStream.html}MergedStream}}, Should test {{{./MirrorStream.html}MirrorStream}} as well.
+
+
+ 3. Run the benchmark test for LOCAL,COLLECTOR and MERGED and make sure data is validated in all cases.
+
+
+ 4. Make sure data is correctly published in data folder in order and timestamps are correct.
+
+
+ 5. Make sure localstream service correctly published data and the commit times are correct and all the files except the current file is published.
+
+
+ 6. Verify that trash paths are correctly populated.
+
+
+ 7. Verify the Purger service purges all the paths which exceeds retentionperiod, try with 2 hours once for trash and other for streams. Change at stream level and make sure its reflected.
+
+
+ 8. Verify that Merged Stream service correctly publishes all the paths.
+
+
+ 9. In all the above cases make sure there are no exceptions.
+
+
+ 10. Pump multiple streams and verify that conduit behaves correctly and no exceptions.
+
+
+ 11. Run benchmark for multiple streams, with multiple producers.
+
+

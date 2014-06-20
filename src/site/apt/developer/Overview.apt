@@ -1,0 +1,119 @@
+ -----
+ Overview
+ -----
+ -----
+ -----
+
+%{toc}
+
+Overview
+
+*What is Conduit used for
+
+ * High throughput, distributed streaming event collection at scale conforming to latencies by conduit. Read the DISCLAIMER below for you need to be extra vigilant using Conduit
+
+ <<DISCLAIMER:>>
+
+ * In extremely rare scenarios (listed below), there can be message replay/loss.
+
+ * Conduit does not gaurantee <<strict>> exactly\-once and inorder mesasage arrival semantics.
+
+ 
+**Near real time latencies through Client Library 
+
+ * Conduit supports consuming data for near real time latiences using message consumer library.
+
+ * Latiences within datacenters are upto 10 sec
+
+ 
+**Batch Consumer Latencies/SLA's 
+
+ * 2\-3 mins for data in local cluster
+
+ * 4\-5 mins for data in merged cluster
+
+ * 6\-7 mins for data in mirrored cluster
+
+ * All latiences are applicable when the system is operational/healthy
+
+ []
+
+
+**Data Delay Scenarios (Batch/Near real time Consumers)
+
+
+ * Grid is running slow/down, capacity issues on grid
+
+ * Both data workers are down
+
+ * Sudden spike in traffic causing conduit collectors enabling flow control
+
+ * Conduit Collectors are down
+
+ * Network Link cross colos is down causing merge/mirror data delays
+
+ []
+
+
+*DataLoss Scenarios
+
+
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+|| Scenario                                                  || How to capture                       || Extent of Data Loss                                                                           |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| Application Bug causes it to crash                         | recieved_good at agent isn't going \  | Inflight messages will be lost as communication between producer library and DatabusAgent is \ |
+|                                                            | up                                    | ASYNC                                                                                          |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| Conduit Agent is down                                      | monitoring of agent, success count \  | AApplication won't be able to connect to agent and messages are lost. Amount of message loss \ |
+|                                                            | going up                              | can be measured through app throughput and down time of agent                                  |
+|                                                            |                                       |                                                                                                |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| Agent is running under-capacity, spikes upto 50-100x in \  | monitor denied_for_rate,  \           | Application throughput and interval during which the agent was sending TRY_LATER can be \      |
+|                                                            | denied_for_queue_size from agent      | used to measure the extent of loss                                                             |
+| traffic                                                    |                                       |                                                                                                |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| Non gracefull shutdown/Crash of Agent \                    | Process/Education to Operations team  | Atmost 1 minute of data which can be cached in memory can get lost\                            |
+|                                                            |                                       |                                                                                                |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| Non graceful shutdown/Crash of Collector \                 | Process/Education to Operations team  | Atmost 1 second of data can get lost \                                                         |
+|                                                            |                                       |                                                                                                |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| No space on Agent to Spool Data and all \                  | Spool space alerting                  | Again dataloss can be measured by how long all collectors were down and agent started to fail \ |
+| Conduit Collectors are down                                |                                       | spool data                                                                                     |
+|                                                            |                                       |                                                                                                |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| No space on Collector to spool and HDFS is down\           | Spool space alerting                  | Collector will push back to agents after they reach their memory cache peak, agent spools and \ |
+|                                                            |                                       | then it doesn't have disk.  \                                                                  |
+|                                                            |                                       |                                                                                                |
+|                                                            |                                       | To measure dataloss here we need to find when the agent stopped spooling and what was the  \   |
+|                                                            |                                       | application througput                                                                          |
+|                                                            |                                       |                                                                                                |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| HDFS all three datanodes went bonkers which have \         | HDFS monitoring                       | Since HDFS doesn't have a POSIX complaint fsync() api this scenario is possible, however the \ |
+| a particular file and they haven't flushed all to disk \   |                                       | probability is rare as we have a replication factor of 3 \                                     |
+|                                                            |                                       |                                                                                                |
+|                                                            |                                       | Atmost 1 minute of data can be lost in this scenario                                           |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+| Data is spooled at agent/collector and before it gets \    | monitoring disk for bad \             | Dataloss is equal to the amount of data spooled                                                |
+| despooled the hard-disk of the box goes bad\               | sectors/other issues                  |                                                                                                |
+|                                                            |                                       |                                                                                                |
+*------------------------------------------------------------+---------------------------------------+------------------------------------------------------------------------------------------------+
+<<Probability of the following scenarios is extremely low however for completness we are enlisting all scenarios below where it can happen>>
+
+*Data Replay Scenarios
+
+
+*---------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| HDFS write() doesn't throw exception, but \ | to avoid dataloss we will call sync() again and in this case atmost 1sec worth of data can be replayed                        |
+| sync() fails                                |                                                                                                                               |
+*---------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| Conduit worker failures due to HDFS errors  | If in a run we publish certain set of files and fail before committing the transaction, the same set can be replayed again \  |
+|                                             | in the next run to avoid data-loss. In most cases the number of files would be equal to number of collectors in LocalStream,\ |
+|                                             | number of collectors multiplied by number of clusters in mergedstream and mirror stream. However if we are processing a \     |
+|                                             | backlog and publish a large number of files and fail to commit the transaction due to HDFS unavalibity then the number \      |
+|                                             | could be higher.                                                                                                              |
+*--------------------------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+<<Probability of the following scenarios is extremely low however for completness we are enlisting all scenarios below where it can happen>>
+
+
+
