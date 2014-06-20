@@ -80,7 +80,7 @@ Overview
  
    [[1]] This test finds the <<mean latency>> (average latency to read all messages). In general, the order of mean latency (for collector/local/merge/mirror) is <<(\<1 min/3\-4 min/4\-5 min/5\-6 min)>>.
  
-   [[1]] This test does not cover <<percentile latency>>. However it should be possible to find percentile latency by using conduit audit feature exposed through audit dashboard. Please refer to {{{./ConduitVisualization.html}Conduit visualization}} for more details.
+   [[1]] This test does not cover <<percentile latency>>. However it should be possible to find percentile latency by using conduit audit feature exposed through audit dashboard. Please refer to {{{./Visualization.html}Conduit visualization}} for more details.
 
 **Throughput
 
