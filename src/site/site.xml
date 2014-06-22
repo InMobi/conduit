@@ -4,14 +4,14 @@
       <item name="Conduit" href="index.html" />
       <item name="Overview" href="developer/Overview.html" />
       <item name="Design" href="developer/Design.html" />
-      <item name="Dev setup" href="developer/DevSetup.html" />
-      <item name="ConduitLite" href="developer/ConduitLite.html" />
-      <item name="Audit" href="developer/Audit.html" />
-      <item name="Visualization" href="developer/Visualization.html"/>
-      <item name="Admin Script" href="developer/AdminScript.html" />
+      <item name="Dev setup" href="DevSetup/DevSetup.html" />
+      <item name="ConduitLite" href="ConduitLite/ConduitLite.html" />
+      <item name="Audit" href="Audit/Audit.html" />
+      <item name="Visualization" href="Visualization/Visualization.html"/>
+      <item name="Admin Script" href="Admin/AdminScript.html" />
+      <item name="Monitoring" href="Monitoring/MonitoringConduit.html" />
     </menu>
 
-    <menu ref="modules" />
     <menu ref="reports"/>
     <breadcrumbs>
       <item name="InMobi" href="http://github.com/inmobi/" />
