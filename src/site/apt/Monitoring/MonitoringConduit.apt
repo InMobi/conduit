@@ -1,0 +1,86 @@
+ -----
+ Configuration
+ -----
+ -----
+ -----
+ 
+Configuration
+ 
+*----*--*--*
+|configName||values||default|
+*----*--*--*
+com.inmobi.databus.metrics.enabled|true / false|false|
+*----*--*--*
+com.inmobi.databus.metrics.period(time between polls)|in seconds|10|
+*----*--*--*
+com.inmobi.databus.metrics.ganglia|true / false|false|
+*----*--*--*
+com.inmobi.databus.metrics.ganglia.serverName|null||
+*----*--*--*
+com.inmobi.databus.metrics.ganglia.port|null||
+*----*--*--*
+com.inmobi.databus.metrics.console|true / false|false|
+*----*--*--*
+com.inmobi.conduit.metrics.slidingwindowtime|in seconds|1|
+*----*--*--*
+
+ Please keep the com.inmobi.conduit.metrics.slidingwindowtime and com.inmobi.databus.metrics.period same to avoid loss of metric. To start with keep both of them as 10.
+
+*Metrics
+ 
+*----+--+--+--+
+|Name||description||context||example|
+*----+--+--+--+
+failures|no of failure, 1 per run|per thread|./LocalStreamService.htmlLocalStreamService.failures.LocalStreamService_testcluster1_test1@|
+*----+--+--+--+
+commit.time|time to commit|per thread|./LocalStreamService.htmlLocalStreamService.commit.time.LocalStreamService_testcluster1_test1@|
+*----+--+--+--+
+filesCopied.count|no of files commited|per stream|./LocalStreamService.htmlLocalStreamService.filesCopied.count.test1|
+*----+--+--+--+
+emptyDir|no of empty dir created|per stream|./LocalStreamService.htmlLocalStreamService.emptyDir.create.test1|
+*----+--+--+--+
+retry.checkPoint|no of checkpoint retries|per stream|./LocalStreamService.htmlLocalStreamService.retry.checkPoint.test1|
+*----+--+--+--+
+retry.mkDir|no of mkdir retries|per stream|./LocalStreamService.htmlLocalStreamService.retry.mkDir.test1|
+*----+--+--+--+
+retry.rename|no of rename retires|per stream|./LocalStreamService.htmlLocalStreamService.retry.rename.test1|
+*----+--+--+--+
+runtime|time taken per run|per thread|./LocalStreamService.htmlLocalStreamService.runtime.LocalStreamService_testcluster1_test1|
+*----+--+--+--+
+purgePaths.count|num of files purged|per thread|./LocalStreamService.htmlDataPurgerService.purgePaths.count.com.inmobi.databus.purge.DataPurgerService|
+*----+--+--+--+
+deleteFailures.count|num of failures happened while deleting paths|per thread|./LocalStreamService.htmlDataPurgerService.deleteFailures.count.com.inmobi.databus.purge.DataPurgerService|
+*----+--+--+--+
+
+*Sample Output
+
+ This sample has been collected using the console reporter
+
++------+
+
+This sample has been collected using the console reporter
+-- Counters ---------------------------------------------------------------------------------------------
+DataPurgerService.failures.com.inmobi.databus.purge.DataPurgerService
+count = 0
+DataPurgerService.purgePaths.count
+count = 0
+DataPurgerService.runtime.com.inmobi.databus.purge.DataPurgerService
+count = 2
+LocalStreamService.commit.time.LocalStreamService_testcluster1_test1@
+count = 0
+LocalStreamService.filesCopied.count.test1
+count = 0
+LocalStreamService.emptyDir.create.test1
+count = 0
+LocalStreamService.failures.LocalStreamService_testcluster1_test1@
+count = 1
+LocalStreamService.retry.checkPoint.test1
+count = 0
+LocalStreamService.retry.mkDir.test1
+count = 0
+LocalStreamService.retry.rename.test1
+count = 0
+LocalStreamService.runtime.LocalStreamService_testcluster1_test1@
+count = 5
+
++------+
