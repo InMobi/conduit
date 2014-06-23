@@ -1,6 +1,15 @@
+ -----
+ Scribe Collector Configuration
+ -----
+ -----
+ -----
 
----+ Scribe Collector Configuration
-<verbatim>
+Scribe Collector Configuration
+
+
+
++------+
+
 <store>
    category=_audit
    type=buffer
@@ -38,11 +47,21 @@
       max_size=128000000
   </secondary>
 </store>
-</verbatim>
-Note:
-In production, please apply the entire set of configuration EXACTLY as mentioned above. You can configure the values of following options:
-   1. 'retry_interval': MUST be same as in existing HDFS based stores
-   1. 'retry_interval_range': MUST be same as in existing HDFS based stores
-   1. 'file_path' in <primary> section: MUST be of the format hdfs://<namenode host>:<namenode:port>/databus/system/data/_audit. E.g:- hdfs://localhost:9000/databus/system/data/_audit
-   1. 'file_path' in <secondary> section: MUST be of the format <spooling directory of scribe collector>/_audit. E.g:- /var/spool/databus/_audit
+
+
++------+
+
+ Note: In production, please apply the entire set of configuration EXACTLY as mentioned above. You can configure the values of following options:
+
+ [[1]] 'retry_interval': MUST be same as in existing HDFS based stores
+
+ [[1]] 'retry_interval_range': MUST be same as in existing HDFS based stores
+
+ [[1]] 'file_path' in <primary> section: MUST be of the format hdfs://<namenode host>:<namenode port>/databus/system/data/_audit. E.g:\- {{{hdfs://localhost:9000/databus/system/data/_audit}hdfs://localhost:9000/databus/system/data/_audit}}
+
+ [[1]] 'file_path' in <secondary> section: MUST be of the format <spooling directory of scribe collector>/_audit. E.g:\- /var/spool/databus/_audit
+
+ []
+
+
 

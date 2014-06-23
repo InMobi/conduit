@@ -1,0 +1,24 @@
+ -----
+ Installing Conduit
+ -----
+ -----
+ -----
+
+%{toc}
+
+Installing Conduit
+ 
+ [[1]] Install & setup  Hadoop
+
+ [[1]] Install & setup {{{./ZooKeeper.html}ZooKeeper}}
+
+ [[1]] Install conduit agents : Package \- scribe\-server\-orig
+
+ [[1]] Install conduit collectors : Package \- scribe\-server\-hdfs\-orig
+
+ [[1]] Install conduit workers : Package \- conduit
+
+ []
+
+
+
