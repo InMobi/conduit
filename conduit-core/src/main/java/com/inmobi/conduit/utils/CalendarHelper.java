@@ -34,12 +34,20 @@ public class CalendarHelper {
 
   public static final ThreadLocal<DateFormat> minDirFormat =
       new ThreadLocal<DateFormat>() {
-        @Override
-        protected SimpleDateFormat initialValue() {
-          return new SimpleDateFormat(minDirFormatStr);
-        }
-      };
+    @Override
+    protected SimpleDateFormat initialValue() {
+      return new SimpleDateFormat(minDirFormatStr);
+    }
+  };
 
+  public static final ThreadLocal<DateFormat> collectorFileFormat =
+      new ThreadLocal<DateFormat>() {
+    @Override
+    protected SimpleDateFormat initialValue() {
+      return new SimpleDateFormat("yyyy" + "-" + "MM" + "-" + "dd" + "-"
+          + "HH" + "-" + "mm");
+    }
+  };
   // TODO - all date/time should be returned in a common time zone GMT
 
   public static Date getDateFromStreamDir(Path streamDirPrefix, Path dir) {
@@ -179,19 +187,26 @@ public class CalendarHelper {
     return calendar.getTime();
   }
 
-  public static long getDateFromCollectorFileName(String name) {
-    String[] splits = name.split(FILENAME_DELIMITER);
-    if (splits.length == 6) {
-      String[] splitOnUnderScore = splits[5].split("_");
-      if (splitOnUnderScore.length == 2) {
-        return getDateHourMinute(Integer.parseInt(splits[1]),
-            Integer.parseInt(splits[2]), Integer.parseInt(splits[3]),
-            Integer.parseInt(splits[4]),
-            Integer.parseInt(splitOnUnderScore[0]))
-            .getTimeInMillis();
-      }
+  public static long getDateFromCollectorFileName(String collectorFileName) {
+    String [] strs = collectorFileName.split("-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}");
+    if (strs.length < 2) {
+      logger.warn("Invalid file name: " + collectorFileName);
+      return -1;
     }
-    return -1;
+    String streamName = strs[0];
+    String dateSubStr = collectorFileName.substring(streamName.length() + 1);
+    String[] str2 = dateSubStr.split("_");
+    if (str2.length < 2) {
+      logger.warn("Invalid file name:" + collectorFileName);
+    }
+    Date timestamp = null;
+    try {
+      timestamp =  collectorFileFormat.get().parse(str2[0]);
+    } catch (ParseException e) {
+      logger.warn("Invalid file name: " + collectorFileName);
+      return -1;
+    }
+    return (timestamp == null) ? -1 : timestamp.getTime();
   }
 
 }
