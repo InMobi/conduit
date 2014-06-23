@@ -247,5 +247,7 @@ public abstract class AuditDBService implements Runnable {
         .MASTER_TABLE_NAME) + AuditDBHelper.TABLE_DATE_FORMATTER.format(date);
   }
 
-  public abstract String createRolledTableNameForService(Date date);
+  public String createRolledTableNameForService(Date date) {
+    return createHourTableName(config, date);
+  }
 }

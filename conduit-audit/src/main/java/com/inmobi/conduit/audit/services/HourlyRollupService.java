@@ -70,11 +70,6 @@ public class HourlyRollupService extends AuditRollUpService {
   }
 
   @Override
-  public String createRolledTableNameForService(Date date) {
-    return createHourTableName(config, date);
-  }
-
-  @Override
   public String getServiceName() {
     return "HourlyRollupService";
   }
