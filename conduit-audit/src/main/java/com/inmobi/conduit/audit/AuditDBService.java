@@ -7,26 +7,31 @@ import com.inmobi.messaging.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
 public abstract class AuditDBService implements Runnable {
-  protected final String rollupChkPtDir, rollupChkPtKey;
+  // Rollup check point directory and key are added to parent class since
+  // Feeder service also needs to read last rolled up table time from the
+  // checkpoint to determine whether or not to add message to tables (in case
+  // of messages read after rollup of that day's table i.e. late messages)
+  protected String rollupChkPtDir, rollupChkPtKey;
   protected final ClientConfig config;
   protected FSCheckpointProvider rollupProvider;
+  protected int tillDays;
 
   protected Thread thread;
   protected volatile boolean isStop = false;
   private static final Log LOG = LogFactory.getLog(AuditDBService.class);
 
-  public AuditDBService (ClientConfig config) {
+  public AuditDBService(ClientConfig config) {
     this.config = config;
+    tillDays = config.getInteger(AuditDBConstants.TILLDAYS_KEY,
+        AuditDBConstants.DEFAULT_HOURLY_ROLLUP_TILLDAYS);
     rollupChkPtDir = config.getString(AuditDBConstants.CHECKPOINT_DIR_KEY);
     rollupChkPtKey = config.getString(AuditDBConstants.CHECKPOINT_KEY,
         AuditDBConstants.DEFAULT_CHECKPOINT_KEY);
@@ -122,9 +127,15 @@ public abstract class AuditDBService implements Runnable {
         LOG.debug("Table dates corresponding to first entry:" +
             AuditDBHelper.DAY_CHK_FORMATTER.format(firstDate) + " and last " +
             "entry:" + AuditDBHelper.DAY_CHK_FORMATTER.format(lastDate));
+        if (firstDate.after(AuditDBHelper.addDaysToCurrentDate(-tillDays))) {
+          LOG.error("First Date of the table is after the till days limit " +
+              "for the service" + AuditDBHelper.addDaysToCurrentDate
+              (-tillDays) + ", returning null start date");
+          return null;
+        }
         Date currentDate = lastDate;
         while (!currentDate.before(firstDate)) {
-          if (checkTableExists(connection, createTableName(currentDate, true)))
+          if (checkTableExists(connection, createRolledTableNameForService(currentDate)))
             return AuditDBHelper.addDaysToGivenDate(currentDate, 1);
           currentDate = AuditDBHelper.addDaysToGivenDate(currentDate, -1);
         }
@@ -221,13 +232,22 @@ public abstract class AuditDBService implements Runnable {
     return false;
   }
 
-  public String createTableName(Date currentDate, boolean isRollupTable) {
-    String tableName = "";
-    if (isRollupTable) {
-      tableName += "hourly_";
-    }
-    tableName += config.getString(AuditDBConstants.MASTER_TABLE_NAME) +
-        AuditDBHelper.TABLE_DATE_FORMATTER.format(currentDate);
-    return tableName;
+  public static String createMinuteTableName(ClientConfig config, Date date) {
+    return config.getString(AuditDBConstants.MASTER_TABLE_NAME) +
+        AuditDBHelper.TABLE_DATE_FORMATTER.format(date);
+  }
+
+  public static String createHourTableName(ClientConfig config, Date date) {
+    return "hourly_" + config.getString(AuditDBConstants
+        .MASTER_TABLE_NAME) + AuditDBHelper.TABLE_DATE_FORMATTER.format(date);
+  }
+
+  public static String createDailyTableName(ClientConfig config, Date date) {
+    return "daily_" + config.getString(AuditDBConstants
+        .MASTER_TABLE_NAME) + AuditDBHelper.TABLE_DATE_FORMATTER.format(date);
+  }
+
+  public String createRolledTableNameForService(Date date) {
+    return createHourTableName(config, date);
   }
 }

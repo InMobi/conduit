@@ -13,30 +13,23 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
 
-public class AuditRollUpService extends AuditDBService {
+public abstract class AuditRollUpService extends AuditDBService {
 
-  final private int rollUpHourOfDay, tilldays;
-  final private long intervalLength;
-  final private String masterTable;
+  final protected int rollUpHourOfDay;
+  final protected String masterTable;
+  protected long intervalLength;
   private static final Log LOG = LogFactory.getLog(AuditRollUpService.class);
 
   public AuditRollUpService(ClientConfig config) {
     super(config);
     rollUpHourOfDay = config.getInteger(AuditDBConstants.ROLLUP_HOUR_KEY, 0);
-    intervalLength = config.getLong(AuditDBConstants.INTERVAL_LENGTH_KEY,
-        3600000l);
     masterTable = config.getString(AuditDBConstants.MASTER_TABLE_NAME);
-    tilldays = config.getInteger(AuditDBConstants.TILLDAYS_KEY);
-    LOG.info("Initialized AuditRollupService with configs rollup hour " +
-        "as:" + rollUpHourOfDay + ", interval length as:" + intervalLength +
-        ", checkpoint directory as " + rollupChkPtDir + " and till days as:" +
-        tilldays);
   }
 
   @Override
   public void stop() {
     isStop = true;
-    //RollupService sleeps for a day between runs so have to interrupt the
+    // RollupService sleeps for a day between runs so have to interrupt the
     // thread on calling stop()
     thread.interrupt();
   }
@@ -102,13 +95,7 @@ public class AuditRollUpService extends AuditDBService {
 
         try {
           if (!isStop) {
-            boolean isCreated = createDailyTable(connection);
-            if (isCreated) {
-              Date markTime = rollupTables(connection);
-              if (markTime != null) {
-                mark(AuditDBHelper.getFirstMilliOfDay(markTime));
-              }
-            }
+            executeRollup(connection);
           }
         } catch (SQLException e) {
           AuditDBHelper.logNextException("SQLException while rollup up " +
@@ -128,7 +115,7 @@ public class AuditRollUpService extends AuditDBService {
     }
   }
 
-  private boolean createDailyTable(Connection connection) {
+  protected boolean createDailyTable(Connection connection) {
     if (!isStop) {
       Date fromDate = new Date();
       Date todate = AuditDBHelper.addDaysToCurrentDate(config.getInteger
@@ -160,7 +147,7 @@ public class AuditRollUpService extends AuditDBService {
           String currentDateString = AuditDBHelper.DAY_CHK_FORMATTER.format(fromDate);
           String nextDayString = AuditDBHelper.DAY_CHK_FORMATTER.format
               (AuditDBHelper.addDaysToGivenDate(fromDate, 1));
-          String dayTable = createTableName(fromDate, false);
+          String dayTable = createMinuteTableName(config, fromDate);
           int index = 1;
           createDailyTableStmt.setString(index++, masterTable);
           createDailyTableStmt.setString(index++, dayTable);
@@ -216,20 +203,6 @@ public class AuditRollUpService extends AuditDBService {
     }
   }
 
-  private Date rollupTables(Connection connection) throws SQLException {
-    if (!isStop) {
-      Date fromTime = getRollupTime();
-      Date toDate = AuditDBHelper.addDaysToCurrentDate(-tilldays);
-      if (fromTime != null && !fromTime.after(toDate)) {
-        return rollupTables(fromTime, toDate, connection);
-      } else {
-        LOG.error("Start time[" + fromTime +"] is after end time[" + toDate
-            + "] for rollup or start time is null");
-      }
-    }
-    return null;
-  }
-
   /**
    * public helper method to rollup daily tables within time range
    * [fromTime, toDate) i.e toDate table will not be rolled up. If rollup of
@@ -252,8 +225,8 @@ public class AuditRollUpService extends AuditDBService {
         LOG.info("Starting roll up of tables from:"+currentDate+" till:"+toDate);
         while (currentDate.before(toDate) && !isStop) {
           Date nextDay = AuditDBHelper.addDaysToGivenDate(currentDate, 1);
-          String srcTable = createTableName(currentDate, false);
-          String destTable = createTableName(currentDate, true);
+          String srcTable = getSourceTable(connection, currentDate);
+          String destTable = createRolledTableNameForService(currentDate);
           Long firstMillisOfDay = AuditDBHelper.getFirstMilliOfDay(currentDate);
           Long firstMillisOfNextDay = AuditDBHelper.getFirstMilliOfDay(nextDay);
           int index = 1;
@@ -289,8 +262,15 @@ public class AuditRollUpService extends AuditDBService {
     return currentDate;
   }
 
-  @Override
-  public String getServiceName() {
-    return "RollUpService";
+  protected abstract Date rollupTables(Connection connection) throws
+      SQLException;
+
+  protected abstract void executeRollup(Connection connection) throws
+      SQLException;
+
+  protected abstract String getSourceTable(Connection connection, Date date);
+
+  public int getTillDays() {
+    return tillDays;
   }
 }

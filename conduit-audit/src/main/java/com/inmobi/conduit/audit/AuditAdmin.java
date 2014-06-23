@@ -1,5 +1,7 @@
 package com.inmobi.conduit.audit;
 
+import com.inmobi.conduit.audit.services.DailyRollupService;
+import com.inmobi.conduit.audit.services.HourlyRollupService;
 import com.inmobi.conduit.audit.util.AuditDBHelper;
 import com.inmobi.conduit.audit.services.AuditRollUpService;
 import com.inmobi.conduit.audit.util.AuditDBConstants;
@@ -24,15 +26,25 @@ public class AuditAdmin {
 
     int run = 0;
     String date = null;
+    boolean isDaily = false;
     if (args[0].equals("-rollup")) {
       run = 1;
+      if (args[1].equals("-daily")) {
+        isDaily = true;
+      }
     } else if (args[0].equals("-create")) {
       run = 2;
     } else if (args[0].equals("-checkpoint")) {
       run = 3;
+      if (args[1].equals("-daily")) {
+        isDaily = true;
+      }
     } else if (args[0].equals("-check")) {
       if (args[1].equals("-rolledup")) {
         run = 4;
+        if (args[1].equals("-daily")) {
+          isDaily = true;
+        }
       } else if (args[1].equals("-created")) {
         run = 5;
       }
@@ -59,33 +71,49 @@ public class AuditAdmin {
 
     ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants
         .FEEDER_CONF_FILE);
-    AuditRollUpService rollUpService = new AuditRollUpService(config);
+    AuditRollUpService rollUpService = null;
+    if (isDaily) {
+      try {
+        rollUpService = new DailyRollupService(config);
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.out.println("Incorrect config in audit-feeder.properties");
+        System.exit(-1);
+      }
+    } else {
+      rollUpService = new HourlyRollupService(config);
+    }
 
-    boolean isSuccess;
+    boolean isSuccess = false;
     try {
-      switch(run) {
-        case 1:
-          isSuccess = rollupDayTable(rollUpService, currentDate, numDays,
-              config);
-          break;
-        case 2:
-          isSuccess = createDayTable(rollUpService, currentDate,
-              numDays, config);
-          break;
-        case 3:
-          isSuccess = checkpointRollupToDate(rollUpService, currentDate);
-          break;
-        case 4:
-          isSuccess = checkTableExists(rollUpService, currentDate, numDays,
-              config, true);
-          break;
-        case 5:
-          isSuccess = checkTableExists(rollUpService, currentDate, numDays,
-              config, false);
-          break;
-        default:
-          System.out.println("Invalid run option");
-          isSuccess = false;
+      if (rollUpService != null) {
+        switch(run) {
+          case 1:
+            isSuccess = rollupDayTable(rollUpService, currentDate, numDays,
+                config);
+            break;
+          case 2:
+            isSuccess = createDayTable(rollUpService, currentDate,
+                numDays, config);
+            break;
+          case 3:
+            isSuccess = checkpointRollupToDate(rollUpService, currentDate);
+            break;
+          case 4:
+            isSuccess = checkTableExists(rollUpService, currentDate, numDays,
+                config, true);
+            break;
+          case 5:
+            isSuccess = checkTableExists(rollUpService, currentDate, numDays,
+                config, false);
+            break;
+          default:
+            System.out.println("Invalid run option");
+            isSuccess = false;
+        }
+      } else {
+        System.out.println("Rollupservice initialized is null, returning");
+        System.exit(-1);
       }
     } catch (SQLException e) {
       AuditDBHelper.logNextException("Exception thrown", e);
@@ -130,7 +158,12 @@ public class AuditAdmin {
           config.getString(AuditDBConstants.DB_PASSWORD));
       for (int i = 0; i < numDays; i++) {
         Date currentDate = AuditDBHelper.addDaysToGivenDate(date, i);
-        String tableName = service.createTableName(currentDate, isRolledUp);
+        String tableName;
+        if (isRolledUp) {
+          tableName = service.createRolledTableNameForService(currentDate);
+        } else {
+          tableName = AuditDBService.createMinuteTableName(config, currentDate);
+        }
         boolean isExists = service.checkTableExists(connection, tableName);
         if (!isExists) {
           isSuccess = false;
@@ -229,8 +262,8 @@ public class AuditAdmin {
           config.getString(AuditDBConstants.DB_URL),
           config.getString(AuditDBConstants.DB_USERNAME),
           config.getString(AuditDBConstants.DB_PASSWORD));
-      Date upperLimitDate = AuditDBHelper.addDaysToCurrentDate(-1 * config.getInteger
-          (AuditDBConstants.TILLDAYS_KEY));
+      Date upperLimitDate = AuditDBHelper.addDaysToCurrentDate(-1 * service
+          .getTillDays());
       if (!fromDate.before(upperLimitDate)) {
         System.out.println("Incorrect day passed: day after rollup upper " +
             "limit i.e " + formatter.format(upperLimitDate));
@@ -275,10 +308,11 @@ public class AuditAdmin {
 
   private static void printUsage() {
     System.out.println("Usage:");
-    System.out.println("-rollup -date <dd-mm-yyyy> [-n <number of days>] --conf <conf path>");
+    System.out.println("-rollup [-daily] -date <dd-mm-yyyy> [-n " +
+        "<number of days>] --conf <conf path>");
     System.out.println("-create -date <dd-mm-yyyy> [-n <number of days>] --conf <conf path>");
-    System.out.println("-checkpoint -date <dd-mm-yyyy> --conf <conf path>");
-    System.out.println("-check -rolledup -date <dd-mm-yyyy> [-n <number of days to check>] --conf <conf path>");
+    System.out.println("-checkpoint -date [-daily] <dd-mm-yyyy> --conf <conf path>");
+    System.out.println("-check -rolledup [-daily] -date <dd-mm-yyyy> [-n <number of days to check>] --conf <conf path>");
     System.out.println("-check -created -date <dd-mm-yyyy> [-n <number of days to check>] --conf <conf path>");
   }
 }
