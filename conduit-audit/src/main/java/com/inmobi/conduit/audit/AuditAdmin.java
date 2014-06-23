@@ -71,38 +71,49 @@ public class AuditAdmin {
 
     ClientConfig config = ClientConfig.loadFromClasspath(AuditDBConstants
         .FEEDER_CONF_FILE);
-    AuditRollUpService rollUpService;
+    AuditRollUpService rollUpService = null;
     if (isDaily) {
-      rollUpService = new DailyRollupService(config);
+      try {
+        rollUpService = new DailyRollupService(config);
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.out.println("Incorrect config in audit-feeder.properties");
+        System.exit(-1);
+      }
     } else {
       rollUpService = new HourlyRollupService(config);
     }
 
-    boolean isSuccess;
+    boolean isSuccess = false;
     try {
-      switch(run) {
-        case 1:
-          isSuccess = rollupDayTable(rollUpService, currentDate, numDays,
-              config);
-          break;
-        case 2:
-          isSuccess = createDayTable(rollUpService, currentDate,
-              numDays, config);
-          break;
-        case 3:
-          isSuccess = checkpointRollupToDate(rollUpService, currentDate);
-          break;
-        case 4:
-          isSuccess = checkTableExists(rollUpService, currentDate, numDays,
-              config, true);
-          break;
-        case 5:
-          isSuccess = checkTableExists(rollUpService, currentDate, numDays,
-              config, false);
-          break;
-        default:
-          System.out.println("Invalid run option");
-          isSuccess = false;
+      if (rollUpService != null) {
+        switch(run) {
+          case 1:
+            isSuccess = rollupDayTable(rollUpService, currentDate, numDays,
+                config);
+            break;
+          case 2:
+            isSuccess = createDayTable(rollUpService, currentDate,
+                numDays, config);
+            break;
+          case 3:
+            isSuccess = checkpointRollupToDate(rollUpService, currentDate);
+            break;
+          case 4:
+            isSuccess = checkTableExists(rollUpService, currentDate, numDays,
+                config, true);
+            break;
+          case 5:
+            isSuccess = checkTableExists(rollUpService, currentDate, numDays,
+                config, false);
+            break;
+          default:
+            System.out.println("Invalid run option");
+            isSuccess = false;
+        }
+      } else {
+        System.out.println("Rollupservice initialized is null, returning");
+        System.exit(-1);
       }
     } catch (SQLException e) {
       AuditDBHelper.logNextException("Exception thrown", e);

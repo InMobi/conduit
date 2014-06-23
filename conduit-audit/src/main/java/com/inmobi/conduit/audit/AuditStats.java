@@ -2,7 +2,6 @@ package com.inmobi.conduit.audit;
 
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
-import com.inmobi.conduit.audit.services.AuditRollUpService;
 import com.inmobi.conduit.audit.services.DailyRollupService;
 import com.inmobi.conduit.audit.services.HourlyRollupService;
 import info.ganglia.gmetric4j.gmetric.GMetric;
@@ -149,24 +148,27 @@ public class AuditStats {
   }
 
   public static void main(String args[]) throws Exception {
-    final AuditStats stats = new AuditStats();
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        stats.stop();
-        stats.join();
-        LOG.info("Finishing the shutdown hook");
-      }
-    });
-    // TODO check if current table exist else create it.NOTE:This will be done
-    // in next version
-
     try {
-      stats.start();
-      // wait for all dbServices to finish
-      stats.join();
-    } finally {
-      stats.stop();
+      final AuditStats stats = new AuditStats();
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          stats.stop();
+          stats.join();
+          LOG.info("Finishing the shutdown hook");
+        }
+      });
+
+      try {
+        stats.start();
+        // wait for all dbServices to finish
+        stats.join();
+      } finally {
+        stats.stop();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.exit(-1);
     }
   }
 }

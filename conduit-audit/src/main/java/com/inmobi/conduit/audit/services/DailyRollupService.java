@@ -6,6 +6,7 @@ import com.inmobi.messaging.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
@@ -29,8 +30,8 @@ public class DailyRollupService extends AuditRollUpService {
     if (tillDays <= hourlyTilldays) {
       LOG.error("Passed configs for daily.rollup.tilldays[" + tillDays +
           "] is less than rollup.tilldays[" + hourlyTilldays + "]");
-      tillDays = hourlyTilldays + AuditDBConstants.DEFAULT_GAP_BTW_ROLLUP_TILLDAYS;
-      LOG.info("Reset daily.rollup.tilldays to " + tillDays);
+      throw new RuntimeException("Incorrect config passed daily.rollup" +
+          ".tilldays should be greater than rollup.tilldays");
     }
     LOG.info("Initialized " + getServiceName() + " with configs rollup hour " +
         "as: " + rollUpHourOfDay + ", interval length as:" + intervalLength +
