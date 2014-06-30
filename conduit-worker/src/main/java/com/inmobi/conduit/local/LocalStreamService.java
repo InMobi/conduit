@@ -78,7 +78,7 @@ public class LocalStreamService extends AbstractService implements
   private Path tmpJobOutputPath;
   private final int FILES_TO_KEEP = 6;
   private int filesPerCollector = 10;
-  private long timeoutToProcessLastCollectorFile = 60 * MILLISECONDS_IN_MINUTE;
+  private long timeoutToProcessLastCollectorFile = 60;
   private boolean processLastFile = false;
   private int numberOfFilesProcessed = 0;
 
@@ -600,9 +600,8 @@ public class LocalStreamService extends AbstractService implements
 
     // get last file from set
     FileStatus lastFile = sortedFiles.last();
-    long currentTimeInMillis = System.currentTimeMillis();
-    if ((currentTimeInMillis - lastFile.getModificationTime())
-        > timeoutToProcessLastCollectorFile) {
+    long diff = (System.currentTimeMillis() - lastFile.getModificationTime()) / MILLISECONDS_IN_MINUTE;
+    if (diff > timeoutToProcessLastCollectorFile) {
       processLastFile = true;
     } else {
       processLastFile = false;

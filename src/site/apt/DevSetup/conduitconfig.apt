@@ -38,7 +38,7 @@
 *----+------+------+
 | com.inmobi.conduit.filesPerCollectorPerLocalStream  | It can only process max number of files per collector in each run | Optional  |
 *----+------+------+
-| com.inmobi.conduit.timeoutToProcessLastCollectorFile | How much time it has to wait before processing the last file (only for LocalStream Service) | Optional  |
+| com.inmobi.conduit.timeoutToProcessLastCollectorFile | How much time (in minutes) it has to wait before processing the last file (only for LocalStream Service) | Optional  |
 *----+------+------+
 | com.inmobi.conduit.metrics.enabled |  enable conduit-worket metrics  | Optional  |
 *----+------+------+
