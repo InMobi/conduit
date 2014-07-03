@@ -146,7 +146,8 @@ public class Visualization implements EntryPoint, ClickHandler {
     endtime.setText(DateUtils.getBaseDateStringFromAuditDateFormat(endTime));
     stDatePicker.setValue(DateUtils.getDateFromAuditDateFormatString(stTime));
     endDatePicker.setValue(DateUtils.getDateFromAuditDateFormatString(endTime));
-    setSelectedInListBox(stTimeHour, DateUtils.getHourFromAuditDateFormatString(stTime));
+    setSelectedInListBox(stTimeHour,
+        DateUtils.getHourFromAuditDateFormatString(stTime));
     setSelectedInListBox(stTimeMinute,
         DateUtils.getMinuteFromAuditDateFormatString(stTime));
     setSelectedInListBox(edTimeHour,
@@ -433,8 +434,9 @@ public class Visualization implements EntryPoint, ClickHandler {
           Style.Display.BLOCK);
       getTopologyData(clientJson);
       getTierLatencyData(clientJson);
+    } else {
+      getTimeLineData(clientJson);
     }
-    getTimeLineData(clientJson);
     clearAndShowLoadingSymbol(viewId);
   }
 
@@ -448,16 +450,17 @@ public class Visualization implements EntryPoint, ClickHandler {
     currentRequest = serviceInstance.getTopologyData(clientJson,
         new AsyncCallback<String>() {
 
-      public void onFailure(Throwable caught) {
-        caught.printStackTrace();
-      }
+          public void onFailure(Throwable caught) {
+            caught.printStackTrace();
+          }
 
-      public void onSuccess(String result) {
-        String topologyJson = ClientDataHelper.getInstance()
-            .getJsonFromTopologyDataResponse(result);
-        drawGraph(topologyJson);
-      }
-    });
+          public void onSuccess(String result) {
+            String topologyJson = ClientDataHelper.getInstance()
+                .getJsonFromTopologyDataResponse(result);
+            System.out.println("topologyJson:"+topologyJson);
+            drawGraph(topologyJson);
+          }
+        });
 
     currentRequests.put(ClientConstants.TOPOLOGY_REQUEST, currentRequest);
   }
@@ -503,6 +506,8 @@ public class Visualization implements EntryPoint, ClickHandler {
             .getTimeLineJSONFromResponse(result);
         int timeBucket = ClientDataHelper.getInstance().getTimeBucketForTrend
             (result);
+        System.out.println("timeLineJson:"+timeLineJson);
+        System.out.println("timeBucket:"+timeBucket);
         renderTimeLineGraph(timeLineJson, timeBucket);
       }
     });
