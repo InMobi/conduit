@@ -38,4 +38,5 @@ public class ServerConstants {
   public static final String MAX_TIME_RANGE_INTERVAL_IN_HOURS = "timeRange";
   public static final String LOSS_WARN_THRESHOLD_DIFF_IN_MINS = "threshold";
   public static final String ROLLEDUP_TILL_DAYS = "rollup.tilldays";
+  public static final String DAILY_ROLLEDUP_TILL_DAYS = "daily.rollup.tilldays";
 }
