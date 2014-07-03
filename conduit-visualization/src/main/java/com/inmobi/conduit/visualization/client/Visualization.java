@@ -277,6 +277,14 @@ public class Visualization implements EntryPoint, ClickHandler {
         } else {
           stTimeMinute.setEnabled(true);
         }
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
+            Integer.parseInt(clientConfig.get(
+                ClientConstants.DAILY_ROLLEDUP_TILL_DAYS)))) {
+          stTimeMinute.setSelectedIndex(1);
+          stTimeHour.setEnabled(false);
+        } else {
+          stTimeHour.setEnabled(true);
+        }
         stcalendarPopup.hide();
       }
     });
@@ -290,6 +298,14 @@ public class Visualization implements EntryPoint, ClickHandler {
           edTimeMinute.setEnabled(false);
         } else {
           edTimeMinute.setEnabled(true);
+        }
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
+            Integer.parseInt(clientConfig.get(
+                ClientConstants.DAILY_ROLLEDUP_TILL_DAYS)))) {
+          edTimeHour.setSelectedIndex(1);
+          edTimeHour.setEnabled(false);
+        } else {
+          edTimeHour.setEnabled(true);
         }
         etcalendarPopup.hide();
       }

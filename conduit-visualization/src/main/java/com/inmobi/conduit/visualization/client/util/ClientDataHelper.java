@@ -108,6 +108,8 @@ public class ClientDataHelper {
         .getClientConfig().getWarnLossThresholdDiff());
     configMap.put(ClientConstants.ROLLEDUP_TILL_DAYS, response.getLoadMainPanelResponse()
         .getClientConfig().getRolleduptilldays());
+    configMap.put(ClientConstants.DAILY_ROLLEDUP_TILL_DAYS, response.getLoadMainPanelResponse()
+        .getClientConfig().getDailyRolledUpTillDays());
     return configMap;
   }
 
