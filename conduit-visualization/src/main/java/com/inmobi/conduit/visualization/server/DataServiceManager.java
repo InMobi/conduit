@@ -6,10 +6,12 @@ import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.audit.Tier;
 import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
+import com.inmobi.conduit.audit.util.AuditDBConstants;
 import com.inmobi.conduit.audit.util.AuditDBHelper;
 import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
 import com.inmobi.conduit.visualization.server.util.ServerDataHelper;
 import com.inmobi.messaging.ClientConfig;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -36,6 +38,7 @@ public class DataServiceManager {
       feederPropertiesPath = ServerConstants.FEEDER_PROPERTIES_DEFAULT_PATH;
     }
     feederConfig = ClientConfig.load(feederPropertiesPath);
+    validateRollUpProperties();
     properties = new VisualizationProperties(visualizationPropertiesPath);
 
     String log4jFilePath = properties.get(ServerConstants
@@ -50,6 +53,20 @@ public class DataServiceManager {
     if (init) {
       String folderPath = properties.get(ServerConstants.CONDUIT_XML_PATH);
       initConfig(folderPath);
+    }
+  }
+
+  private void validateRollUpProperties() {
+    int hourlyTilldays = feederConfig.getInteger(AuditDBConstants.TILLDAYS_KEY,
+        AuditDBConstants.DEFAULT_HOURLY_ROLLUP_TILLDAYS);
+    int dailyTillDays = feederConfig.getInteger(AuditDBConstants
+        .DAILY_ROLLUP_TILLDAYS_KEY, hourlyTilldays + AuditDBConstants
+        .DEFAULT_GAP_BTW_ROLLUP_TILLDAYS);
+    if (dailyTillDays <= hourlyTilldays) {
+      LOG.error("Passed configs for daily.rollup.tilldays[" + dailyTillDays +
+          "] is less than rollup.tilldays[" + hourlyTilldays + "]");
+      throw new RuntimeException("Incorrect config passed daily.rollup" +
+          ".tilldays should be greater than rollup.tilldays");
     }
   }
 

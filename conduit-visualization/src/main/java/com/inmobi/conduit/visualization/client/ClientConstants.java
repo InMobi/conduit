@@ -1,5 +1,7 @@
 package com.inmobi.conduit.visualization.client;
 
+import com.inmobi.conduit.audit.util.AuditDBConstants;
+
 public class ClientConstants {
   public static final String QUERY_CLUSTER = "qcluster";
   public static final String QUERY_STREAM = "qstream";
@@ -25,6 +27,7 @@ public class ClientConstants {
   public static final String LOSS_WARN_THRESHOLD_DIFF =
       "lossWarnThresholdDiff";
   public static final String ROLLEDUP_TILL_DAYS = "rollup.tilldays";
+  public static final String DAILY_ROLLEDUP_TILL_DAYS = AuditDBConstants.DAILY_ROLLUP_TILLDAYS_KEY;
 
   public static final String TREND_VIEW = "Trend";
   public static final String TOPOLOGY_TREND_VIEW = "Topology & Trend";
