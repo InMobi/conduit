@@ -1,7 +1,5 @@
 package com.inmobi.conduit.visualization.client;
 
-import com.inmobi.conduit.audit.util.AuditDBConstants;
-
 public class ClientConstants {
   public static final String QUERY_CLUSTER = "qcluster";
   public static final String QUERY_STREAM = "qstream";
