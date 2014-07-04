@@ -41,6 +41,7 @@ public class Visualization implements EntryPoint, ClickHandler {
       new ArrayList<String>();
   private Map<String, String> clientConfig;
   private int rolledUpTillDays;
+  private int dailyRolledUpTillDays;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
 
   public void onModuleLoad() {
@@ -82,6 +83,8 @@ public class Visualization implements EntryPoint, ClickHandler {
         setConfiguration();
         rolledUpTillDays = Integer.parseInt(clientConfig.get(ClientConstants
             .ROLLEDUP_TILL_DAYS));
+        dailyRolledUpTillDays = Integer.parseInt(clientConfig.get(
+            ClientConstants.DAILY_ROLLEDUP_TILL_DAYS));
         loadMainPanel();
       }
     });
@@ -158,10 +161,20 @@ public class Visualization implements EntryPoint, ClickHandler {
     } else {
       stTimeMinute.setEnabled(true);
     }
+    if (DateUtils.checkSelectedDateRolledUp(stTime, dailyRolledUpTillDays, true)) {
+      stTimeHour.setEnabled(false);
+    } else {
+      stTimeHour.setEnabled(true);
+    }
     if (DateUtils.checkSelectedDateRolledUp(endTime, rolledUpTillDays, true)) {
       edTimeMinute.setEnabled(false);
     } else {
       edTimeMinute.setEnabled(true);
+    }
+    if (DateUtils.checkSelectedDateRolledUp(endTime, dailyRolledUpTillDays, true)) {
+      edTimeHour.setEnabled(false);
+    } else {
+      edTimeHour.setEnabled(true);
     }
     setSelectedInListBox(clusterList, cluster);
     setSelectedInListBox(streamsList, stream);
@@ -264,6 +277,14 @@ public class Visualization implements EntryPoint, ClickHandler {
         } else {
           stTimeMinute.setEnabled(true);
         }
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
+            Integer.parseInt(clientConfig.get(
+                ClientConstants.DAILY_ROLLEDUP_TILL_DAYS)))) {
+          stTimeHour.setSelectedIndex(1);
+          stTimeHour.setEnabled(false);
+        } else {
+          stTimeHour.setEnabled(true);
+        }
         stcalendarPopup.hide();
       }
     });
@@ -277,6 +298,14 @@ public class Visualization implements EntryPoint, ClickHandler {
           edTimeMinute.setEnabled(false);
         } else {
           edTimeMinute.setEnabled(true);
+        }
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
+            Integer.parseInt(clientConfig.get(
+                ClientConstants.DAILY_ROLLEDUP_TILL_DAYS)))) {
+          edTimeHour.setSelectedIndex(1);
+          edTimeHour.setEnabled(false);
+        } else {
+          edTimeHour.setEnabled(true);
         }
         etcalendarPopup.hide();
       }
