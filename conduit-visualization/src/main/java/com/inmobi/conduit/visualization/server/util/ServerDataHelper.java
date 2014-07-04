@@ -225,9 +225,10 @@ public class ServerDataHelper {
             .setMergeSla(properties.get(ServerConstants.MERGE_SLA))
             .setMirrorSla(properties.get(ServerConstants.MIRROR_SLA))
             .setRolleduptilldays(feederConfig.getString(ServerConstants
-                .ROLLEDUP_TILL_DAYS, "2"))
+                .ROLLEDUP_TILL_DAYS, ServerConstants.DEFAULT_HOURLY_ROLLUP_TILLDAYS))
             .setDailyRolledupTilldays(feederConfig.getString(
-                ServerConstants.DAILY_ROLLEDUP_TILL_DAYS, "30"))
+                ServerConstants.DAILY_ROLLEDUP_TILL_DAYS,
+                ServerConstants.DEFAULT_GAP_BTW_ROLLUP_TILLDAYS))
             .build();
     RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
         RequestResponse.LoadMainPanelResponse.newBuilder()
