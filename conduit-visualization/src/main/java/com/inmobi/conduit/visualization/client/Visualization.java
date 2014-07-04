@@ -297,9 +297,7 @@ public class Visualization implements EntryPoint, ClickHandler {
         } else {
           edTimeMinute.setEnabled(true);
         }
-        if (DateUtils.checkSelectedDateRolledUp(selectedDate,
-            Integer.parseInt(clientConfig.get(
-                ClientConstants.DAILY_ROLLEDUP_TILL_DAYS)))) {
+        if (DateUtils.checkSelectedDateRolledUp(selectedDate, dailyRolledUpTillDays)) {
           edTimeHour.setSelectedIndex(1);
           edTimeHour.setEnabled(false);
         } else {
