@@ -81,10 +81,10 @@ public class Visualization implements EntryPoint, ClickHandler {
 
         checkIfGWTDevMode();
         setConfiguration();
-        rolledUpTillDays = Integer.parseInt(clientConfig.get(ClientConstants
-            .ROLLEDUP_TILL_DAYS));
-        dailyRolledUpTillDays = Integer.parseInt(clientConfig.get(
-            ClientConstants.DAILY_ROLLEDUP_TILL_DAYS));
+        rolledUpTillDays = ClientDataHelper.getInstance()
+            .getRolledUpTillDaysFromResponse(result);
+        dailyRolledUpTillDays = ClientDataHelper.getInstance()
+            .getDailyRolledUpTillDaysFromResponse(result);
         loadMainPanel();
       }
     });
@@ -270,16 +270,14 @@ public class Visualization implements EntryPoint, ClickHandler {
             DateUtils.BASE_DATE_FORMATTER.format(selectedDate);
         startTime.setText(selectedDateString);
         if (DateUtils.checkSelectedDateRolledUp(selectedDate,
-            Integer.parseInt(
-                clientConfig.get(ClientConstants.ROLLEDUP_TILL_DAYS)))) {
+            rolledUpTillDays)) {
           stTimeMinute.setSelectedIndex(1);
           stTimeMinute.setEnabled(false);
         } else {
           stTimeMinute.setEnabled(true);
         }
         if (DateUtils.checkSelectedDateRolledUp(selectedDate,
-            Integer.parseInt(clientConfig.get(
-                ClientConstants.DAILY_ROLLEDUP_TILL_DAYS)))) {
+            dailyRolledUpTillDays)) {
           stTimeHour.setSelectedIndex(1);
           stTimeHour.setEnabled(false);
         } else {
