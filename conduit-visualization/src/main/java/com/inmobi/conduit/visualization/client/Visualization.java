@@ -280,7 +280,7 @@ public class Visualization implements EntryPoint, ClickHandler {
         if (DateUtils.checkSelectedDateRolledUp(selectedDate,
             Integer.parseInt(clientConfig.get(
                 ClientConstants.DAILY_ROLLEDUP_TILL_DAYS)))) {
-          stTimeMinute.setSelectedIndex(1);
+          stTimeHour.setSelectedIndex(1);
           stTimeHour.setEnabled(false);
         } else {
           stTimeHour.setEnabled(true);
