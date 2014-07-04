@@ -8,6 +8,7 @@ import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
 import com.inmobi.conduit.visualization.server.*;
 import com.inmobi.conduit.visualization.shared.RequestResponse;
 import com.inmobi.messaging.ClientConfig;
+
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -225,6 +226,8 @@ public class ServerDataHelper {
             .setMirrorSla(properties.get(ServerConstants.MIRROR_SLA))
             .setRolleduptilldays(feederConfig.getString(ServerConstants
                 .ROLLEDUP_TILL_DAYS, "2"))
+            .setDailyRolledupTilldays(feederConfig.getString(
+                ServerConstants.DAILY_ROLLEDUP_TILL_DAYS, "30"))
             .build();
     RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
         RequestResponse.LoadMainPanelResponse.newBuilder()
