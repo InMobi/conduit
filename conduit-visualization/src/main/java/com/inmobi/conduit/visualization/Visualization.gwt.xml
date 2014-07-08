@@ -3,6 +3,8 @@
   <script src="common.js"></script>
   <script src="timeline.js"></script>
   <script src="summary.js"></script>
+  <script src="mapbuilder.js"></script>
+  <script src="treebuilder.js"></script>
   <script src="topology.js"></script>
   <!-- Inherit the core Web Toolkit stuff.                        -->
   <inherits name='com.google.gwt.user.User'/>
