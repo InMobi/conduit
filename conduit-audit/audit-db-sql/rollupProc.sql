@@ -49,9 +49,13 @@ DECLARE
  pkeyname text;
  pkeyconstraint text;
  rowsRet int;
+ currentTime bigint;
+ nextDay bigint;
 BEGIN
 pkeyname = dayTable || '_pkey';
-checkconstraint = 'CHECK(timeinterval >= extract (epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint AND timeinterval < extract(epoch from timestamp ' || quote_literal(nextDayTime) || ')*1000::bigint )';
+execute 'select extract (epoch from timestamp ' || quote_literal(currentTimeStamp) || ')*1000::bigint' into currentTime;
+execute 'select extract (epoch from timestamp ' || quote_literal(nextDayTime) || ')*1000::bigint' into nextDay;
+checkconstraint = 'CHECK(timeinterval >= ' || currentTime || ' AND timeinterval < ' || nextDay || ')';
 pkeyconstraint = 'CONSTRAINT ' || pkeyname || ' PRIMARY KEY (timeinterval, cluster, topic, hostname, tier)';
 createTable = 'CREATE TABLE IF NOT EXISTS ' || dayTable || '(' || checkconstraint || ', ' || pkeyconstraint || ') INHERITS (' || masterTable || ')';
 EXECUTE createTable;

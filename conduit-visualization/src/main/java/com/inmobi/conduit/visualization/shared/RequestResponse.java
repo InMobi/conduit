@@ -2279,13 +2279,13 @@ public final class RequestResponse {
     public boolean hasMirrorSla() { return hasMirrorSla; }
     public java.lang.String getMirrorSla() { return mirrorSla_; }
     
-    // optional string rolleduptilldays = 15;
+    // optional int32 rolleduptilldays = 15;
     public static final int ROLLEDUPTILLDAYS_FIELD_NUMBER = 15;
     private boolean hasRolleduptilldays;
     @com.google.protobuf.gwt.shared.FieldNumber(15)
-    private java.lang.String rolleduptilldays_ = "";
+    private int rolleduptilldays_ = 0;
     public boolean hasRolleduptilldays() { return hasRolleduptilldays; }
-    public java.lang.String getRolleduptilldays() { return rolleduptilldays_; }
+    public int getRolleduptilldays() { return rolleduptilldays_; }
     
     // optional string timeTickInterval = 16;
     public static final int TIMETICKINTERVAL_FIELD_NUMBER = 16;
@@ -2294,6 +2294,14 @@ public final class RequestResponse {
     private java.lang.String timeTickInterval_ = "";
     public boolean hasTimeTickInterval() { return hasTimeTickInterval; }
     public java.lang.String getTimeTickInterval() { return timeTickInterval_; }
+    
+    // optional int32 dailyRolledupTilldays = 17;
+    public static final int DAILYROLLEDUPTILLDAYS_FIELD_NUMBER = 17;
+    private boolean hasDailyRolledupTilldays;
+    @com.google.protobuf.gwt.shared.FieldNumber(17)
+    private int dailyRolledupTilldays_ = 0;
+    public boolean hasDailyRolledupTilldays() { return hasDailyRolledupTilldays; }
+    public int getDailyRolledupTilldays() { return dailyRolledupTilldays_; }
     
     private void initFields() {
     }
@@ -2362,11 +2370,15 @@ public final class RequestResponse {
       }
       
       if (hasRolleduptilldays()) {
-        output.writeString(15, "rolleduptilldays", getRolleduptilldays());
+        output.writeInteger(15, "rolleduptilldays", getRolleduptilldays());
       }
       
       if (hasTimeTickInterval()) {
         output.writeString(16, "timeTickInterval", getTimeTickInterval());
+      }
+      
+      if (hasDailyRolledupTilldays()) {
+        output.writeInteger(17, "dailyRolledupTilldays", getDailyRolledupTilldays());
       }
     }
     
@@ -2516,6 +2528,10 @@ public final class RequestResponse {
         if (other.hasTimeTickInterval()) {
           setTimeTickInterval(other.getTimeTickInterval());
         }
+        
+        if (other.hasDailyRolledupTilldays()) {
+          setDailyRolledupTilldays(other.getDailyRolledupTilldays());
+        }
       
         return this;
       }
@@ -2593,7 +2609,7 @@ public final class RequestResponse {
           setMirrorSla(mirrorSla);
         }
         
-        java.lang.String rolleduptilldays = input.readString(15);
+        java.lang.Integer rolleduptilldays = input.readInteger(15);
         if (rolleduptilldays != null) {
           setRolleduptilldays(rolleduptilldays);
         }
@@ -2601,6 +2617,11 @@ public final class RequestResponse {
         java.lang.String timeTickInterval = input.readString(16);
         if (timeTickInterval != null) {
           setTimeTickInterval(timeTickInterval);
+        }
+        
+        java.lang.Integer dailyRolledupTilldays = input.readInteger(17);
+        if (dailyRolledupTilldays != null) {
+          setDailyRolledupTilldays(dailyRolledupTilldays);
         }
         
         return this;
@@ -2984,30 +3005,27 @@ public final class RequestResponse {
         return this;
       }
       
-      // optional string rolleduptilldays = 15;
+      // optional int32 rolleduptilldays = 15;
       public boolean hasRolleduptilldays() {
         return result.hasRolleduptilldays();
       }
-      public java.lang.String getRolleduptilldays() {
+      public int getRolleduptilldays() {
         return result.getRolleduptilldays();
       }
-      public Builder setRolleduptilldaysIgnoreIfNull(java.lang.String value) {
+      public Builder setRolleduptilldaysIgnoreIfNull(java.lang.Integer value) {
         if (value != null) {
           setRolleduptilldays(value);
         }
         return this;
       }
-      public Builder setRolleduptilldays(java.lang.String value) {
-        if (value == null) {
-    throw new java.lang.NullPointerException();
-  }
-  result.hasRolleduptilldays = true;
+      public Builder setRolleduptilldays(int value) {
+        result.hasRolleduptilldays = true;
         result.rolleduptilldays_ = value;
         return this;
       }
       public Builder clearRolleduptilldays() {
         result.hasRolleduptilldays = false;
-        result.rolleduptilldays_ = getDefaultInstance().getRolleduptilldays();
+        result.rolleduptilldays_ = 0;
         return this;
       }
       
@@ -3035,6 +3053,30 @@ public final class RequestResponse {
       public Builder clearTimeTickInterval() {
         result.hasTimeTickInterval = false;
         result.timeTickInterval_ = getDefaultInstance().getTimeTickInterval();
+        return this;
+      }
+      
+      // optional int32 dailyRolledupTilldays = 17;
+      public boolean hasDailyRolledupTilldays() {
+        return result.hasDailyRolledupTilldays();
+      }
+      public int getDailyRolledupTilldays() {
+        return result.getDailyRolledupTilldays();
+      }
+      public Builder setDailyRolledupTilldaysIgnoreIfNull(java.lang.Integer value) {
+        if (value != null) {
+          setDailyRolledupTilldays(value);
+        }
+        return this;
+      }
+      public Builder setDailyRolledupTilldays(int value) {
+        result.hasDailyRolledupTilldays = true;
+        result.dailyRolledupTilldays_ = value;
+        return this;
+      }
+      public Builder clearDailyRolledupTilldays() {
+        result.hasDailyRolledupTilldays = false;
+        result.dailyRolledupTilldays_ = 0;
         return this;
       }
       

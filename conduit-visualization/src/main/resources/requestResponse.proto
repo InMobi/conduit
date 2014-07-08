@@ -57,6 +57,7 @@ message ClientConfiguration {
 	optional string localSla = 12;
 	optional string mergeSla = 13;
 	optional string mirrorSla = 14;
-	optional string rolleduptilldays = 15;
+	optional int32 rolleduptilldays = 15;
 	optional string timeTickInterval = 16;
+	optional int32 dailyRolledupTilldays = 17;
 }

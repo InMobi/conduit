@@ -8,6 +8,7 @@ import com.inmobi.conduit.audit.util.TimeLineAuditDBHelper;
 import com.inmobi.conduit.visualization.server.*;
 import com.inmobi.conduit.visualization.shared.RequestResponse;
 import com.inmobi.messaging.ClientConfig;
+
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -200,6 +201,8 @@ public class ServerDataHelper {
                                          List<String> clusterList,
                                          VisualizationProperties properties,
                                          ClientConfig feederConfig) {
+    int rolledUpTillDays = feederConfig.getInteger(ServerConstants
+        .ROLLEDUP_TILL_DAYS, ServerConstants.DEFAULT_HOURLY_ROLLUP_TILLDAYS);
     RequestResponse.ClientConfiguration clientConfiguration =
         RequestResponse.ClientConfiguration.newBuilder()
             .setPublisherSla(properties.get(ServerConstants.PUBLISHER_SLA))
@@ -223,8 +226,10 @@ public class ServerDataHelper {
             .setLocalSla(properties.get(ServerConstants.LOCAL_SLA))
             .setMergeSla(properties.get(ServerConstants.MERGE_SLA))
             .setMirrorSla(properties.get(ServerConstants.MIRROR_SLA))
-            .setRolleduptilldays(feederConfig.getString(ServerConstants
-                .ROLLEDUP_TILL_DAYS, "2"))
+            .setRolleduptilldays(rolledUpTillDays)
+            .setDailyRolledupTilldays(feederConfig.getInteger(
+                ServerConstants.DAILY_ROLLEDUP_TILL_DAYS,
+                ServerConstants.DEFAULT_GAP_BTW_ROLLUP_TILLDAYS + rolledUpTillDays))
             .build();
     RequestResponse.LoadMainPanelResponse loadMainPanelResponse =
         RequestResponse.LoadMainPanelResponse.newBuilder()

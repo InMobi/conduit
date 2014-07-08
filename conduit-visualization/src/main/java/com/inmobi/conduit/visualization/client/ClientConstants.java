@@ -25,6 +25,7 @@ public class ClientConstants {
   public static final String LOSS_WARN_THRESHOLD_DIFF =
       "lossWarnThresholdDiff";
   public static final String ROLLEDUP_TILL_DAYS = "rollup.tilldays";
+  public static final String DAILY_ROLLEDUP_TILL_DAYS = "daily.rollup.tilldays";
 
   public static final String TREND_VIEW = "Trend";
   public static final String TOPOLOGY_TREND_VIEW = "Topology & Trend";

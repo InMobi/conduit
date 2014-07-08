@@ -253,6 +253,15 @@ else
           if kill -0 `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE` > /dev/null 2>&1; then
             echo -n Stopping FEEDER
             kill -s SIGTERM `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE`
+            while :
+            do
+             	if kill -0 `cat $_CONDUIT_FEEDER_DAEMON_PIDFILE` > /dev/null 2>&1; then
+             		echo -n "."
+                sleep 1
+              else
+                break
+              fi
+            done
             rm -rf  $_CONDUIT_FEEDER_DAEMON_PIDFILE
             echo -n DONE
           else

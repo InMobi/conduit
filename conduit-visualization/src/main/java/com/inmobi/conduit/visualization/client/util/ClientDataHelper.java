@@ -106,9 +106,31 @@ public class ClientDataHelper {
         .getClientConfig().getMaxTimeRangeInt());
     configMap.put(ClientConstants.LOSS_WARN_THRESHOLD_DIFF, response.getLoadMainPanelResponse()
         .getClientConfig().getWarnLossThresholdDiff());
-    configMap.put(ClientConstants.ROLLEDUP_TILL_DAYS, response.getLoadMainPanelResponse()
-        .getClientConfig().getRolleduptilldays());
     return configMap;
+  }
+
+  public int getRolledUpTillDaysFromResponse(String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance().
+          createNewStreamFromJson(serverJson)).build();
+    } catch(IOException ie) {
+      ie.printStackTrace();
+    }
+    return response.getLoadMainPanelResponse().getClientConfig().getRolleduptilldays();
+  }
+
+  public int getDailyRolledUpTillDaysFromResponse(String serverJson) {
+    RequestResponse.Response response = null;
+    try {
+      response = RequestResponse.Response.newBuilder().readFrom(
+          ClientJsonStreamFactory.getInstance().
+          createNewStreamFromJson(serverJson)).build();
+    } catch(IOException ie) {
+      ie.printStackTrace();
+    }
+    return response.getLoadMainPanelResponse().getClientConfig().getDailyRolledupTilldays();
   }
 
   public Map<String, Integer> getTierLatencyObjListFromResponse(
