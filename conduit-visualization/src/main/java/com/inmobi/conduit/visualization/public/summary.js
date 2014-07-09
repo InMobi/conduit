@@ -13,6 +13,7 @@ function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency,
 }
 
 function addSummaryBox() {
+	clearSummary();
   if (isCountView) {
     loadCountSummary();
   } else {
