@@ -533,20 +533,21 @@ function latencynodeclick(n) {
 
 function getStreamsCausingDataLoss(l) {
   var streamslist = [];
-  var isstreampresent = false;
+  var toAdd = true;
   if (l.source.tier.equalsIgnoreCase("hdfs")) {
-    l.target.allsenttopicstats.forEach(function (t) {
-      l.source.allreceivedtopicstats.forEach(function (s) {
-        if (t.topic == s.topic && s.hostname == l.target.name) {
-          isstreampresent = true;
-          if (isLoss(s.messages, t.messages))
-            streamslist.push(t.topic);
+    for (var t in l.target.topicSentMap) {
+      var obj = l.source.topicReceivedMap[t];
+      if (obj != undefined) {
+        var num = obj[l.target.name];
+        if (num != undefined && !isLoss(num, l.target.topicSentMap[t])) {
+          toAdd = false;
         }
-      });
-      if (!isstreampresent && !(streamslist.contains(t.topic)))
+      }
+      if (toAdd && !(streamslist.contains(t))) {
         streamslist.push(t.topic);
-      isstreampresent = false;
-    });
+      }
+      toAdd = true;
+    }
   } else if (l.source.tier.equalsIgnoreCase("collector")) {
     var linkList = pathLinkCache
       .filter(function (d) {
@@ -554,76 +555,49 @@ function getStreamsCausingDataLoss(l) {
           .tier.equalsIgnoreCase("collector");
       })
       .data();
-    var aggMsgList = [];
+    var aggMsgMap = new Object();
     linkList.forEach(function (l) {
-      l.source.allreceivedtopicstats.forEach(function (stat) {
-        var isPresent = false;
-        for (var index = 0; index < aggMsgList.length; index++) {
-          if (aggMsgList[index].topic == stat.topic) {
-            aggMsgList[index].messages += stat.messages;
-            isPresent = true;
-            break;
-          }
+      for (var t in l.source.topicReceivedMap) {
+        if (aggMsgMap[t] == undefined) {
+          aggMsgMap[t] = 0;
         }
-        if (!isPresent)
-          aggMsgList.push(new TopicStats(stat.topic, stat.messages));
-      });
-    });
-    l.target.allreceivedtopicstats.forEach(function (t) {
-      aggMsgList.forEach(function (s) {
-        if (t.topic == s.topic) {
-          isstreampresent = true;
-          if (isLoss(s.messages, t.messages))
-            streamslist.push(t.topic);
-        }
-      });
-      if (!isstreampresent && !(streamslist.contains(t.topic)))
-        streamslist.push(t.topic);
-      isstreampresent = false;
-    });
-  } else if (l.source.tier.equalsIgnoreCase("merge") || l.source.tier.equalsIgnoreCase(
-    "mirror")) {
-    var targetNodeStreams = [];
-    l.target.allreceivedtopicstats.forEach(function (s) {
-      targetNodeStreams.push(s.topic);
-    });
-    l.source.allreceivedtopicstats.forEach(function (s) {
-      var topic = s.topic;
-      var topicSourceList;
-      l.source.streamSourceList.forEach(function (sourceStream) {
-        if (sourceStream.topic == topic) {
-          topicSourceList = sourceStream.source;
-        }
-      });
-      if (topicSourceList.contains(l.target.clusterName)) {
-        l.target.allreceivedtopicstats.forEach(function (t) {
-          if (t.topic == topic) {
-            isstreampresent = true;
-            if (isLoss(s.messages, t.messages)) {
-              streamslist.push(t.topic);
-            }
-          }
-        });
-        if (!isstreampresent && !(streamslist.contains(topic)) &&
-          targetNodeStreams.contains(topic)) {
-          streamslist.push(topic);
-        }
-        isstreampresent = false;
+        aggMsgMap[t] += l.source.topicReceivedMap[t];
       }
     });
-  } else {
-    l.target.allreceivedtopicstats.forEach(function (t) {
-      l.source.allreceivedtopicstats.forEach(function (s) {
-        if (t.topic == s.topic) {
-          isstreampresent = true;
-          if (isLoss(s.messages, t.messages))
-            streamslist.push(t.topic);
-        }
-      });
-      if (!isstreampresent && !(streamslist.contains(t.topic)))
+    for (var t in l.target.topicReceivedMap) {
+      var num = aggMsgMap[t];
+      if (num != undefined && !isLoss(num, l.target.topicReceivedMap[t])) {
+        toAdd = false;
+      }
+      if (toAdd && !(streamslist.contains(t))) {
         streamslist.push(t.topic);
-      isstreampresent = false;
-    });
+      }
+      toAdd = true;
+    }
+  } else if (isMergeMirror(l.source)) {
+    for (var t in l.source.topicReceivedMap) {
+      var sourceList = l.source.topicSourceMap[t];
+      if (sourceList != undefined && sourceList.contains(l.target.clusterName)) {
+        var num = l.target.topicReceivedMap[t];
+        if (num != undefined && !isLoss(l.source.topicReceivedMap[t], num)) {
+          toAdd = false;
+        }
+      }
+      if (toAdd && !streamslist.contains(t) && l.target.topicReceivedMap[t] != undefined) {
+        streamslist.push(t);
+      }
+      toAdd = true;
+    }
+  } else {
+    for (var t in l.target.topicReceivedMap) {
+      var num = l.source.topicReceivedMap[t];
+      if (num != undefined && !isLoss(num, l.target.topicReceivedMap[t])) {
+        toAdd = false;
+      }
+      if (toAdd && !streamslist.contains(t)) {
+        streamslist.push(t);
+      }
+    }
   }
   return streamslist;
 }

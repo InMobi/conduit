@@ -283,6 +283,15 @@ function appendHealthStatusIndicator(id, health) {
 
 function addTierCountDetailsToSummary(div, currentRow, tier, received, sent,
   childCount) {
+  if (received == undefined) {
+    received = 0;
+  }
+  if (sent == undefined) {
+    sent = 0;
+  }
+  if (childCount == undefined) {
+    childCount = 0;
+  }
   var health;
   if (tier == 'Publisher' && received != 0) {
     health = 0;
