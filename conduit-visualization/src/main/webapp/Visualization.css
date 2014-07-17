@@ -73,7 +73,7 @@ html, body {
   border-width: 2px;
   border-color: #ccc;
   height: 900px;
-  width: 71%;
+  width: 72%;
   background-color: #EBF4F8;
 }
 
@@ -83,7 +83,7 @@ html, body {
   border-width: 2px;
   border-color: #ccc;
   height: 900px;
-  width: 28%;
+  width: 27%;
   background-color: #EBF4F8;
 }
 
@@ -173,16 +173,19 @@ html ul.tabs li.active, html ul.tabs li.active a:hover  {
  padding-top: 10px;
  padding-right: 5px;
  padding-left: 5px;
+ margin-left: 5px;
+ margin-right: 5px;
  border: 1px solid #ccc;
  overflow: hidden;
  clear: both;
  float: left;
- width: 100%;
+ width: 99%;
  background: #EBF4F8;
 }
 
 #tabsContainer {
 	padding-top: 5px;
+	width: 99%
 }
 
 .valuesTable {
@@ -306,4 +309,38 @@ html ul.tabs li.active, html ul.tabs li.active a:hover  {
   border: 0px;
   border-radius: 8px;
   z-index: 1;
+}
+
+#crumbs {
+  list-style-type:none;
+  padding:0;
+  margin:0;
+  height:3em;
+}
+
+#crumbs li {
+  float:left;
+  line-height:2.5em;
+  padding-left:.75em;
+  color:#848484;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+#crumbs ul li:last-child {
+	color:#777;
+}
+
+#crumbs li a {
+  display:block;
+  color:#848484;
+}
+
+#crumbs li a:link, #crumbs li a:visited {
+  text-decoration:none;
+  color:#848484;
+}
+
+#crumbs li a:hover, #crumbs li a:focus {
+  color:blue;
 }
