@@ -27,9 +27,12 @@ import java.util.Properties;
 import java.util.Set;
 
 import com.inmobi.conduit.local.LocalStreamService;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -62,6 +65,10 @@ public class Conduit implements Service, ConduitConstants {
   private volatile boolean initFailed = false;
   private CuratorLeaderManager curatorLeaderManager = null;
   private volatile boolean conduitStarted = false;
+  private static boolean isHCatEnabled = false;
+  private static String hcatDBName = null;
+  private static int numOfHCatClients = 10;
+  private HCatClientUtil hcatUtil = null;
 
   public Conduit(ConduitConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -90,8 +97,28 @@ public class Conduit implements Service, ConduitConstants {
     return publisher;
   }
 
+  public static String getHcatDBName() {
+    return hcatDBName;
+  }
+
+  public static void setHcatDBName(String hcatDBName) {
+    Conduit.hcatDBName = hcatDBName;
+  }
+
+  public static boolean isHCatEnabled() {
+    return isHCatEnabled;
+  }
+
+  public static void setHCatEnabled(boolean enableHcat) {
+    isHCatEnabled = enableHcat;
+  }
+
   protected List<AbstractService> init() throws Exception {
     Cluster currentCluster = null;
+    if (isHCatEnabled) {
+      connectToMetaStoreServer();
+    }
+
     if (currentClusterName != null) {
       currentCluster = config.getClusters().get(currentClusterName);
     }
@@ -216,9 +243,33 @@ public class Conduit implements Service, ConduitConstants {
       Cluster cluster = config.getClusters().get(clusterName);
       LOG.info("Starting Purger for Cluster [" + clusterName + "]");
       //Start a purger per cluster
-      services.add(new DataPurgerService(config, cluster));
+      services.add(new DataPurgerService(config, cluster, hcatUtil));
+    }
+    if (isHCatEnabled) {
+      prepareLastAddedPartitions();
     }
     return services;
+  }
+
+  protected void connectToMetaStoreServer() {
+    HiveConf conf = new HiveConf();
+    String metastoreUrl = conf.getVar(HiveConf.ConfVars.METASTOREURIS);
+    if (metastoreUrl == null) {
+      throw new RuntimeException("metastroe.uri property is not specified in hive-site.xml");
+    }
+    LOG.info("hive metastore uri is : " + metastoreUrl);
+    hcatUtil = new HCatClientUtil(metastoreUrl);
+
+  }
+
+  private void prepareLastAddedPartitions() {
+    for (AbstractService service : services) {
+      try {
+        service.prepareLastAddedPartitionMap();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   private void copyInputFormatJarToClusterFS(Cluster cluster, 
@@ -255,7 +306,8 @@ public class Conduit implements Service, ConduitConstants {
       Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
           throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
+        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
+        hcatUtil);
   }
 
   protected MergedStreamService getMergedStreamService(ConduitConfig config,
@@ -265,7 +317,7 @@ public class Conduit implements Service, ConduitConstants {
     return new MergedStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess);
+        streamsToProcess, hcatUtil);
   }
 
   protected MirrorStreamService getMirrorStreamService(ConduitConfig config,
@@ -275,8 +327,47 @@ public class Conduit implements Service, ConduitConstants {
     return new MirrorStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess);
+        streamsToProcess, hcatUtil);
 
+  }
+
+  public void parseAndCreateHCatClients() throws Exception {
+    if (isHCatEnabled) {
+      try {
+        String hcatCientsRaio = System.getProperty(HCAT_CLIENTS_RATIO, "1/5");
+        String ratioStr = hcatCientsRaio.split("/")[1];
+        int numServices = services.size();
+        int ratio = Integer.parseInt(ratioStr);
+        if (numServices > 0 && ratio > 0) {
+          numOfHCatClients = (numServices / ratio);
+          if (numOfHCatClients <= 0) {
+            numOfHCatClients = 1;
+          }
+        } else {
+          LOG.info("AAAAAAAA no services or ratio is invalid");
+        }
+      } catch(Exception e) {
+        LOG.error("Exception occured  while calcluating the number"
+            + " of hcatClients ", e);
+        numOfHCatClients = 10;
+      }
+      createHCatClients();
+    }
+  }
+  
+  private void createHCatClients() throws Exception {
+    try {
+      HiveConf hcatConf = new HiveConf();
+      hcatConf.set("hive.metastore.local", "false");
+      hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, hcatUtil.getMetastoreUrl());
+      LOG.info("Going to create HCAT CLIENTS now ");
+      hcatUtil.createHCatClients(numOfHCatClients, hcatConf);
+    } catch (Exception e) {
+      LOG.error("Got exception while creatig hcat clients ", e);
+      throw e;
+      // TODO Auto-generated catch block
+     // e.printStackTrace();
+    }
   }
 
   @Override
@@ -480,6 +571,19 @@ public class Conduit implements Service, ConduitConstants {
         }
       }
 
+      String hcatEnabled = prop.getProperty(HCAT_ENABLED);
+      if (hcatEnabled != null && Boolean.parseBoolean(hcatEnabled)) {
+        LOG.info("HCAT is enabled for worker ");
+        isHCatEnabled = true;
+        /*
+         * parse the hcat database name and number of hcat clients needs
+         * to be created
+         */
+        parseHCatProperties(prop);
+      } else {
+        LOG.info("HCAT is not enabled for the worker ");
+      }
+
       ConduitConfigParser configParser =
           new ConduitConfigParser(conduitConfigFile);
       ConduitConfig config = configParser.getConfig();
@@ -541,6 +645,24 @@ public class Conduit implements Service, ConduitConstants {
     catch (Exception e) {
       LOG.warn("Error in starting Conduit daemon", e);
       throw new Exception(e);
+    }
+  }
+
+  private static void parseHCatProperties(Properties prop) {
+    String hcatDBName = prop.getProperty(HCAT_DATABASE_NAME);
+    if (hcatDBName != null && !hcatDBName.isEmpty()) {
+      Conduit.setHcatDBName(hcatDBName);
+    } else {
+      throw new RuntimeException("HCAT DataBase name is not specified"
+          + " in the conduit config file");
+    }
+    String numHCatClientsRatio = prop.getProperty(HCAT_CLIENTS_RATIO);
+    if (numHCatClientsRatio != null) {
+      System.setProperty(HCAT_CLIENTS_RATIO, numHCatClientsRatio);
+      LOG.info("ratio of hcatclient is  configured " + numHCatClientsRatio);
+    } else {
+      /*LOG.info("Number of HcatClients is not configured. Create "
+          + numOfHCatClientsRatio + " HCatCleints");*/
     }
   }
 
