@@ -11,8 +11,6 @@ import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
-import junit.framework.Assert;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -20,6 +18,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
+import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.io.File;
@@ -115,7 +114,7 @@ public class TestLocalLastFileProcessed {
     localFs.mkdirs(new Path(path2));
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
-        cluster.getSourceStreams());
+        cluster.getSourceStreams(), null);
     service.execute();
     Assert.assertEquals(0, ConduitMetrics.<AbsoluteGauge>getMetric(service
         .getServiceType(), AbstractService.LAST_FILE_PROCESSED,
@@ -142,7 +141,7 @@ public class TestLocalLastFileProcessed {
 
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
-        cluster.getSourceStreams());
+        cluster.getSourceStreams(), null);
     service.execute();
     Assert.assertEquals(lastAddedDateStream1, ConduitMetrics.<AbsoluteGauge
         >getMetric(
@@ -171,7 +170,7 @@ public class TestLocalLastFileProcessed {
     Table<String, String, String> checkpointPaths = HashBasedTable.create();
     TestLocalStreamService service = new TestLocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
-        cluster.getSourceStreams());
+        cluster.getSourceStreams(), null);
     service.createListing(localFs,  localFs.getFileStatus(cluster.getDataDir
         ()), results, trashSet, checkpointPaths);
     Assert.assertEquals(lastAddedDateStream1, service.getLastProcessedMap()
@@ -198,7 +197,7 @@ public class TestLocalLastFileProcessed {
     Table<String, String, String> checkpointPaths = HashBasedTable.create();
     TestLocalStreamService service = new TestLocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
-        newStreamToProcess);
+        newStreamToProcess, null);
     service.createListing(localFs, localFs.getFileStatus(cluster.getDataDir
         ()), results, trashSet, checkpointPaths);
     Assert.assertEquals(lastAddedDateStream1, service.getLastProcessedMap()
@@ -221,7 +220,7 @@ public class TestLocalLastFileProcessed {
 
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
-        newStreamToProcess);
+        newStreamToProcess, null);
     service.execute();
     /*
      * Value of metric is minimum(latest file time stamp for each collector).
@@ -258,7 +257,7 @@ public class TestLocalLastFileProcessed {
     Table<String, String, String> checkpointPaths = HashBasedTable.create();
     TestLocalStreamService service = new TestLocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
-        newStreamToProcess);
+        newStreamToProcess, null);
     service.createListing(localFs, localFs.getFileStatus(cluster.getDataDir
         ()), results, trashSet, checkpointPaths);
     Assert.assertEquals(fileTimeStamp, service.getLastProcessedMap().get(stream1));
@@ -292,7 +291,7 @@ public class TestLocalLastFileProcessed {
     Table<String, String, String> checkpointPaths = HashBasedTable.create();
     TestLocalStreamService service = new TestLocalStreamService(parser.getConfig(),
         cluster, null, new FSCheckpointProvider(checkpointDir),
-        newStreamToProcess);
+        newStreamToProcess, null);
     service.createListing(localFs, localFs.getFileStatus(cluster.getDataDir
         ()), results, trashSet, checkpointPaths);
     Assert.assertEquals(fileTimeStamp,

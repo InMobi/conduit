@@ -4,6 +4,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -34,13 +35,13 @@ public class TestRetriableFsOperations extends AbstractService {
   }
 
   public TestRetriableFsOperations() {
-    super(null, null, -1, null, null);
+    super(null, null, -1, null, null, null);
   }
 
   public TestRetriableFsOperations(String name, ConduitConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
       Set<String> streamsToProcess) {
-    super(name, config, runIntervalInMsec, provider, streamsToProcess);
+    super(name, config, runIntervalInMsec, provider, streamsToProcess, null);
   }
 
   @BeforeMethod
@@ -148,5 +149,45 @@ public class TestRetriableFsOperations extends AbstractService {
   @Override
   protected String getTier() {
     return null;
+  }
+
+  @Override
+  public void prepareLastAddedPartitionMap() throws InterruptedException {
+  }
+
+  @Override
+  public void publishPartitions(long commitTime, String categoryName)
+      throws InterruptedException {
+  }
+
+  @Override
+  protected String getTableName(String stream) {
+    return null;
+  }
+
+  @Override
+  protected Date getTimeStampFromHCatPartition(String hcatLoc, String stream) {
+    return null;
+  }
+
+  @Override
+  protected void prepareStreamHcatEnableMap() {
+  }
+
+  @Override
+  protected boolean isStreamHCatEnabled(String stream) {
+    return false;
+  }
+
+  @Override
+  protected void setFailedToGetPartitions(boolean b) {
+  }
+
+  @Override
+  protected void updateLastAddedPartitionMap(String stream, long partTime) {
+  }
+
+  @Override
+  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
   }
 }
