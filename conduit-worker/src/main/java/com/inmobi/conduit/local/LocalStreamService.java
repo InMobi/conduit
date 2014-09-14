@@ -14,10 +14,15 @@
 package com.inmobi.conduit.local;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -28,10 +33,15 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.ConfigConstants;
+import com.inmobi.conduit.HCatClientUtil;
+import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
+import com.inmobi.conduit.utils.HCatPartitionComparator;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -40,6 +50,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -50,6 +61,10 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
+import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.api.HCatPartition;
+import org.apache.hive.hcatalog.common.HCatException;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -67,7 +82,7 @@ import com.inmobi.conduit.utils.FileUtil;
  */
 
 public class LocalStreamService extends AbstractService implements
-    ConfigConstants {
+ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
 
@@ -81,6 +96,9 @@ public class LocalStreamService extends AbstractService implements
   private long timeoutToProcessLastCollectorFile = 60;
   private boolean processLastFile = false;
   private int numberOfFilesProcessed = 0;
+  private final Map<String, Long> lastAddedPartitionMap = new HashMap<String, Long>();
+  private Map<String, Boolean> streamHcatEnableMap = new HashMap<String, Boolean>();
+  private boolean failedTogetPartitions = false;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -96,11 +114,11 @@ public class LocalStreamService extends AbstractService implements
 
   public LocalStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess)
+      Set<String> streamsToProcess, HCatClientUtil hcatUtil)
           throws IOException {
     super("LocalStreamService_" + srcCluster + "_" +
         getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider, streamsToProcess);
+        provider, streamsToProcess, hcatUtil);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -140,6 +158,10 @@ public class LocalStreamService extends AbstractService implements
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          ADD_PARTITIONS_FAILURES, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          CONNECTION_FAILURES, eachStream);
     }
   }
 
@@ -147,6 +169,115 @@ public class LocalStreamService extends AbstractService implements
     if (fs.exists(tmpPath)) {
       LOG.info("Deleting tmpPath recursively [" + tmpPath + "]");
       fs.delete(tmpPath, true);
+    }
+  }
+
+  protected void prepareStreamHcatEnableMap() {
+    Map<String, SourceStream> sourceStreamMap = config.getSourceStreams();
+    for (String stream : streamsToProcess) {
+      if (sourceStreamMap.containsKey(stream)
+          && sourceStreamMap.get(stream).isHCatEnabled()) {
+        streamHcatEnableMap.put(stream, true);
+      } else {
+        streamHcatEnableMap.put(stream, false);
+      }
+    }
+    LOG.info("Hcat enable map for local stream : " + streamHcatEnableMap);
+  }
+
+  protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc, String stream) {
+    String streamRootDirPrefix = new Path(srcCluster.getLocalFinalDestDirRoot(),
+        stream).toString();
+    Date lastAddedPartitionDate = CalendarHelper.getDateFromStreamDir(
+        streamRootDirPrefix, lastHcatPartitionLoc);
+    return lastAddedPartitionDate;
+  }
+
+  protected String getTableName(String streamName) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(LOCAL_TABLE_PREFIX);
+    sb.append("_");
+    sb.append(streamName);
+    return sb.toString();
+  }
+
+  protected boolean isStreamHCatEnabled(String stream) {
+    return streamHcatEnableMap.get(stream);
+  }
+
+  protected void setFailedToGetPartitions(boolean failed) {
+    failedTogetPartitions = failed;
+  }
+
+  protected void updateLastAddedPartitionMap(String stream, long partTime) {
+    lastAddedPartitionMap.put(stream, partTime);
+  }
+
+  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
+    streamHcatEnableMap.put(stream, hcatEnabled);
+  }
+
+  public void publishPartitions(long commitTime, String streamName)
+      throws InterruptedException {
+    if (!streamHcatEnableMap.containsKey(streamName)
+        || !streamHcatEnableMap.get(streamName)) {
+      LOG.info("Hcat is not enabled for " + streamName + " stream");
+      return;
+    }
+    HCatClient hcatClient = getHCatClient();
+    if (hcatClient == null) {
+      return;
+    }
+    try {
+      long lastAddedTime = lastAddedPartitionMap.get(streamName);
+      if (lastAddedTime == -1) {
+        if (!failedTogetPartitions) {
+          lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
+          LOG.info("there are no partitions in "+ getTableName(streamName) +" table. ");
+          return;
+        } else {
+          try {
+            findLastPartition(hcatClient, streamName);
+            lastAddedTime = lastAddedPartitionMap.get(streamName);
+            if (lastAddedTime == -1) {
+              lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
+              LOG.info("there are no partitions in "+ getTableName(streamName) +" table. ");
+              return;
+            }
+          } catch (HCatException e) {
+            LOG.error("Got exception while trying to get the last added partition ", e);
+            return;
+          }
+        }
+      }
+      long nextPartitionTime = lastAddedTime + MILLISECONDS_IN_MINUTE;
+      if (isMissingPartitions(commitTime, nextPartitionTime)) {
+        LOG.debug("Previous partition time: [" + getLogDateString(lastAddedTime) + "]");
+        while (isMissingPartitions(commitTime, nextPartitionTime)) {
+          String missingPartition = Cluster.getDestDir(
+              srcCluster.getLocalFinalDestDirRoot(), streamName, nextPartitionTime);
+          try {
+            if (addPartition(missingPartition, streamName, nextPartitionTime,
+                getTableName(streamName), hcatClient)) {
+              lastAddedPartitionMap.put(streamName, nextPartitionTime);
+            } else {
+              LOG.error("Got an error while trying to add partition " + missingPartition);
+              break;
+            }
+            nextPartitionTime = nextPartitionTime + MILLISECONDS_IN_MINUTE;
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+            break;
+          } catch (ParseException e) {
+            LOG.warn("Got exception while trying to parse ", e);
+            break;
+          }
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn("Got Exception while publishing partition ", e);
+    } finally {
+      submitBack(hcatClient);
     }
   }
 
@@ -433,7 +564,7 @@ public class LocalStreamService extends AbstractService implements
         String currentFile = getCurrentFile(fs, files, sortedFiles);
         LOG.debug("last file " + currentFile + " in the collector directory "
             + collector.getPath());
-        
+
         Iterator<FileStatus> it = sortedFiles.iterator();
         numberOfFilesProcessed = 0;
         long latestCollectorFileTimeStamp = -1;
@@ -591,7 +722,7 @@ public class LocalStreamService extends AbstractService implements
     // then null (implying process this file as non-current file)
     // else
     // return last file as the current file
-    
+
     if (files == null || files.length == 0)
       return null;
     for (FileStatus file : files) {

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,18 +29,25 @@ import java.util.Set;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
+import com.inmobi.conduit.utils.HCatPartitionComparator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.api.HCatPartition;
+import org.apache.hive.hcatalog.common.HCatException;
 
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
+import com.inmobi.conduit.DestinationStream;
+import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
@@ -52,13 +60,17 @@ import com.inmobi.conduit.utils.DatePathComparator;
 public class MirrorStreamService extends DistcpBaseService {
   private static final Log LOG = LogFactory.getLog(MirrorStreamService.class);
 
+  public static Map<String, Long> lastAddedPartitionMap;
+  public static Map<String, Boolean> streamHcatEnableMap;
+  protected static boolean failedTogetPartitions = false;
+
   public MirrorStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess)
-          throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess,
+      HCatClientUtil hcatUtil) throws Exception {
     super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
-        streamsToProcess);
+        streamsToProcess, hcatUtil);
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_CHECKPOINT, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_MKDIR, eachStream);
@@ -72,6 +84,37 @@ public class MirrorStreamService extends DistcpBaseService {
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
+      streamHcatEnableMap = new HashMap<String, Boolean>();
+      lastAddedPartitionMap = new HashMap<String, Long>();
+    }
+  }
+
+  private void publishPartitions(Path destPath, String streamName)
+      throws InterruptedException {
+    long lastAddedTime = lastAddedPartitionMap.get(streamName);
+    Path streamDirPrefix = new Path(destCluster.getFinalDestDirRoot(), streamName);
+    Date fileTimeStamp = CalendarHelper.getDateFromStreamDir(streamDirPrefix, destPath);
+    long nextPartitionTime = fileTimeStamp.getTime() - MILLISECONDS_IN_MINUTE;
+    HCatClient hcatClient = getHCatClient();
+    if (hcatClient == null) {
+      return;
+    }
+    try {
+      if (lastAddedTime >= nextPartitionTime) {
+        return;
+      } else {
+        String missingPartition = Cluster.getDestDir(
+            destCluster.getFinalDestDirRoot(), streamName, nextPartitionTime);
+        try {
+          addPartition(missingPartition, streamName, nextPartitionTime,
+              getTableName(streamName), hcatClient);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        lastAddedPartitionMap.put(streamName, nextPartitionTime);
+      }
+    } finally {
+      submitBack(hcatClient);
     }
   }
 
@@ -164,6 +207,12 @@ public class MirrorStreamService extends DistcpBaseService {
       String streamName = getTopicNameFromDestnPath(entry.getValue());
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue(), streamName);
+        if (streamHcatEnableMap.containsKey(streamName)
+            && streamHcatEnableMap.get(streamName)) {
+          LOG.info("Hcat is enabled for " + streamName + " stream");
+          publishPartitions(entry.getValue(), streamName);
+        }
+        //publishPartitions(entry.getValue(), streamName);
         ConduitMetrics.updateSWGuage(getServiceType(), EMPTYDIR_CREATE,
             streamName, 1);
       } else {
@@ -173,6 +222,12 @@ public class MirrorStreamService extends DistcpBaseService {
           continue;
         }
         retriableMkDirs(getDestFs(), entry.getValue().getParent(), streamName);
+        if (streamHcatEnableMap.containsKey(streamName)
+            && streamHcatEnableMap.get(streamName)) {
+          LOG.info("Hcat is enabled for " + streamName + " stream");
+          publishPartitions(entry.getValue(), streamName);
+        }
+        // publishPartitions(entry.getValue(), streamName);
         if (retriableRename(getDestFs(), entry.getKey().getPath(),
             entry.getValue(), streamName) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
@@ -192,6 +247,22 @@ public class MirrorStreamService extends DistcpBaseService {
       ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
           eachStream, elapsedTime);
     }
+  }
+
+  protected boolean isStreamHCatEnabled(String stream) {
+    return streamHcatEnableMap.get(stream);
+  }
+
+  protected void updateLastAddedPartitionMap(String stream, long partTime) {
+    lastAddedPartitionMap.put(stream, partTime);
+  }
+
+  protected void setFailedToGetPartitions(boolean failed) {
+    failedTogetPartitions = failed;
+  }
+
+  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
+    streamHcatEnableMap.put(stream, hcatEnabled);
   }
 
   /*
@@ -434,5 +505,12 @@ public class MirrorStreamService extends DistcpBaseService {
   @Override
   public String getServiceType() {
     return "MirrorStreamService";
+  }
+
+  @Override
+  public void publishPartitions(long commitTime, String categoryName)
+      throws InterruptedException {
+    // TODO Auto-generated method stub
+
   }
 }
