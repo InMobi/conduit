@@ -265,7 +265,7 @@ public class Conduit implements Service, ConduitConstants {
   private void prepareLastAddedPartitions() {
     for (AbstractService service : services) {
       try {
-        service.prepareLastAddedPartitionMap();
+        ((AbstractService) service).prepareLastAddedPartitionMap();
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
