@@ -63,7 +63,7 @@ public class TestMirrorStreamPartition extends TestMirrorStreamService {
     } catch (HCatException e) {
       LOG.info("Got exception while trying to get the partitions " + e.getCause());  
     } finally {
-      submitBack(hcatClient);
+      addToPool(hcatClient);
     }
   }
 }

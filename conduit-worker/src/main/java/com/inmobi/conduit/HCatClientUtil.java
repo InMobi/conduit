@@ -42,7 +42,7 @@ public class HCatClientUtil {
     }
   }
 
-  public void submitBack(HCatClient hcatClient) {
+  public void addToPool(HCatClient hcatClient) {
     if (buffer != null) {
       buffer.offer(hcatClient);
     }

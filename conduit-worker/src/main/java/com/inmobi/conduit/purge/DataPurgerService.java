@@ -454,7 +454,7 @@ public class DataPurgerService extends AbstractService {
     return Math.abs(hours);
   }
 
-  private void purge() throws HCatException {
+  private void purge() throws HCatException, InterruptedException {
     HCatClient hcatClient = null;
     if (Conduit.isHCatEnabled()) {
       hcatClient = getHCatClient();
@@ -486,7 +486,7 @@ public class DataPurgerService extends AbstractService {
         }
       }
     } finally {
-      submitBack(hcatClient);
+      addToPool(hcatClient);
     }
   }
 

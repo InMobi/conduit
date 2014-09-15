@@ -244,7 +244,7 @@ public class MergedStreamService extends DistcpBaseService {
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      submitBack(hcatClient);
+      addToPool(hcatClient);
     }
   }
 

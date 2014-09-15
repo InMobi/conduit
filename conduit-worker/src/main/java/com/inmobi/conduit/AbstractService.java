@@ -93,7 +93,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final String TABLE_PREFIX = "conduit";
   protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX + "_local";
 
-  protected HCatClientUtil hcatUtil = null;
+  protected final HCatClientUtil hcatUtil;
 
   protected static String hostname;
   static {
@@ -153,8 +153,6 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   public abstract long getMSecondsTillNextRun(long currentTime);
-
-  //public abstract void prepareLastAddedPartitionMap() throws InterruptedException;
 
   protected abstract void execute() throws Exception;
 
@@ -263,26 +261,19 @@ public abstract class AbstractService implements Service, Runnable {
     return LogDateFormat.format(commitTime);
   }
 
-  public HCatClient getHCatClient() {
+  public HCatClient getHCatClient() throws InterruptedException {
     HCatClient hcatClient = null;
     int retryCount = 0;
-    while (retryCount < numOfRetries) {
-      try {
-        hcatClient = hcatUtil.getHCatClient();
-      } catch (InterruptedException e) {
-        retryCount++;
-        e.printStackTrace();
-      }
-      if (hcatClient != null) {
-        break;
-      }
+    while (hcatClient == null && retryCount < numOfRetries) {
+      hcatClient = hcatUtil.getHCatClient();
+      retryCount++;
     }
     return hcatClient;
   }
 
-  protected void submitBack(HCatClient hcatClient) {
+  protected void addToPool(HCatClient hcatClient) {
     if (hcatClient != null) {
-      hcatUtil.submitBack(hcatClient);
+      hcatUtil.addToPool(hcatClient);
     }
   }
 
@@ -404,7 +395,7 @@ public abstract class AbstractService implements Service, Runnable {
         }
       }
     } finally {
-      submitBack(hcatClient);
+      addToPool(hcatClient);
     }
   }
 
@@ -487,12 +478,6 @@ public abstract class AbstractService implements Service, Runnable {
           LOG.warn("Partition " + partInfo + " is already exists in "
               + tableName + " table. ", e);
           return true;
-        }
-        if (e.getCause() instanceof NoSuchObjectException) {
-          stopped = true;
-          LOG.error("Got noSuchObject exception while trying to add a partition "
-              + e.getMessage());
-          throw new RuntimeException(e.getCause());
         }
         ConduitMetrics.updateSWGuage(getServiceType(),
             ADD_PARTITIONS_FAILURES, streamName, 1);

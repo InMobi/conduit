@@ -135,6 +135,6 @@ public class TestHCatUtil {
   }
 
   public static void submitBack(HCatClientUtil hcatUtil, HCatClient hcatClient) {
-    hcatUtil.submitBack(hcatClient);
+    hcatUtil.addToPool(hcatClient);
   }
 }
