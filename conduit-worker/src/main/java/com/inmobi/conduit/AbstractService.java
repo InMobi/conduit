@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
 import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.api.HCatPartition;
@@ -385,8 +386,15 @@ public abstract class AbstractService implements Service, Runnable {
       for (String stream : streamsToProcess) {
         if (isStreamHCatEnabled(stream)) {
           try {
+            hcatClient.getTable(Conduit.getHcatDBName(), getTableName(stream));
             findLastPartition(hcatClient, stream);
           } catch (HCatException e) {
+            if (e.getCause() instanceof NoSuchObjectException) {
+              stopped = true;
+              LOG.error("Got noSuchObject exception while trying to get table"
+                  + " or finding last partition " + e.getMessage());
+              throw new RuntimeException(e.getCause());
+            }
             LOG.warn("Got Exception while finding the last added partition for"
                 + " stream " + stream, e);
             setFailedToGetPartitions(true);
@@ -472,9 +480,15 @@ public abstract class AbstractService implements Service, Runnable {
         return true;
       } catch (HCatException e) {
         if (e.getCause() instanceof AlreadyExistsException) {
-          LOG.info("Partition " + partInfo + " is already exists in "
+          LOG.warn("Partition " + partInfo + " is already exists in "
               + tableName + " table. ", e);
           return true;
+        }
+        if (e.getCause() instanceof NoSuchObjectException) {
+          stopped = true;
+          LOG.error("Got noSuchObject exception while trying to add a partition "
+              + e.getMessage());
+          throw new RuntimeException(e.getCause());
         }
         ConduitMetrics.updateSWGuage(getServiceType(),
             ADD_PARTITIONS_FAILURES, streamName, 1);
