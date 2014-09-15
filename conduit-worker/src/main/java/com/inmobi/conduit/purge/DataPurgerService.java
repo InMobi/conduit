@@ -207,8 +207,6 @@ public class DataPurgerService extends AbstractService {
       Map<String, Path> localStreamsInClusterPathMap = getStreamsInCluster(localStreamRoot);
       getPathsToPurge(mergedStreamsInClusterPathMap,
           localStreamsInClusterPathMap);
-      // TODO purge partitions from the corresponding hcatlog tables.
-      // For that we need a map of streams and set of partitionDescs
       purge();
     } catch (Exception e) {
       LOG.warn(e);
@@ -456,7 +454,7 @@ public class DataPurgerService extends AbstractService {
     return Math.abs(hours);
   }
 
-  private void purge() {
+  private void purge() throws HCatException {
     HCatClient hcatClient = null;
     if (Conduit.isHCatEnabled()) {
       hcatClient = getHCatClient();
@@ -469,16 +467,16 @@ public class DataPurgerService extends AbstractService {
       Iterator it = streamsToPurge.iterator();
       Path purgePath = null;
       while (it.hasNext()) {
-        try {
-          purgePath = (Path) it.next();
-          if (pathPartitionDescMap.containsKey(purgePath)) {
-            HCatAddPartitionDesc partDesc = pathPartitionDescMap.get(purgePath);
-            if (partDesc != null) {
-              LOG.info("Droping the partition : " + partDesc);
-              hcatClient.dropPartitions(partDesc.getDatabaseName(),
-                  partDesc.getTableName(), partDesc.getPartitionSpec(), true);
-            }
+        purgePath = (Path) it.next();
+        if (pathPartitionDescMap.containsKey(purgePath)) {
+          HCatAddPartitionDesc partDesc = pathPartitionDescMap.get(purgePath);
+          if (partDesc != null) {
+            LOG.info("Droping the partition : " + partDesc);
+            hcatClient.dropPartitions(partDesc.getDatabaseName(),
+                partDesc.getTableName(), partDesc.getPartitionSpec(), true);
           }
+        }
+        try {
           fs.delete(purgePath, true);
           LOG.info("Purging [" + purgePath + "]");
           ConduitMetrics.updateSWGuage(getServiceType(), PURGEPATHS_COUNT, getName(), 1);

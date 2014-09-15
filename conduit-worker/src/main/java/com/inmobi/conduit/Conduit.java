@@ -344,7 +344,7 @@ public class Conduit implements Service, ConduitConstants {
             numOfHCatClients = 1;
           }
         } else {
-          LOG.info("AAAAAAAA no services or ratio is invalid");
+          LOG.info("no services or ratio is invalid");
         }
       } catch(Exception e) {
         LOG.error("Exception occured  while calcluating the number"
@@ -365,8 +365,6 @@ public class Conduit implements Service, ConduitConstants {
     } catch (Exception e) {
       LOG.error("Got exception while creatig hcat clients ", e);
       throw e;
-      // TODO Auto-generated catch block
-     // e.printStackTrace();
     }
   }
 
@@ -662,10 +660,7 @@ public class Conduit implements Service, ConduitConstants {
     String numHCatClientsRatio = prop.getProperty(HCAT_CLIENTS_RATIO);
     if (numHCatClientsRatio != null) {
       System.setProperty(HCAT_CLIENTS_RATIO, numHCatClientsRatio);
-      LOG.info("ratio of hcatclient is  configured " + numHCatClientsRatio);
-    } else {
-      /*LOG.info("Number of HcatClients is not configured. Create "
-          + numOfHCatClientsRatio + " HCatCleints");*/
+      LOG.info("ratio of hcatclients is  configured " + numHCatClientsRatio);
     }
   }
 

@@ -29,7 +29,6 @@ import java.util.Set;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
-import com.inmobi.conduit.utils.HCatPartitionComparator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,16 +36,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.api.HCatPartition;
-import org.apache.hive.hcatalog.common.HCatException;
 
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.Conduit;
-import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.utils.DatePathComparator;
 
