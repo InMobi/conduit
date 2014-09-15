@@ -523,7 +523,7 @@ public class DataPurgerService extends AbstractService {
   }
 
   @Override
-  public void publishPartitions(long commitTime, String categoryName)
+  public void registerPartitions(long commitTime, String categoryName)
       throws InterruptedException {
     throw new UnsupportedOperationException(" requested method is not" +
         " implemented in purger service");

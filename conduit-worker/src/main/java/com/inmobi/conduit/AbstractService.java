@@ -367,7 +367,7 @@ public abstract class AbstractService implements Service, Runnable {
         }
       }
     }
-    publishPartitions(commitTime, categoryName);
+    registerPartitions(commitTime, categoryName);
     // prevRuntimeForCategory map is updated with commitTime,
     // even if prevRuntime is -1, since service did run at this point
     prevRuntimeForCategory.put(categoryName, commitTime);
@@ -426,7 +426,7 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected  abstract Date getTimeStampFromHCatPartition(String hcatLoc, String stream);
 
-  public abstract void publishPartitions(long commitTime,
+  public abstract void registerPartitions(long commitTime,
       String categoryName) throws InterruptedException;
 
   protected abstract void prepareStreamHcatEnableMap();

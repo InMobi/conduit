@@ -156,7 +156,7 @@ public class TestRetriableFsOperations extends AbstractService {
   }
 
   @Override
-  public void publishPartitions(long commitTime, String categoryName)
+  public void registerPartitions(long commitTime, String categoryName)
       throws InterruptedException {
   }
 

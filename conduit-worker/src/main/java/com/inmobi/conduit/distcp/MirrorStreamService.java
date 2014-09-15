@@ -512,7 +512,7 @@ public class MirrorStreamService extends DistcpBaseService {
   }
 
   @Override
-  public void publishPartitions(long commitTime, String categoryName)
+  public void registerPartitions(long commitTime, String categoryName)
       throws InterruptedException {
     // TODO Auto-generated method stub
 

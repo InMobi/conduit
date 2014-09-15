@@ -191,7 +191,7 @@ public class MergedStreamService extends DistcpBaseService {
     }
   }
 
-  public void publishPartitions(long commitTime, String streamName)
+  public void registerPartitions(long commitTime, String streamName)
       throws InterruptedException {
     if (!streamHcatEnableMap.containsKey(streamName)
         || !streamHcatEnableMap.get(streamName)) {
