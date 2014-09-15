@@ -92,6 +92,7 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String CONNECTION_FAILURES = "connection.failures";
   protected static final String TABLE_PREFIX = "conduit";
   protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX + "_local";
+  private static final long EMPTY_PARTITION_LIST = -1;
 
   protected final HCatClientUtil hcatUtil;
 

@@ -335,11 +335,13 @@ public class Conduit implements Service, ConduitConstants {
     if (isHCatEnabled) {
       try {
         String hcatCientsRaio = System.getProperty(HCAT_CLIENTS_RATIO, "1/5");
-        String ratioStr = hcatCientsRaio.split("/")[1];
+        String [] ratioSplits = hcatCientsRaio.split("/");
         int numServices = services.size();
-        int ratio = Integer.parseInt(ratioStr);
-        if (numServices > 0 && ratio > 0) {
-          numOfHCatClients = (int) Math.floor(numServices / ratio);
+        boolean isValidRatio = isValidRatio(ratioSplits);
+        isValidRatio(ratioSplits);
+        if (numServices > 0 && isValidRatio) {
+          numOfHCatClients = (int) Math.ceil(
+              (numServices * Integer.parseInt(ratioSplits[0])) / Integer.parseInt(ratioSplits[1]));
           if (numOfHCatClients <= 0) {
             numOfHCatClients = 1;
           }
@@ -353,6 +355,19 @@ public class Conduit implements Service, ConduitConstants {
         numOfHCatClients = 10;
       }
       createHCatClients();
+    }
+  }
+
+  private boolean isValidRatio(String[] ratioSplits) {
+    if (ratioSplits.length == 2) {
+      int num = Integer.parseInt(ratioSplits[0]);
+      int den = Integer.parseInt(ratioSplits[1]);
+      if (num > den || den < 1) {
+        return false;
+      }
+      return true;
+    } else {
+      return  false;
     }
   }
   
