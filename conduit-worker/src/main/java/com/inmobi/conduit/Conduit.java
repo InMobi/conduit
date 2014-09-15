@@ -246,6 +246,7 @@ public class Conduit implements Service, ConduitConstants {
       services.add(new DataPurgerService(config, cluster, hcatUtil));
     }
     if (isHCatEnabled) {
+      parseAndCreateHCatClients();
       prepareLastAddedPartitions();
     }
     return services;
@@ -259,7 +260,6 @@ public class Conduit implements Service, ConduitConstants {
     }
     LOG.info("hive metastore uri is : " + metastoreUrl);
     hcatUtil = new HCatClientUtil(metastoreUrl);
-
   }
 
   private void prepareLastAddedPartitions() {

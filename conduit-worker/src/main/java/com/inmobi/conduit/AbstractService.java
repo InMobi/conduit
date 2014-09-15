@@ -385,7 +385,7 @@ public abstract class AbstractService implements Service, Runnable {
               stopped = true;
               LOG.error("Got noSuchObject exception while trying to get table"
                   + " or finding last partition " + e.getMessage());
-              throw new RuntimeException(e.getCause());
+              throw new RuntimeException(e);
             }
             LOG.warn("Got Exception while finding the last added partition for"
                 + " stream " + stream, e);
