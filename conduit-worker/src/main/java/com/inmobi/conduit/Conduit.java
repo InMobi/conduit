@@ -339,12 +339,13 @@ public class Conduit implements Service, ConduitConstants {
         int numServices = services.size();
         int ratio = Integer.parseInt(ratioStr);
         if (numServices > 0 && ratio > 0) {
-          numOfHCatClients = (numServices / ratio);
+          numOfHCatClients = (int) Math.floor(numServices / ratio);
           if (numOfHCatClients <= 0) {
             numOfHCatClients = 1;
           }
         } else {
-          LOG.info("no services or ratio is invalid");
+          LOG.info("no services or ratio is invalid."
+              + " Starts with " + numOfHCatClients + " hcatclients");
         }
       } catch(Exception e) {
         LOG.error("Exception occured  while calcluating the number"
