@@ -408,7 +408,11 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
-  protected void findLastPartition(HCatClient hcatClient, String stream)
+  /*
+   * It finds the last added partition from the hcatalog table for each stream.
+   * Update with -1 if there are no partitions present in hcatalog.
+   */
+  public void findLastPartition(HCatClient hcatClient, String stream)
       throws HCatException {
     List<HCatPartition> hCatPartitionList = hcatClient.getPartitions(
         Conduit.getHcatDBName(), getTableName(stream));

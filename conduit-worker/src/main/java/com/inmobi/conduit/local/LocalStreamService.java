@@ -591,6 +591,13 @@ ConfigConstants {
     }
   }
 
+  /*
+   * This getter method is only for unit tests.
+   */
+  public long getLastAddedPartTime(String stream) {
+    return lastAddedPartitionMap.get(stream);
+  }
+
   private long processFile(FileStatus file, String currentFile,
       String checkPointValue, FileSystem fs, Map<FileStatus, String> results,
       Map<String, FileStatus> collectorPaths) throws IOException {
