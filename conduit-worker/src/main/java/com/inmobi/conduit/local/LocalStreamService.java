@@ -185,7 +185,8 @@ ConfigConstants {
     LOG.info("Hcat enable map for local stream : " + streamHcatEnableMap);
   }
 
-  protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc, String stream) {
+  protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc,
+      String stream) {
     String streamRootDirPrefix = new Path(srcCluster.getLocalFinalDestDirRoot(),
         stream).toString();
     Date lastAddedPartitionDate = CalendarHelper.getDateFromStreamDir(

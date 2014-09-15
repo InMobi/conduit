@@ -395,6 +395,9 @@ public class Conduit implements Service, ConduitConstants {
     if (publisher != null) {
       publisher.close();
     }
+    if (hcatUtil != null) {
+      hcatUtil.close();
+    }
     LOG.info("Conduit Shutdown complete..");
   }
 

@@ -19,6 +19,7 @@ import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Type;
 
+import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.HCatClientUtil;
 
 public class TestHCatUtil {
@@ -111,18 +112,18 @@ public class TestHCatUtil {
     hCatClient.createTable(tableDesc);
   }
 
-  private static String getStringValue(int intValue) {
-    return String.valueOf(intValue);
-  }
-
   public static Map<String, String> getPartitionMap(Calendar cal) {
-    Map<String, String> firstPtn = new HashMap<String, String>();
-    firstPtn.put("year", getStringValue(cal.get(Calendar.YEAR)));
-    firstPtn.put("month", "0"+getStringValue(cal.get(Calendar.MONTH) + 1));
-    firstPtn.put("day", getStringValue(cal.get(Calendar.DAY_OF_MONTH)));
-    firstPtn.put("hour", "0"+getStringValue(cal.get(Calendar.HOUR_OF_DAY)));
-    firstPtn.put("minute", getStringValue(cal.get(Calendar.MINUTE)));
-    return firstPtn;
+    String dateStr = Cluster.getDateAsYYYYMMDDHHMNPath(cal.getTime().getTime());
+    String [] dateSplits = dateStr.split(File.separator);
+    Map<String, String> partSpec = new HashMap<String, String>();
+    if (dateSplits.length == 5) {
+      partSpec.put("year", dateSplits[0]);
+      partSpec.put("month", dateSplits[1]);
+      partSpec.put("day", dateSplits[2]);
+      partSpec.put("hour", dateSplits[3]);
+      partSpec.put("minute", dateSplits[4]);
+    }
+    return partSpec;
   }
 
   public static void addPartition(HCatClient hCatClient, String dbName,

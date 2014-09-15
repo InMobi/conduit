@@ -378,24 +378,26 @@ public abstract class AbstractService implements Service, Runnable {
 
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
+      LOG.warn("Did not get hcatclient");
       return;
     }
-
-    for (String stream : streamsToProcess) {
-      if (isStreamHCatEnabled(stream)) {
-        try {
-          findLastPartition(hcatClient, stream);
-        } catch (HCatException e) {
-          LOG.warn("Got Exception while finding hte last added partition for"
-              + " each stream");
-          setFailedToGetPartitions(true);
-          e.printStackTrace();
+    try {
+      for (String stream : streamsToProcess) {
+        if (isStreamHCatEnabled(stream)) {
+          try {
+            findLastPartition(hcatClient, stream);
+          } catch (HCatException e) {
+            LOG.warn("Got Exception while finding the last added partition for"
+                + " stream " + stream, e);
+            setFailedToGetPartitions(true);
+          }
+        } else {
+          LOG.info("Hcatalog is not enabled for " + stream + " stream");
         }
-      } else {
-        LOG.info("Hcatalog is not enabled for " + stream + " stream");
       }
+    } finally {
+      submitBack(hcatClient);
     }
-    submitBack(hcatClient);
   }
 
   protected void findLastPartition(HCatClient hcatClient, String stream)
@@ -466,7 +468,7 @@ public abstract class AbstractService implements Service, Runnable {
               partSpec).build();
         }
         hcatClient.addPartition(partInfo);
-        LOG.info("Partitio " + partInfo.getLocation() + " was added successfully");
+        LOG.info("Partition " + partInfo.getLocation() + " was added successfully");
         return true;
       } catch (HCatException e) {
         if (e.getCause() instanceof AlreadyExistsException) {
