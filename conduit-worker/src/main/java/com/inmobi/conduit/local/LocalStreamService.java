@@ -220,11 +220,12 @@ ConfigConstants {
     }
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
+      LOG.info("Didn't get any hcat client from pool hence not adding partitions");
       return;
     }
     try {
       long lastAddedTime = lastAddedPartitionMap.get(streamName);
-      if (lastAddedTime == -1) {
+      if (lastAddedTime == EMPTY_PARTITION_LIST) {
         if (!failedTogetPartitions) {
           lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
           LOG.info("there are no partitions in "+ getTableName(streamName) +" table. ");
@@ -233,7 +234,7 @@ ConfigConstants {
           try {
             findLastPartition(hcatClient, streamName);
             lastAddedTime = lastAddedPartitionMap.get(streamName);
-            if (lastAddedTime == -1) {
+            if (lastAddedTime == EMPTY_PARTITION_LIST) {
               lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
               LOG.info("there are no partitions in "+ getTableName(streamName) +" table. ");
               return;

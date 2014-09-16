@@ -57,8 +57,8 @@ public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
 
-  public static Map<String, Long> lastAddedPartitionMap;
-  public static Map<String, Boolean> streamHcatEnableMap;
+  private static Map<String, Long> lastAddedPartitionMap = new HashMap<String, Long>();
+  private static Map<String, Boolean> streamHcatEnableMap = new HashMap<String, Boolean>();
   protected static boolean failedTogetPartitions = false;
 
   public MergedStreamService(ConduitConfig config, Cluster srcCluster,
@@ -87,8 +87,6 @@ public class MergedStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           CONNECTION_FAILURES, eachStream);
     }
-    streamHcatEnableMap = new HashMap<String, Boolean>();
-    lastAddedPartitionMap = new HashMap<String, Long>();
   }
 
   @Override
@@ -196,11 +194,12 @@ public class MergedStreamService extends DistcpBaseService {
     }
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
+      LOG.info("Didn't get any hcat client from pool hence not adding partitions");
       return;
     }
     try {
       long lastAddedTime = lastAddedPartitionMap.get(streamName);
-      if (lastAddedTime == -1) {
+      if (lastAddedTime == EMPTY_PARTITION_LIST) {
         if (!failedTogetPartitions) {
           lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
           return;
@@ -209,7 +208,7 @@ public class MergedStreamService extends DistcpBaseService {
           try {
             findLastPartition(hcatClient, streamName);
             lastAddedTime = lastAddedPartitionMap.get(streamName);
-            if (lastAddedTime == -1) {
+            if (lastAddedTime == EMPTY_PARTITION_LIST) {
               lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
               return;
             }
@@ -550,5 +549,13 @@ public class MergedStreamService extends DistcpBaseService {
 
   public String getServiceType() {
     return "MergedStreamService";
+  }
+
+  /*
+   * This method is only for test cases
+   */
+  public void clearHCatInMemoryMaps() {
+    streamHcatEnableMap.clear();
+    lastAddedPartitionMap.clear();
   }
 }

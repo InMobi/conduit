@@ -92,7 +92,8 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String CONNECTION_FAILURES = "connection.failures";
   protected static final String TABLE_PREFIX = "conduit";
   protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX + "_local";
-  private static final long EMPTY_PARTITION_LIST = -1;
+  protected static final long EMPTY_PARTITION_LIST = -1;
+  protected static final long FAILED_GET_PARTITIONS = -2;
 
   protected final HCatClientUtil hcatUtil;
 
@@ -382,13 +383,13 @@ public abstract class AbstractService implements Service, Runnable {
             findLastPartition(hcatClient, stream);
           } catch (HCatException e) {
             if (e.getCause() instanceof NoSuchObjectException) {
-              stopped = true;
               LOG.error("Got noSuchObject exception while trying to get table"
                   + " or finding last partition " + e.getMessage());
               throw new RuntimeException(e);
             }
             LOG.warn("Got Exception while finding the last added partition for"
                 + " stream " + stream, e);
+            updateLastAddedPartitionMap(stream, FAILED_GET_PARTITIONS);
             setFailedToGetPartitions(true);
           }
         } else {
@@ -410,7 +411,7 @@ public abstract class AbstractService implements Service, Runnable {
         Conduit.getHcatDBName(), getTableName(stream));
     if (hCatPartitionList.isEmpty()) {
       LOG.info("No partitions present for " + stream + " stream. ");
-      updateLastAddedPartitionMap(stream, (long) -1);
+      updateLastAddedPartitionMap(stream, EMPTY_PARTITION_LIST);
       return;
     }
     Collections.sort(hCatPartitionList, new HCatPartitionComparator());
@@ -422,7 +423,7 @@ public abstract class AbstractService implements Service, Runnable {
           + lastAddedPartitionDate.getTime() + " for stream " + stream);
       updateLastAddedPartitionMap(stream, lastAddedPartitionDate.getTime());
     } else {
-      updateLastAddedPartitionMap(stream, (long) -1);
+      updateLastAddedPartitionMap(stream, EMPTY_PARTITION_LIST);
     }
   }
 
