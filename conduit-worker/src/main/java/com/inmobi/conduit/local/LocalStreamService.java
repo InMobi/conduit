@@ -89,8 +89,6 @@ ConfigConstants {
   private long timeoutToProcessLastCollectorFile = 60;
   private boolean processLastFile = false;
   private int numberOfFilesProcessed = 0;
-  private final Map<String, Long> lastAddedPartitionMap = new HashMap<String, Long>();
-  private Map<String, Boolean> streamHcatEnableMap = new HashMap<String, Boolean>();
   private boolean failedTogetPartitions = false;
 
   // The amount of data expected to be processed by each mapper, such that
@@ -165,6 +163,7 @@ ConfigConstants {
     }
   }
 
+  @Override
   protected void prepareStreamHcatEnableMap() {
     Map<String, SourceStream> sourceStreamMap = config.getSourceStreams();
     for (String stream : streamsToProcess) {
@@ -178,6 +177,7 @@ ConfigConstants {
     LOG.info("Hcat enable map for local stream : " + streamHcatEnableMap);
   }
 
+  @Override
   protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc,
       String stream) {
     String streamRootDirPrefix = new Path(srcCluster.getLocalFinalDestDirRoot(),
@@ -195,56 +195,40 @@ ConfigConstants {
     return sb.toString();
   }
 
-  protected boolean isStreamHCatEnabled(String stream) {
-    return streamHcatEnableMap.get(stream);
-  }
-
-  protected void setFailedToGetPartitions(boolean failed) {
-    failedTogetPartitions = failed;
-  }
-
-  protected void updateLastAddedPartitionMap(String stream, long partTime) {
-    lastAddedPartitionMap.put(stream, partTime);
-  }
-
-  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
-    streamHcatEnableMap.put(stream, hcatEnabled);
-  }
-
+  @Override
   public void registerPartitions(long commitTime, String streamName)
       throws InterruptedException {
-    if (!streamHcatEnableMap.containsKey(streamName)
-        || !streamHcatEnableMap.get(streamName)) {
+    if (!isStreamHCatEnabled(streamName)) {
       LOG.info("Hcat is not enabled for " + streamName + " stream");
       return;
     }
+    String tableName = getTableName(streamName);
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
       LOG.info("Didn't get any hcat client from pool hence not adding partitions");
       return;
     }
     try {
-      long lastAddedTime = lastAddedPartitionMap.get(streamName);
+      long lastAddedTime = lastAddedPartitionMap.get(tableName);
       if (lastAddedTime == EMPTY_PARTITION_LIST) {
-        if (!failedTogetPartitions) {
-          lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
-          LOG.info("there are no partitions in "+ getTableName(streamName) +" table. ");
-          return;
-        } else {
-          try {
-            findLastPartition(hcatClient, streamName);
-            lastAddedTime = lastAddedPartitionMap.get(streamName);
-            if (lastAddedTime == EMPTY_PARTITION_LIST) {
-              lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
-              LOG.info("there are no partitions in "+ getTableName(streamName) +" table. ");
-              return;
-            }
-          } catch (HCatException e) {
-            LOG.error("Got exception while trying to get the last added partition ", e);
+        lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
+        LOG.info("there are no partitions in "+ tableName +" table. ");
+        return;
+      } else if (lastAddedTime == FAILED_GET_PARTITIONS) {
+        try {
+          findLastPartition(hcatClient, streamName);
+          lastAddedTime = lastAddedPartitionMap.get(tableName);
+          if (lastAddedTime == EMPTY_PARTITION_LIST) {
+            lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
+            LOG.info("there are no partitions in "+ tableName +" table. ");
             return;
           }
+        } catch (HCatException e) {
+          LOG.error("Got exception while trying to get the last added partition ", e);
+          return;
         }
       }
+
       long nextPartitionTime = lastAddedTime + MILLISECONDS_IN_MINUTE;
       if (isMissingPartitions(commitTime, nextPartitionTime)) {
         LOG.debug("Previous partition time: [" + getLogDateString(lastAddedTime) + "]");
@@ -253,8 +237,8 @@ ConfigConstants {
               srcCluster.getLocalFinalDestDirRoot(), streamName, nextPartitionTime);
           try {
             if (addPartition(missingPartition, streamName, nextPartitionTime,
-                getTableName(streamName), hcatClient)) {
-              lastAddedPartitionMap.put(streamName, nextPartitionTime);
+                tableName, hcatClient)) {
+              lastAddedPartitionMap.put(tableName, nextPartitionTime);
             } else {
               LOG.error("Got an error while trying to add partition " + missingPartition);
               break;

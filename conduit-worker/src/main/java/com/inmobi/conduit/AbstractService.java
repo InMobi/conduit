@@ -94,6 +94,8 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX + "_local";
   protected static final long EMPTY_PARTITION_LIST = -1;
   protected static final long FAILED_GET_PARTITIONS = -2;
+  protected final Map<String, Boolean> streamHcatEnableMap = new HashMap<String, Boolean>();
+  protected final Map<String, Long> lastAddedPartitionMap = new HashMap<String, Long>();
 
   protected final HCatClientUtil hcatUtil;
 
@@ -107,7 +109,6 @@ public abstract class AbstractService implements Service, Runnable {
       hostname = "";
     }
   }
-
 
   public AbstractService(String name, ConduitConfig config,
       Set<String> streamsToProcess, HCatClientUtil hcatUtil) {
@@ -390,7 +391,6 @@ public abstract class AbstractService implements Service, Runnable {
             LOG.warn("Got Exception while finding the last added partition for"
                 + " stream " + stream, e);
             updateLastAddedPartitionMap(stream, FAILED_GET_PARTITIONS);
-            setFailedToGetPartitions(true);
           }
         } else {
           LOG.info("Hcatalog is not enabled for " + stream + " stream");
@@ -407,11 +407,12 @@ public abstract class AbstractService implements Service, Runnable {
    */
   public void findLastPartition(HCatClient hcatClient, String stream)
       throws HCatException {
+    String tableName = getTableName(stream);
     List<HCatPartition> hCatPartitionList = hcatClient.getPartitions(
-        Conduit.getHcatDBName(), getTableName(stream));
+        Conduit.getHcatDBName(), tableName);
     if (hCatPartitionList.isEmpty()) {
       LOG.info("No partitions present for " + stream + " stream. ");
-      updateLastAddedPartitionMap(stream, EMPTY_PARTITION_LIST);
+      updateLastAddedPartitionMap(tableName, EMPTY_PARTITION_LIST);
       return;
     }
     Collections.sort(hCatPartitionList, new HCatPartitionComparator());
@@ -421,30 +422,39 @@ public abstract class AbstractService implements Service, Runnable {
     if (lastAddedPartitionDate != null) {
       LOG.info("Last added partition timetamp : "
           + lastAddedPartitionDate.getTime() + " for stream " + stream);
-      updateLastAddedPartitionMap(stream, lastAddedPartitionDate.getTime());
+      updateLastAddedPartitionMap(tableName, lastAddedPartitionDate.getTime());
     } else {
-      updateLastAddedPartitionMap(stream, EMPTY_PARTITION_LIST);
+      updateLastAddedPartitionMap(tableName, EMPTY_PARTITION_LIST);
     }
   }
 
   protected abstract String getTableName(String stream);
 
-  protected  abstract Date getTimeStampFromHCatPartition(String hcatLoc, String stream);
+  protected Date getTimeStampFromHCatPartition(String hcatLoc, String stream) {
+    return null;
+  }
 
-  public abstract void registerPartitions(long commitTime,
-      String categoryName) throws InterruptedException;
+  public void registerPartitions(long commitTime,
+      String categoryName) throws InterruptedException {
+    // implement logic here
+  }
 
-  protected abstract void prepareStreamHcatEnableMap();
+  protected boolean isStreamHCatEnabled(String stream) {
+    return streamHcatEnableMap.containsKey(stream)
+        && streamHcatEnableMap.get(stream);
+  }
 
-  protected abstract boolean isStreamHCatEnabled(String stream);
+  protected void updateLastAddedPartitionMap(String tableName, long partTime) {
+    lastAddedPartitionMap.put(tableName, partTime);
+  }
 
-  protected abstract void setFailedToGetPartitions(boolean b);
+  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
+    streamHcatEnableMap.put(stream, hcatEnabled);
+  }
 
-  protected abstract void updateLastAddedPartitionMap(String stream, long partTime);
-
-  protected abstract void updateStreamHCatEnabledMap(String stream,
-      boolean hcatEnabled);
-
+  protected void prepareStreamHcatEnableMap() {
+    // override in local, merge and mirror stream services
+  }
 
   public boolean addPartition(String location, String streamName,
       long partTimeStamp, String tableName, HCatClient hcatClient)

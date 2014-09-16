@@ -152,42 +152,7 @@ public class TestRetriableFsOperations extends AbstractService {
   }
 
   @Override
-  public void prepareLastAddedPartitionMap() throws InterruptedException {
-  }
-
-  @Override
-  public void registerPartitions(long commitTime, String categoryName)
-      throws InterruptedException {
-  }
-
-  @Override
   protected String getTableName(String stream) {
     return null;
-  }
-
-  @Override
-  protected Date getTimeStampFromHCatPartition(String hcatLoc, String stream) {
-    return null;
-  }
-
-  @Override
-  protected void prepareStreamHcatEnableMap() {
-  }
-
-  @Override
-  protected boolean isStreamHCatEnabled(String stream) {
-    return false;
-  }
-
-  @Override
-  protected void setFailedToGetPartitions(boolean b) {
-  }
-
-  @Override
-  protected void updateLastAddedPartitionMap(String stream, long partTime) {
-  }
-
-  @Override
-  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
   }
 }

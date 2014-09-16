@@ -63,7 +63,6 @@ public class DataPurgerService extends AbstractService {
   private final Integer defaultstreamPathRetentioninHours;
   private Map<String, Integer> streamRetention;
   private Set<Path> streamsToPurge;
-  private Map<String, Boolean> streamHCatEnabledMap = new HashMap<String, Boolean>();
   private Map<Path, HCatAddPartitionDesc> pathPartitionDescMap;
   private DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
   private static long MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
@@ -94,11 +93,11 @@ public class DataPurgerService extends AbstractService {
     if (Conduit.isHCatEnabled()) {
       Map<String, DestinationStream> destMap = cluster.getDestinationStreams();
       for (Map.Entry<String, DestinationStream> entry : destMap.entrySet()) {
-        streamHCatEnabledMap.put(entry.getKey(), entry.getValue().isHCatEnabled());
+        streamHcatEnableMap.put(entry.getKey(), entry.getValue().isHCatEnabled());
       }
       Map<String, SourceStream> sourceStreams = config.getSourceStreams();
       for (Map.Entry<String, SourceStream> entry : sourceStreams.entrySet()) {
-        streamHCatEnabledMap.put(entry.getKey(), entry.getValue().isHCatEnabled());
+        streamHcatEnableMap.put(entry.getKey(), entry.getValue().isHCatEnabled());
       }
     }
   }
@@ -369,8 +368,8 @@ public class DataPurgerService extends AbstractService {
   }
 
   private boolean isHCatEnabledStream(String streamName) {
-    if (streamHCatEnabledMap.containsKey(streamName)) {
-      return streamHCatEnabledMap.get(streamName);
+    if (streamHcatEnableMap.containsKey(streamName)) {
+      return streamHcatEnableMap.get(streamName);
     }
     return false;
   }
@@ -501,7 +500,6 @@ public class DataPurgerService extends AbstractService {
     return files;
   }
 
-
   @Override
   protected String getTier() {
     throw new UnsupportedOperationException(" requested method is not" +
@@ -521,50 +519,7 @@ public class DataPurgerService extends AbstractService {
   }
 
   @Override
-  public void registerPartitions(long commitTime, String categoryName)
-      throws InterruptedException {
-    throw new UnsupportedOperationException(" requested method is not" +
-        " implemented in purger service");
-  }
-
-  @Override
   protected String getTableName(String stream) {
-    throw new UnsupportedOperationException(" requested method is not" +
-        " implemented in purger service");
-  }
-
-  @Override
-  protected Date getTimeStampFromHCatPartition(String hcatLoc, String stream) {
-    throw new UnsupportedOperationException(" requested method is not" +
-        " implemented in purger service");
-  }
-
-  @Override
-  protected void prepareStreamHcatEnableMap() {
-    throw new UnsupportedOperationException(" requested method is not" +
-        " implemented in purger service");
-  }
-
-  @Override
-  protected boolean isStreamHCatEnabled(String stream) {
-    throw new UnsupportedOperationException(" requested method is not" +
-        " implemented in purger service");
-  }
-
-  @Override
-  protected void setFailedToGetPartitions(boolean b) {
-    throw new UnsupportedOperationException(" requested method is not" +
-        " implemented in purger service");    
-  }
-
-  @Override
-  protected void updateLastAddedPartitionMap(String stream, long partTime) {
-    throw new UnsupportedOperationException(" requested method is not" +
-        " implemented in purger service");
-  }
-
-  @Override
-  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
     throw new UnsupportedOperationException(" requested method is not" +
         " implemented in purger service");
   }

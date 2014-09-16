@@ -134,6 +134,7 @@ public abstract class DistcpBaseService extends AbstractService {
     return true;
   }
 
+  @Override
   protected void prepareStreamHcatEnableMap() {
     Map<String, DestinationStream> destStreamMap = destCluster.getDestinationStreams();
     for (String stream : streamsToProcess) {
@@ -154,7 +155,9 @@ public abstract class DistcpBaseService extends AbstractService {
     return sb.toString();
   }
 
-  protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc, String stream) {
+  @Override
+  protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc,
+      String stream) {
     String streamRootDirPrefix = new Path(destCluster.getFinalDestDirRoot(),
         stream).toString();
     Date lastAddedPartitionDate = CalendarHelper.getDateFromStreamDir(

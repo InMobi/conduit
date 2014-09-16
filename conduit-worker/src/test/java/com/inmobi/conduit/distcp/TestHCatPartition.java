@@ -103,16 +103,17 @@ public class TestHCatPartition extends TestMiniClusterUtil{
           Path pathPrefix = new Path(rootPath, stream);
           service.findLastPartition(hcatClient, stream);
           // No partitions present in the hcatalog table
-          Assert.assertEquals(service.getLastAddedPartTime(stream), -1);
+          Assert.assertEquals(service.getLastAddedPartTime(tableName), -1);
           while (!cal.getTime().after(currentTime)) {
             Path datePath = CalendarHelper.getPathFromDate(cal.getTime(),
                 pathPrefix);
+            LOG.info("Adding partition for path " + datePath);
             TestHCatUtil.addPartition(hcatClient, dbName, tableName,
                 datePath.toString(), TestHCatUtil.getPartitionMap(cal));
             cal.add(Calendar.MINUTE, 1);
           }
           service.findLastPartition(hcatClient, stream);
-          long lastAddedValue = service.getLastAddedPartTime(stream);
+          long lastAddedValue = service.getLastAddedPartTime(tableName);
           Assert.assertEquals(lastAddedValue, currentTime.getTime());
         }
       }

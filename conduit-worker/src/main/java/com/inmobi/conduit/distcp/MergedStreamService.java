@@ -57,10 +57,6 @@ public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
 
-  private static Map<String, Long> lastAddedPartitionMap = new HashMap<String, Long>();
-  private static Map<String, Boolean> streamHcatEnableMap = new HashMap<String, Boolean>();
-  protected static boolean failedTogetPartitions = false;
-
   public MergedStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       CheckpointProvider provider, Set<String> streamsToProcess,
@@ -185,10 +181,10 @@ public class MergedStreamService extends DistcpBaseService {
     }
   }
 
+  @Override
   public void registerPartitions(long commitTime, String streamName)
       throws InterruptedException {
-    if (!streamHcatEnableMap.containsKey(streamName)
-        || !streamHcatEnableMap.get(streamName)) {
+    if (!isStreamHCatEnabled(streamName)) {
       LOG.info("Hcat is not enabled for " + streamName + " stream");
       return;
     }
@@ -197,27 +193,26 @@ public class MergedStreamService extends DistcpBaseService {
       LOG.info("Didn't get any hcat client from pool hence not adding partitions");
       return;
     }
+    String tableName = getTableName(streamName);
     try {
-      long lastAddedTime = lastAddedPartitionMap.get(streamName);
+      long lastAddedTime = lastAddedPartitionMap.get(tableName);
       if (lastAddedTime == EMPTY_PARTITION_LIST) {
-        if (!failedTogetPartitions) {
-          lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
-          return;
-        } else {
-          // TODO 
-          try {
-            findLastPartition(hcatClient, streamName);
-            lastAddedTime = lastAddedPartitionMap.get(streamName);
-            if (lastAddedTime == EMPTY_PARTITION_LIST) {
-              lastAddedPartitionMap.put(streamName, commitTime - MILLISECONDS_IN_MINUTE);
-              return;
-            }
-          } catch (HCatException e) {
-            e.printStackTrace();
+        lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
+        return;
+      } else if (lastAddedTime == FAILED_GET_PARTITIONS) {
+        try {
+          findLastPartition(hcatClient, streamName);
+          lastAddedTime = lastAddedPartitionMap.get(tableName);
+          if (lastAddedTime == EMPTY_PARTITION_LIST) {
+            lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
             return;
           }
+        } catch (HCatException e) {
+          e.printStackTrace();
+          return;
         }
       }
+
       long nextPartitionTime = lastAddedTime + MILLISECONDS_IN_MINUTE;
       if (isMissingPartitions(commitTime, nextPartitionTime)) {
         LOG.info("Last added partition : [" + getLogDateString(lastAddedTime) + "]");
@@ -226,8 +221,8 @@ public class MergedStreamService extends DistcpBaseService {
               destCluster.getFinalDestDirRoot(), streamName, nextPartitionTime);
           try {
             if (addPartition(missingPartition, streamName, nextPartitionTime,
-                getTableName(streamName), hcatClient)) {
-              lastAddedPartitionMap.put(streamName, nextPartitionTime);
+                tableName, hcatClient)) {
+              lastAddedPartitionMap.put(tableName, nextPartitionTime);
             } else {
               LOG.error("Exception occured while trying to add partition ");
               break;
@@ -246,23 +241,6 @@ public class MergedStreamService extends DistcpBaseService {
       addToPool(hcatClient);
     }
   }
-
-  protected boolean isStreamHCatEnabled(String stream) {
-    return streamHcatEnableMap.get(stream);
-  }
-
-  protected void setFailedToGetPartitions(boolean failed) {
-    failedTogetPartitions = failed;
-  }
-
-  protected void updateLastAddedPartitionMap(String stream, long partTime) {
-    lastAddedPartitionMap.put(stream, partTime);
-  }
-
-  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
-    streamHcatEnableMap.put(stream, hcatEnabled);
-  }
-
 
   private void publishMissingPaths(long commitTime,
       Set<String> categoriesToCommit) throws Exception {
