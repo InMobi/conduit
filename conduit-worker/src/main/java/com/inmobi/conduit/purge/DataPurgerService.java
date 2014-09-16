@@ -214,6 +214,9 @@ public class DataPurgerService extends AbstractService {
     }
   }
 
+  public void clearStreamHCatEnableMap() {
+    streamHcatEnableMap.clear();
+  }
   private void getPathsToPurge(Map<String, Path> mergedStreamsInClusterPathMap,
       Map<String, Path> localStreamsInClusterPathMap) throws Exception {
     getStreamsPathToPurge(mergedStreamsInClusterPathMap, false);

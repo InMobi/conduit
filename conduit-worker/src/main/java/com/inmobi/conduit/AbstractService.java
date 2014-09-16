@@ -94,8 +94,8 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX + "_local";
   protected static final long EMPTY_PARTITION_LIST = -1;
   protected static final long FAILED_GET_PARTITIONS = -2;
-  protected final Map<String, Boolean> streamHcatEnableMap = new HashMap<String, Boolean>();
-  protected final Map<String, Long> lastAddedPartitionMap = new HashMap<String, Long>();
+  protected final static Map<String, Boolean> streamHcatEnableMap = new HashMap<String, Boolean>();
+  protected final static Map<String, Long> lastAddedPartitionMap = new HashMap<String, Long>();
 
   protected final HCatClientUtil hcatUtil;
 
@@ -832,5 +832,13 @@ public abstract class AbstractService implements Service, Runnable {
             " failed ", e);
       }
     }
+  }
+
+  /*
+   * This method is only for test cases
+   */
+  public static void clearHCatInMemoryMaps() {
+    streamHcatEnableMap.clear();
+    lastAddedPartitionMap.clear();
   }
 } 

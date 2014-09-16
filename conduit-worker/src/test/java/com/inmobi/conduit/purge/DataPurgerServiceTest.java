@@ -454,6 +454,7 @@ public class DataPurgerServiceTest {
       service.runOnce();
 
       verifyPurgePartitionFiles(fs, cluster, date1, false, false, hcatClient);
+      service.clearStreamHCatEnableMap();
       Conduit.setHCatEnabled(false);
     }
   }

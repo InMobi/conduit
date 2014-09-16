@@ -134,8 +134,9 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
-
     }
+    // clear all the inmemory static map values to avoid failures in other tests
+    TestLocalStreamService.clearHCatInMemoryMaps();
     LOG.info("Cleaning up leftovers");
 
     for (TestLocalStreamService service : localStreamServices) {

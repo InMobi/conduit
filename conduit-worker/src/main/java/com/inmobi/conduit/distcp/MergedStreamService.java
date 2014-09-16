@@ -528,12 +528,4 @@ public class MergedStreamService extends DistcpBaseService {
   public String getServiceType() {
     return "MergedStreamService";
   }
-
-  /*
-   * This method is only for test cases
-   */
-  public void clearHCatInMemoryMaps() {
-    streamHcatEnableMap.clear();
-    lastAddedPartitionMap.clear();
-  }
 }

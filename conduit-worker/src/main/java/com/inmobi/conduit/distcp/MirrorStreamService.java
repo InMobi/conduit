@@ -484,12 +484,4 @@ public class MirrorStreamService extends DistcpBaseService {
   public String getServiceType() {
     return "MirrorStreamService";
   }
-
-  /*
-   * This method is only for test cases
-   */
-  public void clearHCatInMemoryMaps() {
-    streamHcatEnableMap.clear();
-    lastAddedPartitionMap.clear();
-  }
 }

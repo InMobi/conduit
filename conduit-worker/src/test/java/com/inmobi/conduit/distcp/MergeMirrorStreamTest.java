@@ -344,13 +344,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
     LOG.info("Running MergedStream Service");
 
-    boolean clearMergeHcatMaps = true;
     for (TestMergedStreamService service : mergedStreamServices) {
       Thread.currentThread().setName(service.getName());
-      if (clearMergeHcatMaps) {
-        service.clearHCatInMemoryMaps();
-        clearMergeHcatMaps = false;
-      }
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
@@ -359,13 +354,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
     LOG.info("Running MirrorStreamService Service");
 
-    boolean clearMirrorHcatMaps = true;
     for (TestMirrorStreamService service : mirrorStreamServices) {
       Thread.currentThread().setName(service.getName());
-      if (clearMirrorHcatMaps) {
-        service.clearHCatInMemoryMaps();
-        clearMirrorHcatMaps = false;
-      }
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
