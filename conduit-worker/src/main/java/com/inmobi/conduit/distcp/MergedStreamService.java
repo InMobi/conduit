@@ -31,9 +31,11 @@ import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.DatePathComparator;
 import com.inmobi.conduit.utils.FileUtil;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
@@ -53,14 +55,13 @@ public class MergedStreamService extends DistcpBaseService {
 
   private static final Log LOG = LogFactory.getLog(MergedStreamService.class);
 
-
   public MergedStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess)
-          throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess,
+      HCatClientUtil hcatUtil) throws Exception {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
-        streamsToProcess);
+        streamsToProcess, hcatUtil);
 
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_CHECKPOINT, eachStream);
@@ -75,6 +76,12 @@ public class MergedStreamService extends DistcpBaseService {
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          HCAT_ADD_PARTITIONS_COUNT, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          HCAT_CONNECTION_FAILURES, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          FAILED_TO_GET_HCAT_CLIENT_COUNT, eachStream);
     }
   }
 
@@ -154,6 +161,12 @@ public class MergedStreamService extends DistcpBaseService {
               categoriesToCommit);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths, auditMsgList, parsedCounters);
+          for (String eachStream : streamsToProcess) {
+            if (isStreamHCatEnabled(eachStream)) {
+              String path = destCluster.getFinalDestDir(eachStream, commitTime);
+              pathsToBeregisteredPerTable.get(getTableName(eachStream)).add(new Path(path));
+            }
+          }
         }
         finalizeCheckPoints();
         for (String eachStream : streamsToProcess) {
@@ -171,6 +184,11 @@ public class MergedStreamService extends DistcpBaseService {
       getDestFs().delete(tmpOut, true);
       LOG.debug("Deleting [" + tmpOut + "]");
       publishAuditMessages(auditMsgList);
+      try {
+        registerPartitions();
+      } catch (Exception e) {
+        LOG.warn("Got exception while registering partitions. ", e);
+      }
     }
   }
 
@@ -453,7 +471,6 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   @Override
-
   protected String getTier() {
     return "MERGE";
   }

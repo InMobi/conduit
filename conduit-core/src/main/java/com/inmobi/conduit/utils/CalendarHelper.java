@@ -51,9 +51,12 @@ public class CalendarHelper {
   // TODO - all date/time should be returned in a common time zone GMT
 
   public static Date getDateFromStreamDir(Path streamDirPrefix, Path dir) {
-    String pathStr = dir.toString();
-    int startIndex = streamDirPrefix.toString().length() + 1;
-    String dirString = pathStr.substring(startIndex,
+    return getDateFromStreamDir(streamDirPrefix.toString(), dir.toString());
+  }
+
+  public static Date getDateFromStreamDir(String streamDirPrefix, String dir) {
+    int startIndex = streamDirPrefix.length() + 1;
+    String dirString = dir.substring(startIndex,
         startIndex + minDirFormatStr.length());
     try {
       return minDirFormat.get().parse(dirString);
