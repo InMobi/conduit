@@ -271,14 +271,8 @@ public abstract class AbstractService implements Service, Runnable {
     return LogDateFormat.format(commitTime);
   }
 
-  public HCatClient getHCatClient() throws InterruptedException {
-    HCatClient hcatClient = null;
-    int retryCount = 0;
-    while (hcatClient == null && retryCount < numOfRetries) {
-      hcatClient = hcatUtil.getHCatClient();
-      retryCount++;
-    }
-    return hcatClient;
+  protected HCatClient getHCatClient() throws InterruptedException {
+    return hcatUtil.getHCatClient();
   }
 
   protected void addToPool(HCatClient hcatClient) {
@@ -381,15 +375,12 @@ public abstract class AbstractService implements Service, Runnable {
         }
       }
     }
-    if (isStreamHCatEnabled(categoryName)) {
-      preparePartitionsTobeRegistered(categoryName);
-    }
     // prevRuntimeForCategory map is updated with commitTime,
     // even if prevRuntime is -1, since service did run at this point
     prevRuntimeForCategory.put(categoryName, commitTime);
   }
 
-  public void preparePartitionsTobeRegistered(String streamName)
+  private void preparePartitionsTobeRegistered(String streamName)
       throws InterruptedException {
 
     if (!isStreamHCatEnabled(streamName)) {
@@ -543,12 +534,13 @@ public abstract class AbstractService implements Service, Runnable {
     }
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
-      LOG.info("Did not get hcat client hence not rgistering partitions");
+      LOG.warn("Did not get hcat client hence not rgistering partitions");
       return;
     }
     try {
       for (String stream : streamsToProcess) {
         String tableName = getTableName(stream);
+        preparePartitionsTobeRegistered(stream);
         if (lastAddedPartitionMap.get(tableName) == FAILED_GET_PARTITIONS) {
           continue;
         }
@@ -593,28 +585,24 @@ public abstract class AbstractService implements Service, Runnable {
       partSpec.put("minute", dateSplits[4]);
     }
     HCatAddPartitionDesc partInfo = null;
-    int failedCount = 0;
-    while (failedCount < numOfRetries) {
-      try {
-        if (partInfo == null) {
-          partInfo = HCatAddPartitionDesc.create(dbName, tableName, location,
-              partSpec).build();
-        }
-        hcatClient.addPartition(partInfo);
-        LOG.info("Partition " + partInfo.getLocation() + " was added successfully");
-        return true;
-      } catch (HCatException e) {
-        if (e.getCause() instanceof AlreadyExistsException) {
-          LOG.warn("Partition " + partInfo.getLocation() + " is already exists in "
-              + tableName + " table. ", e);
-          return true;
-        }
-        ConduitMetrics.updateSWGuage(getServiceType(),
-            ADD_PARTITIONS_FAILURES, streamName, 1);
-        failedCount++;
-        LOG.info("Got Exception while trying to add partition  : " + partInfo
-            + ". Exception ", e);
+    try {
+      if (partInfo == null) {
+        partInfo = HCatAddPartitionDesc.create(dbName, tableName, location,
+            partSpec).build();
       }
+      hcatClient.addPartition(partInfo);
+      LOG.info("Partition " + partInfo.getLocation() + " was added successfully");
+      return true;
+    } catch (HCatException e) {
+      if (e.getCause() instanceof AlreadyExistsException) {
+        LOG.warn("Partition " + partInfo.getLocation() + " is already exists in "
+            + tableName + " table. ", e);
+        return true;
+      }
+      ConduitMetrics.updateSWGuage(getServiceType(),
+          ADD_PARTITIONS_FAILURES, streamName, 1);
+      LOG.info("Got Exception while trying to add partition  : " + partInfo
+          + ". Exception ", e);
     }
     return false;
   }

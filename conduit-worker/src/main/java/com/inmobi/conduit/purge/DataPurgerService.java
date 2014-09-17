@@ -240,7 +240,6 @@ public class DataPurgerService extends AbstractService {
                   .getPath().getName(), trashHourPath.getPath().getName());
               if (isPurge(trashPathHourDate, getTrashPathRetentionInHours())) {
                 streamsToPurge.add(trashHourPath.getPath().makeQualified(fs));
-                String stream = trashPath.getPath().getParent().getName();
               }
             } catch (NumberFormatException e) {
               streamsToPurge.add(trashHourPath.getPath().makeQualified(fs));
@@ -340,7 +339,7 @@ public class DataPurgerService extends AbstractService {
                         LOG.debug("Adding stream to purge [" + hour.getPath()
                             + "]");
                         Path hourPath = hour.getPath().makeQualified(fs);
-                        addPartition(streamName, tableName, hourPath, yearVal,
+                        addPartitionToList(streamName, tableName, hourPath, yearVal,
                             monthVal, dayVal, hourVal);
                         streamsToPurge.add(hourPath);
                       }
@@ -348,21 +347,21 @@ public class DataPurgerService extends AbstractService {
                   } else {
                     Path dayPath = day.getPath().makeQualified(fs);
                     // No hour found in day. Purge day
-                    addPartition(streamName, tableName, dayPath, yearVal, monthVal, dayVal);
+                    addPartitionToList(streamName, tableName, dayPath, yearVal, monthVal, dayVal);
                     streamsToPurge.add(dayPath);
                   }
                 } // each day
               } else {
                 // No day found in month. Purge month
                 Path monthPath = month.getPath().makeQualified(fs);
-                addPartition(streamName, tableName, monthPath, yearVal, monthVal);
+                addPartitionToList(streamName, tableName, monthPath, yearVal, monthVal);
                 streamsToPurge.add(monthPath);
               }
             }// each month
           } else {
             // no months found in year. Purge Year.
             Path yearPath = year.getPath().makeQualified(fs);
-            addPartition(streamName, tableName, yearPath, yearVal);
+            addPartitionToList(streamName, tableName, yearPath, yearVal);
             streamsToPurge.add(year.getPath().makeQualified(fs));
           }
         }// each year
@@ -377,46 +376,22 @@ public class DataPurgerService extends AbstractService {
     return false;
   }
 
-  private void addPartition(String streamName, String tableName, Path yearPath,
+  private void addPartitionToList(String streamName, String tableName, Path yearPath,
       String yearVal) throws HCatException {
-    if (!isHCatEnabledStream(streamName)) {
-      return;
-    }
-    Map<String, String> partSpec = new HashMap<String, String>();
-    partSpec.put("year", yearVal);
-    HCatAddPartitionDesc partDesc = HCatAddPartitionDesc.create(
-        Conduit.getHcatDBName(), tableName, yearPath.toString(), partSpec).build();
-    pathPartitionDescMap.put(yearPath, partDesc);
+    addPartitionToList(streamName, tableName, yearPath, yearVal, null);
   }
 
-  private void addPartition(String streamName, String tableName, Path monthPath,
+  private void addPartitionToList(String streamName, String tableName, Path monthPath,
       String yearVal, String monthVal) throws HCatException {
-    if (!isHCatEnabledStream(streamName)) {
-      return;
-    }
-    Map<String, String> partSpec = new HashMap<String, String>();
-    partSpec.put("year", yearVal);
-    partSpec.put("month", monthVal);
-    HCatAddPartitionDesc partDesc = HCatAddPartitionDesc.create(
-        Conduit.getHcatDBName(), tableName, monthPath.toString(), partSpec).build();
-    pathPartitionDescMap.put(monthPath, partDesc);
+    addPartitionToList(streamName, tableName, monthPath, yearVal, monthVal, null);
   }
 
-  private void addPartition(String streamName, String tableName, Path dayPath,
+  private void addPartitionToList(String streamName, String tableName, Path dayPath,
       String yearVal, String monthVal, String dayVal) throws HCatException {
-    if (!isHCatEnabledStream(streamName)) {
-      return;
-    }
-    Map<String, String> partSpec = new HashMap<String, String>();
-    partSpec.put("year", yearVal);
-    partSpec.put("month", monthVal);
-    partSpec.put("day", dayVal);
-    HCatAddPartitionDesc partDesc = HCatAddPartitionDesc.create(
-        Conduit.getHcatDBName(), tableName, dayPath.toString(), partSpec).build();
-    pathPartitionDescMap.put(dayPath, partDesc);
+    addPartitionToList(streamName, tableName, dayPath, yearVal, monthVal, dayVal, null);
   }
 
-  private void addPartition(String streamName, String tableName, Path hourPath,
+  private void addPartitionToList(String streamName, String tableName, Path hourPath,
       String yearVal, String monthVal, String dayVal, String hourVal)
           throws HCatException {
     if (!isHCatEnabledStream(streamName)) {
@@ -424,9 +399,15 @@ public class DataPurgerService extends AbstractService {
     }
     Map<String, String> partSpec = new HashMap<String, String>();
     partSpec.put("year", yearVal);
-    partSpec.put("month", monthVal);
-    partSpec.put("day", dayVal);
-    partSpec.put("hour", hourVal);
+    if (monthVal != null) {
+      partSpec.put("month", monthVal);
+    }
+    if (dayVal != null) {
+      partSpec.put("day", dayVal);
+    }
+    if (hourVal != null) {
+      partSpec.put("hour", hourVal);
+    }
     HCatAddPartitionDesc partDesc = HCatAddPartitionDesc.create(
         Conduit.getHcatDBName(), tableName, hourPath.toString(), partSpec).build();
     pathPartitionDescMap.put(hourPath, partDesc);
@@ -462,6 +443,7 @@ public class DataPurgerService extends AbstractService {
       hcatClient = getHCatClient();
 
       if (hcatClient == null) {
+        LOG.warn("Did not get hcat client hence not purging the partitions and paths");
         return;
       }
     }
@@ -473,14 +455,15 @@ public class DataPurgerService extends AbstractService {
         if (pathPartitionDescMap.containsKey(purgePath)) {
           HCatAddPartitionDesc partDesc = pathPartitionDescMap.get(purgePath);
           if (partDesc != null) {
-            LOG.info("Droping the partition : " + partDesc);
+            LOG.info("Droping the partition : " + partDesc.getLocation()
+                + " from " + partDesc.getTableName() + " table");
             hcatClient.dropPartitions(partDesc.getDatabaseName(),
                 partDesc.getTableName(), partDesc.getPartitionSpec(), true);
           }
         }
         try {
-          fs.delete(purgePath, true);
           LOG.info("Purging [" + purgePath + "]");
+          fs.delete(purgePath, true);
           ConduitMetrics.updateSWGuage(getServiceType(), PURGEPATHS_COUNT, getName(), 1);
         } catch (Exception e) {
           LOG.warn("Cannot delete path " + purgePath, e);
