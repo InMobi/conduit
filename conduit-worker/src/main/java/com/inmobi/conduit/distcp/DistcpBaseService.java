@@ -152,7 +152,7 @@ public abstract class DistcpBaseService extends AbstractService {
   protected String getTableName(String streamName) {
     StringBuilder sb = new StringBuilder();
     sb.append(TABLE_PREFIX);
-    sb.append("_");
+    sb.append(TABLE_NAME_SEPARATOR);
     sb.append(streamName);
     return sb.toString();
   }

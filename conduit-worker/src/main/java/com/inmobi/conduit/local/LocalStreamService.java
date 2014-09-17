@@ -16,11 +16,9 @@ package com.inmobi.conduit.local;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -56,8 +54,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.tools.DistCpConstants;
 import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
-import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.common.HCatException;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -89,7 +85,6 @@ ConfigConstants {
   private long timeoutToProcessLastCollectorFile = 60;
   private boolean processLastFile = false;
   private int numberOfFilesProcessed = 0;
-  private boolean failedTogetPartitions = false;
 
   // The amount of data expected to be processed by each mapper, such that
   // each map task completes within ~20 seconds. This calculation is based
@@ -192,74 +187,9 @@ ConfigConstants {
   protected String getTableName(String streamName) {
     StringBuilder sb = new StringBuilder();
     sb.append(LOCAL_TABLE_PREFIX);
-    sb.append("_");
+    sb.append(TABLE_NAME_SEPARATOR);
     sb.append(streamName);
     return sb.toString();
-  }
-
-  @Override
-  public void registerPartitions(long commitTime, String streamName)
-      throws InterruptedException {
-    if (!isStreamHCatEnabled(streamName)) {
-      LOG.info("Hcat is not enabled for " + streamName + " stream");
-      return;
-    }
-    String tableName = getTableName(streamName);
-    HCatClient hcatClient = getHCatClient();
-    if (hcatClient == null) {
-      LOG.info("Didn't get any hcat client from pool hence not adding partitions");
-      return;
-    }
-    try {
-      long lastAddedTime = lastAddedPartitionMap.get(tableName);
-      if (lastAddedTime == EMPTY_PARTITION_LIST) {
-        lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
-        LOG.info("there are no partitions in "+ tableName +" table. ");
-        return;
-      } else if (lastAddedTime == FAILED_GET_PARTITIONS) {
-        try {
-          findLastPartition(hcatClient, streamName);
-          lastAddedTime = lastAddedPartitionMap.get(tableName);
-          if (lastAddedTime == EMPTY_PARTITION_LIST) {
-            lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
-            LOG.info("there are no partitions in "+ tableName +" table. ");
-            return;
-          }
-        } catch (HCatException e) {
-          LOG.error("Got exception while trying to get the last added partition ", e);
-          return;
-        }
-      }
-
-      long nextPartitionTime = lastAddedTime + MILLISECONDS_IN_MINUTE;
-      if (isMissingPartitions(commitTime, nextPartitionTime)) {
-        LOG.debug("Previous partition time: [" + getLogDateString(lastAddedTime) + "]");
-        while (isMissingPartitions(commitTime, nextPartitionTime)) {
-          String missingPartition = Cluster.getDestDir(
-              srcCluster.getLocalFinalDestDirRoot(), streamName, nextPartitionTime);
-          try {
-            if (addPartition(missingPartition, streamName, nextPartitionTime,
-                tableName, hcatClient)) {
-              lastAddedPartitionMap.put(tableName, nextPartitionTime);
-            } else {
-              LOG.error("Got an error while trying to add partition " + missingPartition);
-              break;
-            }
-            nextPartitionTime = nextPartitionTime + MILLISECONDS_IN_MINUTE;
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-            break;
-          } catch (ParseException e) {
-            LOG.warn("Got exception while trying to parse ", e);
-            break;
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOG.warn("Got Exception while publishing partition ", e);
-    } finally {
-      addToPool(hcatClient);
-    }
   }
 
   @Override

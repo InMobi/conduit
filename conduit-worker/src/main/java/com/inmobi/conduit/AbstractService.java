@@ -92,7 +92,9 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String ADD_PARTITIONS_FAILURES = "addpartitions.failures";
   public final static String CONNECTION_FAILURES = "connection.failures";
   protected static final String TABLE_PREFIX = "conduit";
-  protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX + "_local";
+  protected static final String TABLE_NAME_SEPARATOR = "_";
+  protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX
+      + TABLE_NAME_SEPARATOR +"local";
   protected static final long EMPTY_PARTITION_LIST = -1;
   protected static final long FAILED_GET_PARTITIONS = -2;
   protected final static Map<String, Boolean> streamHcatEnableMap =
@@ -516,11 +518,6 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected Date getTimeStampFromHCatPartition(String hcatLoc, String stream) {
     return null;
-  }
-
-  public void registerPartitions(long commitTime,
-      String categoryName) throws InterruptedException {
-    // implement logic here
   }
 
   protected boolean isStreamHCatEnabled(String stream) {

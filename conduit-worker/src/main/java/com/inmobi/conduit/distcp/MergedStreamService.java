@@ -41,8 +41,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.common.HCatException;
 
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
@@ -185,67 +183,6 @@ public class MergedStreamService extends DistcpBaseService {
       LOG.debug("Deleting [" + tmpOut + "]");
       registerPartitionPerTable();
       publishAuditMessages(auditMsgList);
-    }
-  }
-
-  @Override
-  public void registerPartitions(long commitTime, String streamName)
-      throws InterruptedException {
-    if (!isStreamHCatEnabled(streamName)) {
-      LOG.info("Hcat is not enabled for " + streamName + " stream");
-      return;
-    }
-    HCatClient hcatClient = getHCatClient();
-    if (hcatClient == null) {
-      LOG.info("Didn't get any hcat client from pool hence not adding partitions");
-      return;
-    }
-    String tableName = getTableName(streamName);
-    try {
-      long lastAddedTime = lastAddedPartitionMap.get(tableName);
-      if (lastAddedTime == EMPTY_PARTITION_LIST) {
-        lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
-        return;
-      } else if (lastAddedTime == FAILED_GET_PARTITIONS) {
-        try {
-          findLastPartition(hcatClient, streamName);
-          lastAddedTime = lastAddedPartitionMap.get(tableName);
-          if (lastAddedTime == EMPTY_PARTITION_LIST) {
-            lastAddedPartitionMap.put(tableName, commitTime - MILLISECONDS_IN_MINUTE);
-            return;
-          }
-        } catch (HCatException e) {
-          e.printStackTrace();
-          return;
-        }
-      }
-
-      long nextPartitionTime = lastAddedTime + MILLISECONDS_IN_MINUTE;
-      if (isMissingPartitions(commitTime, nextPartitionTime)) {
-        LOG.info("Last added partition : [" + getLogDateString(lastAddedTime) + "]");
-        while (isMissingPartitions(commitTime, nextPartitionTime)) {
-          String missingPartition = Cluster.getDestDir(
-              destCluster.getFinalDestDirRoot(), streamName, nextPartitionTime);
-          try {
-            if (addPartition(missingPartition, streamName, nextPartitionTime,
-                tableName, hcatClient)) {
-              lastAddedPartitionMap.put(tableName, nextPartitionTime);
-            } else {
-              LOG.error("Exception occured while trying to add partition ");
-              break;
-            }
-            nextPartitionTime = nextPartitionTime + MILLISECONDS_IN_MINUTE;
-          } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            break;
-          }
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      addToPool(hcatClient);
     }
   }
 
