@@ -257,7 +257,11 @@ ConfigConstants {
       throw e;
     } finally {
       publishAuditMessages(auditMsgList);
-      registerPartitions();
+      try {
+        registerPartitions();
+      } catch (Exception e) {
+        LOG.warn("Got exception while registering partitions. ", e);
+      }
     }
   }
 

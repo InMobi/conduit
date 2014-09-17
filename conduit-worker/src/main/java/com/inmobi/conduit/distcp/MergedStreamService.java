@@ -184,7 +184,11 @@ public class MergedStreamService extends DistcpBaseService {
       getDestFs().delete(tmpOut, true);
       LOG.debug("Deleting [" + tmpOut + "]");
       publishAuditMessages(auditMsgList);
-      registerPartitions();
+      try {
+        registerPartitions();
+      } catch (Exception e) {
+        LOG.warn("Got exception while registering partitions. ", e);
+      }
     }
   }
 

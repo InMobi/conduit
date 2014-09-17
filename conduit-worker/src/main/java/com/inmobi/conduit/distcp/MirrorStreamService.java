@@ -159,7 +159,11 @@ public class MirrorStreamService extends DistcpBaseService {
       getDestFs().delete(tmpOut, true);
       LOG.debug("Cleanup [" + tmpOut + "]");
       publishAuditMessages(auditMsgList);
-      registerPartitions();
+      try {
+        registerPartitions();
+      } catch (Exception e) {
+        LOG.warn("Got exception while registering partitions. ", e);
+      }
     }
   }
 
