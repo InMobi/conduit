@@ -338,7 +338,6 @@ public class Conduit implements Service, ConduitConstants {
         String [] ratioSplits = hcatCientsRaio.split("/");
         int numServices = services.size();
         boolean isValidRatio = isValidRatio(ratioSplits);
-        isValidRatio(ratioSplits);
         if (numServices > 0 && isValidRatio) {
           numOfHCatClients = (int) Math.ceil(
               (numServices * Integer.parseInt(ratioSplits[0])) / Integer.parseInt(ratioSplits[1]));

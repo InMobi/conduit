@@ -555,6 +555,8 @@ public abstract class AbstractService implements Service, Runnable {
         String tableName = getTableName(stream);
         preparePartitionsTobeRegistered(stream);
         if (lastAddedPartitionMap.get(tableName) == FAILED_GET_PARTITIONS) {
+          LOG.warn("Failed to get partitions for stream from server hence"
+              + " not registering new partiotions");
           continue;
         }
         List<Path> partitionsTobeRegistered = pathsToBeregisteredPerTable.get(tableName);
