@@ -24,9 +24,10 @@ import com.inmobi.conduit.utils.HCatPartitionComparator;
 
 public class TestMirrorStreamPartition extends TestMirrorStreamService {
   private static final Log LOG = LogFactory.getLog(TestMirrorStreamPartition.class);
-  HCatClient hcatClient = null;
-  static String dbName;
-  Set<String> streamsToProcess = new HashSet<String>();
+
+  private HCatClient hcatClient = null;
+  private String dbName;
+  private Set<String> streamsToProcess = new HashSet<String>();
 
   public TestMirrorStreamPartition(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,

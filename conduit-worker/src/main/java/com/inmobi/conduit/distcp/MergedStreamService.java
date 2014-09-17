@@ -161,6 +161,12 @@ public class MergedStreamService extends DistcpBaseService {
               categoriesToCommit);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths, auditMsgList, parsedCounters);
+          for (String eachStream : streamsToProcess) {
+            if (isStreamHCatEnabled(eachStream)) {
+              String path = destCluster.getFinalDestDir(eachStream, commitTime);
+              pathsToBeregisteredPerTable.get(getTableName(eachStream)).add(new Path(path));
+            }
+          }
         }
         finalizeCheckPoints();
         for (String eachStream : streamsToProcess) {
@@ -177,6 +183,7 @@ public class MergedStreamService extends DistcpBaseService {
       // rmv tmpOut cleanup
       getDestFs().delete(tmpOut, true);
       LOG.debug("Deleting [" + tmpOut + "]");
+      registerPartitionPerTable();
       publishAuditMessages(auditMsgList);
     }
   }

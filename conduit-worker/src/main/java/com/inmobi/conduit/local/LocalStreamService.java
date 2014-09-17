@@ -170,6 +170,8 @@ ConfigConstants {
       if (sourceStreamMap.containsKey(stream)
           && sourceStreamMap.get(stream).isHCatEnabled()) {
         streamHcatEnableMap.put(stream, true);
+        List<Path> paths = new ArrayList<Path>();
+        pathsToBeregisteredPerTable.put(getTableName(stream), paths);
       } else {
         streamHcatEnableMap.put(stream, false);
       }
@@ -322,6 +324,7 @@ ConfigConstants {
       LOG.warn("Error in running LocalStreamService ", e);
       throw e;
     } finally {
+      registerPartitionPerTable();
       publishAuditMessages(auditMsgList);
     }
   }
@@ -847,4 +850,15 @@ ConfigConstants {
   public String getServiceType() {
     return "LocalStreamService";
   }
+
+  protected Path getFinalPath(long time, String stream) {
+    Path finalDestPath = null;
+    try {
+      finalDestPath = new Path(srcCluster.getLocalDestDir(stream, time));
+    } catch (IOException e) {
+      LOG.error("Got exception while constructing a path from time ", e);
+    }
+    return finalDestPath;
+  }
+
 }

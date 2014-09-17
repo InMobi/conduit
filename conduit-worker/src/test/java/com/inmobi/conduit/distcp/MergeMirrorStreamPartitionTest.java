@@ -115,6 +115,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
+      service.clearPathPartitionTable();
     }
 
     LOG.info("Running MergedStream Service");
@@ -124,7 +125,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
-
+      service.clearPathPartitionTable();
     }
     
     LOG.info("Running MirrorStreamService Service");
@@ -134,16 +135,17 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
+      service.clearPathPartitionTable();
     }
     // clear all the inmemory static map values to avoid failures in other tests
     TestLocalStreamService.clearHCatInMemoryMaps();
     LOG.info("Cleaning up leftovers");
 
-    for (TestLocalStreamService service : localStreamServices) {
+/*    for (TestLocalStreamService service : localStreamServices) {
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
     } 
-  }
+*/  }
 
   private void initializeConduit(String filename, String currentClusterName,
       Set<String> additionalClustersToProcess, boolean addAllSourceClusters,
@@ -180,7 +182,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
     // Add a partition with (current -90 mins) timestamp in each table
     // (i.e. local, merge and mirror) for all streams
     Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.HOUR, -1);
+    cal.add(Calendar.HOUR, -2);
     cal.add(Calendar.MINUTE, -30);
     lastAddedPartTime = cal.getTime();
     Map<String, String> partSpec = TestHCatUtil.getPartitionMap(cal);
@@ -276,6 +278,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
               LOG.warn(" table for merge stream was already created: ", e);
             } else {
               LOG.warn("Got exception while creating table for merge stream: ", e);
+              return;
             }
           }
           Path streamPath = new Path(destRootDir, stream);
@@ -329,6 +332,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
                   + " " + tableName );
             } else { 
               LOG.warn("Got exception while creating partition " + partSpec, e);
+              return;
             }
           }
         }

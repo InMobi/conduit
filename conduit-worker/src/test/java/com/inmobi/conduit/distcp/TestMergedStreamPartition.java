@@ -25,9 +25,9 @@ import com.inmobi.conduit.utils.HCatPartitionComparator;
 public class TestMergedStreamPartition extends TestMergedStreamService {
 
   private static final Log LOG = LogFactory.getLog(TestMergedStreamPartition.class);
-   HCatClient hcatClient = null;
-  static String dbName;
-  Set<String> streamsToProcess = new HashSet<String>();
+  private HCatClient hcatClient = null;
+  private String dbName;
+  private Set<String> streamsToProcess = new HashSet<String>();
 
   public TestMergedStreamPartition(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,

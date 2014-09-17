@@ -141,6 +141,8 @@ public abstract class DistcpBaseService extends AbstractService {
       if (destStreamMap.containsKey(stream)
           && destStreamMap.get(stream).isHCatEnabled()) {
         updateStreamHCatEnabledMap(stream, true);
+        List<Path> paths = new ArrayList<Path>();
+        pathsToBeregisteredPerTable.put(getTableName(stream), paths);
       } else {
         updateStreamHCatEnabledMap(stream, false);
       }
@@ -384,4 +386,16 @@ public abstract class DistcpBaseService extends AbstractService {
       tmpPath=tmpPath.getParent();
     return tmpPath.getName();
   }
+
+  @Override
+  protected Path getFinalPath(long time, String stream) {
+    Path finalDestPath = null;
+    try {
+      finalDestPath = new Path(destCluster.getFinalDestDir(stream, time));
+    } catch (IOException e) {
+      LOG.error("Got exception while constructing a path from time ", e);
+    }
+    return finalDestPath;
+  }
+
 }

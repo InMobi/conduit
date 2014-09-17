@@ -28,10 +28,11 @@ import com.inmobi.conduit.utils.HCatPartitionComparator;
 public class TestLocalStreamPartition extends TestLocalStreamService {
 
   private static final Log LOG = LogFactory.getLog(TestLocalStreamPartition.class);
-  HCatClient hcatClient = null;
-  static String dbName;
-  Cluster srcCluster;
+  private HCatClient hcatClient = null;
+  private String dbName;
+  private Cluster srcCluster;
   private Set<String> streamsToProcess = new HashSet<String>();
+
   public TestLocalStreamPartition(ConduitConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
       Set<String> streamsToProcess, HCatClientUtil hcatUtil) throws IOException {
@@ -61,7 +62,7 @@ public class TestLocalStreamPartition extends TestLocalStreamService {
         for (HCatPartition part : list) {
           LOG.info("Local partition location : " + part.getLocation());          
           Path path = new Path(part.getLocation());
-          Assert.assertTrue(path.compareTo(startPath) >=0 && path.compareTo(endPath) <= 0);          
+          Assert.assertTrue(path.compareTo(startPath) >=0 && path.compareTo(endPath) <= 0);
         }
       }
     } catch (HCatException e) {
