@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
 import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.common.HCatException;
@@ -68,6 +69,8 @@ public class DataPurgerService extends AbstractService {
   private static long MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
   private final static String PURGEPATHS_COUNT = "purgePaths.count";
   private final static String DELETE_FAILURES_COUNT = "deleteFailures.count";
+  private final static String HCAT_PURGE_PARTITION_FAILURES_COUNT = "hcat.paritition.drop.failures.count";
+  private static final String HCAT_PURGED_PARTITION_COUNT = "hcat.partition.purged.count";
 
   public DataPurgerService(ConduitConfig conduitConfig, Cluster cluster,
       HCatClientUtil hcatUtil) throws Exception {
@@ -89,6 +92,14 @@ public class DataPurgerService extends AbstractService {
         getName());
     ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
         getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        HCAT_PURGE_PARTITION_FAILURES_COUNT, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        HCAT_CONNECTION_FAILURES, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        HCAT_PURGED_PARTITION_COUNT, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        FAILED_TO_GET_HCAT_CLIENT_COUNT, getName());
 
     if (Conduit.isHCatEnabled()) {
       Map<String, DestinationStream> destMap = cluster.getDestinationStreams();
@@ -444,6 +455,7 @@ public class DataPurgerService extends AbstractService {
 
       if (hcatClient == null) {
         LOG.warn("Did not get hcat client hence not purging the partitions and paths");
+        ConduitMetrics.updateSWGuage(getServiceType(), FAILED_TO_GET_HCAT_CLIENT_COUNT, getName(), 1);
         return;
       }
     }
@@ -457,8 +469,23 @@ public class DataPurgerService extends AbstractService {
           if (partDesc != null) {
             LOG.info("Droping the partition : " + partDesc.getLocation()
                 + " from " + partDesc.getTableName() + " table");
-            hcatClient.dropPartitions(partDesc.getDatabaseName(),
-                partDesc.getTableName(), partDesc.getPartitionSpec(), true);
+            try {
+              hcatClient.dropPartitions(partDesc.getDatabaseName(),
+                  partDesc.getTableName(), partDesc.getPartitionSpec(), false);
+              ConduitMetrics.updateSWGuage(getServiceType(),
+                  HCAT_PURGED_PARTITION_COUNT, getName(), 1);
+            } catch (HCatException hcatException) {
+              if (hcatException.getCause() instanceof NoSuchObjectException) {
+                LOG.info("partition " + partDesc.getLocation() + " does not"
+                    + " exists in " + partDesc.getTableName() + " table");
+              } else {
+                ConduitMetrics.updateSWGuage(getServiceType(),
+                    HCAT_PURGE_PARTITION_FAILURES_COUNT, getName(), 1);
+                ConduitMetrics.updateSWGuage(getServiceType(),
+                    HCAT_CONNECTION_FAILURES, getName(), 1);
+                throw hcatException;
+              }
+            }
           }
         }
         try {

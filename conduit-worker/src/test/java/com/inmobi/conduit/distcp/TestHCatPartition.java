@@ -1,6 +1,5 @@
 package com.inmobi.conduit.distcp;
 
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
@@ -15,7 +14,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;

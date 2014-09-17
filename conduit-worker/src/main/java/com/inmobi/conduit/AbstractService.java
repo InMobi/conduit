@@ -89,8 +89,9 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String FILES_COPIED_COUNT = "filesCopied.count";
   public final static String DATAPURGER_SERVICE = "DataPurgerService";
   public final static String LAST_FILE_PROCESSED = "lastfile.processed";
-  public final static String ADD_PARTITIONS_FAILURES = "addpartitions.failures";
-  public final static String CONNECTION_FAILURES = "connection.failures";
+  public final static String HCAT_ADD_PARTITIONS_COUNT = "hcat.addpartitions.count";
+  public final static String HCAT_CONNECTION_FAILURES = "hcat.connection.failures";
+  public final static String FAILED_TO_GET_HCAT_CLIENT_COUNT = "failed.hcatclient";
   protected static final String TABLE_PREFIX = "conduit";
   protected static final String TABLE_NAME_SEPARATOR = "_";
   protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX
@@ -390,7 +391,9 @@ public abstract class AbstractService implements Service, Runnable {
     String tableName = getTableName(streamName);
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
-      LOG.info("Didn't get any hcat client from pool hence not adding partitions");
+      LOG.warn("Didn't get any hcat client from pool hence not adding partitions");
+      ConduitMetrics.updateSWGuage(getServiceType(), FAILED_TO_GET_HCAT_CLIENT_COUNT,
+          streamName, 1);
       return;
     }
     try {
@@ -451,6 +454,9 @@ public abstract class AbstractService implements Service, Runnable {
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
       LOG.warn("Did not get hcatclient hence not finding the last added partition");
+      for (String stream : streamsToProcess) {
+        ConduitMetrics.updateSWGuage(getServiceType(), FAILED_TO_GET_HCAT_CLIENT_COUNT, stream, 1);
+      }
       return;
     }
     try {
@@ -528,13 +534,17 @@ public abstract class AbstractService implements Service, Runnable {
     // override in local, merge and mirror stream services
   }
 
-  protected void registerPartitionPerTable() throws InterruptedException, ParseException {
+  protected void registerPartitions() throws InterruptedException, ParseException {
     if (!Conduit.isHCatEnabled()) {
       return;
     }
     HCatClient hcatClient = getHCatClient();
     if (hcatClient == null) {
       LOG.warn("Did not get hcat client hence not rgistering partitions");
+      for (String stream : streamsToProcess) {
+        ConduitMetrics.updateSWGuage(getServiceType(),
+            FAILED_TO_GET_HCAT_CLIENT_COUNT, stream, 1);
+      }
       return;
     }
     try {
@@ -592,6 +602,8 @@ public abstract class AbstractService implements Service, Runnable {
       }
       hcatClient.addPartition(partInfo);
       LOG.info("Partition " + partInfo.getLocation() + " was added successfully");
+      ConduitMetrics.updateSWGuage(getServiceType(), HCAT_ADD_PARTITIONS_COUNT,
+          streamName, 1);
       return true;
     } catch (HCatException e) {
       if (e.getCause() instanceof AlreadyExistsException) {
@@ -599,8 +611,8 @@ public abstract class AbstractService implements Service, Runnable {
             + tableName + " table. ", e);
         return true;
       }
-      ConduitMetrics.updateSWGuage(getServiceType(),
-          ADD_PARTITIONS_FAILURES, streamName, 1);
+      ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
+          getName(), 1);
       LOG.info("Got Exception while trying to add partition  : " + partInfo
           + ". Exception ", e);
     }

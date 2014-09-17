@@ -36,7 +36,7 @@ public class HCatClientUtil {
 
   public HCatClient getHCatClient() throws InterruptedException {
     if (buffer != null) {
-      return buffer.poll(60, TimeUnit.SECONDS);
+      return buffer.poll(30, TimeUnit.SECONDS);
     } else {
       return null;
     }
