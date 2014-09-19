@@ -26,6 +26,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.inmobi.conduit.AbstractService;
+import com.inmobi.conduit.distcp.tools.DistCp;
+import com.inmobi.conduit.distcp.tools.DistCpOptions;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
 
@@ -35,8 +37,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.tools.DistCp;
-import org.apache.hadoop.tools.DistCpOptions;
 
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
