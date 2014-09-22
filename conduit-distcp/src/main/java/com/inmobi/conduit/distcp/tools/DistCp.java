@@ -71,8 +71,10 @@ public class DistCp extends Configured implements Tool {
     Configuration defaultConf = new Configuration(false);
     defaultConf.addResource(DISTCP_DEFAULT_XML);
     for (Map.Entry<String, String> entry : defaultConf)
-      if (config.get(entry.getKey()) == null)
+      if (config.get(entry.getKey()) == null) {
+       System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA " + entry.getKey() + "     ... " + entry.getValue());
         config.set(entry.getKey(), entry.getValue());
+      }
     setConf(config);
     this.inputOptions = inputOptions;
     this.metaFolder   = createMetaFolderPath();
