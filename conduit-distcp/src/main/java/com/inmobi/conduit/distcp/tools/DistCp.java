@@ -72,7 +72,6 @@ public class DistCp extends Configured implements Tool {
     defaultConf.addResource(DISTCP_DEFAULT_XML);
     for (Map.Entry<String, String> entry : defaultConf)
       if (config.get(entry.getKey()) == null) {
-       System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA " + entry.getKey() + "     ... " + entry.getValue());
         config.set(entry.getKey(), entry.getValue());
       }
     setConf(config);
