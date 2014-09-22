@@ -101,7 +101,7 @@ public class TestCopyCommitter {
     }
   }
 
-  @Test
+ @Test
   public void testNoCommitAction() {
 
     TaskAttemptContext taskAttemptContext = getTaskAttemptContext(config);
@@ -228,6 +228,7 @@ public class TestCopyCommitter {
       Assert.fail("Preserve status failure");
     } finally {
       TestDistCpUtils.delete(fs, "/tmp1");
+      conf.unset(DistCpConstants.CONF_LABEL_PRESERVE_STATUS);
     }
 
   }
@@ -399,6 +400,7 @@ public class TestCopyCommitter {
     } finally {
       TestDistCpUtils.delete(fs, workPath);
       TestDistCpUtils.delete(fs, finalPath);
+      conf.setBoolean(DistCpConstants.CONF_LABEL_ATOMIC_COPY, false);
     }
   }
 
@@ -444,6 +446,7 @@ public class TestCopyCommitter {
     } finally {
       TestDistCpUtils.delete(fs, workPath);
       TestDistCpUtils.delete(fs, finalPath);
+      conf.setBoolean(DistCpConstants.CONF_LABEL_ATOMIC_COPY, false);
     }
   }
 
