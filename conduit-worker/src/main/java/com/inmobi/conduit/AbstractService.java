@@ -384,10 +384,6 @@ public abstract class AbstractService implements Service, Runnable {
   private boolean preparePartitionsTobeRegistered(String streamName)
       throws InterruptedException {
 
-    if (!isStreamHCatEnabled(streamName)) {
-      LOG.info("Hcat is not enabled for " + streamName + " stream");
-      return true;
-    }
     String tableName = getTableName(streamName);
     long lastAddedTime = lastAddedPartitionMap.get(tableName);
     LOG.info("Last added partition time " + getLogDateString(lastAddedTime)
@@ -561,6 +557,11 @@ public abstract class AbstractService implements Service, Runnable {
     }
     try {
       for (String stream : streamsToProcess) {
+        if (!isStreamHCatEnabled(stream)) {
+          LOG.info("Hcat is not enabled for " + stream + " stream."
+              + " Hence not registering partitions");
+          continue;
+        }
         String tableName = getTableName(stream);
         /*
          * If it is not able to find the diff between the last added partition
