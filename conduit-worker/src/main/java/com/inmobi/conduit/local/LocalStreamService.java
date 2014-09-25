@@ -270,7 +270,7 @@ ConfigConstants {
       throws IOException {
     for (String eachStream : streamsToProcess) {
       if (isStreamHCatEnabled(eachStream)) {
-        String path = srcCluster.getFinalDestDir(eachStream, commitTime);
+        String path = srcCluster.getLocalDestDir(eachStream, commitTime);
         pathsToBeregisteredPerTable.get(getTableName(eachStream)).add(new Path(path));
       }
     }
