@@ -8,13 +8,13 @@
 
     <property>
         <name>distcp.dynamic.strategy.impl</name>
-        <value>org.apache.hadoop.tools.mapred.lib.DynamicInputFormat</value>
+        <value>com.inmobi.conduit.distcp.tools.mapred.lib.DynamicInputFormat</value>
         <description>Implementation of dynamic input format</description>
     </property>
 
     <property>
         <name>distcp.uniformsize.strategy.impl</name>
-        <value>org.apache.hadoop.tools.mapred.UniformSizeInputFormat</value>
+        <value>com.inmobi.conduit.distcp.tools.mapred.UniformSizeInputFormat</value>
         <description>Implementation of static input format</description>
     </property>
 
