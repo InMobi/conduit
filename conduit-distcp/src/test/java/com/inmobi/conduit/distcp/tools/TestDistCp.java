@@ -47,6 +47,8 @@ import com.inmobi.conduit.distcp.tools.mapred.CopyOutputFormat;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 public class TestDistCp {
   private static final Log LOG = LogFactory.getLog(TestDistCp.class);
@@ -198,8 +200,34 @@ public class TestDistCp {
       DistCpOptions options = new DistCpOptions(sources, targetPath);
       options.setOutPutDirectory(counterOutputPath);
 
-      Path stagingDir = JobSubmissionFiles.getStagingDir(
+      Path stagingDir = null/* = JobSubmissionFiles.getStagingDir(
+          new JobClient(new JobConf(configuration)), configuration)*/;
+      boolean hadoop1 = false;
+      try {
+        LOG.info("Trying to get staging path using hadoop-2");
+        Class clusterClass = DistCp.class.getClassLoader().loadClass(
+            "org.apache.hadoop.mapreduce.Cluster");
+        Method method = JobSubmissionFiles.class.getMethod("getStagingDir",
+            clusterClass, Configuration.class);
+        Constructor constructor = clusterClass.getConstructor(Configuration.class);
+        stagingDir = (Path) method.invoke(null,
+            constructor.newInstance(configuration), configuration);
+      } catch (Exception ignored) {
+        // fallback to hadoop-1 API
+        hadoop1= true;
+      }
+      if (hadoop1) {
+        try {
+          LOG.info("Trying to get staging path using hadoop-1");
+          Method method = JobSubmissionFiles.class.getMethod("getStagingDir",
+              JobClient.class, Configuration.class);
+          stagingDir = (Path) method.invoke(null,
               new JobClient(new JobConf(configuration)), configuration);
+        } catch (Exception ignored) {
+          // do nothing
+        }
+      }
+
       stagingDir.getFileSystem(configuration).mkdirs(stagingDir);
 
       try {

@@ -19,6 +19,8 @@
 package com.inmobi.conduit.distcp.tools;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Random;
 
@@ -349,13 +351,39 @@ public class DistCp extends Configured implements Tool {
    */
   private Path createMetaFolderPath() throws Exception {
     Configuration configuration = getConf();
-    Path stagingDir = JobSubmissionFiles.getStagingDir(
-            new JobClient(new JobConf(configuration)), configuration);
+    Path stagingDir = getStagingPath(configuration);
     Path metaFolderPath = new Path(stagingDir, PREFIX + String.valueOf(rand.nextInt()));
     if (LOG.isDebugEnabled())
       LOG.debug("Meta folder location: " + metaFolderPath);
     configuration.set(DistCpConstants.CONF_LABEL_META_FOLDER, metaFolderPath.toString());
     return metaFolderPath;
+  }
+
+  private Path getStagingPath(Configuration configuration) {
+    try {
+      LOG.info("Trying to get staging path using hadoop-2");
+      Class clusterClass = DistCp.class.getClassLoader().loadClass(
+          "org.apache.hadoop.mapreduce.Cluster");
+      Method method = JobSubmissionFiles.class.getMethod("getStagingDir",
+          clusterClass, Configuration.class);
+      Constructor constructor = clusterClass.getConstructor(Configuration.class);
+      return (Path) method.invoke(null,
+          constructor.newInstance(configuration), configuration);
+    } catch (Exception ignored) {
+      // fallback to hadoop-1 API
+    }
+
+    try {
+      LOG.info("Trying to get staging path using hadoop-1");
+      Method method = JobSubmissionFiles.class.getMethod("getStagingDir",
+          JobClient.class, Configuration.class);
+      return (Path) method.invoke(null,
+          new JobClient(new JobConf(configuration)), configuration);
+    } catch (Exception ignored) {
+      // do nothing
+    }
+
+    throw new RuntimeException("Either hadoop-1 or hadoop-2 must be in the classpath");
   }
 
   /**
