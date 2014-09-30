@@ -137,12 +137,9 @@ if [ -z $HADOOP_HOME ]; then
 fi
 
 #set classpath
-for f in $HADOOP_HOME/hadoop-*.jar;do
-  if [[ "$f" != *tool* ]]; then
-export CONDUIT_CLASSPATH=$CONDUIT_CLASSPATH:$f
-  fi
+for i in `hadoop classpath | sed "s/:/ /g"` ;do
+  CONDUIT_CLASSPATH=$CONDUIT_CLASSPATH:$i;
 done
-export CONDUIT_CLASSPATH=$CONDUIT_CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
 export CONDUIT_CLASSPATH="${CONDUIT_HOME}/lib/*:$DEV_CLASSPATH:$CONDUIT_CLASSPATH"
 
 
