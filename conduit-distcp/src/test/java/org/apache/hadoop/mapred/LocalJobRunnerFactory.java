@@ -31,9 +31,9 @@ import org.aspectj.lang.JoinPoint;
 import java.lang.reflect.Field;
 import java.io.IOException;
 
-@Aspect
+//@Aspect
 public class LocalJobRunnerFactory {
-  private static final Log LOG = LogFactory.getLog(LocalJobRunnerFactory.class);
+ /* private static final Log LOG = LogFactory.getLog(LocalJobRunnerFactory.class);
   public JobSubmissionProtocol jobRunner = null;
 
   @Pointcut("execution(* org.apache.hadoop.mapred.JobClient.init(org.apache.hadoop.mapred.JobConf)) && " +
@@ -65,4 +65,4 @@ public class LocalJobRunnerFactory {
       LOG.error("Exception encountered ", e);
     }
   }
-}
+*/}
