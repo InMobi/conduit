@@ -125,7 +125,7 @@ public class Conduit implements Service, ConduitConstants {
 
     // find the name of the jar containing UniformSizeInputFormat class.
     String inputFormatSrcJar = FileUtil.findContainingJar(
-        org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+        com.inmobi.conduit.distcp.tools.mapred.UniformSizeInputFormat.class);
     LOG.debug("Jar containing UniformSizeInputFormat [" + inputFormatSrcJar + "]");
 
     // find the name of the jar containing AuditUtil class.
