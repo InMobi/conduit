@@ -16,11 +16,13 @@ package com.inmobi.conduit.purge;
 import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,9 +35,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
-import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.common.HCatException;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.AbstractService;
@@ -63,7 +64,7 @@ public class DataPurgerService extends AbstractService {
   private final Integer defaultstreamPathRetentioninHours;
   private Map<String, Integer> streamRetention;
   private Set<Path> streamsToPurge;
-  private Map<Path, HCatAddPartitionDesc> pathPartitionDescMap;
+  private Map<Path, PartitionDesc> pathPartitionDescMap;
   private DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
   private static long MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
   private final static String PURGEPATHS_COUNT = "purgePaths.count";
@@ -108,6 +109,56 @@ public class DataPurgerService extends AbstractService {
       for (Map.Entry<String, SourceStream> entry : sourceStreams.entrySet()) {
         streamHcatEnableMap.put(entry.getKey(), entry.getValue().isHCatEnabled());
       }
+    }
+  }
+
+  private class PartitionDesc {
+    String streamName;
+    String tableName;
+    List<String> partVals;
+    String location;
+
+    public PartitionDesc() {
+    }
+
+    PartitionDesc(String stream, String table,
+        List<String> parttitionVals, String pathLocation) {
+      streamName = stream;
+      tableName = table;
+      partVals = parttitionVals;
+      location = pathLocation;
+    }
+
+    public String getLocation() {
+      return location;
+    }
+
+    public void setLocation(String location) {
+      this.location = location;
+    }
+
+    public String getStreamName() {
+      return streamName;
+    }
+
+    public void setStreamName(String streamName) {
+      this.streamName = streamName;
+    }
+
+    public String getTableName() {
+      return tableName;
+    }
+
+    public void setTableName(String tableName) {
+      this.tableName = tableName;
+    }
+
+    public List<String> getPartVals() {
+      return partVals;
+    }
+
+    public void setPartVals(List<String> partVals) {
+      this.partVals = partVals;
     }
   }
 
@@ -200,7 +251,7 @@ public class DataPurgerService extends AbstractService {
     try {
       streamRetention = new HashMap<String, Integer>();
       streamsToPurge = new TreeSet<Path>();
-      pathPartitionDescMap = new HashMap<Path, HCatAddPartitionDesc>();
+      pathPartitionDescMap = new HashMap<Path, PartitionDesc>();
 
       // populates - streamRetention
       // Map of streams and their retention period at this cluster (Partial +
@@ -385,40 +436,39 @@ public class DataPurgerService extends AbstractService {
     return false;
   }
 
-  private void addPartitionToList(String streamName, String tableName, Path yearPath,
-      String yearVal) throws HCatException {
+  private void addPartitionToList(String streamName, String tableName,
+      Path yearPath, String yearVal) {
     addPartitionToList(streamName, tableName, yearPath, yearVal, null);
   }
 
-  private void addPartitionToList(String streamName, String tableName, Path monthPath,
-      String yearVal, String monthVal) throws HCatException {
+  private void addPartitionToList(String streamName, String tableName,
+      Path monthPath, String yearVal, String monthVal) {
     addPartitionToList(streamName, tableName, monthPath, yearVal, monthVal, null);
   }
 
-  private void addPartitionToList(String streamName, String tableName, Path dayPath,
-      String yearVal, String monthVal, String dayVal) throws HCatException {
+  private void addPartitionToList(String streamName, String tableName,
+      Path dayPath, String yearVal, String monthVal, String dayVal) {
     addPartitionToList(streamName, tableName, dayPath, yearVal, monthVal, dayVal, null);
   }
 
   private void addPartitionToList(String streamName, String tableName, Path hourPath,
-      String yearVal, String monthVal, String dayVal, String hourVal)
-          throws HCatException {
+      String yearVal, String monthVal, String dayVal, String hourVal) {
     if (!isHCatEnabledStream(streamName)) {
       return;
     }
-    Map<String, String> partSpec = new HashMap<String, String>();
-    partSpec.put("year", yearVal);
+    List<String> partVals = new ArrayList<String>();
+    partVals.add(yearVal);
     if (monthVal != null) {
-      partSpec.put("month", monthVal);
+      partVals.add(monthVal);
     }
     if (dayVal != null) {
-      partSpec.put("day", dayVal);
+      partVals.add(dayVal);
     }
     if (hourVal != null) {
-      partSpec.put("hour", hourVal);
+      partVals.add(hourVal);
     }
-    HCatAddPartitionDesc partDesc = HCatAddPartitionDesc.create(
-        Conduit.getHcatDBName(), tableName, hourPath.toString(), partSpec).build();
+    PartitionDesc partDesc = new PartitionDesc(streamName, tableName, partVals,
+        hourPath.toString());
     pathPartitionDescMap.put(hourPath, partDesc);
   }
 
@@ -446,42 +496,38 @@ public class DataPurgerService extends AbstractService {
     return Math.abs(hours);
   }
 
-  private void purge() throws HCatException, InterruptedException {
-    HCatClient hcatClient = null;
-    if (Conduit.isHCatEnabled()) {
-      hcatClient = getHCatClient();
-
-      if (hcatClient == null) {
-        LOG.warn("Did not get hcat client hence not purging the partitions and paths");
-        ConduitMetrics.updateSWGuage(getServiceType(), FAILED_TO_GET_HCAT_CLIENT_COUNT, getName(), 1);
-        return;
-      }
-    }
+  private void purge() throws HiveException, InterruptedException {
+    Hive hive = Hive.get();
     try {
       Iterator it = streamsToPurge.iterator();
       Path purgePath = null;
       while (it.hasNext()) {
         purgePath = (Path) it.next();
         if (pathPartitionDescMap.containsKey(purgePath)) {
-          HCatAddPartitionDesc partDesc = pathPartitionDescMap.get(purgePath);
+          PartitionDesc partDesc = pathPartitionDescMap.get(purgePath);
           if (partDesc != null) {
             LOG.info("Droping the partition : " + partDesc.getLocation()
                 + " from " + partDesc.getTableName() + " table");
             try {
-              hcatClient.dropPartitions(partDesc.getDatabaseName(),
-                  partDesc.getTableName(), partDesc.getPartitionSpec(), false);
-              ConduitMetrics.updateSWGuage(getServiceType(),
-                  HCAT_PURGED_PARTITION_COUNT, getName(), 1);
-            } catch (HCatException hcatException) {
-              if (hcatException.getCause() instanceof NoSuchObjectException) {
-                LOG.info("partition " + partDesc.getLocation() + " does not"
+              if (hive.dropPartition(
+                  partDesc.getTableName(), partDesc.getPartVals(), true)) {
+                LOG.info("partition " + partDesc.getLocation() + " dropped"
+                    + " successfully from " + partDesc.getTableName() + " table");
+              } else {
+                LOG.warn("Not able to drop the partition " + partDesc.getLocation()
+                    + "from " + partDesc.getTableName() + " table");
+                break;
+              }
+            } catch (HiveException e) {
+              if (e.getCause() instanceof NoSuchObjectException) {
+                LOG.warn("partition " + partDesc.getLocation() + " does not"
                     + " exists in " + partDesc.getTableName() + " table");
               } else {
                 ConduitMetrics.updateSWGuage(getServiceType(),
                     HCAT_PURGE_PARTITION_FAILURES_COUNT, getName(), 1);
                 ConduitMetrics.updateSWGuage(getServiceType(),
                     HCAT_CONNECTION_FAILURES, getName(), 1);
-                throw hcatException;
+                throw e;
               }
             }
           }
@@ -496,7 +542,7 @@ public class DataPurgerService extends AbstractService {
         }
       }
     } finally {
-      addToPool(hcatClient);
+      //addToPool(hcatClient);
     }
   }
 
