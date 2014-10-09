@@ -241,7 +241,7 @@ public class Conduit implements Service, ConduitConstants {
       Cluster cluster = config.getClusters().get(clusterName);
       LOG.info("Starting Purger for Cluster [" + clusterName + "]");
       //Start a purger per cluster
-      services.add(new DataPurgerService(config, cluster, hcatUtil));
+      services.add(new DataPurgerService(config, cluster));
     }
     if (isHCatEnabled) {
       prepareLastAddedPartitions();
@@ -303,8 +303,7 @@ public class Conduit implements Service, ConduitConstants {
       Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
           throws IOException {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess,
-        hcatUtil);
+        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
   }
 
   protected MergedStreamService getMergedStreamService(ConduitConfig config,
@@ -314,7 +313,7 @@ public class Conduit implements Service, ConduitConstants {
     return new MergedStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
   }
 
   protected MirrorStreamService getMirrorStreamService(ConduitConfig config,
@@ -324,7 +323,7 @@ public class Conduit implements Service, ConduitConstants {
     return new MirrorStreamService(config, srcCluster, dstCluster,
         currentCluster,
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
 
   }
 

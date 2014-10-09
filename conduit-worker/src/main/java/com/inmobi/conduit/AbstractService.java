@@ -109,8 +109,6 @@ public abstract class AbstractService implements Service, Runnable {
   protected final static Map<String, Set<Path>> pathsToBeregisteredPerTable =
       new ConcurrentHashMap<String, Set<Path>>();
 
-  protected  HCatClientUtil hcatUtil;
-
   protected static String hostname;
   static {
     try {
@@ -123,13 +121,12 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   public AbstractService(String name, ConduitConfig config,
-      Set<String> streamsToProcess, HCatClientUtil hcatUtil) {
-    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, hcatUtil);
+      Set<String> streamsToProcess) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
   }
 
   public AbstractService(String name, ConduitConfig config,
-      long runIntervalInMsec, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil) {
+      long runIntervalInMsec, Set<String> streamsToProcess) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
@@ -141,13 +138,12 @@ public abstract class AbstractService implements Service, Runnable {
     } else {
       numOfRetries = Integer.parseInt(retries);
     }
-    this.hcatUtil = hcatUtil;
   }
 
   public AbstractService(String name, ConduitConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
-      Set<String> streamsToProcess, HCatClientUtil hcatUtil) {
-    this(name, config, runIntervalInMsec, streamsToProcess, hcatUtil);
+      Set<String> streamsToProcess) {
+    this(name, config, runIntervalInMsec, streamsToProcess);
     this.checkpointProvider = provider;
   }
 

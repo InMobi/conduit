@@ -46,7 +46,6 @@ import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
-import com.inmobi.conduit.HCatClientUtil;
 
 
 public abstract class DistcpBaseService extends AbstractService {
@@ -67,11 +66,10 @@ public abstract class DistcpBaseService extends AbstractService {
 
   public DistcpBaseService(ConduitConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil)
+      CheckpointProvider provider, Set<String> streamsToProcess)
           throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess, hcatUtil);
+        config, streamsToProcess);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)

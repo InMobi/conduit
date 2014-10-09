@@ -31,7 +31,6 @@ import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfig;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.DatePathComparator;
 import com.inmobi.conduit.utils.FileUtil;
@@ -57,11 +56,10 @@ public class MergedStreamService extends DistcpBaseService {
 
   public MergedStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil) throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess) throws Exception {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
 
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_CHECKPOINT, eachStream);

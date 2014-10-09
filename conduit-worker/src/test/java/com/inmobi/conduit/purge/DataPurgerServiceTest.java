@@ -159,7 +159,7 @@ public class DataPurgerServiceTest {
     public TestDataPurgerService(ConduitConfig config, Cluster cluster,
         HCatClientUtil hcatUtil)
         throws Exception {
-      super(config, cluster, hcatUtil);
+      super(config, cluster);
     }
 
     public void runOnce() throws Exception {

@@ -58,7 +58,7 @@ public class TestMergedStreamService extends MergedStreamService implements
       throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
     MessagePublisher publisher = MessagePublisherFactory.create();
     Conduit.setPublisher(publisher);
     this.srcCluster = srcCluster;

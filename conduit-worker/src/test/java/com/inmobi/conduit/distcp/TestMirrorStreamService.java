@@ -56,7 +56,7 @@ public class TestMirrorStreamService extends MirrorStreamService
       Set<String> streamsToProcess, HCatClientUtil hcatUtil) throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
     MessagePublisher publisher = MessagePublisherFactory.create();
     Conduit.setPublisher(publisher);
     this.destinationCluster = destinationCluster;

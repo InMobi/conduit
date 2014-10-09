@@ -44,7 +44,6 @@ import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.DestinationStream;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.SourceStream;
 
 /*
@@ -72,10 +71,9 @@ public class DataPurgerService extends AbstractService {
   private final static String HCAT_PURGE_PARTITION_FAILURES_COUNT = "hcat.paritition.drop.failures.count";
   private static final String HCAT_PURGED_PARTITION_COUNT = "hcat.partition.purged.count";
 
-  public DataPurgerService(ConduitConfig conduitConfig, Cluster cluster,
-      HCatClientUtil hcatUtil) throws Exception {
+  public DataPurgerService(ConduitConfig conduitConfig, Cluster cluster) throws Exception {
     super(DataPurgerService.class.getName(), conduitConfig, 60000 * 60, null,
-        new HashSet<String>(), hcatUtil);
+        new HashSet<String>());
     this.cluster = cluster;
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
