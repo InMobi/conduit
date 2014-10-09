@@ -32,7 +32,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -67,7 +66,6 @@ public class Conduit implements Service, ConduitConstants {
   private volatile boolean conduitStarted = false;
   private static boolean isHCatEnabled = false;
   private static String hcatDBName = null;
-  private static int numOfHCatClients = 10;
   private HCatClientUtil hcatUtil = null;
 
   public Conduit(ConduitConfig config, Set<String> clustersToProcess,
@@ -246,20 +244,19 @@ public class Conduit implements Service, ConduitConstants {
       services.add(new DataPurgerService(config, cluster, hcatUtil));
     }
     if (isHCatEnabled) {
-      parseAndCreateHCatClients();
       prepareLastAddedPartitions();
     }
     return services;
   }
 
-  protected void connectToMetaStoreServer() {
-    HiveConf conf = new HiveConf();
-    String metastoreUrl = conf.getVar(HiveConf.ConfVars.METASTOREURIS);
+  public static HiveConf connectToMetaStoreServer() {
+    HiveConf hiveConf = new HiveConf();
+    String metastoreUrl = hiveConf.getVar(HiveConf.ConfVars.METASTOREURIS);
     if (metastoreUrl == null) {
       throw new RuntimeException("metastroe.uri property is not specified in hive-site.xml");
     }
     LOG.info("hive metastore uri is : " + metastoreUrl);
-    hcatUtil = new HCatClientUtil(metastoreUrl);
+    return hiveConf;
   }
 
   private void prepareLastAddedPartitions() {
@@ -329,58 +326,6 @@ public class Conduit implements Service, ConduitConstants {
         new FSCheckpointProvider(dstCluster.getCheckpointDir()),
         streamsToProcess, hcatUtil);
 
-  }
-
-  public void parseAndCreateHCatClients() throws Exception {
-    if (isHCatEnabled) {
-      try {
-        String hcatCientsRaio = System.getProperty(HCAT_CLIENTS_RATIO, "1/5");
-        String [] ratioSplits = hcatCientsRaio.split("/");
-        int numServices = services.size();
-        boolean isValidRatio = isValidRatio(ratioSplits);
-        if (numServices > 0 && isValidRatio) {
-          numOfHCatClients = (int) Math.ceil(
-              (numServices * Integer.parseInt(ratioSplits[0])) / Integer.parseInt(ratioSplits[1]));
-          if (numOfHCatClients <= 0) {
-            numOfHCatClients = 1;
-          }
-        } else {
-          LOG.info("no services or ratio is invalid."
-              + " Starts with " + numOfHCatClients + " hcatclients");
-        }
-      } catch(Exception e) {
-        LOG.error("Exception occured  while calcluating the number"
-            + " of hcatClients ", e);
-        numOfHCatClients = 10;
-      }
-      createHCatClients();
-    }
-  }
-
-  private boolean isValidRatio(String[] ratioSplits) {
-    if (ratioSplits.length == 2) {
-      int num = Integer.parseInt(ratioSplits[0]);
-      int den = Integer.parseInt(ratioSplits[1]);
-      if (num > den || den < 1) {
-        return false;
-      }
-      return true;
-    } else {
-      return  false;
-    }
-  }
-  
-  private void createHCatClients() throws Exception {
-    try {
-      HiveConf hcatConf = new HiveConf();
-      hcatConf.set("hive.metastore.local", "false");
-      hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, hcatUtil.getMetastoreUrl());
-      LOG.info("Going to create HCAT CLIENTS now ");
-      hcatUtil.createHCatClients(numOfHCatClients, hcatConf);
-    } catch (Exception e) {
-      LOG.error("Got exception while creatig hcat clients ", e);
-      throw e;
-    }
   }
 
   @Override
@@ -587,18 +532,8 @@ public class Conduit implements Service, ConduitConstants {
         }
       }
 
-      String hcatEnabled = prop.getProperty(HCAT_ENABLED);
-      if (hcatEnabled != null && Boolean.parseBoolean(hcatEnabled)) {
-        LOG.info("HCAT is enabled for worker ");
-        isHCatEnabled = true;
-        /*
-         * parse the hcat database name and number of hcat clients needs
-         * to be created
-         */
-        parseHCatProperties(prop);
-      } else {
-        LOG.info("HCAT is not enabled for the worker ");
-      }
+      // parse hcat properties
+      parseHCatProperties(prop);
 
       ConduitConfigParser configParser =
           new ConduitConfigParser(conduitConfigFile);
@@ -665,18 +600,21 @@ public class Conduit implements Service, ConduitConstants {
   }
 
   private static void parseHCatProperties(Properties prop) {
-    String hcatDBName = prop.getProperty(HCAT_DATABASE_NAME);
-    if (hcatDBName != null && !hcatDBName.isEmpty()) {
-      Conduit.setHcatDBName(hcatDBName);
+    String hcatEnabled = prop.getProperty(HCAT_ENABLED);
+    if (hcatEnabled != null && Boolean.parseBoolean(hcatEnabled)) {
+      LOG.info("HCAT is enabled for worker ");
+      isHCatEnabled = true;
+      String hcatDBName = prop.getProperty(HCAT_DATABASE_NAME);
+      if (hcatDBName != null && !hcatDBName.isEmpty()) {
+        Conduit.setHcatDBName(hcatDBName);
+      } else {
+        throw new RuntimeException("HCAT DataBase name is not specified"
+            + " in the conduit config file");
+      }
     } else {
-      throw new RuntimeException("HCAT DataBase name is not specified"
-          + " in the conduit config file");
+      LOG.info("HCAT is not enabled for the worker ");
     }
-    String numHCatClientsRatio = prop.getProperty(HCAT_CLIENTS_RATIO);
-    if (numHCatClientsRatio != null) {
-      System.setProperty(HCAT_CLIENTS_RATIO, numHCatClientsRatio);
-      LOG.info("ratio of hcatclients is  configured " + numHCatClientsRatio);
-    }
+    
   }
 
   private void startCuratorLeaderManager(
