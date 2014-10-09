@@ -2,12 +2,12 @@ package com.inmobi.conduit.utils;
 
 import java.util.Comparator;
 
-import org.apache.hive.hcatalog.api.HCatPartition;
+import org.apache.hadoop.hive.ql.metadata.Partition;
 
-public class HCatPartitionComparator implements Comparator<HCatPartition> {
+public class HCatPartitionComparator implements Comparator<Partition> {
 
   @Override
-  public int compare(HCatPartition part1, HCatPartition part2) {
+  public int compare(Partition part1, Partition part2) {
     String location1 = part1.getLocation();
     String location2 = part2.getLocation();
     if (location1 != null && location2 != null) {

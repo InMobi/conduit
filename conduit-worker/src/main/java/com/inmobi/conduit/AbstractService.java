@@ -45,10 +45,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
-import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.api.HCatPartition;
-import org.apache.hive.hcatalog.common.HCatException;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
+import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
@@ -279,16 +279,6 @@ public abstract class AbstractService implements Service, Runnable {
     return LogDateFormat.format(commitTime);
   }
 
-  protected HCatClient getHCatClient() throws InterruptedException {
-    return hcatUtil.getHCatClient();
-  }
-
-  protected void addToPool(HCatClient hcatClient) {
-    if (hcatClient != null) {
-      hcatUtil.addToPool(hcatClient);
-    }
-  }
-
   private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
 
     FileStatus[] fileStatus;
@@ -401,16 +391,8 @@ public abstract class AbstractService implements Service, Runnable {
       LOG.info("there are no partitions in "+ tableName +" table. ");
       return true;
     } else if (lastAddedTime == FAILED_GET_PARTITIONS) {
-      HCatClient hcatClient = getHCatClient();
-      if (hcatClient == null) {
-        LOG.warn("Didn't get any hcat client from pool hence not preparing"
-            + " final partition list");
-        ConduitMetrics.updateSWGuage(getServiceType(), FAILED_TO_GET_HCAT_CLIENT_COUNT,
-            streamName, 1);
-        return false;
-      }
       try {
-        findLastPartition(hcatClient, streamName);
+        findLastPartition(streamName);
         lastAddedTime = lastAddedPartitionMap.get(tableName);
         LOG.info("Last added parittion time " + getLogDateString(lastAddedTime)
             + " for table " + tableName);
@@ -418,11 +400,9 @@ public abstract class AbstractService implements Service, Runnable {
           LOG.info("there are no partitions in "+ tableName +" table. ");
           return true;
         }
-      } catch (HCatException e) {
+      } catch (HiveException e) {
         LOG.error("Got exception while trying to get the last added partition ", e);
         return false;
-      } finally {
-        addToPool(hcatClient);
       }
     }
     findDiffBetweenLastAddedAndFirstPath(streamName, tableName);
@@ -467,40 +447,23 @@ public abstract class AbstractService implements Service, Runnable {
   public void prepareLastAddedPartitionMap() throws InterruptedException {
     prepareStreamHcatEnableMap();
 
-    HCatClient hcatClient = getHCatClient();
-    if (hcatClient == null) {
-      LOG.warn("Did not get hcatclient hence not finding the last added partition");
-      for (String stream : streamsToProcess) {
-        if (isStreamHCatEnabled(stream)) {
-          updateLastAddedPartitionMap(getTableName(stream), FAILED_GET_PARTITIONS);
-          ConduitMetrics.updateSWGuage(getServiceType(),
-              FAILED_TO_GET_HCAT_CLIENT_COUNT, stream, 1);
-        }
-      }
-      return;
-    }
-    try {
-      for (String stream : streamsToProcess) {
-        if (isStreamHCatEnabled(stream)) {
-          try {
-            hcatClient.getTable(Conduit.getHcatDBName(), getTableName(stream));
-            findLastPartition(hcatClient, stream);
-          } catch (HCatException e) {
-            if (e.getCause() instanceof NoSuchObjectException) {
-              LOG.error("Got noSuchObject exception while trying to get table"
-                  + " or finding last partition " + e.getMessage());
-              throw new RuntimeException(e);
-            }
-            LOG.warn("Got Exception while finding the last added partition for"
-                + " stream " + stream, e);
-            updateLastAddedPartitionMap(getTableName(stream), FAILED_GET_PARTITIONS);
+    for (String stream : streamsToProcess) {
+      if (isStreamHCatEnabled(stream)) {
+        String tableName = getTableName(stream);
+        try {
+          findLastPartition(stream);
+        } catch (HiveException e) {
+          if (e.getCause() instanceof InvalidTableException) {
+            LOG.error("Table " + tableName + " does not exists " + e.getMessage());
+            throw new RuntimeException(e);
           }
-        } else {
-          LOG.debug("Hcatalog is not enabled for " + stream + " stream");
+          LOG.warn("Got Exception while finding the last added partition for"
+              + " stream " + stream, e);
+          updateLastAddedPartitionMap(getTableName(stream), FAILED_GET_PARTITIONS);
         }
+      } else {
+        LOG.debug("Hcatalog is not enabled for " + stream + " stream");
       }
-    } finally {
-      addToPool(hcatClient);
     }
   }
 
@@ -508,18 +471,19 @@ public abstract class AbstractService implements Service, Runnable {
    * It finds the last added partition from the hcatalog table for each stream.
    * Update with -1 if there are no partitions present in hcatalog.
    */
-  public void findLastPartition(HCatClient hcatClient, String stream)
-      throws HCatException {
+  public void findLastPartition(String stream) throws HiveException {
     String tableName = getTableName(stream);
-    List<HCatPartition> hCatPartitionList = hcatClient.getPartitions(
-        Conduit.getHcatDBName(), tableName);
-    if (hCatPartitionList.isEmpty()) {
-      LOG.info("No partitions present for " + stream + " stream. ");
+    Hive hive = Hive.get();
+    org.apache.hadoop.hive.ql.metadata.Table table = hive.getTable(
+        getTableName(stream));
+    List<Partition> partitionList = hive.getPartitions(table);
+    if (partitionList.isEmpty()) {
+      LOG.info("No partitions present for " + tableName + " table.");
       updateLastAddedPartitionMap(tableName, EMPTY_PARTITION_LIST);
       return;
     }
-    Collections.sort(hCatPartitionList, new HCatPartitionComparator());
-    HCatPartition lastHcatPartition = hCatPartitionList.get(hCatPartitionList.size()-1);
+    Collections.sort(partitionList, new HCatPartitionComparator());
+    Partition lastHcatPartition = partitionList.get(partitionList.size()-1);
     Date lastAddedPartitionDate = getTimeStampFromHCatPartition(
         lastHcatPartition.getLocation(), stream);
     if (lastAddedPartitionDate != null) {
@@ -558,15 +522,6 @@ public abstract class AbstractService implements Service, Runnable {
     if (!Conduit.isHCatEnabled()) {
       return;
     }
-    HCatClient hcatClient = getHCatClient();
-    if (hcatClient == null) {
-      LOG.warn("Did not get hcat client hence not rgistering partitions");
-      for (String stream : streamsToProcess) {
-        ConduitMetrics.updateSWGuage(getServiceType(),
-            FAILED_TO_GET_HCAT_CLIENT_COUNT, stream, 1);
-      }
-      return;
-    }
     try {
       for (String stream : streamsToProcess) {
         if (!isStreamHCatEnabled(stream)) {
@@ -603,8 +558,7 @@ public abstract class AbstractService implements Service, Runnable {
             Path path = pathIt.next();
             Date date = getTimeStampFromHCatPartition(path.toString(), stream);
             LOG.info("Adding the partition  " + path.toString() + " in " + tableName + " table");
-            if (addPartition(path.toString(), stream, date.getTime(), tableName,
-                hcatClient)) {
+            if (addPartition(path.toString(), stream, date.getTime(), tableName)) {
               partitionsTobeRegistered.remove(path);
               updateLastAddedPartitionMap(tableName, date.getTime());
             } else {
@@ -614,17 +568,13 @@ public abstract class AbstractService implements Service, Runnable {
         }
       }
     } finally {
-      addToPool(hcatClient);
+      //addToPool(hcatClient);
     }
   }
 
   public boolean addPartition(String location, String streamName,
-      long partTimeStamp, String tableName, HCatClient hcatClient)
+      long partTimeStamp, String tableName)
           throws InterruptedException, ParseException {
-    if (hcatClient == null) {
-      LOG.warn("Did not get hcat client for table " + tableName);
-      return false;
-    }
     String dbName = Conduit.getHcatDBName();
     String dateStr = Cluster.getDateAsYYYYMMDDHHMNPath(partTimeStamp);
     String [] dateSplits = dateStr.split(File.separator);
@@ -636,26 +586,25 @@ public abstract class AbstractService implements Service, Runnable {
       partSpec.put("hour", dateSplits[3]);
       partSpec.put("minute", dateSplits[4]);
     }
-    HCatAddPartitionDesc partInfo = null;
+    Partition partitionTobeAdded = null;
     try {
-      if (partInfo == null) {
-        partInfo = HCatAddPartitionDesc.create(dbName, tableName, location,
-            partSpec).build();
-      }
-      hcatClient.addPartition(partInfo);
-      LOG.info("Partition " + partInfo.getLocation() + " was added successfully");
+      Hive hive = Hive.get();
+      org.apache.hadoop.hive.ql.metadata.Table table = hive.getTable(tableName);
+      partitionTobeAdded = hive.createPartition(table, partSpec);
+      LOG.info("Partition " + partitionTobeAdded.getLocation() + " was added"
+          + " successfully");
       ConduitMetrics.updateSWGuage(getServiceType(), HCAT_ADD_PARTITIONS_COUNT,
           streamName, 1);
       return true;
-    } catch (HCatException e) {
+    } catch (HiveException e) {
       if (e.getCause() instanceof AlreadyExistsException) {
-        LOG.warn("Partition " + partInfo.getLocation() + " is already exists in "
-            + tableName + " table. ", e);
+        LOG.warn("Partition " + partitionTobeAdded.getLocation() + " is already"
+            + " exists in " + tableName + " table. ", e);
         return true;
       }
       ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
           getName(), 1);
-      LOG.info("Got Exception while trying to add partition  : " + partInfo
+      LOG.info("Got Exception while trying to add partition  : " + partSpec
           + ". Exception ", e);
     }
     return false;
