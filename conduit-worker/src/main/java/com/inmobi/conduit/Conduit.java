@@ -31,6 +31,7 @@ import com.inmobi.conduit.local.LocalStreamService;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -67,7 +68,6 @@ public class Conduit implements Service, ConduitConstants {
   private static boolean isHCatEnabled = false;
   private static String hcatDBName = null;
   private static HiveConf hiveConf = null;
-  private HCatClientUtil hcatUtil = null;
 
   public Conduit(ConduitConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
@@ -343,8 +343,8 @@ public class Conduit implements Service, ConduitConstants {
     if (publisher != null) {
       publisher.close();
     }
-    if (hcatUtil != null) {
-      hcatUtil.close();
+    if (isHCatEnabled) {
+      Hive.closeCurrent();
     }
     LOG.info("Conduit Shutdown complete..");
   }

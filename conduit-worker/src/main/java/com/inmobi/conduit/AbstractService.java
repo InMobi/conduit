@@ -193,8 +193,9 @@ public abstract class AbstractService implements Service, Runnable {
         execute();
         LOG.info("Performing Post Execute Step after a run...");
         postExecute();
-        if (stopped)
-          return;
+        if (stopped) {
+          break;
+        }
       } catch (Throwable th) {
         if (!DATAPURGER_SERVICE.equalsIgnoreCase(getServiceType())) {
           for (String eachStream : streamsToProcess) {
@@ -232,6 +233,10 @@ public abstract class AbstractService implements Service, Runnable {
           LOG.warn("thread interrupted " + thread.getName(), e);
         }
       }
+    }
+    // close the connection to metastore if user issues a stop command
+    if (stopped && Conduit.isHCatEnabled()) {
+      Hive.closeCurrent();
     }
   }
 
@@ -563,7 +568,8 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   protected void registerPartitions() throws InterruptedException, ParseException {
-    if (!Conduit.isHCatEnabled()) {
+    // return immediately if hcat is not enabled or if user issues a stop command
+    if (!Conduit.isHCatEnabled() || stopped) {
       return;
     }
     try {
