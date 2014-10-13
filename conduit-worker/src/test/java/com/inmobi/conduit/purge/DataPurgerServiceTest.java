@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
 import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.api.HCatCreateDBDesc;
@@ -430,6 +431,7 @@ public class DataPurgerServiceTest {
       TestHCatUtil.startMetaStoreServer(hcatConf1, 20109);
       Thread.sleep(10000);
 
+      Hive hive = Hive.get(hcatConf1);   
       HCatClientUtil hcatUtil1 = TestHCatUtil.getHCatUtil(hcatConf1);
       TestHCatUtil.createHCatClients(hcatConf1, hcatUtil1);
 

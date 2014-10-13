@@ -4,13 +4,24 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
+import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Order;
+import org.apache.hadoop.hive.metastore.api.SerDeInfo;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.Table;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
 import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.api.HCatCreateDBDesc;
@@ -20,6 +31,7 @@ import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Type;
 
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.HCatClientUtil;
 
 public class TestHCatUtil {
@@ -63,6 +75,21 @@ public class TestHCatUtil {
     return hcatConf;
   }
 
+  public static HiveConf getHiveConf() {
+    return Conduit.getHiveConf();
+  }
+
+  public Database createDatabase(String dbName) throws Exception {
+      if(null == dbName) { return null; }
+      Database db = new Database();
+      db.setName(dbName);
+      try {
+        Hive.get().createDatabase(db);
+      } catch(HiveException e) {
+        //
+      }
+      return db;
+  }
   public static HCatClientUtil getHCatUtil(HiveConf hiveConf) {
     String metaStoreUri = hiveConf.getVar(HiveConf.ConfVars.METASTOREURIS);
     HCatClientUtil hcatClientUtil = new HCatClientUtil(metaStoreUri);
@@ -103,6 +130,79 @@ public class TestHCatUtil {
     ptnCols.add(new HCatFieldSchema("hour", Type.STRING, "hour column"));
     ptnCols.add(new HCatFieldSchema("minute", Type.STRING, "minute column"));
     return ptnCols;
+  }
+
+  public void createTable(String dbName, String tableName) throws Exception {
+    Hive hive = Hive.get();
+    ArrayList<FieldSchema> cols = new ArrayList<FieldSchema>(2);
+    cols.add(new FieldSchema("name", serdeConstants.STRING_TYPE_NAME, ""));
+    cols.add(new FieldSchema("income", serdeConstants.INT_TYPE_NAME, ""));
+
+    Map<String, String> params = new HashMap<String, String>();
+    params.put("sd_param_1", "Use this for comments etc");
+
+    Map<String, String> serdParams = new HashMap<String, String>();
+    serdParams.put(serdeConstants.SERIALIZATION_FORMAT, "1");
+
+    StorageDescriptor sd = createStorageDescriptor(tableName, cols, params, serdParams);
+    Table tbl = createTable(dbName, tableName, null, null,
+        getPartKeys(), sd, 90);
+
+  }
+
+  private Table createTable(String dbName, String tblName, String owner,
+      Map<String,String> tableParams, Map<String, String> partitionKeys,
+      StorageDescriptor sd, int lastAccessTime) throws Exception {
+    Table tbl = new Table();
+    tbl.setDbName(dbName);
+    tbl.setTableName(tblName);
+   
+    if(owner != null) {
+      tbl.setOwner(owner);
+    }
+
+    if(partitionKeys != null) {
+      List<FieldSchema> partKeys = new ArrayList<FieldSchema>();
+      Set<String> keySet = partitionKeys.keySet();
+      Iterator<String> it = keySet.iterator();
+      while (it.hasNext()) {
+        partKeys.add(new FieldSchema(it.next(), "", ""));
+      }
+    }
+
+    tbl.setLastAccessTime(lastAccessTime);
+
+    Hive.get().createTable(tbl);
+    return tbl;
+  }
+
+  public Map<String, String> getPartKeys() {
+    Map<String, String> partitionKeys = new HashMap<String, String>();
+    partitionKeys.put("year", serdeConstants.STRING_TYPE_NAME);
+    partitionKeys.put("month", serdeConstants.STRING_TYPE_NAME);
+    partitionKeys.put("day", serdeConstants.STRING_TYPE_NAME);
+    partitionKeys.put("hour", serdeConstants.STRING_TYPE_NAME);
+    partitionKeys.put("value", serdeConstants.STRING_TYPE_NAME);
+    return partitionKeys;
+  }
+  private StorageDescriptor createStorageDescriptor(String tableName,
+    List<FieldSchema> cols, Map<String, String> params, Map<String, String> serdParams)  {
+    StorageDescriptor sd = new StorageDescriptor();
+
+    sd.setCols(cols);
+    sd.setCompressed(false);
+    sd.setNumBuckets(1);
+    sd.setParameters(params);
+    sd.setBucketCols(new ArrayList<String>(2));
+    sd.getBucketCols().add("name");
+    sd.setSerdeInfo(new SerDeInfo());
+    sd.getSerdeInfo().setName(tableName);
+    sd.getSerdeInfo().setParameters(serdParams);
+    sd.getSerdeInfo().getParameters()
+        .put(serdeConstants.SERIALIZATION_FORMAT, "1");
+    sd.setSortCols(new ArrayList<Order>());
+
+    return sd;
   }
 
   public static void createTable(HCatClient hCatClient, String dbName,
