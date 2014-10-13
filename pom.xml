@@ -327,6 +327,16 @@
         <artifactId>hive-hcatalog-core</artifactId>
         <version>${hive.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-exec</artifactId>
+        <version>0.13.1-inm</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-metastore</artifactId>
+        <version>0.13.1-inm</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

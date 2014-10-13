@@ -32,7 +32,7 @@ public class TestMergedStreamPartition extends TestMergedStreamService {
   public TestMergedStreamPartition(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
       Set<String> streamsToProcess, HCatClientUtil hcatUtil) throws Exception {
-    super(config, srcCluster, destinationCluster, currentCluster, streamsToProcess, hcatUtil);
+    super(config, srcCluster, destinationCluster, currentCluster, streamsToProcess);
     this.streamsToProcess = streamsToProcess;
     dbName = Conduit.getHcatDBName();
   }
@@ -42,12 +42,12 @@ public class TestMergedStreamPartition extends TestMergedStreamService {
 
     LOG.info(" post execute in TestMergedstream parititon");
     try {
-      hcatClient = getHCatClient();
+     //hcatClient = getHCatClient();
 
       for (String stream : streamsToProcess) {
         String tableName = "conduit_" + stream;
         List<HCatPartition> list = hcatClient.getPartitions(dbName, tableName);
-        Collections.sort(list, new HCatPartitionComparator());
+       // Collections.sort(list, new HCatPartitionComparator());
         Date lastAddedTime = MergeMirrorStreamPartitionTest.getLastAddedPartTime();
         Calendar cal = Calendar.getInstance();
         Date endTime = cal.getTime();
@@ -65,7 +65,7 @@ public class TestMergedStreamPartition extends TestMergedStreamService {
     } catch (HCatException e) {
       LOG.info("Got exception while trying to get the partitions " + e.getCause());
     } finally {
-      addToPool(hcatClient);
+      //addToPool(hcatClient);
     }
   }
 }

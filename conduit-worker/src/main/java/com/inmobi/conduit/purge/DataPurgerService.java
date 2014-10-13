@@ -118,9 +118,6 @@ public class DataPurgerService extends AbstractService {
     List<String> partVals;
     String location;
 
-    public PartitionDesc() {
-    }
-
     PartitionDesc(String stream, String table,
         List<String> parttitionVals, String pathLocation) {
       streamName = stream;
@@ -133,32 +130,16 @@ public class DataPurgerService extends AbstractService {
       return location;
     }
 
-    public void setLocation(String location) {
-      this.location = location;
-    }
-
     public String getStreamName() {
       return streamName;
-    }
-
-    public void setStreamName(String streamName) {
-      this.streamName = streamName;
     }
 
     public String getTableName() {
       return tableName;
     }
 
-    public void setTableName(String tableName) {
-      this.tableName = tableName;
-    }
-
     public List<String> getPartVals() {
       return partVals;
-    }
-
-    public void setPartVals(List<String> partVals) {
-      this.partVals = partVals;
     }
   }
 
@@ -497,7 +478,7 @@ public class DataPurgerService extends AbstractService {
   }
 
   private void purge() throws HiveException, InterruptedException {
-    Hive hive = Hive.get();
+    Hive hive = Hive.get(Conduit.getHiveConf());
     try {
       Iterator it = streamsToPurge.iterator();
       Path purgePath = null;
@@ -509,7 +490,7 @@ public class DataPurgerService extends AbstractService {
             LOG.info("Droping the partition : " + partDesc.getLocation()
                 + " from " + partDesc.getTableName() + " table");
             try {
-              if (hive.dropPartition(
+              if (hive.dropPartition(Conduit.getHcatDBName(),
                   partDesc.getTableName(), partDesc.getPartVals(), true)) {
                 LOG.info("partition " + partDesc.getLocation() + " dropped"
                     + " successfully from " + partDesc.getTableName() + " table");

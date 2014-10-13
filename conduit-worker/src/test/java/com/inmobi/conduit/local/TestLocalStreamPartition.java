@@ -36,7 +36,7 @@ public class TestLocalStreamPartition extends TestLocalStreamService {
   public TestLocalStreamPartition(ConduitConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
       Set<String> streamsToProcess, HCatClientUtil hcatUtil) throws IOException {
-    super(config, srcCluster, currentCluster, provider, streamsToProcess, hcatUtil);
+    super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.streamsToProcess = streamsToProcess;
     this.srcCluster = srcCluster;
     dbName = Conduit.getHcatDBName();
@@ -47,11 +47,11 @@ public class TestLocalStreamPartition extends TestLocalStreamService {
 
     LOG.info("post execute in TestLocalStreamPartition");
     try {
-      hcatClient = getHCatClient();
+     // hcatClient = getHCatClient();
       for (String stream : streamsToProcess) {
         String tableName = "conduit_local_" + stream;
         List<HCatPartition> list = hcatClient.getPartitions(dbName, tableName);
-        Collections.sort(list, new HCatPartitionComparator());
+       // Collections.sort(list, new HCatPartitionComparator());
         Date lastAddedTime = MergeMirrorStreamPartitionTest.getLastAddedPartTime();
         Calendar cal = Calendar.getInstance();
         Date endTime = cal.getTime();
@@ -68,7 +68,7 @@ public class TestLocalStreamPartition extends TestLocalStreamService {
     } catch (HCatException e) {
       LOG.info("Got exception while trying to get the partitions " + e.getCause());  
     } finally {
-      addToPool(hcatClient);
+     // addToPool(hcatClient);
     }
   }
 }

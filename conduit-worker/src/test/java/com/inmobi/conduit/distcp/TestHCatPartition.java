@@ -9,6 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.LogFactoryImpl;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hive.hcatalog.api.HCatClient;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
@@ -43,7 +44,7 @@ public class TestHCatPartition extends TestMiniClusterUtil{
     HiveConf hiveConf = TestHCatUtil.getHcatConf(msPort,
         "target/metastore-unittest", "metadb-unittest");
     TestHCatUtil.startMetaStoreServer(hiveConf, msPort);
-    hcatClientUtil = TestHCatUtil.getHCatUtil(hiveConf);
+   // hcatClientUtil = TestHCatUtil.getHCatUtil(hiveConf);
     TestHCatUtil.createHCatClients(hiveConf, hcatClientUtil);
     HCatClient hcatClient = TestHCatUtil.getHCatClient(hcatClientUtil);
     // LOG.info("AAAAAAAAAAAAA hcat client ");
@@ -79,7 +80,7 @@ public class TestHCatPartition extends TestMiniClusterUtil{
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()),
-          streamsToProcess, null);
+          streamsToProcess);
       services.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
@@ -87,10 +88,11 @@ public class TestHCatPartition extends TestMiniClusterUtil{
     for (TestLocalStreamService service : services) {
       HCatClient hcatClient = TestHCatUtil.getHCatClient(hcatClientUtil);
       for (String stream : streamsToProcess) {
-        if (hcatClient != null) {
+//        if (hcatClient != null) {
           String tableName = "conduit_local_" + stream;
-          TestHCatUtil.createTable(hcatClient, dbName, tableName,
-              TestHCatUtil.getPartCols());
+  //        TestHCatUtil.createTable(hcatClient, dbName, tableName,
+     //         TestHCatUtil.getPartCols());
+          //Hive.get().createTable(tbl);
           Calendar cal = Calendar.getInstance();
           cal.add(Calendar.MINUTE, -10);
           cal.set(Calendar.MILLISECOND, 0);
@@ -99,7 +101,7 @@ public class TestHCatPartition extends TestMiniClusterUtil{
           cal.add(Calendar.MINUTE, -20);
           String rootPath= service.getCluster().getLocalFinalDestDirRoot();
           Path pathPrefix = new Path(rootPath, stream);
-          service.findLastPartition(hcatClient, stream);
+          service.findLastPartition(stream);
           // No partitions present in the hcatalog table
           Assert.assertEquals(service.getLastAddedPartTime(tableName), -1);
           while (!cal.getTime().after(currentTime)) {
@@ -110,11 +112,11 @@ public class TestHCatPartition extends TestMiniClusterUtil{
                 datePath.toString(), TestHCatUtil.getPartitionMap(cal));
             cal.add(Calendar.MINUTE, 1);
           }
-          service.findLastPartition(hcatClient, stream);
+          service.findLastPartition(stream);
           long lastAddedValue = service.getLastAddedPartTime(tableName);
           Assert.assertEquals(lastAddedValue, currentTime.getTime());
         }
       }
     }
-  }
+ // }
 }

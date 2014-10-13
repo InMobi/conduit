@@ -25,7 +25,6 @@ import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConstants;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.PublishMissingPathsTest;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
@@ -391,7 +390,7 @@ public class TestLocalStreamService extends LocalStreamService implements
   
   public TestLocalStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, HCatClientUtil hcatUtil)
+      Set<String> streamsToProcess)
           throws IOException {
     super(config, srcCluster, currentCluster, provider, streamsToProcess);
     this.srcCluster = srcCluster;

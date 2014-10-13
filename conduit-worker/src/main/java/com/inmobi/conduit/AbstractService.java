@@ -21,10 +21,12 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -473,28 +475,70 @@ public abstract class AbstractService implements Service, Runnable {
    */
   public void findLastPartition(String stream) throws HiveException {
     String tableName = getTableName(stream);
-    Hive hive = Hive.get();
-    org.apache.hadoop.hive.ql.metadata.Table table = hive.getTable(
+    Hive hive = Hive.get(Conduit.getHiveConf());
+    org.apache.hadoop.hive.ql.metadata.Table table = hive.getTable(Conduit.getHcatDBName(),
         getTableName(stream));
-    List<Partition> partitionList = hive.getPartitions(table);
-    if (partitionList.isEmpty()) {
+    Set<Partition> partitionSet = hive.getAllPartitionsOf(table);
+    if (partitionSet.isEmpty()) {
       LOG.info("No partitions present for " + tableName + " table.");
       updateLastAddedPartitionMap(tableName, EMPTY_PARTITION_LIST);
       return;
     }
+    List<Partition> partitionList = new ArrayList<Partition>();
+    partitionList.addAll(partitionSet);
     Collections.sort(partitionList, new HCatPartitionComparator());
     Partition lastHcatPartition = partitionList.get(partitionList.size()-1);
-    Date lastAddedPartitionDate = getTimeStampFromHCatPartition(
-        lastHcatPartition.getLocation(), stream);
+    Date lastAddedPartitionDate = getDateFromPartition(lastHcatPartition);
     if (lastAddedPartitionDate != null) {
       LOG.info("Last added partition timetamp : " + lastAddedPartitionDate
           + " for table " + tableName);
       updateLastAddedPartitionMap(tableName, lastAddedPartitionDate.getTime());
     } else {
+      LOG.info("not able to get the last added partition from the last added"
+          + " partition " + lastHcatPartition.getSpec() + ". Hence update the"
+              + " last added partition map with empty value");
       updateLastAddedPartitionMap(tableName, EMPTY_PARTITION_LIST);
     }
   }
 
+  private Date getDateFromPartition(Partition partition) {
+    LinkedHashMap<String, String> partSpecs = partition.getSpec();
+    String yearVal = getPartVal(partSpecs, "year");
+    String monthVal = getPartVal(partSpecs, "month");
+    String dayVal = getPartVal(partSpecs, "day");
+    String hourVal = getPartVal(partSpecs, "hour");
+    String minuteVal = getPartVal(partSpecs, "minute");
+    String dateStr = getDateStr(yearVal, monthVal, dayVal, hourVal, minuteVal);
+    try {
+      return CalendarHelper.minDirFormat.get().parse(dateStr);
+    } catch (ParseException e) {
+      LOG.warn("Got exception while parsing date string :" + dateStr
+          + " . Hence returning null");
+      return null;
+    }
+  }
+
+  private String getPartVal(LinkedHashMap<String, String> partSpecs, String partCol) {
+    if (partSpecs.containsKey(partCol)) {
+      return partSpecs.get(partCol);
+    }
+    return null;
+  }
+
+  private String getDateStr(String yearVal, String monthVal, String dayVal,
+      String hourVal, String minuteVal) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(yearVal);
+    sb.append(File.separator);
+    sb.append(monthVal);
+    sb.append(File.separator);
+    sb.append(dayVal);
+    sb.append(File.separator);
+    sb.append(hourVal);
+    sb.append(File.separator);
+    sb.append(minuteVal);
+    return sb.toString();
+  }
   protected abstract String getTableName(String stream);
 
   protected Date getTimeStampFromHCatPartition(String hcatLoc, String stream) {
@@ -547,6 +591,8 @@ public abstract class AbstractService implements Service, Runnable {
           continue;
         }
         Set<Path> partitionsTobeRegistered = pathsToBeregisteredPerTable.get(tableName);
+        LOG.info("partitions to be registered : " + partitionsTobeRegistered
+            + " for " + tableName + " table");
         synchronized (partitionsTobeRegistered) {
           // Register all the partitions in the list except the last one
           while (partitionsTobeRegistered.size() > 1) {
@@ -588,8 +634,9 @@ public abstract class AbstractService implements Service, Runnable {
     }
     Partition partitionTobeAdded = null;
     try {
-      Hive hive = Hive.get();
-      org.apache.hadoop.hive.ql.metadata.Table table = hive.getTable(tableName);
+      Hive hive = Hive.get(Conduit.getHiveConf());
+      org.apache.hadoop.hive.ql.metadata.Table table = hive.getTable(dbName,
+          tableName);
       partitionTobeAdded = hive.createPartition(table, partSpec);
       LOG.info("Partition " + partitionTobeAdded.getLocation() + " was added"
           + " successfully");

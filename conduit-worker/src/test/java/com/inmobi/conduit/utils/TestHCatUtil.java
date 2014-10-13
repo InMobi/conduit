@@ -26,9 +26,10 @@ public class TestHCatUtil {
 
   private static final Log LOG = LogFactory.getLog(TestHCatUtil.class);
 
+  static Thread hcatServer = null;
   public static void startMetaStoreServer(final HiveConf hiveConf,
       final int msPort) {
-    Thread hcatServer = new Thread(new Runnable() {
+     hcatServer = new Thread(new Runnable() {
       @Override
       public void run() {
         try {
@@ -39,6 +40,10 @@ public class TestHCatUtil {
       }
     });
     hcatServer.start();
+  }
+
+  public void stop() {
+    hcatServer.stop();
   }
 
   public static HiveConf getHcatConf(int msPort, String metaStoreWarehouseDir, String metaDb) {
