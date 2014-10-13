@@ -166,7 +166,11 @@ public class MergedStreamService extends DistcpBaseService {
           for (String eachStream : streamsToProcess) {
             if (isStreamHCatEnabled(eachStream)) {
               String path = destCluster.getFinalDestDir(eachStream, commitTime);
-              pathsToBeregisteredPerTable.get(getTableName(eachStream)).add(new Path(path));
+              List<Path> pathsTobeRegistered = pathsToBeregisteredPerTable.
+                  get(getTableName(eachStream));
+              synchronized (pathsTobeRegistered) {
+                pathsTobeRegistered.add(new Path(path));
+              }
             }
           }
         }
