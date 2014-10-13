@@ -112,6 +112,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
 
     for (TestLocalStreamService service : localStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.prepareLastAddedPartitionMap();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
@@ -122,6 +123,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
 
     for (TestMergedStreamService service : mergedStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.prepareLastAddedPartitionMap();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
@@ -132,6 +134,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
 
     for (TestMirrorStreamService service : mirrorStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.prepareLastAddedPartitionMap();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
