@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -105,8 +106,8 @@ public abstract class AbstractService implements Service, Runnable {
       new ConcurrentHashMap<String, Boolean>();
   protected final static Map<String, Long> lastAddedPartitionMap =
       new ConcurrentHashMap<String, Long>();
-  protected final static Map<String, List<Path>> pathsToBeregisteredPerTable =
-      new ConcurrentHashMap<String, List<Path>>();
+  protected final static Map<String, Set<Path>> pathsToBeregisteredPerTable =
+      new ConcurrentHashMap<String, Set<Path>>();
 
   protected  HCatClientUtil hcatUtil;
 
@@ -360,7 +361,7 @@ public abstract class AbstractService implements Service, Runnable {
     if (prevRuntime != -1) {
       if (isMissingPaths(commitTime, prevRuntime)) {
         LOG.debug("Previous Runtime: [" + getLogDateString(prevRuntime) + "]");
-        List<Path> pathsToBeRegistered = null;
+        Set<Path> pathsToBeRegistered = null;
         String tableName = null;
         if (isStreamHCatEnabled(categoryName)) {
           tableName = getTableName(categoryName);
@@ -428,19 +429,21 @@ public abstract class AbstractService implements Service, Runnable {
         addToPool(hcatClient);
       }
     }
-    findDiffBetweenLastAddedAndFirstPath(lastAddedTime, streamName, tableName);
+    findDiffBetweenLastAddedAndFirstPath(streamName, tableName);
     return true;
   }
 
-  private void findDiffBetweenLastAddedAndFirstPath(long lastAddedTime,
-      String stream, String table) {
-    List<Path> listOfPathsTobeRegistered = pathsToBeregisteredPerTable.get(table);
+  private void findDiffBetweenLastAddedAndFirstPath(String stream,
+      String table) {
+    Set<Path> listOfPathsTobeRegistered = pathsToBeregisteredPerTable.get(table);
     synchronized (listOfPathsTobeRegistered) {
       if (listOfPathsTobeRegistered.isEmpty()) {
         return;
       } else {
+        long lastAddedTime = lastAddedPartitionMap.get(table);
+        Iterator<Path> it = listOfPathsTobeRegistered.iterator();
         // get the first path
-        Path firstPathInList = listOfPathsTobeRegistered.get(0);
+        Path firstPathInList = it.next();
         Date timeFromPath = getTimeStampFromHCatPartition(firstPathInList.toString(),
             stream);
         LOG.info("Find the missing partitions between "
@@ -456,7 +459,6 @@ public abstract class AbstractService implements Service, Runnable {
             lastAddedTime = nextPathPartTime;
           }
         }
-        Collections.sort(listOfPathsTobeRegistered);
         pathsToBeregisteredPerTable.put(table, listOfPathsTobeRegistered);
       }
     }
@@ -593,20 +595,21 @@ public abstract class AbstractService implements Service, Runnable {
               + " not registering new partiotions");
           continue;
         }
-        List<Path> partitionsTobeRegistered = pathsToBeregisteredPerTable.get(tableName);
+        Set<Path> partitionsTobeRegistered = pathsToBeregisteredPerTable.get(tableName);
         synchronized (partitionsTobeRegistered) {
           // Register all the partitions in the list except the last one
           while (partitionsTobeRegistered.size() > 1) {
+            Iterator<Path> pathIt = partitionsTobeRegistered.iterator();
             /* always retrieve first element from the list as we remove the
              * element once it is added to partition. then second element will
              *  be the first one
              */
-            Path path = partitionsTobeRegistered.get(0);
+            Path path = pathIt.next();
             Date date = getTimeStampFromHCatPartition(path.toString(), stream);
             LOG.info("Adding the partition  " + path.toString() + " in " + tableName + " table");
             if (addPartition(path.toString(), stream, date.getTime(), tableName,
                 hcatClient)) {
-              partitionsTobeRegistered.remove(0);
+              partitionsTobeRegistered.remove(path);
               updateLastAddedPartitionMap(tableName, date.getTime());
             } else {
               break;

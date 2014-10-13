@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -169,7 +170,7 @@ ConfigConstants {
       if (sourceStreamMap.containsKey(stream)
           && sourceStreamMap.get(stream).isHCatEnabled()) {
         streamHcatEnableMap.put(stream, true);
-        List<Path> paths = new ArrayList<Path>();
+        Set<Path> paths = Collections.synchronizedSortedSet(new TreeSet<Path>());
         pathsToBeregisteredPerTable.put(getTableName(stream), paths);
       } else {
         streamHcatEnableMap.put(stream, false);

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.distcp.tools.DistCp;
@@ -146,7 +148,7 @@ public abstract class DistcpBaseService extends AbstractService {
       if (destStreamMap.containsKey(stream)
           && destStreamMap.get(stream).isHCatEnabled()) {
         updateStreamHCatEnabledMap(stream, true);
-        List<Path> paths = new ArrayList<Path>();
+        Set<Path> paths = Collections.synchronizedSortedSet(new TreeSet<Path>());
         pathsToBeregisteredPerTable.put(getTableName(stream), paths);
       } else {
         updateStreamHCatEnabledMap(stream, false);

@@ -215,7 +215,7 @@ public class MirrorStreamService extends DistcpBaseService {
   private void addToTobeRegisteredList(Path registerPath ,
       String streamName) {
     if (isStreamHCatEnabled(streamName)) {
-      List<Path> pathsToberegistered = pathsToBeregisteredPerTable.
+      Set<Path> pathsToberegistered = pathsToBeregisteredPerTable.
           get(getTableName(streamName));
       if (!pathsToberegistered.contains(registerPath)) {
         pathsToberegistered.add(registerPath);

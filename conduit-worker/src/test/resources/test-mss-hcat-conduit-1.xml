@@ -17,7 +17,7 @@
         <source>
           <name>testcluster2</name>
           <retentioninhours>24</retentioninhours>
-        </source> 
+        </source>
       </sources>
       <destinations>
 
@@ -30,7 +30,6 @@
           <name>testcluster2</name>
           <retentioninhours>24</retentioninhours>
         </destination>
-
       </destinations>
     </stream>
     <stream name="test2" hcatenabled="true">
