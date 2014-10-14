@@ -26,17 +26,8 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
 import org.apache.hadoop.hive.ql.metadata.HiveUtils;
 import org.apache.hadoop.hive.serde.serdeConstants;
-import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
-import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.api.HCatCreateDBDesc;
-import org.apache.hive.hcatalog.api.HCatCreateTableDesc;
-import org.apache.hive.hcatalog.common.HCatException;
-import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
-import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Type;
 
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.Conduit;
-import com.inmobi.conduit.HCatClientUtil;
 
 public class TestHCatUtil {
 
@@ -99,51 +90,9 @@ public class TestHCatUtil {
     }
     return db;
   }
-  public static HCatClientUtil getHCatUtil(HiveConf hiveConf) {
-    String metaStoreUri = hiveConf.getVar(HiveConf.ConfVars.METASTOREURIS);
-    HCatClientUtil hcatClientUtil = new HCatClientUtil(metaStoreUri);
-    return hcatClientUtil;
-  }
-
-  public static void createHCatClients(HiveConf hcatConf, HCatClientUtil hcatClientUtil)
-      throws InterruptedException {
-    try {
-      hcatClientUtil.createHCatClients(10, hcatConf);
-    } catch (HCatException e) {
-      LOG.warn("Exception occured while trying to create hcat cleints ", e);
-    }
-  }
-
-  public static HCatClient getHCatClient(HCatClientUtil hcatClientUtil)
-      throws InterruptedException {
-    return hcatClientUtil.getHCatClient();
-  }
-
-  public static void createDataBase(String dbName, HCatClient hcatClient) {
-    HCatCreateDBDesc dbDesc = null;
-    try {
-      dbDesc = HCatCreateDBDesc.create(dbName)
-          .ifNotExists(true).build();
-      hcatClient.createDatabase(dbDesc);
-    } catch (HCatException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-  }
-
-  public static List<HCatFieldSchema> getPartCols() throws HCatException {
-    List<HCatFieldSchema> ptnCols = new ArrayList<HCatFieldSchema>();
-    ptnCols.add(new HCatFieldSchema("year", Type.STRING, "year column"));
-    ptnCols.add(new HCatFieldSchema("month", Type.STRING, "month column"));
-    ptnCols.add(new HCatFieldSchema("day", Type.STRING, "day column"));
-    ptnCols.add(new HCatFieldSchema("hour", Type.STRING, "hour column"));
-    ptnCols.add(new HCatFieldSchema("minute", Type.STRING, "minute column"));
-    return ptnCols;
-  }
 
   public org.apache.hadoop.hive.ql.metadata.Table createTable(String dbName,
       String tableName) throws Exception {
-    Hive hive = Hive.get();
     ArrayList<FieldSchema> cols = new ArrayList<FieldSchema>(2);
     cols.add(new FieldSchema("name", serdeConstants.STRING_TYPE_NAME, ""));
     cols.add(new FieldSchema("income", serdeConstants.INT_TYPE_NAME, ""));
@@ -196,7 +145,7 @@ public class TestHCatUtil {
           org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE,
           DefaultStorageHandler.class.getName());
     } catch (HiveException e) {
-      throw new HCatException(
+      throw new HiveException(
           "Exception while creating instance of storage handler",
           e);
     }
@@ -241,18 +190,6 @@ public class TestHCatUtil {
     return sd;
   }
 
-  public static void createTable(HCatClient hCatClient, String dbName,
-      String tableName, List<HCatFieldSchema> ptnCols) throws HCatException {
-
-    ArrayList<HCatFieldSchema> cols = new ArrayList<HCatFieldSchema>();
-    cols.add(new HCatFieldSchema("stringcolumn", Type.STRING, "id columns"));
-
-    HCatCreateTableDesc tableDesc = HCatCreateTableDesc
-        .create(dbName, tableName, cols).fileFormat("sequencefile")
-        .partCols(ptnCols).build();
-    hCatClient.createTable(tableDesc);
-  }
-
   public static Map<String, String> getPartitionMap(Calendar cal) {
     String dateStr = Cluster.getDateAsYYYYMMDDHHMNPath(cal.getTime().getTime());
     String [] dateSplits = dateStr.split(File.separator);
@@ -267,21 +204,8 @@ public class TestHCatUtil {
     return partSpec;
   }
 
-
   public static void addPartition(org.apache.hadoop.hive.ql.metadata.Table table,
       Map<String, String> partSpec) throws HiveException {
     Hive.get().createPartition(table, partSpec);
-  }
-
-  public static void addPartition(HCatClient hCatClient, String dbName,
-      String tableName, String location, Map<String, String> partSpec)
-          throws HCatException {  
-    HCatAddPartitionDesc addPtn = HCatAddPartitionDesc.create(dbName,
-        tableName, location, partSpec).build();
-    hCatClient.addPartition(addPtn);
-  }
-
-  public static void submitBack(HCatClientUtil hcatUtil, HCatClient hcatClient) {
-    hcatUtil.addToPool(hcatClient);
   }
 }

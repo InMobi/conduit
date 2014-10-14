@@ -614,7 +614,7 @@ public class Conduit implements Service, ConduitConstants {
 
   private static void constructHiveConf() {
     HiveConf hConf = new HiveConf();
-    String metastoreUrl = hiveConf.getVar(HiveConf.ConfVars.METASTOREURIS);
+    String metastoreUrl = hConf.getVar(HiveConf.ConfVars.METASTOREURIS);
     if (metastoreUrl == null) {
       throw new RuntimeException("metastroe.uri property is not specified in hive-site.xml");
     }
