@@ -16,7 +16,6 @@ package com.inmobi.conduit.purge;
 import java.io.FileNotFoundException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -119,16 +118,13 @@ public class DataPurgerService extends AbstractService {
   private class PartitionDesc {
     String streamName;
     String tableName;
-    List<String> partVals;
     String location;
     Map<String, String> partSpec;
 
-    PartitionDesc(String stream, String table,
-        List<String> parttitionVals, String pathLocation,
+    PartitionDesc(String stream, String table, String pathLocation,
         Map<String, String> parttitionSpec) {
       streamName = stream;
       tableName = table;
-      partVals = parttitionVals;
       location = pathLocation;
       partSpec = parttitionSpec;
     }
@@ -145,10 +141,6 @@ public class DataPurgerService extends AbstractService {
       return tableName;
     }
 
-    public List<String> getPartVals() {
-      return partVals;
-    }
-    
     public Map<String, String> getPartSpec() {
       return partSpec;
     }
@@ -449,22 +441,17 @@ public class DataPurgerService extends AbstractService {
       return;
     }
     Map<String, String> partSpec = new HashMap<String, String>();
-    List<String> partVals = new ArrayList<String>();
     partSpec.put(YEAR_PARTITION_NAME, yearVal);
-    partVals.add(yearVal);
     if (monthVal != null) {
       partSpec.put(MONTH_PARTITION_NAME, monthVal);
-      partVals.add(monthVal);
     }
     if (dayVal != null) {
       partSpec.put(DAY_PARTITION_NAME, dayVal);
-      partVals.add(dayVal);
     }
     if (hourVal != null) {
       partSpec.put(HOUR_PARTITION_NAME, hourVal);
-      partVals.add(hourVal);
     }
-    PartitionDesc partDesc = new PartitionDesc(streamName, tableName, partVals,
+    PartitionDesc partDesc = new PartitionDesc(streamName, tableName,
         hourPath.toString(), partSpec);
     pathPartitionDescMap.put(hourPath, partDesc);
   }
