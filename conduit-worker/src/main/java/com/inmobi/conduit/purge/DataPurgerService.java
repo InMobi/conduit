@@ -450,18 +450,18 @@ public class DataPurgerService extends AbstractService {
     }
     Map<String, String> partSpec = new HashMap<String, String>();
     List<String> partVals = new ArrayList<String>();
-    partSpec.put("year", yearVal);
+    partSpec.put(YEAR_PARTITION_NAME, yearVal);
     partVals.add(yearVal);
     if (monthVal != null) {
-      partSpec.put("month", monthVal);
+      partSpec.put(MONTH_PARTITION_NAME, monthVal);
       partVals.add(monthVal);
     }
     if (dayVal != null) {
-      partSpec.put("day", dayVal);
+      partSpec.put(DAY_PARTITION_NAME, dayVal);
       partVals.add(dayVal);
     }
     if (hourVal != null) {
-      partSpec.put("hour", hourVal);
+      partSpec.put(HOUR_PARTITION_NAME, hourVal);
       partVals.add(hourVal);
     }
     PartitionDesc partDesc = new PartitionDesc(streamName, tableName, partVals,
@@ -523,41 +523,20 @@ public class DataPurgerService extends AbstractService {
             Table table = Hive.get().getTable(Conduit.getHcatDBName(),
                 partDesc.getTableName(), true);
 
-            String filterString = getFilterString(partDesc.getPartSpec());
-            LOG.info("filter String " + filterString + " for dropping partition");
-            List<Partition> partitions = null;
-            try {
-              partitions = Hive.get().getPartitionsByFilter(table, filterString);
-            } catch (MetaException e) {
-              throw new HiveException(e.getCause());
-            } catch (NoSuchObjectException e) {
-              LOG.info("got NoSuchObject exception while trying to list"
-                  + " parttions from " + partDesc.getTableName() + " for filter " + filterString);
-            } catch (TException e) {
-              throw new HiveException(e.getCause());
-            }
-            if (partitions != null) {
-              for (Partition partition : partitions) {
-                if (Hive.get().dropPartition(Conduit.getHcatDBName(),
-                    partDesc.getTableName(), partition.getValues(), true)) {
-                  LOG.info("partition " + partDesc.getLocation() + " dropped"
-                      + " successfully from " + partDesc.getTableName() + " table");
-                } else {
-                  LOG.warn("Not able to drop the partition " + partDesc.getLocation()
-                      + "from " + partDesc.getTableName() + " table");
-                  break;
-                }
-              }
+            List<Partition> partitions = getPartitionsByFilter(partDesc, table);
+            if (dropPartitions(partDesc, partitions)) {
+              pathPartitionDescMap.remove(purgePath);
+            } else {
+              LOG.info("Did not drop all the partitions for " + partDesc.
+                  getPartSpec() +  " partspec from " + partDesc.getTableName());
+              break;
             }
           } catch (HiveException e) {
             if (e.getCause() instanceof NoSuchObjectException) {
               LOG.warn("partition " + partDesc.getLocation() + " does not"
                   + " exist in " + partDesc.getTableName() + " table");
             } else {
-              ConduitMetrics.updateSWGuage(getServiceType(),
-                  HCAT_PURGE_PARTITION_FAILURES_COUNT, getName(), 1);
-              ConduitMetrics.updateSWGuage(getServiceType(),
-                  HCAT_CONNECTION_FAILURES, getName(), 1);
+              updatePartitionFailureMetrics();
               throw e;
             }
           }
@@ -571,6 +550,49 @@ public class DataPurgerService extends AbstractService {
         LOG.warn("Cannot delete path " + purgePath, e);
         ConduitMetrics.updateSWGuage(getServiceType(), DELETE_FAILURES_COUNT, getName(), 1);
       }
+    }
+  }
+
+  private boolean dropPartitions(PartitionDesc partDesc,
+      List<Partition> partitions) throws HiveException {
+    if (partitions == null) {
+      return true;
+    }
+    for (Partition partition : partitions) {
+      if (Hive.get().dropPartition(Conduit.getHcatDBName(),
+          partDesc.getTableName(), partition.getValues(), true)) {
+        LOG.info("partition " + partDesc.getLocation() + " dropped"
+            + " successfully from " + partDesc.getTableName() + " table");
+      } else {
+        LOG.warn("Not able to drop the partition " + partDesc.getLocation()
+            + "from " + partDesc.getTableName() + " table");
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void updatePartitionFailureMetrics() {
+    ConduitMetrics.updateSWGuage(getServiceType(),
+        HCAT_PURGE_PARTITION_FAILURES_COUNT, getName(), 1);
+    ConduitMetrics.updateSWGuage(getServiceType(),
+        HCAT_CONNECTION_FAILURES, getName(), 1);
+  }
+
+  private List<Partition> getPartitionsByFilter(PartitionDesc partDesc,
+      Table table) throws HiveException {
+    String filterString = getFilterString(partDesc.getPartSpec());
+    LOG.info("filter String " + filterString + " for dropping partition");
+    try {
+      return Hive.get().getPartitionsByFilter(table, filterString);
+    } catch (MetaException e) {
+      throw new HiveException(e.getCause());
+    } catch (NoSuchObjectException e) {
+      LOG.info("got NoSuchObject exception while trying to list"
+          + " parttions from " + partDesc.getTableName() + " for filter " + filterString);
+      return null;
+    } catch (TException e) {
+      throw new HiveException(e.getCause());
     }
   }
 

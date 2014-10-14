@@ -61,7 +61,7 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
   public void cleanup() throws Exception {
     Conduit.setHCatEnabled(false);
     for (TestLocalStreamService service: services) {
-      clearInMemoryMaps(service);
+      //clearInMemoryMaps(service);
     }
     TestHCatUtil.stop();
     super.cleanup();
@@ -100,6 +100,7 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
     TestHCatUtil.createDatabase(dbName);
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
+        service.prepareLastAddedPartitionMap();
         String tableName = "conduit_local_" + stream;
         try {
           table = thutil.createTable(Conduit.getHcatDBName(), tableName);
@@ -116,7 +117,6 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
         cal.add(Calendar.MINUTE, -20);
         String rootPath= service.getCluster().getLocalFinalDestDirRoot();
         Path pathPrefix = new Path(rootPath, stream);
-        service.prepareLastAddedPartitionMap();
         service.findLastPartition(stream);
         // No partitions present in the hcatalog table
         Assert.assertEquals(service.getLastAddedPartTime(tableName), -1);
@@ -129,9 +129,9 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
         }
         LOG.info("AAAAAAAAAAAAAAAAAAAAA list of partitions : " + Hive.get().getPartitions(table));
         service.findLastPartition(stream);
-        clearInMemoryMaps(service);
         long lastAddedValue = service.getLastAddedPartTime(tableName);
         Assert.assertEquals(lastAddedValue, currentTime.getTime());
+        clearInMemoryMaps(service);
       }
     }
   }

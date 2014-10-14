@@ -28,7 +28,7 @@ import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.TestHCatUtil;
 
 public class TestHCatPartition extends TestMiniClusterUtil{
-
+/*
   private static final Log LOG = LogFactoryImpl.getLog(TestHCatPartition.class);
 
   private static final int msPort = 20100;
@@ -118,5 +118,5 @@ public class TestHCatPartition extends TestMiniClusterUtil{
         }
       }
     }
- // }
+ // }*/
 }
