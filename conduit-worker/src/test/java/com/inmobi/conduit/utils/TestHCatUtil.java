@@ -13,14 +13,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.metadata.Table;
+import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
+import org.apache.hadoop.hive.ql.metadata.HiveUtils;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
 import org.apache.hive.hcatalog.api.HCatClient;
@@ -39,9 +43,10 @@ public class TestHCatUtil {
   private static final Log LOG = LogFactory.getLog(TestHCatUtil.class);
 
   static Thread hcatServer = null;
+  static HiveConf hiveConf = null;
   public static void startMetaStoreServer(final HiveConf hiveConf,
       final int msPort) {
-     hcatServer = new Thread(new Runnable() {
+    hcatServer = new Thread(new Runnable() {
       @Override
       public void run() {
         try {
@@ -54,7 +59,7 @@ public class TestHCatUtil {
     hcatServer.start();
   }
 
-  public void stop() {
+  public static void stop() {
     hcatServer.stop();
   }
 
@@ -72,23 +77,27 @@ public class TestHCatUtil {
     hcatConf.setIntVar(HiveConf.ConfVars. METASTORETHRIFTFAILURERETRIES, 3);
     hcatConf.setIntVar(HiveConf.ConfVars.METASTORE_CLIENT_CONNECT_RETRY_DELAY, 3);
     hcatConf.setIntVar(HiveConf.ConfVars.METASTORE_CLIENT_SOCKET_TIMEOUT, 60);
+    setHiveConf(hcatConf);
     return hcatConf;
   }
 
   public static HiveConf getHiveConf() {
-    return Conduit.getHiveConf();
+    return hiveConf;
   }
 
-  public Database createDatabase(String dbName) throws Exception {
-      if(null == dbName) { return null; }
-      Database db = new Database();
-      db.setName(dbName);
-      try {
-        Hive.get().createDatabase(db);
-      } catch(HiveException e) {
-        //
-      }
-      return db;
+  public static void setHiveConf(HiveConf hcatConf) {
+    hiveConf = hcatConf;
+  }
+  public static Database createDatabase(String dbName) throws Exception {
+    if(null == dbName) { return null; }
+    Database db = new Database();
+    db.setName(dbName);
+    try {
+      Hive.get(getHiveConf()).createDatabase(db);
+    } catch(HiveException e) {
+      LOG.warn("AAAAAAAAAAAAAAAAAAAAAAAAAA hive instance is in catch ", e);  
+    }
+    return db;
   }
   public static HCatClientUtil getHCatUtil(HiveConf hiveConf) {
     String metaStoreUri = hiveConf.getVar(HiveConf.ConfVars.METASTOREURIS);
@@ -132,7 +141,8 @@ public class TestHCatUtil {
     return ptnCols;
   }
 
-  public void createTable(String dbName, String tableName) throws Exception {
+  public org.apache.hadoop.hive.ql.metadata.Table createTable(String dbName,
+      String tableName) throws Exception {
     Hive hive = Hive.get();
     ArrayList<FieldSchema> cols = new ArrayList<FieldSchema>(2);
     cols.add(new FieldSchema("name", serdeConstants.STRING_TYPE_NAME, ""));
@@ -145,9 +155,11 @@ public class TestHCatUtil {
     serdParams.put(serdeConstants.SERIALIZATION_FORMAT, "1");
 
     StorageDescriptor sd = createStorageDescriptor(tableName, cols, params, serdParams);
-    Table tbl = createTable(dbName, tableName, null, null,
+    Table tbl = createTable(dbName, tableName, "owner", null,
         getPartKeys(), sd, 90);
-
+    org.apache.hadoop.hive.ql.metadata.Table table = new org.apache.hadoop.hive.ql.metadata.Table();
+    table.setTTable(tbl);
+    return table;
   }
 
   private Table createTable(String dbName, String tblName, String owner,
@@ -156,25 +168,48 @@ public class TestHCatUtil {
     Table tbl = new Table();
     tbl.setDbName(dbName);
     tbl.setTableName(tblName);
-   
+    if(tableParams != null) {
+      tbl.setParameters(tableParams);
+    }
+
     if(owner != null) {
       tbl.setOwner(owner);
     }
 
     if(partitionKeys != null) {
-      List<FieldSchema> partKeys = new ArrayList<FieldSchema>();
-      Set<String> keySet = partitionKeys.keySet();
-      Iterator<String> it = keySet.iterator();
-      while (it.hasNext()) {
-        partKeys.add(new FieldSchema(it.next(), "", ""));
+      tbl.setPartitionKeys(new ArrayList<FieldSchema>(partitionKeys.size()));
+      for(String key : partitionKeys.keySet()) {
+        tbl.getPartitionKeys().add(
+            new FieldSchema(key, partitionKeys.get(key), ""));
       }
     }
-
+    tbl.setTableType(TableType.EXTERNAL_TABLE.toString());
+    try {
+      LOG.info("Creating instance of storage handler to get input/output, serder info.");
+      HiveStorageHandler sh = HiveUtils.getStorageHandler(getHiveConf(),
+          DefaultStorageHandler.class.getName());
+      sd.setInputFormat(sh.getInputFormatClass().getName());
+      sd.setOutputFormat(sh.getOutputFormatClass().getName());
+      sd.getSerdeInfo().setSerializationLib(
+          sh.getSerDeClass().getName());
+      tbl.putToParameters(
+          org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE,
+          DefaultStorageHandler.class.getName());
+    } catch (HiveException e) {
+      throw new HCatException(
+          "Exception while creating instance of storage handler",
+          e);
+    }
+    tbl.setSd(sd);
     tbl.setLastAccessTime(lastAccessTime);
+    org.apache.hadoop.hive.ql.metadata.Table table = new org.apache.hadoop.hive.ql.metadata.Table();
+    table.setTTable(tbl);
+    Hive hive = Hive.get(getHiveConf());
+    LOG.warn("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA hive instance is  " + hive);
 
-    Hive.get().createTable(tbl);
+    hive.createTable(table);
     return tbl;
-  }
+  } 
 
   public Map<String, String> getPartKeys() {
     Map<String, String> partitionKeys = new HashMap<String, String>();
@@ -182,11 +217,12 @@ public class TestHCatUtil {
     partitionKeys.put("month", serdeConstants.STRING_TYPE_NAME);
     partitionKeys.put("day", serdeConstants.STRING_TYPE_NAME);
     partitionKeys.put("hour", serdeConstants.STRING_TYPE_NAME);
-    partitionKeys.put("value", serdeConstants.STRING_TYPE_NAME);
+    partitionKeys.put("minute", serdeConstants.STRING_TYPE_NAME);
     return partitionKeys;
   }
+
   private StorageDescriptor createStorageDescriptor(String tableName,
-    List<FieldSchema> cols, Map<String, String> params, Map<String, String> serdParams)  {
+      List<FieldSchema> cols, Map<String, String> params, Map<String, String> serdParams)  {
     StorageDescriptor sd = new StorageDescriptor();
 
     sd.setCols(cols);
@@ -199,7 +235,7 @@ public class TestHCatUtil {
     sd.getSerdeInfo().setName(tableName);
     sd.getSerdeInfo().setParameters(serdParams);
     sd.getSerdeInfo().getParameters()
-        .put(serdeConstants.SERIALIZATION_FORMAT, "1");
+    .put(serdeConstants.SERIALIZATION_FORMAT, "1");
     sd.setSortCols(new ArrayList<Order>());
 
     return sd;
@@ -229,6 +265,12 @@ public class TestHCatUtil {
       partSpec.put("minute", dateSplits[4]);
     }
     return partSpec;
+  }
+
+
+  public static void addPartition(org.apache.hadoop.hive.ql.metadata.Table table,
+      Map<String, String> partSpec) throws HiveException {
+    Hive.get().createPartition(table, partSpec);
   }
 
   public static void addPartition(HCatClient hCatClient, String dbName,
