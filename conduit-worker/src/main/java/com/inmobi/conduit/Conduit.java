@@ -250,6 +250,10 @@ public class Conduit implements Service, ConduitConstants {
     return hiveConf;
   }
 
+  public static void setHiveConf(HiveConf hiveConf) {
+    Conduit.hiveConf = hiveConf;
+  }
+
   private void prepareLastAddedPartitions() {
     for (AbstractService service : services) {
       try {
