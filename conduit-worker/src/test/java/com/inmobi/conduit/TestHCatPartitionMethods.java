@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -15,6 +16,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
@@ -61,7 +63,7 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
   public void cleanup() throws Exception {
     Conduit.setHCatEnabled(false);
     for (TestLocalStreamService service: services) {
-      //clearInMemoryMaps(service);
+      clearInMemoryMaps(service);
     }
     TestHCatUtil.stop();
     super.cleanup();
@@ -100,7 +102,6 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
     TestHCatUtil.createDatabase(dbName);
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
-        service.prepareLastAddedPartitionMap();
         String tableName = "conduit_local_" + stream;
         try {
           table = thutil.createTable(Conduit.getHcatDBName(), tableName);
@@ -114,9 +115,11 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
         cal.set(Calendar.MILLISECOND, 0);
         cal.set(Calendar.SECOND, 0);
         Date currentTime = cal.getTime();
+        cal.add(Calendar.HOUR_OF_DAY, -1);
         cal.add(Calendar.MINUTE, -20);
         String rootPath= service.getCluster().getLocalFinalDestDirRoot();
         Path pathPrefix = new Path(rootPath, stream);
+        service.prepareLastAddedPartitionMap();
         service.findLastPartition(stream);
         // No partitions present in the hcatalog table
         Assert.assertEquals(service.getLastAddedPartTime(tableName), -1);
@@ -127,10 +130,11 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
           TestHCatUtil.addPartition(table, TestHCatUtil.getPartitionMap(cal));
           cal.add(Calendar.MINUTE, 1);
         }
-        LOG.info("AAAAAAAAAAAAAAAAAAAAA list of partitions : " + Hive.get().getPartitions(table));
         service.findLastPartition(stream);
         long lastAddedValue = service.getLastAddedPartTime(tableName);
         Assert.assertEquals(lastAddedValue, currentTime.getTime());
+        service.getFileSystem().delete(
+            new Path(service.getCluster().getRootDir()), true);
         clearInMemoryMaps(service);
       }
     }
@@ -161,10 +165,13 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
         service.updateLastAddedPartitionMap(tableName, cal1.getTime().getTime());
         Set<Path> pathsList = new TreeSet<Path>();
         pathsList.add(currentMinDir);
-        service.pathsToBeregisteredPerTable.put(tableName, pathsList);
+        TestLocalStreamService.pathsToBeregisteredPerTable.put(tableName, pathsList);
         service.findDiffBetweenLastAddedAndFirstPath(stream, tableName);
+        Assert.assertTrue(TestLocalStreamService.pathsToBeregisteredPerTable.
+            get(tableName).size() == 10);
+        service.getFileSystem().delete(
+            new Path(service.getCluster().getRootDir()), true);
         clearInMemoryMaps(service);
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA " + service.pathsToBeregisteredPerTable);
       }
     }
   }
@@ -173,6 +180,7 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
   public void testLocalStreamServiceWithLastAddedPartTime() throws Exception {
     TestHCatUtil thutil = new TestHCatUtil();
     Conduit.setHcatDBName("conduit2");
+    Conduit.setHCatEnabled(true);
     dbName = Conduit.getHcatDBName();
     TestHCatUtil.createDatabase(dbName);
     for (TestLocalStreamService service : services) {
@@ -191,18 +199,24 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
         String timeString = CalendarHelper.minDirFormat.get().format(currentTime1);
         String pathPrefix = new Path(service.getCluster().getLocalFinalDestDirRoot(), stream).toString();
         Path currentMinDir = new Path(pathPrefix, timeString);
-        System.out.println("AAAAAAAAAAAAAAA currentmindir " + currentMinDir);
         LOG.info("Adding partition for path " + TestHCatUtil.getPartitionMap(cal1));
         TestHCatUtil.addPartition(table, TestHCatUtil.getPartitionMap(cal1));
 
         service.prepareLastAddedPartitionMap();
         service.runPreExecute();
         service.runExecute();
-        LOG.info("AAAAAAAAAAAAAAAAAAAA list of partitions after excute " + Hive.get().getPartitions(table));
-        LOG.info("AAAAAAAAAAAAAAAAAAAA list of partitions size after excute " + Hive.get().getPartitions(table).size());
+        List<Partition> partitionList = Hive.get().getPartitions(table);
+        /* last added partition is 150 mins back. For the latest minute,
+         * partition won't be created immediately. So, it should have at least
+         * 149 partitions
+         */
+        LOG.info("AAAAAAAAAAAAAAAAAAAAAA partitions to be registered : " + service.pathsToBeregisteredPerTable.get(tableName));
+        LOG.info("Number of partitions in the hcat table : " + partitionList.size() + "   AAAAAAAAAA partiitonList " + partitionList);
+        Assert.assertTrue(partitionList.size() >= 149);
         clearInMemoryMaps(service);
         service.getFileSystem().delete(
             new Path(service.getCluster().getRootDir()), true);
+        //Conduit.setHCa
       }
     }
   }

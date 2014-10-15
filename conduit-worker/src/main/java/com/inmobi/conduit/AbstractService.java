@@ -576,6 +576,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected void registerPartitions() throws InterruptedException, ParseException {
     // return immediately if hcat is not enabled or if user issues a stop command
     if (!Conduit.isHCatEnabled() || stopped) {
+      LOG.info("Hcat is not enabled or stop is issued. Hence not registering any partitions");
       return;
     }
     for (String stream : streamsToProcess) {
@@ -604,6 +605,13 @@ public abstract class AbstractService implements Service, Runnable {
       Set<Path> partitionsTobeRegistered = pathsToBeregisteredPerTable.get(tableName);
       LOG.info("partitions to be registered : " + partitionsTobeRegistered
           + " for " + tableName + " table");
+      org.apache.hadoop.hive.ql.metadata.Table table = null;
+      try {
+        table = Hive.get(
+            Conduit.getHiveConf()).getTable(Conduit.getHcatDBName(), tableName);
+      } catch (HiveException e) {
+        LOG.info("Got exception while trying to get the " + tableName + " table: ", e);
+      }
       synchronized (partitionsTobeRegistered) {
         // Register all the partitions in the list except the last one
         while (partitionsTobeRegistered.size() > 1) {
@@ -614,8 +622,10 @@ public abstract class AbstractService implements Service, Runnable {
            */
           Path path = pathIt.next();
           Date date = getTimeStampFromHCatPartition(path.toString(), stream);
-          LOG.info("Adding the partition  " + path.toString() + " in " + tableName + " table");
-          if (addPartition(path.toString(), stream, date.getTime(), tableName)) {
+          LOG.info("Adding the partition  " + path.toString() + " in "
+              + tableName + " table");
+          if (addPartition(path.toString(), stream, date.getTime(),
+              tableName, table)) {
             partitionsTobeRegistered.remove(path);
             updateLastAddedPartitionMap(tableName, date.getTime());
           } else {
@@ -629,7 +639,8 @@ public abstract class AbstractService implements Service, Runnable {
   }
 
   public boolean addPartition(String location, String streamName,
-      long partTimeStamp, String tableName)
+      long partTimeStamp, String tableName,
+      org.apache.hadoop.hive.ql.metadata.Table table)
           throws InterruptedException, ParseException {
     String dbName = Conduit.getHcatDBName();
     String dateStr = Cluster.getDateAsYYYYMMDDHHMNPath(partTimeStamp);
@@ -644,8 +655,9 @@ public abstract class AbstractService implements Service, Runnable {
     }
     Partition partitionTobeAdded = null;
     try {
-      org.apache.hadoop.hive.ql.metadata.Table table = Hive.get(
-          Conduit.getHiveConf()).getTable(dbName, tableName);
+      if (table == null) {
+        table = Hive.get(Conduit.getHiveConf()).getTable(dbName, tableName);
+      }
       partitionTobeAdded = Hive.get(Conduit.getHiveConf()).createPartition(
           table, partSpec);
       LOG.info("Partition " + partitionTobeAdded.getLocation() + " was added"

@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
@@ -15,6 +16,7 @@ import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.TestMiniClusterUtil;
 import com.inmobi.conduit.metrics.AbsoluteGauge;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -38,6 +40,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   @BeforeMethod
   public void beforeTest() throws Exception{
+    AbstractService.clearHCatInMemoryMaps();
+    Conduit.setHCatEnabled(false);
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
     prop.setProperty("com.inmobi.conduit.metrics.slidingwindowtime", "100000000");

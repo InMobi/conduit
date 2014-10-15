@@ -13,6 +13,7 @@
  */
 package com.inmobi.conduit.purge;
 
+import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
@@ -451,6 +452,7 @@ public class DataPurgerServiceTest {
   }
 
   public void testDataPurger() throws Exception {
+    AbstractService.clearHCatInMemoryMaps();
     LOG.info("Check data purger does not stop when unable to delete a path");
     ConduitConfigParser configparser = new ConduitConfigParser(
         "test-dps-conduit_X_5.xml");
