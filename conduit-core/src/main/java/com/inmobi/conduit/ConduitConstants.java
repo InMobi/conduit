@@ -47,5 +47,4 @@ public interface ConduitConstants {
       "com.inmobi.conduit.timeoutToProcessLastCollectorFile";
   public static final String HCAT_ENABLED = "com.inmobi.conduit.hcatEnabled";
   public static final String HCAT_DATABASE_NAME = "com.inmobi.conduit.hcatDBName";
-  public static final String HCAT_CLIENTS_RATIO = "com.inmobi.conduit.hcatClients.ratio";
 }
