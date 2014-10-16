@@ -195,16 +195,6 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
     Map<String, Integer> sourceStreams = new HashMap<String, Integer>();
     // get sources for each stream
     String streamName = el.getAttribute(NAME);
-    String hcatEnabled = el.getAttribute(HCAT_ENABLED_PER_STREAM);
-    boolean isHCatEnabled = false;
-    if (hcatEnabled != null && !hcatEnabled.isEmpty()) {
-      isHCatEnabled = Boolean.parseBoolean(hcatEnabled);
-      if (isHCatEnabled) {
-        logger.info("HCat is enabled for stream " + streamName);
-      } else {
-        logger.info("HCat is not enabled for stream " + streamName);
-      }
-    }
     NodeList sourceList = el.getElementsByTagName(SOURCE);
     for (int i = 0; i < sourceList.getLength(); i++) {
       Element source = (Element) sourceList.item(i);
@@ -213,16 +203,16 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
       int rententionInHours = getRetention(source, RETENTION_IN_HOURS);
       logger.debug(" StreamSource :: streamname " + streamName
           + " retentioninhours " + rententionInHours + " " + "clusterName "
-          + clusterName + " isHCatEnabled " + isHCatEnabled);
+          + clusterName);
       sourceStreams.put(clusterName, new Integer(rententionInHours));
     }
     // get all destinations for this stream
-    readConsumeStreams(streamName, el, isHCatEnabled);
-    return new SourceStream(streamName, sourceStreams, isHCatEnabled);
+    readConsumeStreams(streamName, el);
+    return new SourceStream(streamName, sourceStreams);
   }
 
-  private void readConsumeStreams(String streamName, Element el,
-      boolean isHCatEnabled) throws Exception {
+  private void readConsumeStreams(String streamName, Element el)
+      throws Exception {
     NodeList consumeStreamNodeList = el.getElementsByTagName(DESTINATION);
     for (int i = 0; i < consumeStreamNodeList.getLength(); i++) {
       Element replicatedConsumeStream = (Element) consumeStreamNodeList.item(i);
@@ -238,10 +228,9 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
         isPrimary = new Boolean(false);
       logger.info("Reading Stream Destination Details :: Stream Name "
           + streamName + " cluster " + clusterName + " retentionInHours "
-          + retentionInHours + " isPrimary " + isPrimary + " isHCatEnabled "
-          + isHCatEnabled);
+          + retentionInHours + " isPrimary " + isPrimary);
       DestinationStream consumeStream = new DestinationStream(streamName,
-          retentionInHours, isPrimary, isHCatEnabled);
+          retentionInHours, isPrimary);
       if (clusterConsumeStreams.get(clusterName) == null) {
         List<DestinationStream> consumeStreamList = new ArrayList<DestinationStream>();
         consumeStreamList.add(consumeStream);

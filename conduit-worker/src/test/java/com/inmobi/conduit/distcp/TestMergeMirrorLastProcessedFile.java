@@ -4,7 +4,7 @@ import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.utils.CalendarHelper;
-
+import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -14,7 +14,6 @@ import org.apache.hadoop.io.compress.Compressor;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.log4j.Logger;
-import org.testng.Assert;
 import org.testng.annotations.*;
 
 import java.io.IOException;
@@ -128,7 +127,7 @@ public class TestMergeMirrorLastProcessedFile {
     }
 
     TestMergedStreamService service = new TestMergedStreamService(parser
-        .getConfig(), cluster1, cluster2, null, cluster1.getSourceStreams(), null);
+        .getConfig(), cluster1, cluster2, null, cluster1.getSourceStreams());
     service.getDistCPInputFile();
     Assert.assertEquals(getMinute(cal.getTimeInMillis() - 60000),
         service.getLastProcessedMap().get(stream1));
@@ -157,7 +156,7 @@ public class TestMergeMirrorLastProcessedFile {
     }
 
     TestMergedStreamService service = new TestMergedStreamService(parser
-        .getConfig(), cluster1, cluster2, null, cluster1.getSourceStreams(), null);
+        .getConfig(), cluster1, cluster2, null, cluster1.getSourceStreams());
     service.getDistCPInputFile();
     Assert.assertEquals(getMinute(cal.getTimeInMillis() - 60000),
         service.getLastProcessedMap().get(stream1));
@@ -186,7 +185,7 @@ public class TestMergeMirrorLastProcessedFile {
     }
 
     TestMergedStreamService service = new TestMergedStreamService(parser
-        .getConfig(), cluster1, cluster2, null, cluster1.getSourceStreams(), null);
+        .getConfig(), cluster1, cluster2, null, cluster1.getSourceStreams());
     service.getDistCPInputFile();
     Assert.assertEquals(getMinute(cal.getTimeInMillis() - 60000),
         service.getLastProcessedMap().get(stream1));
@@ -208,7 +207,7 @@ public class TestMergeMirrorLastProcessedFile {
     }
 
     TestMirrorStreamService service = new TestMirrorStreamService(parser
-        .getConfig(), cluster2, cluster1, null, cluster1.getSourceStreams(), null);
+        .getConfig(), cluster2, cluster1, null, cluster1.getSourceStreams());
     service.getDistCPInputFile();
     Assert.assertEquals(getMinute(cal.getTimeInMillis() - 60000),
         service.getLastProcessedMap().get(stream1));
@@ -237,7 +236,7 @@ public class TestMergeMirrorLastProcessedFile {
     }
 
     TestMirrorStreamService service = new TestMirrorStreamService(parser
-        .getConfig(), cluster2, cluster1, null, cluster1.getSourceStreams(), null);
+        .getConfig(), cluster2, cluster1, null, cluster1.getSourceStreams());
     service.getDistCPInputFile();
     Assert.assertEquals(getMinute(cal.getTimeInMillis() - 60000),
         service.getLastProcessedMap().get(stream1));
@@ -266,7 +265,7 @@ public class TestMergeMirrorLastProcessedFile {
     }
 
     TestMirrorStreamService service = new TestMirrorStreamService(parser
-        .getConfig(), cluster2, cluster1, null, cluster1.getSourceStreams(), null);
+        .getConfig(), cluster2, cluster1, null, cluster1.getSourceStreams());
     service.getDistCPInputFile();
     Assert.assertEquals(getMinute(cal.getTimeInMillis() - 60000),
         service.getLastProcessedMap().get(stream1));

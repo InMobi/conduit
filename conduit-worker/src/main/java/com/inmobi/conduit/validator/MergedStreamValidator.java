@@ -236,7 +236,7 @@ public class MergedStreamValidator extends AbstractStreamValidator {
         Cluster destinationCluster, Set<String> streamsToProcess)
             throws Exception {
       super(config, srcCluster, destinationCluster, null, null,
-          streamsToProcess, null);
+          streamsToProcess);
     }
 
     @Override

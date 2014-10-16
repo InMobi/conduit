@@ -19,5 +19,4 @@ public interface ConduitConfigParserTags {
   public static final String JT_URL = "jturl";
   public static final String COPYMAPPER_IMPL="copyMapperClass";
   String CLUSTER_READ_URL="readUrl";
-  public static final String HCAT_ENABLED_PER_STREAM = "hcatenabled";
 }

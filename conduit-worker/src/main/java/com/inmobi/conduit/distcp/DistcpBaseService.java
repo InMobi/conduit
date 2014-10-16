@@ -28,7 +28,6 @@ import java.util.Set;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -42,8 +41,6 @@ import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
-import com.inmobi.conduit.DestinationStream;
-import com.inmobi.conduit.HCatClientUtil;
 
 
 public abstract class DistcpBaseService extends AbstractService {
@@ -64,11 +61,10 @@ public abstract class DistcpBaseService extends AbstractService {
 
   public DistcpBaseService(ConduitConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil)
+      CheckpointProvider provider, Set<String> streamsToProcess)
           throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess, hcatUtil);
+        config, streamsToProcess);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
@@ -132,39 +128,6 @@ public abstract class DistcpBaseService extends AbstractService {
       throw e;
     }
     return true;
-  }
-
-  @Override
-  protected void prepareStreamHcatEnableMap() {
-    Map<String, DestinationStream> destStreamMap = destCluster.getDestinationStreams();
-    for (String stream : streamsToProcess) {
-      if (destStreamMap.containsKey(stream)
-          && destStreamMap.get(stream).isHCatEnabled()) {
-        updateStreamHCatEnabledMap(stream, true);
-        List<Path> paths = new ArrayList<Path>();
-        pathsToBeregisteredPerTable.put(getTableName(stream), paths);
-      } else {
-        updateStreamHCatEnabledMap(stream, false);
-      }
-    }
-  }
-
-  protected String getTableName(String streamName) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(TABLE_PREFIX);
-    sb.append(TABLE_NAME_SEPARATOR);
-    sb.append(streamName);
-    return sb.toString();
-  }
-
-  @Override
-  protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc,
-      String stream) {
-    String streamRootDirPrefix = new Path(destCluster.getFinalDestDirRoot(),
-        stream).toString();
-    Date lastAddedPartitionDate = CalendarHelper.getDateFromStreamDir(
-        streamRootDirPrefix, lastHcatPartitionLoc);
-    return lastAddedPartitionDate;
   }
 
   /*
@@ -386,16 +349,4 @@ public abstract class DistcpBaseService extends AbstractService {
       tmpPath=tmpPath.getParent();
     return tmpPath.getName();
   }
-
-  @Override
-  protected Path getFinalPath(long time, String stream) {
-    Path finalDestPath = null;
-    try {
-      finalDestPath = new Path(destCluster.getFinalDestDir(stream, time));
-    } catch (IOException e) {
-      LOG.error("Got exception while constructing a path from time ", e);
-    }
-    return finalDestPath;
-  }
-
 }
