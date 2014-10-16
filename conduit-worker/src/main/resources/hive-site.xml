@@ -2,11 +2,23 @@
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
   <property>
+    <name>hive.metastore.uris</name>
+    <value></value>
+  </property>
+  <property>
     <name>hive.metastore.connect.retries</name>
     <value>3</value>
   </property>
   <property>
     <name>hive.metastore.client.socket.timeout</name>
     <value>20</value>
+  </property>
+  <property>
+    <name>hive.metastore.failure.retries</name>
+    <value>2</value>
+  </property>
+  <property>
+    <name>hive.metastore.client.connect.retry.delay</name>
+    <value>2</value>
   </property>
 </configuration>
