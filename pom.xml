@@ -22,7 +22,7 @@
   <properties>
     <excluded.testng.groups>integration</excluded.testng.groups>
     <messaging-client-version>4.0.3</messaging-client-version>
-    <hive.version>0.13.1-inm</hive.version>
+    <hive.version>0.13.1</hive.version>
   </properties>
 
   <profiles>
