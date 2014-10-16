@@ -32,6 +32,7 @@ import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.ConfigConstants;
 import com.inmobi.conduit.utils.CalendarHelper;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -48,12 +49,12 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.tools.DistCpConstants;
-import org.apache.hadoop.tools.mapred.UniformSizeInputFormat;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.audit.thrift.AuditMessage;
+import com.inmobi.conduit.distcp.tools.DistCpConstants;
+import com.inmobi.conduit.distcp.tools.mapred.UniformSizeInputFormat;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;

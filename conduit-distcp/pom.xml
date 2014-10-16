@@ -305,7 +305,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>org.apache.hadoop.tools.DistCp</mainClass>
+              <mainClass>com.inmobi.conduit.distcp.tools.DistCp</mainClass>
             </manifest>
           </archive>
         </configuration>
@@ -373,7 +373,7 @@
           <groups>
             <group>
               <title>Hadoop DistCp</title>
-              <packages>org.apache.hadoop.tools</packages>
+              <packages>com.inmobi.conduit.distcp.tools</packages>
             </group>
           </groups>
         </configuration>
