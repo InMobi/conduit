@@ -85,12 +85,10 @@ public class TestCreateListing {
     assert checkpointPaths.size() == 0;
 
     //create one data file
-    FSDataOutputStream out1 = localFs.create(new Path(collectorPath, "datafile1"));
-    out1.close();
+    localFs.create(new Path(collectorPath, "datafile1"));
     service.createListing(localFs, localFs.getFileStatus(new Path(rootDir,
     "data")), results, trashSet, checkpointPaths);
 
-    Thread.sleep(2000);
     assert results.size() == 0;
     assert trashSet.size() == 0;
     assert checkpointPaths.size() == 0;
