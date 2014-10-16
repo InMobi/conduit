@@ -191,7 +191,7 @@ public class TestLocalStreamService extends LocalStreamService implements
 
       // Copy input format src jar to FS
       String inputFormatSrcJar = FileUtil
-          .findContainingJar(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+          .findContainingJar(com.inmobi.conduit.distcp.tools.mapred.UniformSizeInputFormat.class);
       fs.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
       // Copy AuditUtil src jar to FS
       String auditSrcJar = FileUtil.findContainingJar(

@@ -26,10 +26,10 @@ import org.apache.hadoop.io.DataInputBuffer;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.tools.DistCp;
-import org.apache.hadoop.tools.DistCpConstants;
-import org.apache.hadoop.tools.DistCpOptions;
 
+import com.inmobi.conduit.distcp.tools.DistCp;
+import com.inmobi.conduit.distcp.tools.DistCpConstants;
+import com.inmobi.conduit.distcp.tools.DistCpOptions;
 import com.inmobi.conduit.utils.FileUtil;
 
 /**
