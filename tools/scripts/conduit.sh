@@ -79,7 +79,9 @@ fi
 
 #set classpath
 for i in `hadoop classpath | sed "s/:/ /g"` ;do
-  CLASSPATH=$CLASSPATH:$i;
+  if [[ "$i" == *.jar ]]; then
+    CLASSPATH=$CLASSPATH:$i;
+  fi
 done
 
 export CLASSPATH=$CLASSPATH:`ls $CONDUIT_DIR/lib/*jar | tr "\n" :`;

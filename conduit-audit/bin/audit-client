@@ -183,8 +183,10 @@ fi
 
 #set classpath
 for i in `hadoop classpath | sed "s/:/ /g"` ;do
-  if [[ "$i" != *slf4j* ]]; then
-    CLIENT_CLASSPATH=$CLIENT_CLASSPATH:$i;
+  if [[ "$i" == *.jar ]]; then
+    if [[ "$i" != *slf4j* ]]; then
+      CLIENT_CLASSPATH=$CLIENT_CLASSPATH:$i;
+    fi
   fi
 done
 
