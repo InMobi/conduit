@@ -78,12 +78,12 @@ if [ -z $HADOOP_CONF_DIR ]; then
 fi
 
 #set classpath
-for f in $HADOOP_HOME/hadoop-*.jar;do
-  if [[ "$f" != *tool* ]]; then
-    export CLASSPATH=$CLASSPATH:$f
+for i in `hadoop classpath | sed "s/:/ /g"` ;do
+  if [[ "$i" == *.jar ]]; then
+    CLASSPATH=$CLASSPATH:$i;
   fi
 done
-export CLASSPATH=$CLASSPATH:`ls $HADOOP_HOME/lib/*jar | tr "\n" :`;
+
 export CLASSPATH=$CLASSPATH:`ls $CONDUIT_DIR/lib/*jar | tr "\n" :`;
 export CLASSPATH=$configDir:$CLASSPATH:$HADOOP_CONF_DIR:$CONDUIT_DIR/bin
 export CONDUIT_OPTS="-Dcom.sun.management.jmxremote.port=9089 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
