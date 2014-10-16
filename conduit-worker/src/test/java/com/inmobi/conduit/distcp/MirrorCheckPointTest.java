@@ -183,7 +183,7 @@ public class MirrorCheckPointTest {
         Cluster srcCluster = config.getClusters().get(remote);
         MirrorStreamService service = new TestMirrorStreamService(config,
             srcCluster, cluster, cluster,
-            mirrorSrcClusterToStreamsMap.get(remote), null);
+            mirrorSrcClusterToStreamsMap.get(remote));
         service.execute();
         if(srcRemoteMirrorMap.get(remote)==null){
           List<String> tmp = new ArrayList<String>();

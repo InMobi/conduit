@@ -17,18 +17,11 @@ public class DestinationStream {
   private final int retentionInHours;
   private final String name;
   private final Boolean isPrimary;
-  private final Boolean isHCatEnabled;
 
-  public DestinationStream(String name, int retentionInHours, Boolean isPrimary,
-      Boolean isHCatEnabled) {
+  public DestinationStream(String name, int retentionInHours, Boolean isPrimary) {
     this.name = name;
     this.retentionInHours = retentionInHours;
     this.isPrimary = isPrimary;
-    this.isHCatEnabled = isHCatEnabled;
-  }
-
-  public Boolean isHCatEnabled() {
-    return isHCatEnabled;
   }
 
   public boolean isPrimary() {

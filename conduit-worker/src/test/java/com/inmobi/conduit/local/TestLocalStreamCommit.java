@@ -60,7 +60,7 @@ public class TestLocalStreamCommit {
     Cluster cluster1 = parser.getConfig().getClusters().get("testcluster1");
     LocalStreamService service = new LocalStreamService(parser.getConfig(),
         cluster1, null, new FSCheckpointProvider(
-            "/tmp/test-conduit/conduit/checkpoint"), streamsToProcess, null);
+            "/tmp/test-conduit/conduit/checkpoint"), streamsToProcess);
     createData(cluster1);
     service.prepareForCommit(System.currentTimeMillis());
     Path tmpPath = new Path(cluster1.getTmpPath(),

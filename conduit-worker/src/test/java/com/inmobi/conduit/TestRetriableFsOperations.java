@@ -4,7 +4,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -35,13 +34,13 @@ public class TestRetriableFsOperations extends AbstractService {
   }
 
   public TestRetriableFsOperations() {
-    super(null, null, -1, null, null, null);
+    super(null, null, -1, null, null);
   }
 
   public TestRetriableFsOperations(String name, ConduitConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
       Set<String> streamsToProcess) {
-    super(name, config, runIntervalInMsec, provider, streamsToProcess, null);
+    super(name, config, runIntervalInMsec, provider, streamsToProcess);
   }
 
   @BeforeMethod
@@ -148,11 +147,6 @@ public class TestRetriableFsOperations extends AbstractService {
 
   @Override
   protected String getTier() {
-    return null;
-  }
-
-  @Override
-  protected String getTableName(String stream) {
     return null;
   }
 }

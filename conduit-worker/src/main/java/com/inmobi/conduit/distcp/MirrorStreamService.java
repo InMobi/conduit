@@ -40,7 +40,6 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
@@ -53,15 +52,13 @@ import com.inmobi.conduit.utils.DatePathComparator;
 public class MirrorStreamService extends DistcpBaseService {
   private static final Log LOG = LogFactory.getLog(MirrorStreamService.class);
 
-  protected static boolean failedTogetPartitions = false;
-
   public MirrorStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil) throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess)
+          throws Exception {
     super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_CHECKPOINT, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_MKDIR, eachStream);
@@ -75,12 +72,6 @@ public class MirrorStreamService extends DistcpBaseService {
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          HCAT_ADD_PARTITIONS_COUNT, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          HCAT_CONNECTION_FAILURES, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          FAILED_TO_GET_HCAT_CLIENT_COUNT, eachStream);
     }
   }
 
@@ -159,11 +150,6 @@ public class MirrorStreamService extends DistcpBaseService {
       getDestFs().delete(tmpOut, true);
       LOG.debug("Cleanup [" + tmpOut + "]");
       publishAuditMessages(auditMsgList);
-      try {
-        registerPartitions();
-      } catch (Exception e) {
-        LOG.warn("Got exception while registering partitions. ", e);
-      }
     }
   }
 
@@ -178,7 +164,6 @@ public class MirrorStreamService extends DistcpBaseService {
       String streamName = getTopicNameFromDestnPath(entry.getValue());
       if (entry.getKey().isDir()) {
         retriableMkDirs(getDestFs(), entry.getValue(), streamName);
-        addToTobeRegisteredList(entry.getValue(), streamName);
         ConduitMetrics.updateSWGuage(getServiceType(), EMPTYDIR_CREATE,
             streamName, 1);
       } else {
@@ -188,7 +173,6 @@ public class MirrorStreamService extends DistcpBaseService {
           continue;
         }
         retriableMkDirs(getDestFs(), entry.getValue().getParent(), streamName);
-        addToTobeRegisteredList(entry.getValue().getParent(), streamName);
         if (retriableRename(getDestFs(), entry.getKey().getPath(),
             entry.getValue(), streamName) == false) {
           LOG.warn("Failed to rename.Aborting transaction COMMIT to avoid "
@@ -207,17 +191,6 @@ public class MirrorStreamService extends DistcpBaseService {
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.updateSWGuage(getServiceType(), COMMIT_TIME,
           eachStream, elapsedTime);
-    }
-  }
-
-  private void addToTobeRegisteredList(Path registerPath ,
-      String streamName) {
-    if (isStreamHCatEnabled(streamName)) {
-      List<Path> pathsToberegistered = pathsToBeregisteredPerTable.
-          get(getTableName(streamName));
-      if (!pathsToberegistered.contains(registerPath)) {
-        pathsToberegistered.add(registerPath);
-      }
     }
   }
 
@@ -450,7 +423,6 @@ public class MirrorStreamService extends DistcpBaseService {
   protected String getTier() {
     return "MIRROR";
   }
-
   /*
    * Full path needs to be preserved for mirror stream
    */

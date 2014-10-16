@@ -14,11 +14,9 @@ import java.util.concurrent.BlockingQueue;
 import com.inmobi.conduit.AbstractServiceTest;
 import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.PublishMissingPathsTest;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -53,10 +51,10 @@ public class TestMirrorStreamService extends MirrorStreamService
   
   public TestMirrorStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      Set<String> streamsToProcess, HCatClientUtil hcatUtil) throws Exception {
+      Set<String> streamsToProcess) throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
     MessagePublisher publisher = MessagePublisherFactory.create();
     Conduit.setPublisher(publisher);
     this.destinationCluster = destinationCluster;

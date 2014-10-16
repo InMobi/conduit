@@ -18,7 +18,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -32,10 +31,7 @@ import java.util.TreeSet;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.ConfigConstants;
-import com.inmobi.conduit.HCatClientUtil;
-import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -71,7 +67,7 @@ import com.inmobi.conduit.utils.FileUtil;
  */
 
 public class LocalStreamService extends AbstractService implements
-ConfigConstants {
+    ConfigConstants {
 
   private static final Log LOG = LogFactory.getLog(LocalStreamService.class);
 
@@ -100,11 +96,11 @@ ConfigConstants {
 
   public LocalStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, HCatClientUtil hcatUtil)
+      Set<String> streamsToProcess)
           throws IOException {
     super("LocalStreamService_" + srcCluster + "_" +
         getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider, streamsToProcess, hcatUtil);
+        provider, streamsToProcess);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -144,12 +140,6 @@ ConfigConstants {
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          HCAT_ADD_PARTITIONS_COUNT, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          HCAT_CONNECTION_FAILURES, eachStream);
-      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          FAILED_TO_GET_HCAT_CLIENT_COUNT, eachStream);
     }
   }
 
@@ -158,40 +148,6 @@ ConfigConstants {
       LOG.info("Deleting tmpPath recursively [" + tmpPath + "]");
       fs.delete(tmpPath, true);
     }
-  }
-
-  @Override
-  protected void prepareStreamHcatEnableMap() {
-    Map<String, SourceStream> sourceStreamMap = config.getSourceStreams();
-    for (String stream : streamsToProcess) {
-      if (sourceStreamMap.containsKey(stream)
-          && sourceStreamMap.get(stream).isHCatEnabled()) {
-        streamHcatEnableMap.put(stream, true);
-        List<Path> paths = new ArrayList<Path>();
-        pathsToBeregisteredPerTable.put(getTableName(stream), paths);
-      } else {
-        streamHcatEnableMap.put(stream, false);
-      }
-    }
-    LOG.info("Hcat enable map for local stream : " + streamHcatEnableMap);
-  }
-
-  @Override
-  protected Date getTimeStampFromHCatPartition(String lastHcatPartitionLoc,
-      String stream) {
-    String streamRootDirPrefix = new Path(srcCluster.getLocalFinalDestDirRoot(),
-        stream).toString();
-    Date lastAddedPartitionDate = CalendarHelper.getDateFromStreamDir(
-        streamRootDirPrefix, lastHcatPartitionLoc);
-    return lastAddedPartitionDate;
-  }
-
-  protected String getTableName(String streamName) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(LOCAL_TABLE_PREFIX);
-    sb.append(TABLE_NAME_SEPARATOR);
-    sb.append(streamName);
-    return sb.toString();
   }
 
   @Override
@@ -238,7 +194,6 @@ ConfigConstants {
         LOG.info("Commiting mvPaths and ConsumerPaths");
 
         commit(prepareForCommit(commitTime), false,auditMsgList);
-        updatePathsTobeRegisteredWithLatestDir(commitTime);
         checkPoint(checkpointPaths);
         LOG.info("Commiting trashPaths");
         commit(populateTrashCommitPaths(trashSet), true, null);
@@ -258,21 +213,6 @@ ConfigConstants {
       throw e;
     } finally {
       publishAuditMessages(auditMsgList);
-      try {
-        registerPartitions();
-      } catch (Exception e) {
-        LOG.warn("Got exception while registering partitions. ", e);
-      }
-    }
-  }
-
-  private void updatePathsTobeRegisteredWithLatestDir(long commitTime)
-      throws IOException {
-    for (String eachStream : streamsToProcess) {
-      if (isStreamHCatEnabled(eachStream)) {
-        String path = srcCluster.getLocalDestDir(eachStream, commitTime);
-        pathsToBeregisteredPerTable.get(getTableName(eachStream)).add(new Path(path));
-      }
     }
   }
 
@@ -493,7 +433,7 @@ ConfigConstants {
         String currentFile = getCurrentFile(fs, files, sortedFiles);
         LOG.debug("last file " + currentFile + " in the collector directory "
             + collector.getPath());
-
+        
         Iterator<FileStatus> it = sortedFiles.iterator();
         numberOfFilesProcessed = 0;
         long latestCollectorFileTimeStamp = -1;
@@ -524,13 +464,6 @@ ConfigConstants {
         LOG.warn("No new files in " + streamName + " stream");
       }
     }
-  }
-
-  /*
-   * This getter method is only for unit tests.
-   */
-  public long getLastAddedPartTime(String stream) {
-    return lastAddedPartitionMap.get(stream);
   }
 
   private long processFile(FileStatus file, String currentFile,
@@ -658,7 +591,7 @@ ConfigConstants {
     // then null (implying process this file as non-current file)
     // else
     // return last file as the current file
-
+    
     if (files == null || files.length == 0)
       return null;
     for (FileStatus file : files) {
@@ -797,15 +730,4 @@ ConfigConstants {
   public String getServiceType() {
     return "LocalStreamService";
   }
-
-  protected Path getFinalPath(long time, String stream) {
-    Path finalDestPath = null;
-    try {
-      finalDestPath = new Path(srcCluster.getLocalDestDir(stream, time));
-    } catch (IOException e) {
-      LOG.error("Got exception while constructing a path from time ", e);
-    }
-    return finalDestPath;
-  }
-
 }
