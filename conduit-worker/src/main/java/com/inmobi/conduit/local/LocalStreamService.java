@@ -189,11 +189,16 @@ ConfigConstants {
   }
 
   protected String getTableName(String streamName) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(LOCAL_TABLE_PREFIX);
-    sb.append(TABLE_NAME_SEPARATOR);
-    sb.append(streamName);
-    return sb.toString();
+    if (streamTableNameMap.containsKey(streamName)) {
+      return streamTableNameMap.get(streamName);
+    } else {
+      StringBuilder sb = new StringBuilder();
+      sb.append(LOCAL_TABLE_PREFIX);
+      sb.append(TABLE_NAME_SEPARATOR);
+      sb.append(streamName);
+      streamTableNameMap.put(streamName, sb.toString());
+      return sb.toString();
+    }
   }
 
   @Override

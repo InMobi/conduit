@@ -114,6 +114,7 @@ public abstract class AbstractService implements Service, Runnable {
       new ConcurrentHashMap<String, Long>();
   protected final static Map<String, Set<Path>> pathsToBeregisteredPerTable =
       new ConcurrentHashMap<String, Set<Path>>();
+  protected Map<String, String> streamTableNameMap = new HashMap<String, String>();
 
   protected static String hostname;
   static {
