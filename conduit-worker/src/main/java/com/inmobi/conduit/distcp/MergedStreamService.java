@@ -79,7 +79,7 @@ public class MergedStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           HCAT_CONNECTION_FAILURES, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          FAILED_TO_GET_HCAT_CLIENT_COUNT, eachStream);
+          HCAT_ALREADY_EXISTS_EXCEPTION, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           JOB_EXECUTION_TIME, eachStream);
     }
@@ -161,14 +161,16 @@ public class MergedStreamService extends DistcpBaseService {
               categoriesToCommit);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths, auditMsgList, parsedCounters);
+          /*
+           * add this commit time minute dir to the partitionsToBeregistered
+           */
           for (String eachStream : streamsToProcess) {
             if (isStreamHCatEnabled(eachStream)) {
-              String path = destCluster.getFinalDestDir(eachStream, commitTime);
+              String partitionPathTobeRegisted = destCluster.getFinalDestDir(
+                  eachStream, commitTime);
               Set<Path> pathsTobeRegistered = pathsToBeregisteredPerTable.
                   get(getTableName(eachStream));
-              synchronized (pathsTobeRegistered) {
-                pathsTobeRegistered.add(new Path(path));
-              }
+              pathsTobeRegistered.add(new Path(partitionPathTobeRegisted));
             }
           }
         }

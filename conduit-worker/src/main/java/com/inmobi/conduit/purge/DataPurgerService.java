@@ -100,8 +100,6 @@ public class DataPurgerService extends AbstractService {
         HCAT_CONNECTION_FAILURES, getName());
     ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
         HCAT_PURGED_PARTITION_COUNT, getName());
-    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-        FAILED_TO_GET_HCAT_CLIENT_COUNT, getName());
 
     if (Conduit.isHCatEnabled()) {
       Map<String, DestinationStream> destMap = cluster.getDestinationStreams();
@@ -511,6 +509,7 @@ public class DataPurgerService extends AbstractService {
                 partDesc.getTableName(), true);
 
             List<Partition> partitions = getPartitionsByFilter(partDesc, table);
+            // drop all partitions for a specified partitionSpec
             if (dropPartitions(partDesc, partitions)) {
               pathPartitionDescMap.remove(purgePath);
             } else {
@@ -548,7 +547,7 @@ public class DataPurgerService extends AbstractService {
     for (Partition partition : partitions) {
       if (Hive.get().dropPartition(Conduit.getHcatDBName(),
           partDesc.getTableName(), partition.getValues(), true)) {
-        LOG.info("partition " + partDesc.getLocation() + " dropped"
+        LOG.debug("partition " + partition.getLocation() + " dropped"
             + " successfully from " + partDesc.getTableName() + " table");
       } else {
         LOG.warn("Not able to drop the partition " + partDesc.getLocation()

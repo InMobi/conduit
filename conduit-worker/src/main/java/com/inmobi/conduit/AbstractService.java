@@ -96,7 +96,7 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String JOB_EXECUTION_TIME = "job.execution.time";
   public final static String HCAT_ADD_PARTITIONS_COUNT = "hcat.addpartitions.count";
   public final static String HCAT_CONNECTION_FAILURES = "hcat.connection.failures";
-  public final static String FAILED_TO_GET_HCAT_CLIENT_COUNT = "failed.hcatclient";
+  public final static String HCAT_ALREADY_EXISTS_EXCEPTION = "hcat.already.exists";
   public static final String YEAR_PARTITION_NAME = "year";
   public static final String MONTH_PARTITION_NAME = "month";
   public static final String DAY_PARTITION_NAME = "day";
@@ -669,6 +669,8 @@ public abstract class AbstractService implements Service, Runnable {
       if (e.getCause() instanceof AlreadyExistsException) {
         LOG.warn("Partition " + partSpec + " is already"
             + " exists in " + tableName + " table. ", e);
+        ConduitMetrics.updateSWGuage(getServiceType(),
+            HCAT_ALREADY_EXISTS_EXCEPTION, streamName, 1);
         return true;
       }
       ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
