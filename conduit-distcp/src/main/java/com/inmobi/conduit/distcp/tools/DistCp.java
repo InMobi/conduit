@@ -360,7 +360,7 @@ public class DistCp extends Configured implements Tool {
 
   private Path getStagingPath(Configuration configuration) {
     try {
-      LOG.info("Trying to get staging path using hadoop-2");
+      LOG.debug("Trying to get staging path using hadoop-2");
       Class clusterClass = DistCp.class.getClassLoader().loadClass(
           "org.apache.hadoop.mapreduce.Cluster");
       Method method = JobSubmissionFiles.class.getMethod("getStagingDir",
@@ -373,7 +373,7 @@ public class DistCp extends Configured implements Tool {
     }
 
     try {
-      LOG.info("Trying to get staging path using hadoop-1");
+      LOG.debug("Trying to get staging path using hadoop-1");
       Method method = JobSubmissionFiles.class.getMethod("getStagingDir",
           JobClient.class, Configuration.class);
       return (Path) method.invoke(null,
