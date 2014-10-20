@@ -118,17 +118,23 @@ public class DataPurgerService extends AbstractService {
     String tableName;
     String location;
     Map<String, String> partSpec;
+    String filterString;
 
     PartitionDesc(String stream, String table, String pathLocation,
-        Map<String, String> parttitionSpec) {
+        Map<String, String> parttitionSpec, String filter) {
       streamName = stream;
       tableName = table;
       location = pathLocation;
       partSpec = parttitionSpec;
+      filterString = filter;
     }
 
     public String getLocation() {
       return location;
+    }
+
+    public String getFilterString() {
+      return filterString;
     }
 
     public String getStreamName() {
@@ -449,8 +455,9 @@ public class DataPurgerService extends AbstractService {
     if (hourVal != null) {
       partSpec.put(HOUR_PARTITION_NAME, hourVal);
     }
+    String filterString = getFilterString(partSpec);
     PartitionDesc partDesc = new PartitionDesc(streamName, tableName,
-        hourPath.toString(), partSpec);
+        hourPath.toString(), partSpec, filterString);
     pathPartitionDescMap.put(hourPath, partDesc);
   }
 
@@ -476,22 +483,6 @@ public class DataPurgerService extends AbstractService {
     long diff = endDate.getTimeInMillis() - startDate.getTimeInMillis();
     int hours = (int) Math.floor(diff / MILLISECONDS_PER_HOUR);
     return Math.abs(hours);
-  }
-
-  private static String getFilterString(Map<String, String> partitionSpec) {
-    final String AND = " AND ";
-
-    StringBuilder filter = new StringBuilder();
-    for (Map.Entry<String, String> entry : partitionSpec.entrySet()) {
-      filter.append(entry.getKey()).append("=").append("\"").append(
-          entry.getValue()).append("\"").append(AND);
-    }
-
-    int length = filter.toString().length();
-    if (length > 0)
-      filter.delete(length - AND.length(), length);
-
-    return filter.toString();
   }
 
   private void purge() throws HiveException, InterruptedException {
@@ -565,9 +556,25 @@ public class DataPurgerService extends AbstractService {
         HCAT_CONNECTION_FAILURES, getName(), 1);
   }
 
+  private static String getFilterString(Map<String, String> partitionSpec) {
+    final String AND = " AND ";
+
+    StringBuilder filter = new StringBuilder();
+    for (Map.Entry<String, String> entry : partitionSpec.entrySet()) {
+      filter.append(entry.getKey()).append("=").append("\"").append(
+          entry.getValue()).append("\"").append(AND);
+    }
+
+    int length = filter.toString().length();
+    if (length > 0)
+      filter.delete(length - AND.length(), length);
+
+    return filter.toString();
+  }
+
   private List<Partition> getPartitionsByFilter(PartitionDesc partDesc,
       Table table) throws HiveException {
-    String filterString = getFilterString(partDesc.getPartSpec());
+    String filterString = partDesc.getFilterString();
     LOG.info("filter String " + filterString + " for dropping partition");
     try {
       return Hive.get().getPartitionsByFilter(table, filterString);
