@@ -50,6 +50,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
@@ -469,6 +470,8 @@ public abstract class AbstractService implements Service, Runnable {
             LOG.error("Table " + tableName + " does not exists " + e.getMessage());
             throw new RuntimeException(e);
           }
+          ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
+              getName(), 1);
           LOG.warn("Got Exception while finding the last added partition for"
               + " stream " + stream, e);
           updateLastAddedPartitionMap(getTableName(stream), FAILED_GET_PARTITIONS);
@@ -574,7 +577,8 @@ public abstract class AbstractService implements Service, Runnable {
     // override in local, merge and mirror stream services
   }
 
-  protected void registerPartitions() throws InterruptedException, ParseException {
+  protected void registerPartitions()
+      throws InterruptedException, ParseException, HiveException {
     // return immediately if hcat is not enabled or if user issues a stop command
     if (!Conduit.isHCatEnabled() || stopped) {
       LOG.info("Hcat is not enabled or stop is issued. Hence not registering any partitions");
@@ -606,44 +610,77 @@ public abstract class AbstractService implements Service, Runnable {
       Set<Path> partitionsTobeRegistered = pathsToBeregisteredPerTable.get(tableName);
       LOG.info("partitions to be registered : " + partitionsTobeRegistered
           + " for " + tableName + " table");
-      org.apache.hadoop.hive.ql.metadata.Table table = null;
-      try {
-        table = Hive.get(
-            Conduit.getHiveConf()).getTable(Conduit.getHcatDBName(), tableName);
-      } catch (HiveException e) {
-        LOG.info("Got exception while trying to get the " + tableName + " table: ", e);
-      }
       synchronized (partitionsTobeRegistered) {
+        if (partitionsTobeRegistered.isEmpty()
+            || partitionsTobeRegistered.size() == 1) {
+          LOG.info("No partitions to be registered for table " + tableName);
+          return;
+        }
+        AddPartitionDesc addPd = new AddPartitionDesc(Conduit.getHcatDBName(),
+            tableName, true);
+        int numOfPartitionsTobeRegistered = partitionsTobeRegistered.size() - 1;
+        Date updateWithLastAddedTime = null;
+        int count = 0;
+        Iterator<Path> pathIt = partitionsTobeRegistered.iterator();
         // Register all the partitions in the list except the last one
-        while (partitionsTobeRegistered.size() > 1) {
-          Iterator<Path> pathIt = partitionsTobeRegistered.iterator();
+        while (count++ < numOfPartitionsTobeRegistered) {
           /* always retrieve first element from the list as we remove the
            * element once it is added to partition. then second element will
            *  be the first one
            */
-          Path path = pathIt.next();
-          Date date = getTimeStampFromHCatPartition(path.toString(), stream);
-          LOG.info("Adding the partition  " + path.toString() + " in "
-              + tableName + " table");
-          if (addPartition(path.toString(), stream, date.getTime(),
-              tableName, table)) {
-            partitionsTobeRegistered.remove(path);
-            updateLastAddedPartitionMap(tableName, date.getTime());
-          } else {
-            LOG.info("partition " + path.toString() + " was not added to "
-                + tableName + " table");
-            break;
+          Path pathToBeregistered = pathIt.next();
+
+          Date partitionDate = getTimeStampFromHCatPartition(
+              pathToBeregistered.toString(), stream);
+
+          addPd.addPartition(getPartSpecFromPartTime(partitionDate.getTime()),
+              pathToBeregistered.toString());
+          updateWithLastAddedTime = partitionDate;
+        }
+        /* Add all partitions to the table and remove registered paths from
+         * the in memory set if all partitions were added successfully
+         */
+        if (addPartitions(stream, tableName, addPd, updateWithLastAddedTime)) {
+          Iterator<Path> it = partitionsTobeRegistered.iterator();
+          while (numOfPartitionsTobeRegistered-- > 0) {
+            LOG.debug("Remove partition path " + it.next() + "from the partitionMap");
+            it.remove();
           }
         }
       }
     }
   }
 
-  public boolean addPartition(String location, String streamName,
-      long partTimeStamp, String tableName,
-      org.apache.hadoop.hive.ql.metadata.Table table)
-          throws InterruptedException, ParseException {
-    String dbName = Conduit.getHcatDBName();
+  private boolean addPartitions(String stream, String tableName,
+      AddPartitionDesc addPd, Date updateWithLastAddedTime) throws HiveException {
+    if (addPd.getPartitionCount() == 0) {
+      return false;
+    }
+    try {
+      LOG.info("Adding the partitions  " + addPd + " in "
+          + tableName + " table");
+      Hive.get().createPartitions(addPd);
+      LOG.info("update the last added partition map with last added partition"
+          + " time " + updateWithLastAddedTime + " for table " + tableName);
+      updateLastAddedPartitionMap(tableName, updateWithLastAddedTime.getTime());
+    } catch (HiveException e) {
+      if (e.getCause() instanceof AlreadyExistsException) {
+        LOG.warn("Partition " + addPd + " is already"
+            + " exists in " + tableName + " table. ", e);
+        ConduitMetrics.updateSWGuage(getServiceType(),
+            HCAT_ALREADY_EXISTS_EXCEPTION, stream, 1);
+      } else {
+        ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
+            getName(), 1);
+        LOG.info("Got Exception while trying to add partition  : " + addPd
+            + ". Exception ", e);
+        throw e;
+      }
+    }
+    return true;
+  }
+
+  private Map<String, String> getPartSpecFromPartTime(long partTimeStamp) {
     String dateStr = Cluster.getDateAsYYYYMMDDHHMNPath(partTimeStamp);
     String [] dateSplits = dateStr.split(File.separator);
     Map<String, String> partSpec = new HashMap<String, String>();
@@ -654,32 +691,7 @@ public abstract class AbstractService implements Service, Runnable {
       partSpec.put(HOUR_PARTITION_NAME, dateSplits[3]);
       partSpec.put(MINUTE_PARTITION_NAME, dateSplits[4]);
     }
-    Partition partitionTobeAdded = null;
-    try {
-      if (table == null) {
-        table = Hive.get(Conduit.getHiveConf()).getTable(dbName, tableName);
-      }
-      partitionTobeAdded = Hive.get(Conduit.getHiveConf()).createPartition(
-          table, partSpec);
-      LOG.info("Partition " + partitionTobeAdded.getLocation() + " was added"
-          + " successfully");
-      ConduitMetrics.updateSWGuage(getServiceType(), HCAT_ADD_PARTITIONS_COUNT,
-          streamName, 1);
-      return true;
-    } catch (HiveException e) {
-      if (e.getCause() instanceof AlreadyExistsException) {
-        LOG.warn("Partition " + partSpec + " is already"
-            + " exists in " + tableName + " table. ", e);
-        ConduitMetrics.updateSWGuage(getServiceType(),
-            HCAT_ALREADY_EXISTS_EXCEPTION, streamName, 1);
-        return true;
-      }
-      ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
-          getName(), 1);
-      LOG.info("Got Exception while trying to add partition  : " + partSpec
-          + ". Exception ", e);
-    }
-    return false;
+    return partSpec;
   }
 
   /*

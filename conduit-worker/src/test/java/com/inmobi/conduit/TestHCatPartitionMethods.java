@@ -210,13 +210,11 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
          * partition won't be created immediately. So, it should have at least
          * 149 partitions
          */
-        LOG.info("AAAAAAAAAAAAAAAAAAAAAA partitions to be registered : " + service.pathsToBeregisteredPerTable.get(tableName));
-        LOG.info("Number of partitions in the hcat table : " + partitionList.size() + "   AAAAAAAAAA partiitonList " + partitionList);
+        LOG.info("Number of partitions in the hcat table : " + partitionList.size() + ". Partitions are " + partitionList);
         Assert.assertTrue(partitionList.size() >= 149);
         clearInMemoryMaps(service);
         service.getFileSystem().delete(
             new Path(service.getCluster().getRootDir()), true);
-        //Conduit.setHCa
       }
     }
   }
