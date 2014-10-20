@@ -52,6 +52,8 @@ public class PublishMissingPathsTest {
 
   @BeforeMethod
   public void beforeTest() throws Exception{
+    AbstractService.clearHCatInMemoryMaps();
+    Conduit.setHCatEnabled(false);
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
     ConduitMetrics.init(prop);
