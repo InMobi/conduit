@@ -87,6 +87,7 @@ done
 export CLASSPATH=$CLASSPATH:`ls $CONDUIT_DIR/lib/*jar | tr "\n" :`;
 export CLASSPATH=$configDir:$CLASSPATH:$HADOOP_CONF_DIR:$CONDUIT_DIR/bin
 export CONDUIT_OPTS="-Dcom.sun.management.jmxremote.port=9089 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+export CONDUIT_OPTS=$CONDUIT_OPTS:"-Djava.library.path=$HADOOP_HOME/lib/native"
 #echo setting classPath to $CLASSPATH
 
 case $startStop in
