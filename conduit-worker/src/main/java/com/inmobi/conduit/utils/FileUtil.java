@@ -35,6 +35,7 @@ import com.inmobi.messaging.util.AuditUtil;
 public class FileUtil {
   private static final Log LOG = LogFactory.getLog(FileUtil.class);
   private static final int WINDOW_SIZE = 60;
+  private static final int NANO_SECONDS_IN_MILLI_SECOND = 1000 * 1000;
 
   public static void gzip(Path src, Path target, Configuration conf,
       Map<Long, Long> received) throws IOException {
@@ -47,17 +48,35 @@ public class FileUtil {
         gzipCompressor);
     FSDataInputStream in = fs.open(src);
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    long timeTakenForReading = 0;
+    long timeTakenForCompressing = 0;
+    long timeTakenForDecoding = 0;
+    long lineCount = 0;
     try {
-      String line;
-      while ((line = reader.readLine()) != null) {
+      String line = reader.readLine();
+      while (line != null) {
+        lineCount++;
         byte[] msg = line.getBytes();
         if (received != null) {
+          long decodeStartTime = getCurrentTimeInNanoSecs();
           byte[] decodedMsg = Base64.decodeBase64(msg);
+          timeTakenForDecoding += (getCurrentTimeInNanoSecs() - decodeStartTime);
           incrementReceived(decodedMsg, received);
         }
+        long compressionStartTime = getCurrentTimeInNanoSecs();
         compressedOut.write(msg);
         compressedOut.write("\n".getBytes());
+        timeTakenForCompressing += (getCurrentTimeInNanoSecs()
+            - compressionStartTime);
+        long readStartTime = getCurrentTimeInNanoSecs();
+        line = reader.readLine();
+        timeTakenForReading += (getCurrentTimeInNanoSecs() - readStartTime);
       }
+      System.out.println("Reading " + lineCount + " lines from " + src + " file");
+      System.out.println("Time taken for reading the " + src + " file is : "
+          + (timeTakenForReading/NANO_SECONDS_IN_MILLI_SECOND)
+          + "millis. CompressionWrite time :" + (timeTakenForCompressing/NANO_SECONDS_IN_MILLI_SECOND)
+          + "millis. Decoding time: " + (timeTakenForDecoding/NANO_SECONDS_IN_MILLI_SECOND) + "millis");
     } catch (Exception e) {
       throw new IOException("Error in compressing ", e);
     } finally {
@@ -75,6 +94,10 @@ public class FileUtil {
       }
       CodecPool.returnCompressor(gzipCompressor);
     }
+  }
+
+  private static long getCurrentTimeInNanoSecs() {
+    return System.nanoTime();
   }
 
   private static Long getWindow(Long timestamp) {
