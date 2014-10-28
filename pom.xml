@@ -5,7 +5,7 @@
   <groupId>com.inmobi.conduit</groupId>
   <artifactId>conduit-parent</artifactId>
   <name>Conduit</name>
-  <version>2.3.1</version>
+  <version>2.3.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <description>Yet another streaming data transport system.</description>
   <url>https://github.com/InMobi/conduit</url>
