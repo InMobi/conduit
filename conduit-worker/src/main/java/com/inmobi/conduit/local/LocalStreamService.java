@@ -32,6 +32,7 @@ import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.ConfigConstants;
 import com.inmobi.conduit.utils.CalendarHelper;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -140,6 +141,8 @@ public class LocalStreamService extends AbstractService implements
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
+      ConduitMetrics.registerAbsoluteGauge(getServiceType(),
+          JOB_EXECUTION_TIME, eachStream);
     }
   }
 
@@ -188,7 +191,11 @@ public class LocalStreamService extends AbstractService implements
         return;
       }
       Job job = createJob(tmpJobInputPath, totalSize);
+      long jobStartTime = System.nanoTime();
       job.waitForCompletion(true);
+      long jobExecutionTimeInSecs = (System.nanoTime()
+          - jobStartTime)/(NANO_SECONDS_IN_SECOND);
+      updateJobTimeCounter(jobExecutionTimeInSecs);
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");

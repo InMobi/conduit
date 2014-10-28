@@ -29,6 +29,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import com.inmobi.conduit.utils.CalendarHelper;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -60,6 +61,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected static final int DEFAULT_WINDOW_SIZE = 60;
   private final TSerializer serializer = new TSerializer();
   protected final static long MILLISECONDS_IN_MINUTE = 60 * 1000;
+  protected static final int NANO_SECONDS_IN_SECOND = 1000 * 1000 * 1000;
   private Map<String, Long> prevRuntimeForCategory = new HashMap<String, Long>();
   protected final SimpleDateFormat LogDateFormat = new SimpleDateFormat(
       "yyyy/MM/dd, hh:mm");
@@ -78,6 +80,7 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String FILES_COPIED_COUNT = "filesCopied.count";
   public final static String DATAPURGER_SERVICE = "DataPurgerService";
   public final static String LAST_FILE_PROCESSED = "lastfile.processed";
+  public final static String JOB_EXECUTION_TIME = "job.execution.time";
 
   protected static String hostname;
   static {
@@ -236,6 +239,13 @@ public abstract class AbstractService implements Service, Runnable {
       }
     } catch (InterruptedException e) {
       LOG.warn("thread interrupted " + thread.getName());
+    }
+  }
+
+  protected void updateJobTimeCounter(long jobExecutionTime) {
+    for (String eachStream : streamsToProcess) {
+      ConduitMetrics.updateAbsoluteGauge(getServiceType(),
+          JOB_EXECUTION_TIME, eachStream, jobExecutionTime);
     }
   }
 
