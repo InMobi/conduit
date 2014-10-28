@@ -141,8 +141,8 @@ public class LocalStreamService extends AbstractService implements
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
-      ConduitMetrics.registerAbsoluteGauge(getServiceType(),
-          JOB_EXECUTION_TIME, eachStream);
+      /*ConduitMetrics.registerAbsoluteGauge(getServiceType(),
+          JOB_EXECUTION_TIME, eachStream);*/
     }
   }
 
@@ -195,7 +195,8 @@ public class LocalStreamService extends AbstractService implements
       job.waitForCompletion(true);
       long jobExecutionTimeInSecs = (System.nanoTime()
           - jobStartTime)/(NANO_SECONDS_IN_SECOND);
-      updateJobTimeCounter(jobExecutionTimeInSecs);
+      LOG.info("Time taken to complete the job " + jobExecutionTimeInSecs + "secs");
+      //updateJobTimeCounter(jobExecutionTimeInSecs);
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");

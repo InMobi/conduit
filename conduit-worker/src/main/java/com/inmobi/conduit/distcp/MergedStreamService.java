@@ -75,8 +75,8 @@ public class MergedStreamService extends DistcpBaseService {
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
-      ConduitMetrics.registerAbsoluteGauge(getServiceType(),
-          JOB_EXECUTION_TIME, eachStream);
+      /*ConduitMetrics.registerAbsoluteGauge(getServiceType(),
+          JOB_EXECUTION_TIME, eachStream);*/
     }
   }
 
