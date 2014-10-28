@@ -26,8 +26,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.inmobi.conduit.AbstractService;
+import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.FileUtil;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -123,6 +125,8 @@ public abstract class DistcpBaseService extends AbstractService {
     DistCp distCp = new ConduitDistCp(conf, options, fileListingMap);
     try {
       distCp.execute();
+      long jobExecutionTimeInSecs = (distCp.getJobTimeInNanos())/(NANO_SECONDS_IN_SECOND);
+      updateJobTimeCounter(jobExecutionTimeInSecs);
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;

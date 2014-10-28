@@ -57,6 +57,7 @@ public class DistCp extends Configured implements Tool {
 
   private boolean submitted;
   private FileSystem jobFS;
+  private long jobExecutionTimeInNanos;
 
   /**
    * Public Constructor. Creates DistCp object with specified input-parameters.
@@ -135,7 +136,9 @@ public class DistCp extends Configured implements Tool {
       job = createJob();
       createInputFileListing(job);
 
+      long jobStartTime = System.nanoTime();
       job.submit();
+      updateJobTimeInNanos(jobStartTime);
       submitted = true;
     } finally {
       if (!submitted) {
@@ -154,6 +157,14 @@ public class DistCp extends Configured implements Tool {
       throw new IOException("DistCp failure: Job " + jobID + " has failed. ");
     }
     return job;
+  }
+
+  public long getJobTimeInNanos() {
+    return jobExecutionTimeInNanos;
+  }
+
+  private void updateJobTimeInNanos(long jobStartTime) {
+    jobExecutionTimeInNanos = System.nanoTime() - jobStartTime;
   }
 
   /**
