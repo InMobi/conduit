@@ -124,10 +124,8 @@ public abstract class DistcpBaseService extends AbstractService {
     options.setOutPutDirectory(tmpCounterOutputPath);
     DistCp distCp = new ConduitDistCp(conf, options, fileListingMap);
     try {
-      long jobStartTime = System.nanoTime();
       distCp.execute();
-      long jobExecutionTimeInSecs = (System.nanoTime()
-          - jobStartTime)/(NANO_SECONDS_IN_SECOND);
+      long jobExecutionTimeInSecs = (distCp.getJobTimeInNanos())/(NANO_SECONDS_IN_SECOND);
       updateJobTimeCounter(jobExecutionTimeInSecs);
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
