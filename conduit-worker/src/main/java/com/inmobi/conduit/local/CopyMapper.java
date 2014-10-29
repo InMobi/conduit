@@ -59,6 +59,7 @@ public class CopyMapper extends Mapper<Text, FileStatus, NullWritable,
     FileSystem fs = FileSystem.get(srcConf);
     Path target = getTempPath(context, src, category, collector);
     if (FileUtil.gzip(src, target, srcConf, received)) {
+      LOG.info("File " + src + " is empty hence returning without compressing");
       return;
     }
     // move to final destination
