@@ -136,9 +136,7 @@ public class DistCp extends Configured implements Tool {
       job = createJob();
       createInputFileListing(job);
 
-      long jobStartTime = System.nanoTime();
       job.submit();
-      updateJobTimeInNanos(jobStartTime);
       submitted = true;
     } finally {
       if (!submitted) {
@@ -153,9 +151,12 @@ public class DistCp extends Configured implements Tool {
     LOG.info("DistCp job may be tracked at: " + job.getTrackingURL());
     LOG.info("To cancel, run the following command:\thadoop job -kill " + jobID);
 
+    long jobStartTime = System.nanoTime();
     if (inputOptions.shouldBlock() && !job.waitForCompletion(true)) {
+      updateJobTimeInNanos(jobStartTime);
       throw new IOException("DistCp failure: Job " + jobID + " has failed. ");
     }
+    updateJobTimeInNanos(jobStartTime);
     return job;
   }
 
