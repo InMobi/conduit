@@ -452,7 +452,7 @@ public class LocalStreamService extends AbstractService implements
            * fileTimeStamp value will be -1 for the files which are already processed
            */
           long fileTimeStamp = processFile(file, currentFile,
-              checkPointValue, fs, results, collectorPaths);
+              checkPointValue, fs, results, collectorPaths, streamName);
           if (fileTimeStamp > latestCollectorFileTimeStamp) {
             latestCollectorFileTimeStamp = fileTimeStamp;
           }
@@ -476,27 +476,20 @@ public class LocalStreamService extends AbstractService implements
 
   private long processFile(FileStatus file, String currentFile,
       String checkPointValue, FileSystem fs, Map<FileStatus, String> results,
-      Map<String, FileStatus> collectorPaths) throws IOException {
+      Map<String, FileStatus> collectorPaths, String stream) throws IOException {
     long fileTimeStamp = -1;
 
     String fileName = file.getPath().getName();
     if (fileName != null
         && (!fileName.equalsIgnoreCase(currentFile) || processLastFile)) {
-      if (!isEmptyFile(file, fs)) {
-        Path src = file.getPath().makeQualified(fs);
-        String destDir = getCategoryJobOutTmpPath(getCategoryFromSrcPath(src))
-            .toString();
-        if (aboveCheckpoint(checkPointValue, fileName)) {
-          results.put(file, destDir);
-          fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
-          numberOfFilesProcessed++;
-        }
-        collectorPaths.put(fileName, file);
-      } else {
+      String destDir = getCategoryJobOutTmpPath(stream)
+          .toString();
+      if (aboveCheckpoint(checkPointValue, fileName)) {
+        results.put(file, destDir);
         fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
-        LOG.info("Empty File [" + file.getPath() + "] found. " + "Deleting it");
-        fs.delete(file.getPath(), false);
+        numberOfFilesProcessed++;
       }
+      collectorPaths.put(fileName, file);
     }
     return fileTimeStamp;
   }

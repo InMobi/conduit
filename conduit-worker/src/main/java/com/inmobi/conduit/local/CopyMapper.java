@@ -58,7 +58,9 @@ public class CopyMapper extends Mapper<Text, FileStatus, NullWritable,
 
     FileSystem fs = FileSystem.get(srcConf);
     Path target = getTempPath(context, src, category, collector);
-    FileUtil.gzip(src, target, srcConf, received);
+    if (FileUtil.gzip(src, target, srcConf, received)) {
+      return;
+    }
     // move to final destination
     fs.mkdirs(new Path(dest).makeQualified(fs));
     String destnFilename = collector + "-" + src.getName() + ".gz";
