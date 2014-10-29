@@ -112,33 +112,32 @@ public class TestCreateListing {
     out.writeBytes("this is a testcase");
     out.close();
 
-    //sleep for 10 msec
-    Thread.sleep(10);
+    //sleep for 1sec
+    Thread.sleep(1000);
     service.createListing(localFs, localFs.getFileStatus(new Path(rootDir,
- "data")), results, trashSet,
-        checkpointPaths);
+        "data")), results, trashSet, checkpointPaths);
 
     // only 1 file exist at this point hence won't be picked
-    assert results.size() == 0;
+    assert results.size() == 1;
     assert trashSet.size() == 0;
-    assert checkpointPaths.size() == 0;
+    assert checkpointPaths.size() == 1;
 
-     out = localFs.create(new Path(collectorPath,
-    "datafile3"));
+    out = localFs.create(new Path(collectorPath, "datafile3"));
     out.writeBytes("this is a testcase");
     out.close();
 
     //don't sleep now
     clearLists(results, trashSet, checkpointPaths);
     service.createListing(localFs, localFs.getFileStatus(new Path(rootDir,
-    "data")), results, trashSet, checkpointPaths);
+        "data")), results, trashSet, checkpointPaths);
     for (FileStatus file : results.keySet())  {
        LOG.info("File Name [" + file.getPath() + "]");
     }
-    assert results.size() == 1;
+    assert results.size() == 2;
     assert trashSet.size() == 0;
     assert checkpointPaths.size() == 1;
 
+    Thread.sleep(1000);
 
     out = localFs.create(new Path(collectorPath,
     "datafile4"));
@@ -152,6 +151,9 @@ public class TestCreateListing {
     "datafile6"));
     out.writeBytes("this is a testcase");
     out.close();
+    // sleep 1sec before creating one file to have diff modification time
+    // from other files on local file system
+    Thread.sleep(1000);
     out = localFs.create(new Path(collectorPath,
     "datafile7"));
     out.writeBytes("this is a testcase");
@@ -164,17 +166,16 @@ public class TestCreateListing {
       LOG.info("File Name [" + file.getPath() + "]");
     }
 
-    assert results.size() == 5;
+    assert results.size() == 6;
     assert trashSet.size() == 0;
     assert checkpointPaths.size() == 1;
 
-    out = localFs.create(new Path(collectorPath,
-    "datafile8"));
+    out = localFs.create(new Path(collectorPath, "datafile8"));
     out.writeBytes("this is a testcase");
     out.close();
 
-    out = localFs.create(new Path(collectorPath,
-    "datafile9"));
+    Thread.sleep(1000);
+    out = localFs.create(new Path(collectorPath, "datafile9"));
     out.writeBytes("this is a testcase");
     out.close();
 
@@ -184,8 +185,8 @@ public class TestCreateListing {
     for (FileStatus file : results.keySet())  {
       LOG.info("File Name [" + file.getPath() + "]");
     }
-    assert results.size() == 7;
-    assert trashSet.size() == 1;
+    assert results.size() == 8;
+    assert trashSet.size() == 2;
     assert checkpointPaths.size() == 1;
 
   }
