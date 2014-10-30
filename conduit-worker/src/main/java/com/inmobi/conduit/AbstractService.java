@@ -244,8 +244,8 @@ public abstract class AbstractService implements Service, Runnable {
 
   protected void updateJobTimeCounter(long jobExecutionTime) {
     for (String eachStream : streamsToProcess) {
-      ConduitMetrics.updateAbsoluteGauge(getServiceType(),
-          JOB_EXECUTION_TIME, eachStream, jobExecutionTime);
+      ConduitMetrics.updateSWGuage(getServiceType(), JOB_EXECUTION_TIME,
+          eachStream, jobExecutionTime);
     }
   }
 

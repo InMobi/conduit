@@ -4,10 +4,13 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.metrics.AbsoluteGauge;
 import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.utils.FileUtil;
 import com.inmobi.messaging.Message;
 import com.inmobi.messaging.util.AuditUtil;
 
@@ -38,9 +41,21 @@ public class TestLocalLastFileProcessed {
 
   @BeforeTest
   public void setup() throws Exception {
+    System.setProperty(Conduit.AUDIT_ENABLED_KEY, "false");
     localFs = FileSystem.getLocal(new Configuration());
     parser = new ConduitConfigParser("src/test/resources/test-lss-conduit1.xml");
+    // Copy input format src jar to FS
+    String inputFormatSrcJar = FileUtil
+        .findContainingJar(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
     cluster = parser.getConfig().getClusters().get("testcluster1");
+    Path jarsPath = new Path(cluster.getTmpPath(), "jars");
+    localFs.copyFromLocalFile(new Path(inputFormatSrcJar),
+        new Path(jarsPath, "conduit-distcp-current.jar"));
+    String auditSrcJar = FileUtil.findContainingJar(
+        com.inmobi.messaging.util.AuditUtil.class);
+    localFs.copyFromLocalFile(new Path(auditSrcJar),
+        new Path(jarsPath, "messaging-client-core.jar"));
+
     Iterator<String> setIterator = cluster.getSourceStreams().iterator();
     if (setIterator.hasNext()) {
       stream1 = setIterator.next();
@@ -127,9 +142,9 @@ public class TestLocalLastFileProcessed {
 
   @Test
   public void testAllEmptyFiles() throws Exception {
-    int numFiles = 6;
+    int numFiles = 9;
     Calendar calendar = Calendar.getInstance();
-    calendar.add(Calendar.MINUTE, -7);
+    calendar.add(Calendar.MINUTE, -10);
     Date firstDate = calendar.getTime();
 
     createFiles(calendar, stream1, cluster.getName(), numFiles, false);
@@ -144,6 +159,7 @@ public class TestLocalLastFileProcessed {
         cluster, null, new FSCheckpointProvider(checkpointDir),
         cluster.getSourceStreams());
     service.execute();
+    createFiles(calendar, stream1, cluster.getName(), numFiles, false);
     Assert.assertEquals(lastAddedDateStream1, ConduitMetrics.<AbsoluteGauge
         >getMetric(
             service.getServiceType(), AbstractService.LAST_FILE_PROCESSED,
@@ -152,6 +168,12 @@ public class TestLocalLastFileProcessed {
         .<AbsoluteGauge>getMetric(
             service.getServiceType(), AbstractService.LAST_FILE_PROCESSED,
             stream2).getValue().longValue());
+    long lastAddedDateStream3 = getMinute(calendar.getTimeInMillis() - 60000);
+    service.execute();
+    Assert.assertEquals(lastAddedDateStream3, ConduitMetrics.<AbsoluteGauge
+        >getMetric(
+            service.getServiceType(), AbstractService.LAST_FILE_PROCESSED,
+            stream1).getValue().longValue());
   }
 
   @Test

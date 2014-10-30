@@ -37,26 +37,34 @@ public class FileUtil {
   private static final int WINDOW_SIZE = 60;
   private static final int NANO_SECONDS_IN_MILLI_SECOND = 1000 * 1000;
   private static final int BYTES_IN_KILO_BYTE = 1024;
+  private static final byte[] NEW_LINE_CHARACTER_IN_BYTES = "\n".getBytes();
 
-  public static void gzip(Path src, Path target, Configuration conf,
+  public static boolean gzip(Path src, Path target, Configuration conf,
       Map<Long, Long> received) throws IOException {
     FileSystem fs = FileSystem.get(conf);
-    FSDataOutputStream out = fs.create(target);
-    GzipCodec gzipCodec = ReflectionUtils.newInstance(
-        GzipCodec.class, conf);
-    Compressor gzipCompressor = CodecPool.getCompressor(gzipCodec);
-    OutputStream compressedOut = gzipCodec.createOutputStream(out,
-        gzipCompressor);
+    FSDataOutputStream out = null;
+    Compressor gzipCompressor = null;
+    OutputStream compressedOut = null;
     FSDataInputStream in = fs.open(src);
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
     long timeTakenForReading = 0;
     long timeTakenForCompressing = 0;
     long timeTakenForDecoding = 0;
     long lineCount = 0;
+    boolean isEmpty = true;
     try {
       long readStartTime = getCurrentTimeInNanoSecs();
       String line = reader.readLine();
       timeTakenForReading += getElapsedTime(readStartTime);
+      if (line != null) {
+        isEmpty = false;
+        out = fs.create(target);
+        GzipCodec gzipCodec = ReflectionUtils.newInstance(
+            GzipCodec.class, conf);
+        gzipCompressor = CodecPool.getCompressor(gzipCodec);
+        compressedOut = gzipCodec.createOutputStream(out,
+            gzipCompressor);
+      }
       while (line != null) {
         lineCount++;
         byte[] msg = line.getBytes();
@@ -100,6 +108,7 @@ public class FileUtil {
       }
       CodecPool.returnCompressor(gzipCompressor);
     }
+    return isEmpty;
   }
 
   private static long getElapsedTime(long startTime) {
