@@ -141,8 +141,8 @@ public class LocalStreamService extends AbstractService implements
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
-      /*ConduitMetrics.registerAbsoluteGauge(getServiceType(),
-          JOB_EXECUTION_TIME, eachStream);*/
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          JOB_EXECUTION_TIME, eachStream);
     }
   }
 
@@ -487,7 +487,13 @@ public class LocalStreamService extends AbstractService implements
       if (aboveCheckpoint(checkPointValue, fileName)) {
         results.put(file, destDir);
         fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
-        numberOfFilesProcessed++;
+        /*
+         * Depending on getLen() only for incrementing the
+         * number of data files count
+         */
+        if (file.getLen() != 0) {
+          numberOfFilesProcessed++;
+        }
       }
       collectorPaths.put(fileName, file);
     }
