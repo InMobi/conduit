@@ -86,6 +86,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() , 0);
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.FILES_COPIED_COUNT,"test1").getValue().longValue() , 18);
     Assert.assertTrue(ConduitMetrics.<AbsoluteGauge>getMetric("MergedStreamService", AbstractService.LAST_FILE_PROCESSED, "test1").getValue().longValue() > 0);
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService", AbstractService.JOB_EXECUTION_TIME, "test1").getValue().longValue() >= 0);
   }
 
   @Test

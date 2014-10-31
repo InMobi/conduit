@@ -141,6 +141,8 @@ public class LocalStreamService extends AbstractService implements
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          JOB_EXECUTION_TIME, eachStream);
     }
   }
 
@@ -189,7 +191,12 @@ public class LocalStreamService extends AbstractService implements
         return;
       }
       Job job = createJob(tmpJobInputPath, totalSize);
+      long jobStartTime = System.nanoTime();
       job.waitForCompletion(true);
+      long jobExecutionTimeInSecs = (System.nanoTime()
+          - jobStartTime)/(NANO_SECONDS_IN_SECOND);
+      LOG.info("Time taken to complete the job " + jobExecutionTimeInSecs + "secs");
+      //updateJobTimeCounter(jobExecutionTimeInSecs);
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
@@ -445,7 +452,7 @@ public class LocalStreamService extends AbstractService implements
            * fileTimeStamp value will be -1 for the files which are already processed
            */
           long fileTimeStamp = processFile(file, currentFile,
-              checkPointValue, fs, results, collectorPaths);
+              checkPointValue, fs, results, collectorPaths, streamName);
           if (fileTimeStamp > latestCollectorFileTimeStamp) {
             latestCollectorFileTimeStamp = fileTimeStamp;
           }
@@ -469,27 +476,26 @@ public class LocalStreamService extends AbstractService implements
 
   private long processFile(FileStatus file, String currentFile,
       String checkPointValue, FileSystem fs, Map<FileStatus, String> results,
-      Map<String, FileStatus> collectorPaths) throws IOException {
+      Map<String, FileStatus> collectorPaths, String stream) throws IOException {
     long fileTimeStamp = -1;
 
     String fileName = file.getPath().getName();
     if (fileName != null
         && (!fileName.equalsIgnoreCase(currentFile) || processLastFile)) {
-      if (!isEmptyFile(file, fs)) {
-        Path src = file.getPath().makeQualified(fs);
-        String destDir = getCategoryJobOutTmpPath(getCategoryFromSrcPath(src))
-            .toString();
-        if (aboveCheckpoint(checkPointValue, fileName)) {
-          results.put(file, destDir);
-          fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
+      String destDir = getCategoryJobOutTmpPath(stream)
+          .toString();
+      if (aboveCheckpoint(checkPointValue, fileName)) {
+        results.put(file, destDir);
+        fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
+        /*
+         * Depending on getLen() only for incrementing the
+         * number of data files count
+         */
+        if (file.getLen() != 0) {
           numberOfFilesProcessed++;
         }
-        collectorPaths.put(fileName, file);
-      } else {
-        fileTimeStamp = CalendarHelper.getDateFromCollectorFileName(fileName);
-        LOG.info("Empty File [" + file.getPath() + "] found. " + "Deleting it");
-        fs.delete(file.getPath(), false);
       }
+      collectorPaths.put(fileName, file);
     }
     return fileTimeStamp;
   }

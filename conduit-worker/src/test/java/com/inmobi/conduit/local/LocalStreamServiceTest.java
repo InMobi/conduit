@@ -439,6 +439,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() ,0 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_MKDIR,"test1").getValue().longValue() ,0 );
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() ,0 );
+    Assert.assertTrue(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("LocalStreamService", AbstractService.JOB_EXECUTION_TIME, "test1").getValue().longValue() >= 0);
   }
 
   @Test(groups = { "integration" })
