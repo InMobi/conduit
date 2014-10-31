@@ -36,6 +36,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpOptions;
 
@@ -124,10 +125,11 @@ public abstract class DistcpBaseService extends AbstractService {
     options.setOutPutDirectory(tmpCounterOutputPath);
     DistCp distCp = new ConduitDistCp(conf, options, fileListingMap);
     try {
-      distCp.execute();
+      Job job = distCp.execute();
       long jobExecutionTimeInSecs = (distCp.getJobTimeInNanos()/NANO_SECONDS_IN_SECOND);
-      LOG.info("Time taken to complete the job " + jobExecutionTimeInSecs + "secs");
-      //updateJobTimeCounter(jobExecutionTimeInSecs);
+      LOG.info("Time taken to complete " + job.getJobID() + " job : "
+          + jobExecutionTimeInSecs + "secs");
+      updateJobTimeCounter(jobExecutionTimeInSecs);
     } catch (Exception e) {
       LOG.error("Exception encountered ", e);
       throw e;
