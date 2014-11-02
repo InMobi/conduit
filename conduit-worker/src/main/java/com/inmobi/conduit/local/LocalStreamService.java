@@ -195,8 +195,9 @@ public class LocalStreamService extends AbstractService implements
       job.waitForCompletion(true);
       long jobExecutionTimeInSecs = (System.nanoTime()
           - jobStartTime)/(NANO_SECONDS_IN_SECOND);
-      LOG.info("Time taken to complete the job " + jobExecutionTimeInSecs + "secs");
-      //updateJobTimeCounter(jobExecutionTimeInSecs);
+      LOG.info("Time taken to complete " + job.getJobID() + " job : "
+          + jobExecutionTimeInSecs + "secs");
+      updateJobTimeCounter(jobExecutionTimeInSecs);
       if (job.isSuccessful()) {
         commitTime = srcCluster.getCommitTime();
         LOG.info("Commiting mvPaths and ConsumerPaths");
