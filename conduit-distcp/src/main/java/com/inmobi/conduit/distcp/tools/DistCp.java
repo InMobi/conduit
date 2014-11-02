@@ -60,6 +60,7 @@ public class DistCp extends Configured implements Tool {
 
   private boolean submitted;
   private FileSystem jobFS;
+  private long jobExecutionTimeInNanos;
 
   /**
    * Public Constructor. Creates DistCp object with specified input-parameters.
@@ -153,10 +154,21 @@ public class DistCp extends Configured implements Tool {
     LOG.info("DistCp job may be tracked at: " + job.getTrackingURL());
     LOG.info("To cancel, run the following command:\thadoop job -kill " + jobID);
 
+    long jobStartTime = System.nanoTime();
     if (inputOptions.shouldBlock() && !job.waitForCompletion(true)) {
+      updateJobTimeInNanos(jobStartTime);
       throw new IOException("DistCp failure: Job " + jobID + " has failed. ");
     }
+    updateJobTimeInNanos(jobStartTime);
     return job;
+  }
+
+  public long getJobTimeInNanos() {
+    return jobExecutionTimeInNanos;
+  }
+
+  private void updateJobTimeInNanos(long jobStartTime) {
+    jobExecutionTimeInNanos = System.nanoTime() - jobStartTime;
   }
 
   /**

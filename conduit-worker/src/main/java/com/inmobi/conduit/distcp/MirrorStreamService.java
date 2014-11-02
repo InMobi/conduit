@@ -72,6 +72,8 @@ public class MirrorStreamService extends DistcpBaseService {
           COMMIT_TIME, eachStream);
       ConduitMetrics.registerAbsoluteGauge(getServiceType(),
           LAST_FILE_PROCESSED, eachStream);
+      ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+          JOB_EXECUTION_TIME, eachStream);
     }
   }
 
