@@ -46,7 +46,7 @@ public class TestLocalLastFileProcessed {
     parser = new ConduitConfigParser("src/test/resources/test-lss-conduit1.xml");
     // Copy input format src jar to FS
     String inputFormatSrcJar = FileUtil
-        .findContainingJar(org.apache.hadoop.tools.mapred.UniformSizeInputFormat.class);
+        .findContainingJar(com.inmobi.conduit.distcp.tools.mapred.UniformSizeInputFormat.class);
     cluster = parser.getConfig().getClusters().get("testcluster1");
     Path jarsPath = new Path(cluster.getTmpPath(), "jars");
     localFs.copyFromLocalFile(new Path(inputFormatSrcJar),
