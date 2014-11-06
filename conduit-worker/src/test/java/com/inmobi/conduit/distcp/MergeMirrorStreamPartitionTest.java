@@ -127,9 +127,9 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
       service.runPostExecute();
       service.clearPathPartitionTable();
     }
-    
+
     LOG.info("Running MirrorStreamService Service");
-    
+
     for (TestMirrorStreamService service : mirrorStreamServices) {
       Thread.currentThread().setName(service.getName());
       service.runPreExecute();
@@ -141,11 +141,11 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
     TestLocalStreamService.clearHCatInMemoryMaps();
     LOG.info("Cleaning up leftovers");
 
-/*    for (TestLocalStreamService service : localStreamServices) {
+    for (TestLocalStreamService service : localStreamServices) {
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
     } 
-*/  }
+  }
 
   private void initializeConduit(String filename, String currentClusterName,
       Set<String> additionalClustersToProcess, boolean addAllSourceClusters,
