@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -27,8 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.inmobi.conduit.utils.CalendarHelper;
+
+import com.inmobi.conduit.utils.HCatPartitionComparator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,6 +42,12 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.api.HCatPartition;
+import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.thrift.TSerializer;
 
 import com.google.common.collect.HashBasedTable;
@@ -68,7 +79,7 @@ public abstract class AbstractService implements Service, Runnable {
   protected final Set<String> streamsToProcess;
   protected final Map<String, Long> lastProcessedFile;
   private final static long TIME_RETRY_IN_MILLIS = 500;
-  private int numOfRetries;
+  protected int numOfRetries;
   protected Path tmpCounterOutputPath;
   public final static String RUNTIME = "runtime";
   public final static String FAILURES = "failures";
@@ -81,6 +92,23 @@ public abstract class AbstractService implements Service, Runnable {
   public final static String DATAPURGER_SERVICE = "DataPurgerService";
   public final static String LAST_FILE_PROCESSED = "lastfile.processed";
   public final static String JOB_EXECUTION_TIME = "job.execution.time";
+  public final static String HCAT_ADD_PARTITIONS_COUNT = "hcat.addpartitions.count";
+  public final static String HCAT_CONNECTION_FAILURES = "hcat.connection.failures";
+  public final static String FAILED_TO_GET_HCAT_CLIENT_COUNT = "failed.hcatclient";
+  protected static final String TABLE_PREFIX = "conduit";
+  protected static final String TABLE_NAME_SEPARATOR = "_";
+  protected static final String LOCAL_TABLE_PREFIX = TABLE_PREFIX
+      + TABLE_NAME_SEPARATOR +"local";
+  protected static final long EMPTY_PARTITION_LIST = -1;
+  protected static final long FAILED_GET_PARTITIONS = -2;
+  protected final static Map<String, Boolean> streamHcatEnableMap =
+      new ConcurrentHashMap<String, Boolean>();
+  protected final static Map<String, Long> lastAddedPartitionMap =
+      new ConcurrentHashMap<String, Long>();
+  protected final static Map<String, List<Path>> pathsToBeregisteredPerTable =
+      new ConcurrentHashMap<String, List<Path>>();
+
+  protected  HCatClientUtil hcatUtil;
 
   protected static String hostname;
   static {
@@ -93,14 +121,14 @@ public abstract class AbstractService implements Service, Runnable {
     }
   }
 
-
   public AbstractService(String name, ConduitConfig config,
-      Set<String> streamsToProcess) {
-    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess);
+      Set<String> streamsToProcess, HCatClientUtil hcatUtil) {
+    this(name, config, DEFAULT_RUN_INTERVAL,streamsToProcess, hcatUtil);
   }
 
   public AbstractService(String name, ConduitConfig config,
-      long runIntervalInMsec, Set<String> streamsToProcess) {
+      long runIntervalInMsec, Set<String> streamsToProcess,
+      HCatClientUtil hcatUtil) {
     this.config = config;
     this.name = name;
     this.runIntervalInMsec = runIntervalInMsec;
@@ -112,12 +140,13 @@ public abstract class AbstractService implements Service, Runnable {
     } else {
       numOfRetries = Integer.parseInt(retries);
     }
+    this.hcatUtil = hcatUtil;
   }
 
   public AbstractService(String name, ConduitConfig config,
       long runIntervalInMsec, CheckpointProvider provider,
-      Set<String> streamsToProcess) {
-    this(name, config, runIntervalInMsec, streamsToProcess);
+      Set<String> streamsToProcess, HCatClientUtil hcatUtil) {
+    this(name, config, runIntervalInMsec, streamsToProcess, hcatUtil);
     this.checkpointProvider = provider;
   }
 
@@ -253,6 +282,16 @@ public abstract class AbstractService implements Service, Runnable {
     return LogDateFormat.format(commitTime);
   }
 
+  protected HCatClient getHCatClient() throws InterruptedException {
+    return hcatUtil.getHCatClient();
+  }
+
+  protected void addToPool(HCatClient hcatClient) {
+    if (hcatClient != null) {
+      hcatUtil.addToPool(hcatClient);
+    }
+  }
+
   private Path getLatestDir(FileSystem fs, Path Dir) throws Exception {
 
     FileStatus[] fileStatus;
@@ -321,6 +360,12 @@ public abstract class AbstractService implements Service, Runnable {
     if (prevRuntime != -1) {
       if (isMissingPaths(commitTime, prevRuntime)) {
         LOG.debug("Previous Runtime: [" + getLogDateString(prevRuntime) + "]");
+        List<Path> pathsToBeRegistered = null;
+        String tableName = null;
+        if (isStreamHCatEnabled(categoryName)) {
+          tableName = getTableName(categoryName);
+          pathsToBeRegistered = pathsToBeregisteredPerTable.get(tableName);
+        }
         while (isMissingPaths(commitTime, prevRuntime)) {
           String missingPath = Cluster.getDestDir(destDir, categoryName,
               prevRuntime);
@@ -328,16 +373,287 @@ public abstract class AbstractService implements Service, Runnable {
           if (!fs.exists(missingDir)) {
             LOG.debug("Creating Missing Directory [" + missingDir + "]");
             fs.mkdirs(missingDir);
+            if (isStreamHCatEnabled(categoryName)) {
+              pathsToBeRegistered.add(missingDir);
+            }
             ConduitMetrics.updateSWGuage(getServiceType(), EMPTYDIR_CREATE,
                 categoryName, 1);
           }
           prevRuntime += MILLISECONDS_IN_MINUTE;
+        }
+        if (isStreamHCatEnabled(categoryName)) {
+          pathsToBeregisteredPerTable.put(tableName, pathsToBeRegistered);
         }
       }
     }
     // prevRuntimeForCategory map is updated with commitTime,
     // even if prevRuntime is -1, since service did run at this point
     prevRuntimeForCategory.put(categoryName, commitTime);
+  }
+
+  private boolean preparePartitionsTobeRegistered(String streamName)
+      throws InterruptedException {
+
+    String tableName = getTableName(streamName);
+    long lastAddedTime = lastAddedPartitionMap.get(tableName);
+    LOG.info("Last added partition time " + getLogDateString(lastAddedTime)
+        + " for table " + tableName);
+    if (lastAddedTime == EMPTY_PARTITION_LIST) {
+      LOG.info("there are no partitions in "+ tableName +" table. ");
+      return true;
+    } else if (lastAddedTime == FAILED_GET_PARTITIONS) {
+      HCatClient hcatClient = getHCatClient();
+      if (hcatClient == null) {
+        LOG.warn("Didn't get any hcat client from pool hence not preparing"
+            + " final partition list");
+        ConduitMetrics.updateSWGuage(getServiceType(), FAILED_TO_GET_HCAT_CLIENT_COUNT,
+            streamName, 1);
+        return false;
+      }
+      try {
+        findLastPartition(hcatClient, streamName);
+        lastAddedTime = lastAddedPartitionMap.get(tableName);
+        LOG.info("Last added parittion time " + getLogDateString(lastAddedTime)
+            + " for table " + tableName);
+        if (lastAddedTime == EMPTY_PARTITION_LIST) {
+          LOG.info("there are no partitions in "+ tableName +" table. ");
+          return true;
+        }
+      } catch (HCatException e) {
+        LOG.error("Got exception while trying to get the last added partition ", e);
+        return false;
+      } finally {
+        addToPool(hcatClient);
+      }
+    }
+    findDiffBetweenLastAddedAndFirstPath(lastAddedTime, streamName, tableName);
+    return true;
+  }
+
+  private void findDiffBetweenLastAddedAndFirstPath(long lastAddedTime,
+      String stream, String table) {
+    List<Path> listOfPathsTobeRegistered = pathsToBeregisteredPerTable.get(table);
+    if (listOfPathsTobeRegistered.isEmpty()) {
+      return;
+    } else {
+      // get the first path
+      Path firstPathInList = listOfPathsTobeRegistered.get(0);
+      Date timeFromPath = getTimeStampFromHCatPartition(firstPathInList.toString(),
+          stream);
+      LOG.info("Find the missing partitions between "
+          + getLogDateString(lastAddedTime) + " and " + timeFromPath
+          + " for table " + table);
+      while (isMissingPartitions(timeFromPath.getTime(), lastAddedTime)) {
+        long nextPathPartTime = lastAddedTime + MILLISECONDS_IN_MINUTE;
+        Path nextPathTobeAdded = getFinalPath(nextPathPartTime, stream);
+        LOG.info("Add the missing partition location " + nextPathTobeAdded
+            + " to the list for registering");
+        if (nextPathTobeAdded != null) {
+          listOfPathsTobeRegistered.add(nextPathTobeAdded);
+          lastAddedTime = nextPathPartTime;
+        }
+      }
+      Collections.sort(listOfPathsTobeRegistered);
+      pathsToBeregisteredPerTable.put(table, listOfPathsTobeRegistered);
+    }
+  }
+
+  protected Path getFinalPath(long time, String stream) {
+    return null;
+  }
+
+  public void prepareLastAddedPartitionMap() throws InterruptedException {
+    prepareStreamHcatEnableMap();
+
+    HCatClient hcatClient = getHCatClient();
+    if (hcatClient == null) {
+      LOG.warn("Did not get hcatclient hence not finding the last added partition");
+      for (String stream : streamsToProcess) {
+        if (isStreamHCatEnabled(stream)) {
+          updateLastAddedPartitionMap(getTableName(stream), FAILED_GET_PARTITIONS);
+          ConduitMetrics.updateSWGuage(getServiceType(),
+              FAILED_TO_GET_HCAT_CLIENT_COUNT, stream, 1);
+        }
+      }
+      return;
+    }
+    try {
+      for (String stream : streamsToProcess) {
+        if (isStreamHCatEnabled(stream)) {
+          try {
+            hcatClient.getTable(Conduit.getHcatDBName(), getTableName(stream));
+            findLastPartition(hcatClient, stream);
+          } catch (HCatException e) {
+            if (e.getCause() instanceof NoSuchObjectException) {
+              LOG.error("Got noSuchObject exception while trying to get table"
+                  + " or finding last partition " + e.getMessage());
+              throw new RuntimeException(e);
+            }
+            LOG.warn("Got Exception while finding the last added partition for"
+                + " stream " + stream, e);
+            updateLastAddedPartitionMap(getTableName(stream), FAILED_GET_PARTITIONS);
+          }
+        } else {
+          LOG.debug("Hcatalog is not enabled for " + stream + " stream");
+        }
+      }
+    } finally {
+      addToPool(hcatClient);
+    }
+  }
+
+  /*
+   * It finds the last added partition from the hcatalog table for each stream.
+   * Update with -1 if there are no partitions present in hcatalog.
+   */
+  public void findLastPartition(HCatClient hcatClient, String stream)
+      throws HCatException {
+    String tableName = getTableName(stream);
+    List<HCatPartition> hCatPartitionList = hcatClient.getPartitions(
+        Conduit.getHcatDBName(), tableName);
+    if (hCatPartitionList.isEmpty()) {
+      LOG.info("No partitions present for " + stream + " stream. ");
+      updateLastAddedPartitionMap(tableName, EMPTY_PARTITION_LIST);
+      return;
+    }
+    Collections.sort(hCatPartitionList, new HCatPartitionComparator());
+    HCatPartition lastHcatPartition = hCatPartitionList.get(hCatPartitionList.size()-1);
+    Date lastAddedPartitionDate = getTimeStampFromHCatPartition(
+        lastHcatPartition.getLocation(), stream);
+    if (lastAddedPartitionDate != null) {
+      LOG.info("Last added partition timetamp : " + lastAddedPartitionDate
+          + " for table " + tableName);
+      updateLastAddedPartitionMap(tableName, lastAddedPartitionDate.getTime());
+    } else {
+      updateLastAddedPartitionMap(tableName, EMPTY_PARTITION_LIST);
+    }
+  }
+
+  protected abstract String getTableName(String stream);
+
+  protected Date getTimeStampFromHCatPartition(String hcatLoc, String stream) {
+    return null;
+  }
+
+  protected boolean isStreamHCatEnabled(String stream) {
+    return streamHcatEnableMap.containsKey(stream)
+        && streamHcatEnableMap.get(stream);
+  }
+
+  protected void updateLastAddedPartitionMap(String tableName, long partTime) {
+    lastAddedPartitionMap.put(tableName, partTime);
+  }
+
+  protected void updateStreamHCatEnabledMap(String stream, boolean hcatEnabled) {
+    streamHcatEnableMap.put(stream, hcatEnabled);
+  }
+
+  protected void prepareStreamHcatEnableMap() {
+    // override in local, merge and mirror stream services
+  }
+
+  protected void registerPartitions() throws InterruptedException, ParseException {
+    if (!Conduit.isHCatEnabled()) {
+      return;
+    }
+    HCatClient hcatClient = getHCatClient();
+    if (hcatClient == null) {
+      LOG.warn("Did not get hcat client hence not rgistering partitions");
+      for (String stream : streamsToProcess) {
+        ConduitMetrics.updateSWGuage(getServiceType(),
+            FAILED_TO_GET_HCAT_CLIENT_COUNT, stream, 1);
+      }
+      return;
+    }
+    try {
+      for (String stream : streamsToProcess) {
+        if (!isStreamHCatEnabled(stream)) {
+          LOG.info("Hcat is not enabled for " + stream + " stream."
+              + " Hence not registering partitions");
+          continue;
+        }
+        String tableName = getTableName(stream);
+        /*
+         * If it is not able to find the diff between the last added partition
+         * and first path in the partition list then it should not register
+         * partitions until it finds the diff
+         */
+        if (!preparePartitionsTobeRegistered(stream)) {
+          LOG.info("Not registering the partitions as part of this run as"
+              + " it was not able to find the last added partition"
+              + " or diff betweeen last added and first path in the list" );
+          continue;
+        }
+        if (lastAddedPartitionMap.get(tableName) == FAILED_GET_PARTITIONS) {
+          LOG.warn("Failed to get partitions for stream from server hence"
+              + " not registering new partiotions");
+          continue;
+        }
+        List<Path> partitionsTobeRegistered = pathsToBeregisteredPerTable.get(tableName);
+        // Register all the partitions in the list except the last one
+        while (partitionsTobeRegistered.size() > 1) {
+          /* always retrieve first element from the list as we remove the
+           * element once it is added to partition. then second element will
+           *  be the first one
+           */
+          Path path = partitionsTobeRegistered.get(0);
+          Date date = getTimeStampFromHCatPartition(path.toString(), stream);
+          LOG.info("Adding the partition  " + path.toString() + " in " + tableName + " table");
+          if (addPartition(path.toString(), stream, date.getTime(), tableName,
+              hcatClient)) {
+            partitionsTobeRegistered.remove(0);
+            updateLastAddedPartitionMap(tableName, date.getTime());
+          } else {
+            break;
+          }
+        }
+      }
+    } finally {
+      addToPool(hcatClient);
+    }
+  }
+
+  public boolean addPartition(String location, String streamName,
+      long partTimeStamp, String tableName, HCatClient hcatClient)
+          throws InterruptedException, ParseException {
+    if (hcatClient == null) {
+      LOG.warn("Did not get hcat client for table " + tableName);
+      return false;
+    }
+    String dbName = Conduit.getHcatDBName();
+    String dateStr = Cluster.getDateAsYYYYMMDDHHMNPath(partTimeStamp);
+    String [] dateSplits = dateStr.split(File.separator);
+    Map<String, String> partSpec = new HashMap<String, String>();
+    if (dateSplits.length == 5) {
+      partSpec.put("year", dateSplits[0]);
+      partSpec.put("month", dateSplits[1]);
+      partSpec.put("day", dateSplits[2]);
+      partSpec.put("hour", dateSplits[3]);
+      partSpec.put("minute", dateSplits[4]);
+    }
+    HCatAddPartitionDesc partInfo = null;
+    try {
+      if (partInfo == null) {
+        partInfo = HCatAddPartitionDesc.create(dbName, tableName, location,
+            partSpec).build();
+      }
+      hcatClient.addPartition(partInfo);
+      LOG.info("Partition " + partInfo.getLocation() + " was added successfully");
+      ConduitMetrics.updateSWGuage(getServiceType(), HCAT_ADD_PARTITIONS_COUNT,
+          streamName, 1);
+      return true;
+    } catch (HCatException e) {
+      if (e.getCause() instanceof AlreadyExistsException) {
+        LOG.warn("Partition " + partInfo.getLocation() + " is already exists in "
+            + tableName + " table. ", e);
+        return true;
+      }
+      ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
+          getName(), 1);
+      LOG.info("Got Exception while trying to add partition  : " + partInfo
+          + ". Exception ", e);
+    }
+    return false;
   }
 
   /*
@@ -528,6 +844,10 @@ public abstract class AbstractService implements Service, Runnable {
     return ((commitTime - prevRuntime) >= MILLISECONDS_IN_MINUTE);
   }
 
+  protected boolean isMissingPartitions(long commitTime, long lastAddedPartTime) {
+    return ((commitTime - lastAddedPartTime) > MILLISECONDS_IN_MINUTE);
+  }
+
   protected void publishMissingPaths(FileSystem fs, String destDir,
       long commitTime, Set<String> streams) throws Exception {
     if (streams != null) {
@@ -536,6 +856,7 @@ public abstract class AbstractService implements Service, Runnable {
       }
     }
   }
+
   /**
    * Get the service name from the name
    */
@@ -667,4 +988,21 @@ public abstract class AbstractService implements Service, Runnable {
       }
     }
   }
-} 
+
+  /*
+   * This method is only for test cases
+   */
+  public static void clearHCatInMemoryMaps() {
+    streamHcatEnableMap.clear();
+    lastAddedPartitionMap.clear();
+  }
+
+  // this is for only tests
+  public void clearPathPartitionTable() {
+    for (String stream : streamsToProcess) {
+      String tableName = getTableName(stream);
+      pathsToBeregisteredPerTable.get(tableName).clear();
+    }
+  }
+}
+

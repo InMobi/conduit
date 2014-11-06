@@ -26,18 +26,25 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.inmobi.conduit.utils.CalendarHelper;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.common.HCatException;
 
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.DestinationStream;
+import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.SourceStream;
 
 /*
@@ -45,6 +52,9 @@ import com.inmobi.conduit.SourceStream;
  * (i) One data Purger Service for a cluster
  */
 
+/*
+ * Set<HCatPartitionDesc> set = new TreeSet<>();
+ */
 public class DataPurgerService extends AbstractService {
   private static final Log LOG = LogFactory.getLog(DataPurgerService.class);
 
@@ -54,15 +64,18 @@ public class DataPurgerService extends AbstractService {
   private final Integer defaultstreamPathRetentioninHours;
   private Map<String, Integer> streamRetention;
   private Set<Path> streamsToPurge;
+  private Map<Path, HCatAddPartitionDesc> pathPartitionDescMap;
   private DateFormat dateFormat = new SimpleDateFormat("yyyy:MM:dd:HH:mm");
   private static long MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
   private final static String PURGEPATHS_COUNT = "purgePaths.count";
   private final static String DELETE_FAILURES_COUNT = "deleteFailures.count";
+  private final static String HCAT_PURGE_PARTITION_FAILURES_COUNT = "hcat.paritition.drop.failures.count";
+  private static final String HCAT_PURGED_PARTITION_COUNT = "hcat.partition.purged.count";
 
-  public DataPurgerService(ConduitConfig conduitConfig, Cluster cluster)
-      throws Exception {
+  public DataPurgerService(ConduitConfig conduitConfig, Cluster cluster,
+      HCatClientUtil hcatUtil) throws Exception {
     super(DataPurgerService.class.getName(), conduitConfig, 60000 * 60, null,
-        new HashSet<String>());
+        new HashSet<String>(), hcatUtil);
     this.cluster = cluster;
     fs = FileSystem.get(cluster.getHadoopConf());
     this.defaulttrashPathRetentioninHours = new Integer(
@@ -79,6 +92,25 @@ public class DataPurgerService extends AbstractService {
         getName());
     ConduitMetrics.registerSlidingWindowGauge(getServiceType(), FAILURES,
         getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        HCAT_PURGE_PARTITION_FAILURES_COUNT, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        HCAT_CONNECTION_FAILURES, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        HCAT_PURGED_PARTITION_COUNT, getName());
+    ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
+        FAILED_TO_GET_HCAT_CLIENT_COUNT, getName());
+
+    if (Conduit.isHCatEnabled()) {
+      Map<String, DestinationStream> destMap = cluster.getDestinationStreams();
+      for (Map.Entry<String, DestinationStream> entry : destMap.entrySet()) {
+        streamHcatEnableMap.put(entry.getKey(), entry.getValue().isHCatEnabled());
+      }
+      Map<String, SourceStream> sourceStreams = config.getSourceStreams();
+      for (Map.Entry<String, SourceStream> entry : sourceStreams.entrySet()) {
+        streamHcatEnableMap.put(entry.getKey(), entry.getValue().isHCatEnabled());
+      }
+    }
   }
 
   @Override
@@ -108,6 +140,7 @@ public class DataPurgerService extends AbstractService {
       DestinationStream consumeStream = (DestinationStream) entry.getValue();
       Integer mergedStreamRetentionInHours = consumeStream
           .getRetentionInHours();
+
       LOG.debug("Merged Stream :: streamName [" + streamName
           + "] mergedStreamRetentionInHours [" + mergedStreamRetentionInHours
           + "]");
@@ -169,6 +202,7 @@ public class DataPurgerService extends AbstractService {
     try {
       streamRetention = new HashMap<String, Integer>();
       streamsToPurge = new TreeSet<Path>();
+      pathPartitionDescMap = new HashMap<Path, HCatAddPartitionDesc>();
 
       // populates - streamRetention
       // Map of streams and their retention period at this cluster (Partial +
@@ -191,10 +225,13 @@ public class DataPurgerService extends AbstractService {
     }
   }
 
+  public void clearStreamHCatEnableMap() {
+    streamHcatEnableMap.clear();
+  }
   private void getPathsToPurge(Map<String, Path> mergedStreamsInClusterPathMap,
       Map<String, Path> localStreamsInClusterPathMap) throws Exception {
-    getStreamsPathToPurge(mergedStreamsInClusterPathMap);
-    getStreamsPathToPurge(localStreamsInClusterPathMap);
+    getStreamsPathToPurge(mergedStreamsInClusterPathMap, false);
+    getStreamsPathToPurge(localStreamsInClusterPathMap, true);
     getTrashPathsToPurge();
 
   }
@@ -212,8 +249,9 @@ public class DataPurgerService extends AbstractService {
             try {
               Calendar trashPathHourDate = getDateFromTrashPath(trashPath
                   .getPath().getName(), trashHourPath.getPath().getName());
-              if (isPurge(trashPathHourDate, getTrashPathRetentionInHours()))
+              if (isPurge(trashPathHourDate, getTrashPathRetentionInHours())) {
                 streamsToPurge.add(trashHourPath.getPath().makeQualified(fs));
+              }
             } catch (NumberFormatException e) {
               streamsToPurge.add(trashHourPath.getPath().makeQualified(fs));
             }
@@ -245,6 +283,7 @@ public class DataPurgerService extends AbstractService {
     String year = date[0];
     String month = date[1];
     String day = date[2];
+
     return CalendarHelper.getDateHour(year, month, day, trashHourPath);
 
   }
@@ -264,7 +303,7 @@ public class DataPurgerService extends AbstractService {
     return streams;
   }
 
-  private void getStreamsPathToPurge(Map<String, Path> streamPathMap)
+  private void getStreamsPathToPurge(Map<String, Path> streamPathMap, boolean isLocal)
       throws Exception {
     Set<Map.Entry<String, Path>> streamsToProcess = streamPathMap.entrySet();
     Iterator it = streamsToProcess.iterator();
@@ -272,54 +311,117 @@ public class DataPurgerService extends AbstractService {
       Map.Entry<String, Path> entry = (Map.Entry<String, Path>) it.next();
       String streamName = entry.getKey();
       Path streamRootPath = entry.getValue();
+      String tableName = null;
+      if (isLocal) {
+        tableName = LOCAL_TABLE_PREFIX + "_" + streamName;
+      } else {
+        tableName = TABLE_PREFIX + "_" + streamName;
+      }
       LOG.debug("Find Paths to purge for stream [" + streamName
           + "] streamRootPath [" + streamRootPath + "]");
       // For each Stream, all years
       FileStatus[] years = getAllFilesInDir(streamRootPath, fs);
       if (years != null) {
         for (FileStatus year : years) {
+          String yearVal = year.getPath().getName();
           // For each month
           FileStatus[] months = getAllFilesInDir(year.getPath(), fs);
           if (months != null && months.length >= 1) {
             for (FileStatus month : months) {
+              String monthVal = month.getPath().getName();
               // For each day
               FileStatus[] days = getAllFilesInDir(month.getPath(), fs);
               if (days != null && days.length >= 1) {
                 for (FileStatus day : days) {
+                  String dayVal = day.getPath().getName();
                   // For each day
                   FileStatus[] hours = getAllFilesInDir(day.getPath(), fs);
                   if (hours != null && hours.length >= 1) {
                     for (FileStatus hour : hours) {
                       LOG.debug("Working for hour [" + hour.getPath() + "]");
-                      Calendar streamDate = CalendarHelper.getDateHour(year
-                          .getPath().getName(), month.getPath().getName(), day
-                          .getPath().getName(), hour.getPath().getName());
+
+                      String hourVal = hour.getPath().getName();
+                      Calendar streamDate = CalendarHelper.getDateHour(yearVal,
+                          monthVal, dayVal, hourVal);
                       LOG.debug("Validate [" + streamDate.toString()
                           + "] against retentionHours ["
                           + getRetentionPeriod(streamName) + "]");
                       if (isPurge(streamDate, getRetentionPeriod(streamName))) {
                         LOG.debug("Adding stream to purge [" + hour.getPath()
                             + "]");
-                        streamsToPurge.add(hour.getPath().makeQualified(fs));
+                        Path hourPath = hour.getPath().makeQualified(fs);
+                        addPartitionToList(streamName, tableName, hourPath, yearVal,
+                            monthVal, dayVal, hourVal);
+                        streamsToPurge.add(hourPath);
                       }
                     }
                   } else {
+                    Path dayPath = day.getPath().makeQualified(fs);
                     // No hour found in day. Purge day
-                    streamsToPurge.add(day.getPath().makeQualified(fs));
+                    addPartitionToList(streamName, tableName, dayPath, yearVal, monthVal, dayVal);
+                    streamsToPurge.add(dayPath);
                   }
                 } // each day
               } else {
                 // No day found in month. Purge month
-                streamsToPurge.add(month.getPath().makeQualified(fs));
+                Path monthPath = month.getPath().makeQualified(fs);
+                addPartitionToList(streamName, tableName, monthPath, yearVal, monthVal);
+                streamsToPurge.add(monthPath);
               }
             }// each month
           } else {
             // no months found in year. Purge Year.
+            Path yearPath = year.getPath().makeQualified(fs);
+            addPartitionToList(streamName, tableName, yearPath, yearVal);
             streamsToPurge.add(year.getPath().makeQualified(fs));
           }
         }// each year
       }
     }// each stream
+  }
+
+  private boolean isHCatEnabledStream(String streamName) {
+    if (streamHcatEnableMap.containsKey(streamName)) {
+      return streamHcatEnableMap.get(streamName);
+    }
+    return false;
+  }
+
+  private void addPartitionToList(String streamName, String tableName, Path yearPath,
+      String yearVal) throws HCatException {
+    addPartitionToList(streamName, tableName, yearPath, yearVal, null);
+  }
+
+  private void addPartitionToList(String streamName, String tableName, Path monthPath,
+      String yearVal, String monthVal) throws HCatException {
+    addPartitionToList(streamName, tableName, monthPath, yearVal, monthVal, null);
+  }
+
+  private void addPartitionToList(String streamName, String tableName, Path dayPath,
+      String yearVal, String monthVal, String dayVal) throws HCatException {
+    addPartitionToList(streamName, tableName, dayPath, yearVal, monthVal, dayVal, null);
+  }
+
+  private void addPartitionToList(String streamName, String tableName, Path hourPath,
+      String yearVal, String monthVal, String dayVal, String hourVal)
+          throws HCatException {
+    if (!isHCatEnabledStream(streamName)) {
+      return;
+    }
+    Map<String, String> partSpec = new HashMap<String, String>();
+    partSpec.put("year", yearVal);
+    if (monthVal != null) {
+      partSpec.put("month", monthVal);
+    }
+    if (dayVal != null) {
+      partSpec.put("day", dayVal);
+    }
+    if (hourVal != null) {
+      partSpec.put("hour", hourVal);
+    }
+    HCatAddPartitionDesc partDesc = HCatAddPartitionDesc.create(
+        Conduit.getHcatDBName(), tableName, hourPath.toString(), partSpec).build();
+    pathPartitionDescMap.put(hourPath, partDesc);
   }
 
   public boolean isPurge(Calendar streamDate, Integer retentionPeriodinHours) {
@@ -346,19 +448,57 @@ public class DataPurgerService extends AbstractService {
     return Math.abs(hours);
   }
 
-  private void purge() {
-    Iterator it = streamsToPurge.iterator();
-    Path purgePath = null;
-    while (it.hasNext()) {
-      try {
-        purgePath = (Path) it.next();
-        fs.delete(purgePath, true);
-        LOG.info("Purging [" + purgePath + "]");
-        ConduitMetrics.updateSWGuage(getServiceType(), PURGEPATHS_COUNT, getName(), 1);
-      } catch (Exception e) {
-        LOG.warn("Cannot delete path " + purgePath, e);
-        ConduitMetrics.updateSWGuage(getServiceType(), DELETE_FAILURES_COUNT, getName(), 1);
+  private void purge() throws HCatException, InterruptedException {
+    HCatClient hcatClient = null;
+    if (Conduit.isHCatEnabled()) {
+      hcatClient = getHCatClient();
+
+      if (hcatClient == null) {
+        LOG.warn("Did not get hcat client hence not purging the partitions and paths");
+        ConduitMetrics.updateSWGuage(getServiceType(), FAILED_TO_GET_HCAT_CLIENT_COUNT, getName(), 1);
+        return;
       }
+    }
+    try {
+      Iterator it = streamsToPurge.iterator();
+      Path purgePath = null;
+      while (it.hasNext()) {
+        purgePath = (Path) it.next();
+        if (pathPartitionDescMap.containsKey(purgePath)) {
+          HCatAddPartitionDesc partDesc = pathPartitionDescMap.get(purgePath);
+          if (partDesc != null) {
+            LOG.info("Droping the partition : " + partDesc.getLocation()
+                + " from " + partDesc.getTableName() + " table");
+            try {
+              hcatClient.dropPartitions(partDesc.getDatabaseName(),
+                  partDesc.getTableName(), partDesc.getPartitionSpec(), false);
+              ConduitMetrics.updateSWGuage(getServiceType(),
+                  HCAT_PURGED_PARTITION_COUNT, getName(), 1);
+            } catch (HCatException hcatException) {
+              if (hcatException.getCause() instanceof NoSuchObjectException) {
+                LOG.info("partition " + partDesc.getLocation() + " does not"
+                    + " exists in " + partDesc.getTableName() + " table");
+              } else {
+                ConduitMetrics.updateSWGuage(getServiceType(),
+                    HCAT_PURGE_PARTITION_FAILURES_COUNT, getName(), 1);
+                ConduitMetrics.updateSWGuage(getServiceType(),
+                    HCAT_CONNECTION_FAILURES, getName(), 1);
+                throw hcatException;
+              }
+            }
+          }
+        }
+        try {
+          LOG.info("Purging [" + purgePath + "]");
+          fs.delete(purgePath, true);
+          ConduitMetrics.updateSWGuage(getServiceType(), PURGEPATHS_COUNT, getName(), 1);
+        } catch (Exception e) {
+          LOG.warn("Cannot delete path " + purgePath, e);
+          ConduitMetrics.updateSWGuage(getServiceType(), DELETE_FAILURES_COUNT, getName(), 1);
+        }
+      }
+    } finally {
+      addToPool(hcatClient);
     }
   }
 
@@ -372,7 +512,6 @@ public class DataPurgerService extends AbstractService {
     }
     return files;
   }
-
 
   @Override
   protected String getTier() {
@@ -390,5 +529,11 @@ public class DataPurgerService extends AbstractService {
    */
   public String getServiceType(){
     return "DataPurgerService";
+  }
+
+  @Override
+  protected String getTableName(String stream) {
+    throw new UnsupportedOperationException(" requested method is not" +
+        " implemented in purger service");
   }
 }

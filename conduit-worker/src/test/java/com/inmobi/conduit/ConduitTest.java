@@ -50,7 +50,7 @@ public class ConduitTest extends TestMiniClusterUtil {
         Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess) throws IOException {
       return new TestLocalStreamService(config, cluster, currentCluster,
           new FSCheckpointProvider(cluster.getCheckpointDir()),
-          streamsToProcess);
+          streamsToProcess, null);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ConduitTest extends TestMiniClusterUtil {
         throws Exception {
 
       return new TestMergedStreamService(config, srcCluster, dstCluster,
-          currentCluster, streamsToProcess);
+          currentCluster, streamsToProcess, null);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class ConduitTest extends TestMiniClusterUtil {
         Set<String> streamsToProcess)
         throws Exception {
       return new TestMirrorStreamService(config, srcCluster, dstCluster,
-          currentCluster, streamsToProcess);
+          currentCluster, streamsToProcess, null);
     }
 
   }

@@ -8,12 +8,19 @@ import java.util.Set;
 import com.inmobi.conduit.distcp.MirrorStreamService;
 import com.inmobi.conduit.local.LocalStreamService;
 import com.inmobi.conduit.purge.DataPurgerService;
+
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.inmobi.conduit.distcp.MergedStreamService;
 
 public class TestConduitInitialization {
+
+  @BeforeMethod
+  public void beforeTestMethod() {
+    Conduit.setHCatEnabled(false);
+  }
 
   public void setUP(String filename, Set<String> clustersToProcess, 
       List<AbstractService> listOfServices) throws Exception {

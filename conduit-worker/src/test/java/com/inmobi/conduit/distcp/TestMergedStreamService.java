@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue;
 import com.inmobi.conduit.AbstractServiceTest;
 import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.PublishMissingPathsTest;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -29,6 +30,7 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.FSCheckpointProvider;
+import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.DatePathComparator;
 import com.inmobi.conduit.utils.FileUtil;
@@ -52,11 +54,11 @@ public class TestMergedStreamService extends MergedStreamService implements
 
   public TestMergedStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      Set<String> streamsToProcess)
+      Set<String> streamsToProcess, HCatClientUtil hcatUtil)
       throws Exception {
     super(config, srcCluster, destinationCluster, currentCluster,
         new FSCheckpointProvider(destinationCluster.getCheckpointDir()),
-        streamsToProcess);
+        streamsToProcess, hcatUtil);
     MessagePublisher publisher = MessagePublisherFactory.create();
     Conduit.setPublisher(publisher);
     this.srcCluster = srcCluster;
