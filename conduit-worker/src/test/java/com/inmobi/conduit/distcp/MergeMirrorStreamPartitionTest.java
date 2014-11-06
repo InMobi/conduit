@@ -14,9 +14,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
-import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.common.HCatException;
-import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -29,7 +26,6 @@ import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
 import com.inmobi.conduit.FSCheckpointProvider;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.TestMiniClusterUtil;
 import com.inmobi.conduit.local.TestLocalStreamPartition;
@@ -38,7 +34,7 @@ import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.TestHCatUtil;
 
 public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
-  private static final Log LOG = LogFactory.getLog(MergeMirrorStreamPartitionTest.class);
+  /*private static final Log LOG = LogFactory.getLog(MergeMirrorStreamPartitionTest.class);
 
   private List<HCatClientUtil> hcatUtilList = new ArrayList<HCatClientUtil>();
   private static final int msPort1 = 20104;
@@ -112,6 +108,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
 
     for (TestLocalStreamService service : localStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.prepareLastAddedPartitionMap();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
@@ -122,6 +119,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
 
     for (TestMergedStreamService service : mergedStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.prepareLastAddedPartitionMap();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
@@ -132,6 +130,7 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
 
     for (TestMirrorStreamService service : mirrorStreamServices) {
       Thread.currentThread().setName(service.getName());
+      service.prepareLastAddedPartitionMap();
       service.runPreExecute();
       service.runExecute();
       service.runPostExecute();
@@ -345,5 +344,5 @@ public class MergeMirrorStreamPartitionTest extends TestMiniClusterUtil {
       }
       TestHCatUtil.submitBack(hcatClientUtil, hcatClient);
     }
-  }
+  }*/
 }

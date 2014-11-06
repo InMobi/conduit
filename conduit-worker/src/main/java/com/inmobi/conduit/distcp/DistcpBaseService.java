@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.distcp.tools.DistCp;
@@ -44,7 +46,6 @@ import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
-import com.inmobi.conduit.HCatClientUtil;
 
 
 public abstract class DistcpBaseService extends AbstractService {
@@ -65,11 +66,10 @@ public abstract class DistcpBaseService extends AbstractService {
 
   public DistcpBaseService(ConduitConfig config, String name,
       Cluster srcCluster, Cluster destCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil)
+      CheckpointProvider provider, Set<String> streamsToProcess)
           throws Exception {
     super(name + "_" + srcCluster.getName() + "_" + destCluster.getName(),
-        config, streamsToProcess, hcatUtil);
+        config, streamsToProcess);
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     if (currentCluster != null)
@@ -146,7 +146,7 @@ public abstract class DistcpBaseService extends AbstractService {
       if (destStreamMap.containsKey(stream)
           && destStreamMap.get(stream).isHCatEnabled()) {
         updateStreamHCatEnabledMap(stream, true);
-        List<Path> paths = new ArrayList<Path>();
+        Set<Path> paths = Collections.synchronizedSortedSet(new TreeSet<Path>());
         pathsToBeregisteredPerTable.put(getTableName(stream), paths);
       } else {
         updateStreamHCatEnabledMap(stream, false);
@@ -155,11 +155,16 @@ public abstract class DistcpBaseService extends AbstractService {
   }
 
   protected String getTableName(String streamName) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(TABLE_PREFIX);
-    sb.append(TABLE_NAME_SEPARATOR);
-    sb.append(streamName);
-    return sb.toString();
+    if (streamTableNameMap.containsKey(streamName)) {
+      return streamTableNameMap.get(streamName);
+    } else {
+      StringBuilder sb = new StringBuilder();
+      sb.append(TABLE_PREFIX);
+      sb.append(TABLE_NAME_SEPARATOR);
+      sb.append(streamName);
+      streamTableNameMap.put(streamName, sb.toString());
+      return sb.toString();
+    }
   }
 
   @Override

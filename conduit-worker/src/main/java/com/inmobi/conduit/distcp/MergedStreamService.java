@@ -31,7 +31,6 @@ import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.ConduitConfig;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.utils.CalendarHelper;
 import com.inmobi.conduit.utils.DatePathComparator;
 import com.inmobi.conduit.utils.FileUtil;
@@ -57,11 +56,10 @@ public class MergedStreamService extends DistcpBaseService {
 
   public MergedStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil) throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess) throws Exception {
     super(config, "MergedStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
 
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), AbstractService.RETRY_CHECKPOINT, eachStream);
@@ -81,7 +79,7 @@ public class MergedStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           HCAT_CONNECTION_FAILURES, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          FAILED_TO_GET_HCAT_CLIENT_COUNT, eachStream);
+          HCAT_ALREADY_EXISTS_EXCEPTION, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           JOB_EXECUTION_TIME, eachStream);
     }
@@ -163,10 +161,16 @@ public class MergedStreamService extends DistcpBaseService {
               categoriesToCommit);
           // category, Set of Paths to commit
           doLocalCommit(commitPaths, auditMsgList, parsedCounters);
+          /*
+           * add this commit time minute dir to the partitionsToBeregistered
+           */
           for (String eachStream : streamsToProcess) {
             if (isStreamHCatEnabled(eachStream)) {
-              String path = destCluster.getFinalDestDir(eachStream, commitTime);
-              pathsToBeregisteredPerTable.get(getTableName(eachStream)).add(new Path(path));
+              String partitionPathTobeRegisted = destCluster.getFinalDestDir(
+                  eachStream, commitTime);
+              Set<Path> pathsTobeRegistered = pathsToBeregisteredPerTable.
+                  get(getTableName(eachStream));
+              pathsTobeRegistered.add(new Path(partitionPathTobeRegisted));
             }
           }
         }

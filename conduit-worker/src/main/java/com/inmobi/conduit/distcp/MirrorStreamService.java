@@ -40,7 +40,6 @@ import com.inmobi.audit.thrift.AuditMessage;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.utils.DatePathComparator;
 
 /* Assumption - Mirror is always of a merged Stream.There is only 1 instance of a merged Stream
@@ -57,11 +56,10 @@ public class MirrorStreamService extends DistcpBaseService {
 
   public MirrorStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster destinationCluster, Cluster currentCluster,
-      CheckpointProvider provider, Set<String> streamsToProcess,
-      HCatClientUtil hcatUtil) throws Exception {
+      CheckpointProvider provider, Set<String> streamsToProcess) throws Exception {
     super(config, "MirrorStreamService_" + getServiceName(streamsToProcess),
         srcCluster, destinationCluster, currentCluster, provider,
-        streamsToProcess, hcatUtil);
+        streamsToProcess);
     for (String eachStream : streamsToProcess) {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_CHECKPOINT, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(), RETRY_MKDIR, eachStream);
@@ -80,7 +78,7 @@ public class MirrorStreamService extends DistcpBaseService {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           HCAT_CONNECTION_FAILURES, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          FAILED_TO_GET_HCAT_CLIENT_COUNT, eachStream);
+          HCAT_ALREADY_EXISTS_EXCEPTION, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           JOB_EXECUTION_TIME, eachStream);
     }
@@ -215,7 +213,7 @@ public class MirrorStreamService extends DistcpBaseService {
   private void addToTobeRegisteredList(Path registerPath ,
       String streamName) {
     if (isStreamHCatEnabled(streamName)) {
-      List<Path> pathsToberegistered = pathsToBeregisteredPerTable.
+      Set<Path> pathsToberegistered = pathsToBeregisteredPerTable.
           get(getTableName(streamName));
       if (!pathsToberegistered.contains(registerPath)) {
         pathsToberegistered.add(registerPath);

@@ -52,6 +52,8 @@ public class PublishMissingPathsTest {
 
   @BeforeMethod
   public void beforeTest() throws Exception{
+    AbstractService.clearHCatInMemoryMaps();
+    Conduit.setHCatEnabled(false);
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
     ConduitMetrics.init(prop);
@@ -78,7 +80,7 @@ public class PublishMissingPathsTest {
     fs.delete(new Path(cluster.getRootDir()), true);
     TestLocalStreamService service = new TestLocalStreamService(config,
         cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()),
-        streamsToProcess, null);
+        streamsToProcess);
 
     ArrayList<SourceStream> sstreamList = new ArrayList<SourceStream>(config
         .getSourceStreams().values());

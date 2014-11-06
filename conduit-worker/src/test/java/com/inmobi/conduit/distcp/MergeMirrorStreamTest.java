@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.DestinationStream;
@@ -15,6 +16,7 @@ import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.TestMiniClusterUtil;
 import com.inmobi.conduit.metrics.AbsoluteGauge;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -38,6 +40,8 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
 
   @BeforeMethod
   public void beforeTest() throws Exception{
+    AbstractService.clearHCatInMemoryMaps();
+    Conduit.setHCatEnabled(false);
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
     prop.setProperty("com.inmobi.conduit.metrics.slidingwindowtime", "100000000");
@@ -409,7 +413,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster,new FSCheckpointProvider(cluster
-              .getCheckpointDir()), streamsToProcessLocal, null);
+              .getCheckpointDir()), streamsToProcessLocal);
       localStreamServices.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
@@ -467,7 +471,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       for (String remote : mergedStreamRemoteClusters) {
         TestMergedStreamService remoteMergeService = new TestMergedStreamService(
             config, config.getClusters().get(remote), cluster, currentCluster,
-            mergedSrcClusterToStreamsMap.get(remote), null);
+            mergedSrcClusterToStreamsMap.get(remote));
         mergedStreamServices.add(remoteMergeService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMergeService.getCurrentCluster(),
@@ -478,7 +482,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       for (String remote : mirroredRemoteClusters) {
         TestMirrorStreamService remoteMirrorService = new TestMirrorStreamService(
             config, config.getClusters().get(remote), cluster, currentCluster,
-            mirrorSrcClusterToStreamsMap.get(remote), null);
+            mirrorSrcClusterToStreamsMap.get(remote));
         mirrorStreamServices.add(remoteMirrorService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMirrorService.getCurrentCluster(),

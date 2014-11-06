@@ -239,20 +239,17 @@
       <version>15.0-rc1</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.hive.hcatalog</groupId>
-      <artifactId>hive-webhcat-java-client</artifactId>
-    </dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-exec</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-metastore</artifactId>
+      </dependency>
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
       <version>0.9.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hive.hcatalog</groupId>
-      <artifactId>hive-hcatalog-core</artifactId>
-      <version>${hive.version}</version>
-      <classifier>tests</classifier>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

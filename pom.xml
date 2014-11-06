@@ -22,7 +22,7 @@
   <properties>
     <excluded.testng.groups>integration</excluded.testng.groups>
     <messaging-client-version>4.0.3</messaging-client-version>
-    <hive.version>0.13.1-inm</hive.version>
+    <hive.version>0.13.2-inm</hive.version>
   </properties>
 
   <profiles>
@@ -312,19 +312,14 @@
         <artifactId>commons-configuration</artifactId>
         <version>1.9</version>
       </dependency>
-       <dependency>
-        <groupId>org.apache.hive.hcatalog</groupId>
-        <artifactId>hive-webhcat-java-client</artifactId>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-exec</artifactId>
         <version>${hive.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.hive.hcatalog</groupId>
-        <artifactId>hive-hcatalog</artifactId>
-        <version>${hive.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hive.hcatalog</groupId>
-        <artifactId>hive-hcatalog-core</artifactId>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-metastore</artifactId>
         <version>${hive.version}</version>
       </dependency>
     </dependencies>

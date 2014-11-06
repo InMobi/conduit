@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -32,7 +33,6 @@ import java.util.TreeSet;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.ConfigConstants;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
 
@@ -100,11 +100,11 @@ ConfigConstants {
 
   public LocalStreamService(ConduitConfig config, Cluster srcCluster,
       Cluster currentCluster, CheckpointProvider provider,
-      Set<String> streamsToProcess, HCatClientUtil hcatUtil)
+      Set<String> streamsToProcess)
           throws IOException {
     super("LocalStreamService_" + srcCluster + "_" +
         getServiceName(streamsToProcess), config, DEFAULT_RUN_INTERVAL,
-        provider, streamsToProcess, hcatUtil);
+        provider, streamsToProcess);
     this.srcCluster = srcCluster;
     if (currentCluster == null)
       this.currentCluster = srcCluster;
@@ -149,7 +149,7 @@ ConfigConstants {
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           HCAT_CONNECTION_FAILURES, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
-          FAILED_TO_GET_HCAT_CLIENT_COUNT, eachStream);
+          HCAT_ALREADY_EXISTS_EXCEPTION, eachStream);
       ConduitMetrics.registerSlidingWindowGauge(getServiceType(),
           JOB_EXECUTION_TIME, eachStream);
     }
@@ -169,7 +169,7 @@ ConfigConstants {
       if (sourceStreamMap.containsKey(stream)
           && sourceStreamMap.get(stream).isHCatEnabled()) {
         streamHcatEnableMap.put(stream, true);
-        List<Path> paths = new ArrayList<Path>();
+        Set<Path> paths = Collections.synchronizedSortedSet(new TreeSet<Path>());
         pathsToBeregisteredPerTable.put(getTableName(stream), paths);
       } else {
         streamHcatEnableMap.put(stream, false);
@@ -189,11 +189,16 @@ ConfigConstants {
   }
 
   protected String getTableName(String streamName) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(LOCAL_TABLE_PREFIX);
-    sb.append(TABLE_NAME_SEPARATOR);
-    sb.append(streamName);
-    return sb.toString();
+    if (streamTableNameMap.containsKey(streamName)) {
+      return streamTableNameMap.get(streamName);
+    } else {
+      StringBuilder sb = new StringBuilder();
+      sb.append(LOCAL_TABLE_PREFIX);
+      sb.append(TABLE_NAME_SEPARATOR);
+      sb.append(streamName);
+      streamTableNameMap.put(streamName, sb.toString());
+      return sb.toString();
+    }
   }
 
   @Override

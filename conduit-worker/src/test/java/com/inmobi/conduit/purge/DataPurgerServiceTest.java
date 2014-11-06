@@ -13,10 +13,10 @@
  */
 package com.inmobi.conduit.purge;
 
+import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;
 import com.inmobi.conduit.ConduitConfigParser;
-import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.local.LocalStreamServiceTest;
 import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
@@ -41,10 +41,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
-import org.apache.hive.hcatalog.api.HCatClient;
-import org.apache.hive.hcatalog.api.HCatCreateDBDesc;
-import org.apache.hive.hcatalog.api.HCatCreateTableDesc;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.log4j.Logger;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -156,10 +154,9 @@ public class DataPurgerServiceTest {
   }
 
   private class TestDataPurgerService extends DataPurgerService {
-    public TestDataPurgerService(ConduitConfig config, Cluster cluster,
-        HCatClientUtil hcatUtil)
+    public TestDataPurgerService(ConduitConfig config, Cluster cluster)
         throws Exception {
-      super(config, cluster, hcatUtil);
+      super(config, cluster);
     }
 
     public void runOnce() throws Exception {
@@ -182,7 +179,7 @@ public class DataPurgerServiceTest {
     for (Cluster cluster : config.getClusters().values()) {
 
       LOG.info("Creating Service for Cluster " + cluster.getName());
-      TestDataPurgerService service = new TestDataPurgerService(config, cluster, null);
+      TestDataPurgerService service = new TestDataPurgerService(config, cluster);
 
       service.runOnce();
 
@@ -229,7 +226,7 @@ public class DataPurgerServiceTest {
   }
 
   private void createTestPurgePartitionFiles(FileSystem fs, Cluster cluster,
-      Calendar date, HCatClient hcatClient) throws Exception {
+      Calendar date, Table table) throws Exception {
     for(String streamname: cluster.getSourceStreams()) {
       String[] files = new String[NUM_OF_FILES];
       String datapath = Cluster
@@ -238,11 +235,8 @@ public class DataPurgerServiceTest {
           + streamname + File.separator + datapath;
       fs.mkdirs(new Path(commitpath));
       Map<String, String> partSpec = TestHCatUtil.getPartitionMap(date);
-      HCatAddPartitionDesc hcatPartDesc = HCatAddPartitionDesc.create(
-          Conduit.getHcatDBName(), "conduit_local_" + streamname, commitpath,
-          partSpec).build();
-      LOG.info("Adding partition " + hcatPartDesc + " for stream " + streamname);
-      hcatClient.addPartition(hcatPartDesc);
+      LOG.info("Adding partition " + partSpec + " for stream " + streamname);
+      TestHCatUtil.addPartition(table, partSpec);   
       for (int j = 0; j < NUM_OF_FILES; ++j) {
         files[j] = new String(cluster.getName() + "-"
             + TestLocalStreamService.getDateAsYYYYMMDDHHmm(new Date()) + "_"
@@ -325,8 +319,8 @@ public class DataPurgerServiceTest {
   }
 
   private void verifyPurgePartitionFiles(FileSystem fs, Cluster cluster,
-      Calendar date, boolean checkexists, boolean checktrashexists,
-      HCatClient hcatClient) throws Exception {
+      Calendar date, boolean checkexists, boolean checktrashexists, Table table)
+          throws Exception {
     for (String streamname : cluster.getSourceStreams()) {
       String datapath = Cluster
           .getDateAsYYYYMMDDHHMNPath(date.getTime());
@@ -336,8 +330,7 @@ public class DataPurgerServiceTest {
         Path path = new Path(commitpath);
         LOG.info("Verifying File " + path.toString());
         Assert.assertEquals(fs.exists(path), checkexists);
-        Assert.assertEquals(hcatClient.getPartitions("conduit",
-            "conduit_local_" + streamname).size(), 0);
+        Assert.assertEquals(Hive.get().getPartitions(table).size(), 0);
       }
     }
   }
@@ -382,7 +375,7 @@ public class DataPurgerServiceTest {
 
     for (Cluster cluster : config.getClusters().values()) {
       TestDataPurgerService service = new TestDataPurgerService(
-          config, cluster, null);
+          config, cluster);
 
       FileSystem fs = FileSystem.getLocal(new Configuration());
       fs.delete(new Path(cluster.getRootDir()), true);
@@ -416,7 +409,7 @@ public class DataPurgerServiceTest {
         "deleteFailures.count", DataPurgerService.class.getName()).getValue().longValue(), 0);
   }
 
-  public void testDataPurgerParittion() throws Exception {
+  public void testDataPurgerPartition() throws Exception {
     LOG.info("Check data purger does not stop when unable to delete a path");
     ConduitConfigParser configparser = new ConduitConfigParser(
         "test-dps-conduit_X_hcat_5.xml");
@@ -430,36 +423,36 @@ public class DataPurgerServiceTest {
       TestHCatUtil.startMetaStoreServer(hcatConf1, 20109);
       Thread.sleep(10000);
 
-      HCatClientUtil hcatUtil1 = TestHCatUtil.getHCatUtil(hcatConf1);
-      TestHCatUtil.createHCatClients(hcatConf1, hcatUtil1);
+      Conduit.setHiveConf(hcatConf1);
 
       FileSystem fs = FileSystem.getLocal(new Configuration());
       fs.delete(new Path(cluster.getRootDir()), true);
 
-      HCatClient hcatClient = hcatUtil1.getHCatClient();
-      HCatCreateDBDesc hcatDbDesc = HCatCreateDBDesc.create("conduit").build();
-      hcatClient.createDatabase(hcatDbDesc);
+      TestHCatUtil.createDatabase(Conduit.getHcatDBName());
+      TestHCatUtil thutil = new TestHCatUtil();
+      Table table = null;
      for (String stream : cluster.getSourceStreams()) {
-       TestHCatUtil.createTable(hcatClient, "conduit",
-           "conduit_local_"+stream, TestHCatUtil.getPartCols());
+       table = thutil.createTable(Conduit.getHcatDBName(), "conduit_local_"+stream);
      }
       Calendar date1 = new GregorianCalendar(Calendar.getInstance()
           .getTimeZone());
       date1.add(Calendar.HOUR, -7);
-      createTestPurgePartitionFiles(fs, cluster, date1, hcatClient);
+      createTestPurgePartitionFiles(fs, cluster, date1, table);
 
       TestDataPurgerService service = new TestDataPurgerService(config,
-          cluster, hcatUtil1);
+          cluster);
 
       service.runOnce();
 
-      verifyPurgePartitionFiles(fs, cluster, date1, false, false, hcatClient);
+      verifyPurgePartitionFiles(fs, cluster, date1, false, false, table);
       service.clearStreamHCatEnableMap();
       Conduit.setHCatEnabled(false);
+      TestHCatUtil.stop();
     }
   }
 
   public void testDataPurger() throws Exception {
+    AbstractService.clearHCatInMemoryMaps();
     LOG.info("Check data purger does not stop when unable to delete a path");
     ConduitConfigParser configparser = new ConduitConfigParser(
         "test-dps-conduit_X_5.xml");
@@ -494,7 +487,7 @@ public class DataPurgerServiceTest {
       date3.add(Calendar.HOUR, -5);
       createTestPurgefiles(fs, cluster, date3, false);
 
-      TestDataPurgerService service = new TestDataPurgerService(config, cluster, null);
+      TestDataPurgerService service = new TestDataPurgerService(config, cluster);
 
       service.runOnce();
 
@@ -564,7 +557,7 @@ public class DataPurgerServiceTest {
       date3.add(Calendar.HOUR, -1);
       createTestPurgefiles(fs, cluster, date3, false);
 
-      TestDataPurgerService service = new TestDataPurgerService(config, cluster, null);
+      TestDataPurgerService service = new TestDataPurgerService(config, cluster);
 
       service.runOnce();
 
@@ -585,7 +578,7 @@ public class DataPurgerServiceTest {
       ConduitConfig config = LocalStreamServiceTest.buildTestConduitConfig(
           "local", "file:///tmp", "datapurger", "48", "24");
       service = new TestDataPurgerService(config, config.getClusters().get(
-          "cluster1"), null);
+          "cluster1"));
     }
     catch (Exception e) {
       LOG.error("Error in creating DataPurgerService", e);

@@ -41,6 +41,7 @@ import com.inmobi.conduit.metrics.ConduitMetrics;
 import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.conduit.AbstractService;
 import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfigParser;
 import com.inmobi.conduit.ConduitConstants;
 import com.inmobi.conduit.FSCheckpointProvider;
@@ -62,6 +63,8 @@ public class MergeCheckpointTest {
 
   @BeforeMethod
   public void beforeTest() throws Exception{
+    AbstractService.clearHCatInMemoryMaps();
+    Conduit.setHCatEnabled(false);
     Properties prop = new Properties();
     prop.setProperty("com.inmobi.conduit.metrics.enabled", "true");
     prop.setProperty("com.inmobi.conduit.metrics.slidingwindowtime", "100000000");
@@ -193,7 +196,7 @@ public class MergeCheckpointTest {
       for (String remote : mergedStreamRemoteClusters) {
         MergedStreamService service = new TestMergedStreamService(config,
             config.getClusters().get(remote), currentCluster, currentCluster,
-            mergedSrcClusterToStreamsMap.get(remote), null);
+            mergedSrcClusterToStreamsMap.get(remote));
         service.execute();
         if (!srcRemoteMergeMap.containsKey(cluster)) {
           List<String> tmp = new ArrayList<String>();

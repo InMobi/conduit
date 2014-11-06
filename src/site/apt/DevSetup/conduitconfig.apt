@@ -56,5 +56,3 @@
 *----+------+------+
 | com.inmobi.conduit.hcatDBName | | Mandatory if hcatlog is enabled for worker |
 *----+------+------+
-| com.inmobi.conduit.hcatClients.ratio | ratio of hcat clients with respective to services. Ex: if services are 10 and ratio is 1/2 then (10/2) hcat client objects will be created | optional.  default value is 1/5 |
-*----+------+------+
