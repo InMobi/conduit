@@ -368,7 +368,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     for (TestLocalStreamService service : localStreamServices) {
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
-    }
+    } 
   }
 
   private void initializeConduit(String filename, String currentClusterName,
@@ -409,7 +409,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster,new FSCheckpointProvider(cluster
-              .getCheckpointDir()), streamsToProcessLocal);
+              .getCheckpointDir()), streamsToProcessLocal, null);
       localStreamServices.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
@@ -467,7 +467,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       for (String remote : mergedStreamRemoteClusters) {
         TestMergedStreamService remoteMergeService = new TestMergedStreamService(
             config, config.getClusters().get(remote), cluster, currentCluster,
-            mergedSrcClusterToStreamsMap.get(remote));
+            mergedSrcClusterToStreamsMap.get(remote), null);
         mergedStreamServices.add(remoteMergeService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMergeService.getCurrentCluster(),
@@ -478,7 +478,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
       for (String remote : mirroredRemoteClusters) {
         TestMirrorStreamService remoteMirrorService = new TestMirrorStreamService(
             config, config.getClusters().get(remote), cluster, currentCluster,
-            mirrorSrcClusterToStreamsMap.get(remote));
+            mirrorSrcClusterToStreamsMap.get(remote), null);
         mirrorStreamServices.add(remoteMirrorService);
         if (currentCluster != null)
           Assert.assertEquals(remoteMirrorService.getCurrentCluster(),

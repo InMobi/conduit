@@ -25,6 +25,7 @@ import com.inmobi.conduit.CheckpointProvider;
 import com.inmobi.conduit.Cluster;
 import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConstants;
+import com.inmobi.conduit.HCatClientUtil;
 import com.inmobi.conduit.PublishMissingPathsTest;
 import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.utils.CalendarHelper;
@@ -383,17 +384,16 @@ public class TestLocalStreamService extends LocalStreamService implements
       throw new Error("Error in LocalStreamService Test PostExecute");
     } catch (AssertionError e) {
       e.printStackTrace();
-      throw new Error("Error in LocalStreamService Test PostExecute");
+      throw new Error("Error in LocalStreamService Test PostExecute", e);
     }
     
   }
   
-  public TestLocalStreamService(ConduitConfig config,
-                                Cluster srcCluster, Cluster currentCluster,
- CheckpointProvider provider,
-      Set<String> streamsToProcess)
-      throws IOException {
-    super(config, srcCluster, currentCluster, provider, streamsToProcess);
+  public TestLocalStreamService(ConduitConfig config, Cluster srcCluster,
+      Cluster currentCluster, CheckpointProvider provider,
+      Set<String> streamsToProcess, HCatClientUtil hcatUtil)
+          throws IOException {
+    super(config, srcCluster, currentCluster, provider, streamsToProcess, hcatUtil);
     this.srcCluster = srcCluster;
     this.provider = provider;
     MessagePublisher publisher = MessagePublisherFactory.create();

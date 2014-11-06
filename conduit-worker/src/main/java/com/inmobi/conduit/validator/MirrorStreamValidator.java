@@ -216,7 +216,7 @@ public class MirrorStreamValidator extends AbstractStreamValidator {
     public MirrorStreamFixService(ConduitConfig conduitConfig, Cluster srcCluster,
         Cluster destCluster, Set<String> streamsToProcess) throws Exception {
       super(conduitConfig, srcCluster, destCluster, null, null,
-          streamsToProcess);
+          streamsToProcess, null);
     }
 
     @Override

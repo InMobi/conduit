@@ -65,7 +65,7 @@ public class TestCreateListing {
 
     LocalStreamService service = new LocalStreamService(null, cluster, null,
         new FSCheckpointProvider("/tmp/test-conduit/conduit/checkpoint"),
-        streamsToProcess);
+        streamsToProcess, null);
     service.createListing(localFs, localFs.getFileStatus(new Path(rootDir,
     "data")), results, trashSet, checkpointPaths);
 

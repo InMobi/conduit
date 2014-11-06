@@ -236,7 +236,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       streamsToProcess.add("stream2");
       TestLocalStreamService service = new TestLocalStreamService(null,
           cluster, null, new FSCheckpointProvider(cluster.getRootDir()
-              + "/conduit-checkpoint"), streamsToProcess);
+              + "/conduit-checkpoint"), streamsToProcess, null);
       service.createListing(fs, dataDir, results, trashSet, checkpointPaths);
 
       Set<String> tmpResults = new LinkedHashSet<String>();
@@ -305,14 +305,14 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     sourcestreams.put("cluster1", new Integer(retentioninhours));
 
     Map<String, SourceStream> streamMap = new HashMap<String, SourceStream>();
-    streamMap.put("stream1", new SourceStream("stream1", sourcestreams));
+    streamMap.put("stream1", new SourceStream("stream1", sourcestreams, false));
 
     sourcestreams.clear();
 
     Map<String, DestinationStream> deststreamMap = new HashMap<String, DestinationStream>();
     deststreamMap.put("stream1",
         new DestinationStream("stream1", Integer.parseInt(retentioninhours),
-            Boolean.TRUE));
+            Boolean.TRUE, false));
 
     sourcestreams.clear();
 
@@ -396,7 +396,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     streamsToProcess.addAll(conduitConfig.getSourceStreams().keySet());
     TestLocalStreamService service = new TestLocalStreamService(
         conduitConfig, cluster, null, new FSCheckpointProvider(
-            cluster.getCheckpointDir()), streamsToProcess);
+            cluster.getCheckpointDir()), streamsToProcess, null);
 
     Map<Path, Path> trashCommitPaths = service
         .populateTrashCommitPaths(trashSet);
@@ -568,7 +568,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
       cluster.getHadoopConf().set("mapred.job.tracker",
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
-          cluster, null, new NullCheckPointProvider(), streamsToProcess);
+          cluster, null, new NullCheckPointProvider(), streamsToProcess, null);
       services.add(service);
     }
 
@@ -626,7 +626,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, currentCluster, new NullCheckPointProvider(),
-          streamsToProcess);
+          streamsToProcess, null);
       services.add(service);
     }
 
@@ -717,7 +717,7 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
           super.CreateJobConf().get("mapred.job.tracker"));
       TestLocalStreamService service = new TestLocalStreamService(config,
           cluster, null, new FSCheckpointProvider(cluster.getCheckpointDir()),
-          streamsToProcess);
+          streamsToProcess, null);
       services.add(service);
       service.getFileSystem().delete(
           new Path(service.getCluster().getRootDir()), true);
