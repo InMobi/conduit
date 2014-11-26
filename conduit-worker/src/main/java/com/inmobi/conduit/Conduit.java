@@ -231,9 +231,10 @@ public class Conduit implements Service, ConduitConstants {
     }
     // copy inputFormat source jar into /conduit/system/tmp/jars path
     Path inputFormatJarDestPath = new Path(jarsPath, "conduit-distcp-current.jar");
-    if (!clusterFS.exists(inputFormatJarDestPath)) {
-      clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
+    if (clusterFS.exists(inputFormatJarDestPath)) {
+      clusterFS.delete(inputFormatJarDestPath, true);
     }
+    clusterFS.copyFromLocalFile(new Path(inputFormatSrcJar), inputFormatJarDestPath);
   }
 
   private void copyAuditUtilJarToClusterFs(Cluster cluster,
@@ -246,9 +247,10 @@ public class Conduit implements Service, ConduitConstants {
     }
     // copy AuditUtil source jar into /conduit/system/tmp/jars path
     Path AuditUtilJarDestPath = new Path(jarsPath, "messaging-client-core.jar");
-    if (!clusterFS.exists(AuditUtilJarDestPath)) {
-      clusterFS.copyFromLocalFile(new Path(auditUtilSrcJar), AuditUtilJarDestPath);
+    if (clusterFS.exists(AuditUtilJarDestPath)) {
+      clusterFS.delete(AuditUtilJarDestPath, true);
     }
+    clusterFS.copyFromLocalFile(new Path(auditUtilSrcJar), AuditUtilJarDestPath);
   }
 
   protected LocalStreamService getLocalStreamService(ConduitConfig config,
