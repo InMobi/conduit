@@ -66,7 +66,7 @@ public class ConduitMetrics {
       return;
     }
     timeBetweenPolls = Integer.parseInt(config.getProperty(REPORTING_PERIOD , "10"));
-    slidingwindowtime = Integer.parseInt(config.getProperty(SLIDING_WINDOW_TIME, "1"));
+    slidingwindowtime = Integer.parseInt(config.getProperty(REPORTING_PERIOD, "10"));
 
     if (config.getProperty(GANGLIA, "false").equalsIgnoreCase("true")) {
       final GMetric ganglia = new GMetric(config.getProperty(GANGLIA_SERVERNAME),
