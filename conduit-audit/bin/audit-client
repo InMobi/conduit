@@ -146,6 +146,18 @@ while [ -n "$*" ] ; do
   esac
 done
 
+if [ -n "$opt_conf" ]; then
+  envfile=$opt_conf/conduit-audit.env
+
+  #check env existence
+  if ! [ -r $envfile ]; then
+    echo $envfile " not found."
+    exit 1
+  fi
+
+  . $envfile
+fi
+
 
 # find java
 if [ -z "${JAVA_HOME}" ] ; then
@@ -195,15 +207,6 @@ if [ -n "$opt_audit" ] ; then
   run_client $CLIENT_AUDIT_QUERY_CLASS $args
 else
   if [ -n "$opt_feeder" ] ; then
-    envfile=$opt_conf/conduit-audit.env
-
-    #check env existence
-    if ! [ -r $envfile ]; then
-      echo $envfile " not found."
-      exit 1
-    fi
-
-    . $envfile
 
     #create PID dir
     if [ "$CONDUIT_FEEDER_PID_DIR" = "" ]; then
