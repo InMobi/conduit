@@ -147,6 +147,8 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
 
   @Test
   public void testFindDiffBetweenLastAddedPartTimeAndFirstPath() throws Exception {
+	  Conduit.setHcatDBName("conduit3");
+	  TestHCatUtil.createDatabase("conduit3");
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
         service.getFileSystem().delete(
@@ -161,6 +163,14 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
         String pathPrefix = new Path(service.getCluster().
             getLocalFinalDestDirRoot(), stream).toString();
         Path currentMinDir = new Path(pathPrefix, timeString);
+        TestHCatUtil thutil = new TestHCatUtil();
+        try {
+          table = thutil.createTable(Conduit.getHcatDBName(), tableName);
+        } catch (HiveException e) {
+          if (e.getCause() instanceof AlreadyExistsException) {
+            LOG.warn("Table " + tableName + "already exists ");
+          }
+        }
         service.prepareLastAddedPartitionMap();
         service.updateLastAddedPartitionMap(tableName, cal1.getTime().getTime());
         Set<Path> pathsList = new TreeSet<Path>();

@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.inmobi.conduit.utils.CalendarHelper;
-
 import com.inmobi.conduit.utils.HCatPartitionComparator;
 
 import org.apache.commons.logging.Log;
@@ -466,7 +465,7 @@ public abstract class AbstractService implements Service, Runnable {
         try {
           findLastPartition(stream);
         } catch (HiveException e) {
-          if (e.getCause() instanceof InvalidTableException) {
+          if (e instanceof InvalidTableException) {
             LOG.error("Table " + tableName + " does not exists " + e.getMessage());
             throw new RuntimeException(e);
           }
@@ -657,7 +656,7 @@ public abstract class AbstractService implements Service, Runnable {
       return false;
     }
     try {
-      LOG.info("Adding the partitions  " + addPd + " in "
+      LOG.info("Adding the partitions  " + addPd.getLocationForExplain() + " in "
           + tableName + " table");
       Hive.get().createPartitions(addPd);
       LOG.info("update the last added partition map with last added partition"
@@ -672,8 +671,8 @@ public abstract class AbstractService implements Service, Runnable {
       } else {
         ConduitMetrics.updateSWGuage(getServiceType(), HCAT_CONNECTION_FAILURES,
             getName(), 1);
-        LOG.info("Got Exception while trying to add partition  : " + addPd
-            + ". Exception ", e);
+        LOG.info("Got Exception while trying to add partition  : "
+            + addPd.getLocationForExplain() + ". Exception ", e);
         throw e;
       }
     }
