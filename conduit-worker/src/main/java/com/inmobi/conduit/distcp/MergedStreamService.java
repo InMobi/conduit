@@ -160,7 +160,7 @@ public class MergedStreamService extends DistcpBaseService {
           commitPaths = createLocalCommitPaths(tmpOut, commitTime,
               categoriesToCommit);
           // category, Set of Paths to commit
-          doLocalCommit(commitPaths, auditMsgList, parsedCounters);
+          doLocalCommit(commitPaths, auditMsgList, parsedCounters, commitTime);
           /*
            * add this commit time minute dir to the partitionsToBeregistered
            */
@@ -262,11 +262,16 @@ public class MergedStreamService extends DistcpBaseService {
   }
 
   private void doLocalCommit(Map<Path, Path> commitPaths,
-      List<AuditMessage> auditMsgList, Table<String, Long, Long> parsedCounters)
-          throws Exception {
+      List<AuditMessage> auditMsgList, Table<String, Long, Long> parsedCounters,
+      long commitTime) throws Exception {
     LOG.info("Committing " + commitPaths.size() + " paths.");
     FileSystem fs = getDestFs();
     long startTime = System.currentTimeMillis();
+    for (String stream : streamsToProcess) {
+      Path finalDestPath = new Path(destCluster.getFinalDestDir(stream, commitTime));
+      LOG.info("Creating commit time minute directory " + finalDestPath + " for " + stream);
+      retriableMkDirs(fs, finalDestPath, stream);
+    }
     for (Map.Entry<Path, Path> entry : commitPaths.entrySet()) {
       LOG.info("Renaming " + entry.getKey() + " to " + entry.getValue());
       String streamName = getTopicNameFromDestnPath(entry.getValue());
