@@ -370,7 +370,7 @@ public abstract class AbstractService implements Service, Runnable {
               prevRuntime);
           Path missingDir = new Path(missingPath);
           if (!fs.exists(missingDir)) {
-            LOG.debug("Creating Missing Directory [" + missingDir + "]");
+            LOG.info("Creating Missing Directory [" + missingDir + "]");
             fs.mkdirs(missingDir);
             if (isStreamHCatEnabled(categoryName)) {
               synchronized (pathsToBeRegistered) {
