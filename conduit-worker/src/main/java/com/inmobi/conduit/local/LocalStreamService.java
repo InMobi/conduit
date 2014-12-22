@@ -331,9 +331,9 @@ ConfigConstants {
         LOG.debug("Moving [" + file.getPath() + "] to [" + destPath + "]");
         mvPaths.put(file.getPath(), destPath);
       }
-      publishMissingPaths(fs,
-          srcCluster.getLocalFinalDestDirRoot(), commitTime, categoryName);
     }
+    publishMissingPaths(fs,
+            srcCluster.getLocalFinalDestDirRoot(), commitTime, streamsToProcess);
     return mvPaths;
   }
 
