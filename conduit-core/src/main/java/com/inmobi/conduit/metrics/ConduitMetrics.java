@@ -29,7 +29,6 @@ public class ConduitMetrics {
   private final static String MERGED_SERVICE = "MergedStreamService";
   private final static String MIRROR_SERVICE = "MirrorStreamService";
   private final static String PURGER_SERVICE = "DataPurgerService";
-  private final static String SLIDING_WINDOW_TIME ="com.inmobi.conduit.metrics.slidingwindowtime";
 
 
   private final static Map<String, ScheduledReporter> reporterMap =
@@ -38,7 +37,6 @@ public class ConduitMetrics {
 
   private static boolean isEnabled =false;
   private static int timeBetweenPolls = 10;
-  private static int slidingwindowtime= 0;
   private static MetricRegistry registry;
 
   /*
@@ -66,7 +64,6 @@ public class ConduitMetrics {
       return;
     }
     timeBetweenPolls = Integer.parseInt(config.getProperty(REPORTING_PERIOD , "10"));
-    slidingwindowtime = Integer.parseInt(config.getProperty(SLIDING_WINDOW_TIME, "1"));
 
     if (config.getProperty(GANGLIA, "false").equalsIgnoreCase("true")) {
       final GMetric ganglia = new GMetric(config.getProperty(GANGLIA_SERVERNAME),
@@ -294,7 +291,7 @@ public class ConduitMetrics {
       return null;
     }
 
-    final SlidingTimeWindowGauge codahalegaugeInst = new SlidingTimeWindowGauge(slidingwindowtime, TimeUnit.SECONDS);
+    final SlidingTimeWindowGauge codahalegaugeInst = new SlidingTimeWindowGauge(timeBetweenPolls, TimeUnit.SECONDS);
     registry.register(metricsName, codahalegaugeInst);
     addToCache(serviceName, counterType, context, codahalegaugeInst);
     return codahalegaugeInst;
