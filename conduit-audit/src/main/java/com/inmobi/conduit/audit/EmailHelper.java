@@ -54,7 +54,7 @@ public class EmailHelper {
       MimeBodyPart attachment = new MimeBodyPart();
       attachment.setFileName("manual.pdf");
       attachment.setContent("", "application/pdf");
-      mp.addBodyPart(attachment); 
+      mp.addBodyPart(attachment);
 
       message.setContent(mp);
       LOG.info("Sending email" + message);

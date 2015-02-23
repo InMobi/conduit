@@ -65,7 +65,7 @@ public class StreamLatencyMetrics {
     String [] clusterSplits = clusterStr.split(",");
     String [] urlSplits = urlStr.split(",");
 
-    for (int i = 0; i < clusterSplits.length; i++) {	
+    for (int i = 0; i < clusterSplits.length; i++) {
       clusterUrlMap.put(clusterSplits[i], urlSplits[i]);
     }
     LOG.info(" clusterUrl map " + clusterUrlMap);
@@ -89,7 +89,7 @@ public class StreamLatencyMetrics {
 
     /*
      * rajub@tzns4003:~$ /usr/local/conduit-audit/bin/audit-client audit -group TIER,TOPIC -filter topic=beacon_rr_uj1_cpm_render,TIER=LOCAL -percentile 95 19-11-2014-08:00 19-11-2014-09:00  --conf /usr/local/conduit-audit/prod/conf/
-     * 
+     *
      * Displaying results for AuditStatsQuery [fromTime=19-11 08:00, toTime=19-11 09:00, groupBy=GroupBy[TIER, TOPIC], filter=Filter{TOPIC=[beacon_rr_uj1_cpm_render], TIER=[LOCAL]}, timeZone=null, percentiles=95]
 [{"TOPIC":"beacon_rr_uj1_cpm_render","CLUSTER":null,"Received":698899,"HOSTNAME":null,"TIMEINTERVAL":null,"Latencies":{"95.0":3},"TIER":"LOCAL"}]
      */
@@ -101,7 +101,7 @@ public class StreamLatencyMetrics {
       ClusterHtml clusterHtml = new ClusterHtml(cluster);
       AuditDbQuery auditQuery = new AuditDbQuery(endTimeStr, startTimeStr,
           "TIER='LOCAL|MERGE',CLUSTER=" + cluster,
-          "TIER,TOPIC", "GMT", percentileStr); 
+          "TIER,TOPIC", "GMT", percentileStr);
       try {
         auditQuery.execute();
         LOG.info(" displaying the results : ");
@@ -193,7 +193,7 @@ public class StreamLatencyMetrics {
   }
 
   /*
-   * It prepares a result in json form and post it to the url 
+   * It prepares a result in json form and post it to the url
    */
   private void postOnlyLatencyMetrics(AuditDbQuery auditQuery,
       String startTimeStr, String url, ClusterHtml clusterHtml) throws JSONException {
@@ -204,7 +204,7 @@ public class StreamLatencyMetrics {
     for (Tuple tuple : tupleSet) {
       if (streamList.contains(tuple.getTopic())) {
         Map<Float, Integer> percentileMap = percentileTupleMap.get(tuple);
-        Set<Float> percentileStr = auditQuery.getPercentileSet();				
+        Set<Float> percentileStr = auditQuery.getPercentileSet();
         for (Float percentileVal : percentileStr) {
           Integer latencyValue = percentileMap.get(percentileVal);
           String percentile = String.valueOf(percentileVal).substring(0,
@@ -234,7 +234,7 @@ public class StreamLatencyMetrics {
     try {
       con = (HttpURLConnection) ((new URL(url).openConnection()));
       con.setDoOutput(true);
-      con.setDoInput(true); 
+      con.setDoInput(true);
       con.setUseCaches(false);
 
       con.connect();
@@ -340,4 +340,5 @@ public class StreamLatencyMetrics {
     }
 
   }
+  
 }
