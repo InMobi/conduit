@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -25,23 +23,6 @@ import org.json.JSONObject;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
 import com.inmobi.messaging.util.AuditUtil;
 
-/*
- * Post metrics to track.corp.inmobi.com/bender/dash/117
- * 
- * 
- *Inputs: ListOfStreams, ListOfClusters, ListOfUrls(order of url is in the order of clusters),
- * percentileString(default 90 and 95), tier(local and merge)
- * 
- *Steps: 
- * Parse the inputs
- * for each cluster stream url create a object called streamLatency 
- * for each object run two queries.. one for LOCAL tier and another for MERGE tier.
- * 
- * How to post metrics from the query results..
- * Query results returns set of tuples.. here we will be having only one tuple
- * 
- * 
- */
 public class StreamLatencyMetrics {
 
   private List<String> streamList = new ArrayList<String>();
@@ -143,7 +124,9 @@ public class StreamLatencyMetrics {
         }
       }
       if (sendMail) {
-        htmlBody.append("<p></p><table BORDER=2 CELLPADDING=10> \n").append("<caption><b>").append(cluster+ " Latencies in minutes </b>").append("</caption>").append("<tr> \n <th>Cluster</th><th>StreamType</th> \n<th>Topic</th>\n");
+        htmlBody.append("<p></p><table BORDER=2 CELLPADDING=10> \n").append("<caption><b>").
+            append(cluster+ " Latencies in minutes </b>").append("</caption>").
+            append("<tr> \n <th>Cluster</th><th>StreamType</th> \n<th>Topic</th>\n");
         for (String percentile : percentileStr.split(",")) {
           htmlBody.append("<th col>"+ Double.parseDouble(percentile) +" percentile</th>").append("\n");
         }
