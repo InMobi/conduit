@@ -1,4 +1,4 @@
-package com.inmobi.conduit.audit.metric.tools;
+package com.inmobi.conduit.audit.tools;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;

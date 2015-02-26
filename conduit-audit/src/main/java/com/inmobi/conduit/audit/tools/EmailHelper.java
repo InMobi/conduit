@@ -1,4 +1,4 @@
-package com.inmobi.conduit.audit.metric.tools;
+package com.inmobi.conduit.audit.tools;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
