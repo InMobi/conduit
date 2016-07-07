@@ -360,7 +360,6 @@
         <configuration>
           <excludedGroups>${excluded.testng.groups}</excludedGroups>
           <forkedProcessTimeoutInSeconds>7200</forkedProcessTimeoutInSeconds>
-          <skip>true</skip>
         </configuration>
       </plugin>
       <plugin>
