@@ -1,4 +1,4 @@
-package com.inmobi.conduit.audit.metric.tools;
+package com.inmobi.conduit.audit;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -20,7 +20,6 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.inmobi.conduit.audit.Tuple;
 import com.inmobi.conduit.audit.query.AuditDbQuery;
 import com.inmobi.messaging.util.AuditUtil;
 

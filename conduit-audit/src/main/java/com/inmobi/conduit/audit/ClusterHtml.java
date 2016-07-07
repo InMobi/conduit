@@ -1,4 +1,4 @@
-package com.inmobi.conduit.audit.metric.tools;
+package com.inmobi.conduit.audit;
 
 public class ClusterHtml {
 
