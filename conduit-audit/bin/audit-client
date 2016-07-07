@@ -27,7 +27,7 @@
 CLIENT_AUDIT_QUERY_CLASS="com.inmobi.conduit.audit.query.AuditDbQuery"
 CLIENT_FEEDER_CLASS="com.inmobi.conduit.audit.AuditStats"
 CLIENT_ADMIN_CLASS="com.inmobi.conduit.audit.AuditAdmin"
-CLIENT_LATENCY_CLASS="com.inmobi.conduit.audit.tools.StreamLatencyMetrics"
+CLIENT_LATENCY_CLASS="com.inmobi.conduit.audit.metric.tools.StreamLatencyMetrics"
 
 ################################
 # functions
