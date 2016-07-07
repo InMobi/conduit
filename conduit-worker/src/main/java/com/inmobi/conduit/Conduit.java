@@ -69,6 +69,8 @@ public class Conduit implements Service, ConduitConstants {
   private static String hcatDBName = null;
   private static HiveConf hiveConf = null;
 
+  private String checkpointDir;
+
   public Conduit(ConduitConfig config, Set<String> clustersToProcess,
                  String currentCluster) {
     this(config, clustersToProcess);
@@ -298,9 +300,17 @@ public class Conduit implements Service, ConduitConstants {
 
   protected LocalStreamService getLocalStreamService(ConduitConfig config,
       Cluster cluster, Cluster currentCluster, Set<String> streamsToProcess)
-          throws IOException {
+          throws Exception {
     return new LocalStreamService(config, cluster, currentCluster,
-        new FSCheckpointProvider(cluster.getCheckpointDir()), streamsToProcess);
+            getProvider(cluster), streamsToProcess);
+  }
+
+  private CheckpointProvider getProvider(Cluster cluster) throws Exception {
+      if (checkpointDir == null || checkpointDir.length() == 0) {
+        return new FSCheckpointProvider(cluster.getCheckpointDir());
+      } else {
+        return new FSCheckpointProvider(checkpointDir);
+      }
   }
 
   protected MergedStreamService getMergedStreamService(ConduitConfig config,
@@ -308,8 +318,7 @@ public class Conduit implements Service, ConduitConstants {
       Set<String>  streamsToProcess)
           throws Exception {
     return new MergedStreamService(config, srcCluster, dstCluster,
-        currentCluster,
-        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
+        currentCluster, getProvider(dstCluster),
         streamsToProcess);
   }
 
@@ -318,8 +327,7 @@ public class Conduit implements Service, ConduitConstants {
       Set<String> streamsToProcess)
           throws Exception {
     return new MirrorStreamService(config, srcCluster, dstCluster,
-        currentCluster,
-        new FSCheckpointProvider(dstCluster.getCheckpointDir()),
+        currentCluster, getProvider(dstCluster),
         streamsToProcess);
 
   }
@@ -471,6 +479,11 @@ public class Conduit implements Service, ConduitConstants {
         throw new RuntimeException("Zoookeeper connection string not " +
             "specified");
       }
+      String checkpointDir = prop.getProperty(CHECKPOINT_DIR);
+      if (checkpointDir == null || checkpointDir.length() == 0) {
+        LOG.warn("Checkpoint dir is not configured. Will be using HDFS for checkpointing.");
+      }
+
       String enableZK = prop.getProperty(ENABLE_ZOOKEEPER);
       boolean enableZookeeper;
       if (enableZK != null && enableZK.length() != 0)
@@ -551,8 +564,8 @@ public class Conduit implements Service, ConduitConstants {
           conduitClusterId.append("_");
         }
       }
-      final Conduit conduit = new Conduit(config, clustersToProcess,
-          currentCluster);
+      final Conduit conduit = new Conduit(config, clustersToProcess, currentCluster);
+      conduit.checkpointDir = checkpointDir;
 
       MessagePublisher msgPublisher = createMessagePublisher(prop);
       if (msgPublisher != null) {
