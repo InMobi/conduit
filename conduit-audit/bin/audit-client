@@ -68,7 +68,7 @@ Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>]
        $0 admin -check -rolledup [-daily] -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
        $0 admin -check -created -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
        $0 latency -latency <-streams(comma separated) -clusters(comma separated) -urls(comma separated)>
-           [-percentile(comma separated) -days(number of days beyond to current time) -hours(number of hours beyond from now)]
+           [-percentile(comma separated) -days(number of days beyond to currnet time) -hours(number of hours beyond from now)]
 EOF
 }
 
