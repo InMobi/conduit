@@ -134,12 +134,7 @@
   </profiles>
 
   <dependencies>
- <dependency>
-      <groupId>javax.mail</groupId>
-      <artifactId>mail</artifactId>
-      <version>1.4</version>
-    </dependency>   
- <dependency>
+    <dependency>
       <groupId>com.inmobi.conduit</groupId>
       <artifactId>conduit-core</artifactId>
       <version>${project.version}</version>
