@@ -26,7 +26,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.inmobi.conduit.distcp.MergedStreamService;
+import com.inmobi.conduit.distcp.MirrorStreamService;
 import com.inmobi.conduit.local.LocalStreamService;
+import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.purge.DataPurgerService;
+import com.inmobi.conduit.utils.FileUtil;
+import com.inmobi.conduit.utils.SecureLoginUtil;
+import com.inmobi.conduit.zookeeper.CuratorLeaderManager;
+import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,20 +45,8 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
-
-import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.distcp.MergedStreamService;
-import com.inmobi.conduit.distcp.MirrorStreamService;
-import com.inmobi.conduit.purge.DataPurgerService;
-import com.inmobi.conduit.utils.FileUtil;
-import com.inmobi.conduit.utils.SecureLoginUtil;
-import com.inmobi.conduit.zookeeper.CuratorLeaderManager;
-import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.publisher.MessagePublisher;
-import com.inmobi.messaging.publisher.MessagePublisherFactory;
 
 public class Conduit implements Service, ConduitConstants {
   private static Logger LOG = Logger.getLogger(Conduit.class);
@@ -131,22 +129,31 @@ public class Conduit implements Service, ConduitConstants {
       if (!clustersToProcess.contains(cluster.getName())) {
         continue;
       }
+      if (cluster.getSourceStreams().size() <= 0) {
+        continue;
+      }
       //Start LocalStreamConsumerService for this cluster if it's the source of any stream
-      if (cluster.getSourceStreams().size() > 0) {
-        // copy input format jar from local to cluster FS
-        copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
-        copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
-        Iterator<String> iterator = cluster.getSourceStreams().iterator();
-        Set<String> streamsToProcess = new HashSet<String>();
-        while (iterator.hasNext()) {
-          for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
-            streamsToProcess.add(iterator.next());
+      // copy input format jar from local to cluster FS
+      copyInputFormatJarToClusterFS(cluster, inputFormatSrcJar);
+      copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
+      Map<String, SourceStream> sourceStreamsMap = cluster.getSourceStreamsMap();
+      Iterator<String> iterator = cluster.getSourceStreams().iterator();
+      Set<String> streamsToProcess = new HashSet<String>();
+      while (iterator.hasNext()) {
+        int counter = 0;
+        while (counter > numStreamsLocalService && iterator.hasNext()) {
+          String name = iterator.next();
+          SourceStream sourceStream = sourceStreamsMap.get(name);
+          if (!sourceStream.isEnableLocalJob()) {
+            LOG.info("Stream : " + name + " is not enabled for LocalStreamService");
+            continue;
           }
-          if (streamsToProcess.size() > 0) {
-            services.add(getLocalStreamService(config, cluster, currentCluster,
-                streamsToProcess));
-            streamsToProcess = new HashSet<String>();
-          }
+          streamsToProcess.add(iterator.next());
+          counter++;
+        }
+        if (streamsToProcess.size() > 0) {
+          services.add(getLocalStreamService(config, cluster, currentCluster, streamsToProcess));
+          streamsToProcess = new HashSet<String>();
         }
       }
 
@@ -264,7 +271,7 @@ public class Conduit implements Service, ConduitConstants {
     }
   }
 
-  private void copyInputFormatJarToClusterFS(Cluster cluster, 
+  private void copyInputFormatJarToClusterFS(Cluster cluster,
       String inputFormatSrcJar) throws IOException {
     FileSystem clusterFS = FileSystem.get(cluster.getHadoopConf());
     // create jars path inside /conduit/system/tmp path
@@ -611,7 +618,7 @@ public class Conduit implements Service, ConduitConstants {
     } else {
       LOG.info("HCAT is not enabled for the worker ");
     }
-    
+
   }
 
   private static void constructHiveConf() {

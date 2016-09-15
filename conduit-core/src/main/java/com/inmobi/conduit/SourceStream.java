@@ -21,14 +21,20 @@ public class SourceStream {
   //Map of ClusterName, Retention for a stream
   private final Map<String, Integer> sourceClusters;
   private final boolean isHCatEnabled;
-
+  private final boolean enableLocalJob;
 
   public SourceStream(String name, Map<String, Integer> sourceClusters,
       boolean isHCatEnabled) {
+    this(name, sourceClusters, isHCatEnabled, Boolean.TRUE);
+  }
+
+  public SourceStream(String name, Map<String, Integer> sourceClusters,
+      boolean isHCatEnabled, boolean enableLocalJob) {
     super();
     this.name = name;
     this.sourceClusters = sourceClusters;
     this.isHCatEnabled = isHCatEnabled;
+    this.enableLocalJob = enableLocalJob;
   }
 
   public int getRetentionInHours(String clusterName) {
@@ -48,4 +54,7 @@ public class SourceStream {
     return isHCatEnabled;
   }
 
+  public boolean isEnableLocalJob() {
+    return enableLocalJob;
+  }
 }

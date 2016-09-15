@@ -39,14 +39,15 @@ public class Cluster {
   private final String hdfsUrl;
   private final String clustername;
   private final String clusterjobqueuename;
+  private final Map<String, SourceStream> sourceStreams;
   private final Map<String, DestinationStream> consumeStreams;
-  private final Set<String> sourceStreams;
+//  private final Set<String> sourceStreams;
   private final Configuration hadoopConf;
   private final String copyMapperImpl;
   private final String readUrl;
 
   public Cluster(Map<String, String> clusterElementsMap, String rootDir,
-      Map<String, DestinationStream> consumeStreams, Set<String> sourceStreams)
+      Map<String, DestinationStream> consumeStreams, Map<String, SourceStream> sourceStreams)
       throws Exception {
     this.rootDir = rootDir;
     this.clustername = clusterElementsMap.get(ConduitConfigParser.NAME);
@@ -227,6 +228,10 @@ public class Cluster {
   }
 
   public Set<String> getSourceStreams() {
+    return sourceStreams.keySet();
+  }
+
+  public Map<String,SourceStream> getSourceStreamsMap() {
     return sourceStreams;
   }
 
