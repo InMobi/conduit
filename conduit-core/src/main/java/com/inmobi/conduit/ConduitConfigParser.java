@@ -159,7 +159,23 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
       cRootDir = defaults.get(ROOTDIR);
 
     return new Cluster(clusterelementsmap, cRootDir, consumeStreams,
-        getSourceStreams(clusterelementsmap.get(NAME)));
+        getSourceStreamsMap(clusterelementsmap.get(NAME)));
+  }
+
+  private Map<String,SourceStream> getSourceStreamsMap(String clusterName) throws Exception {
+    Map<String,SourceStream> srcStreams = new HashMap<String,SourceStream>();
+    Set<Map.Entry<String, SourceStream>> entrySet = streamMap.entrySet();
+    Iterator it = entrySet.iterator();
+    while (it.hasNext()) {
+      Map.Entry entry = (Map.Entry) it.next();
+      String streamName = (String) entry.getKey();
+      SourceStream streamDetails = (SourceStream) entry.getValue();
+      if (streamDetails.getSourceClusters().contains(clusterName)) {
+        srcStreams.put(streamName,streamDetails);
+      }
+
+    }
+    return srcStreams;
   }
 
   private Set<String> getSourceStreams(String clusterName) throws Exception {
