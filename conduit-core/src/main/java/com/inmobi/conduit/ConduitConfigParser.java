@@ -205,6 +205,16 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
         logger.info("HCat is not enabled for stream " + streamName);
       }
     }
+    boolean isEnabled = true;
+    String isEnabledStr = el.getAttribute(IS_ENABLED_STREAM);
+    if (isEnabledStr != null && !isEnabledStr.isEmpty()) {
+      isEnabled = Boolean.parseBoolean(isEnabledStr);
+      if (isEnabled) {
+        logger.info("isEnabled is enabled for stream " + streamName);
+      } else {
+        logger.info("isEnabled is not enabled for stream " + streamName);
+      }
+    }
     NodeList sourceList = el.getElementsByTagName(SOURCE);
     for (int i = 0; i < sourceList.getLength(); i++) {
       Element source = (Element) sourceList.item(i);
@@ -213,12 +223,12 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
       int rententionInHours = getRetention(source, RETENTION_IN_HOURS);
       logger.debug(" StreamSource :: streamname " + streamName
           + " retentioninhours " + rententionInHours + " " + "clusterName "
-          + clusterName + " isHCatEnabled " + isHCatEnabled);
+          + clusterName + " isHCatEnabled " + isHCatEnabled+" isEnabled "+isEnabled);
       sourceStreams.put(clusterName, new Integer(rententionInHours));
     }
     // get all destinations for this stream
     readConsumeStreams(streamName, el, isHCatEnabled);
-    return new SourceStream(streamName, sourceStreams, isHCatEnabled);
+    return new SourceStream(streamName, sourceStreams, isHCatEnabled, isEnabled);
   }
 
   private void readConsumeStreams(String streamName, Element el,

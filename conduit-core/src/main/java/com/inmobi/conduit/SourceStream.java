@@ -21,15 +21,21 @@ public class SourceStream {
   //Map of ClusterName, Retention for a stream
   private final Map<String, Integer> sourceClusters;
   private final boolean isHCatEnabled;
+  private final boolean isEnabled;
 
 
   public SourceStream(String name, Map<String, Integer> sourceClusters,
-      boolean isHCatEnabled) {
+            boolean isHCatEnabled,boolean isEnabled) {
     super();
     this.name = name;
     this.sourceClusters = sourceClusters;
+    this.isEnabled = isEnabled;
     this.isHCatEnabled = isHCatEnabled;
   }
+//  public SourceStream(String name, Map<String, Integer> sourceClusters,
+//            boolean isHCatEnabled) {
+//    this(name, sourceClusters, isHCatEnabled, true);
+//  }
 
   public int getRetentionInHours(String clusterName) {
     int clusterRetention = sourceClusters.get(clusterName).intValue();
@@ -48,4 +54,7 @@ public class SourceStream {
     return isHCatEnabled;
   }
 
+  public boolean isEnabled() {
+    return isEnabled;
+  }
 }
