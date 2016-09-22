@@ -19,23 +19,18 @@ import java.util.Set;
 public class SourceStream {
   private final String name;
   //Map of ClusterName, Retention for a stream
+  private final Set<String> enabledSources;
   private final Map<String, Integer> sourceClusters;
   private final boolean isHCatEnabled;
-  private final boolean isEnabled;
-
 
   public SourceStream(String name, Map<String, Integer> sourceClusters,
-            boolean isHCatEnabled,boolean isEnabled) {
+            boolean isHCatEnabled,Set<String> enabledSources) {
     super();
     this.name = name;
     this.sourceClusters = sourceClusters;
-    this.isEnabled = isEnabled;
+    this.enabledSources = enabledSources;
     this.isHCatEnabled = isHCatEnabled;
   }
-//  public SourceStream(String name, Map<String, Integer> sourceClusters,
-//            boolean isHCatEnabled) {
-//    this(name, sourceClusters, isHCatEnabled, true);
-//  }
 
   public int getRetentionInHours(String clusterName) {
     int clusterRetention = sourceClusters.get(clusterName).intValue();
@@ -54,7 +49,7 @@ public class SourceStream {
     return isHCatEnabled;
   }
 
-  public boolean isEnabled() {
-    return isEnabled;
+  public Set<String> getEnabledSources() {
+    return enabledSources;
   }
 }

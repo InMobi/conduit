@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.inmobi.conduit.distcp.MergedStreamService;
 import com.inmobi.conduit.distcp.MirrorStreamService;
 import com.inmobi.conduit.local.LocalStreamService;
 import com.inmobi.conduit.purge.DataPurgerService;
@@ -12,8 +13,6 @@ import com.inmobi.conduit.purge.DataPurgerService;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.inmobi.conduit.distcp.MergedStreamService;
 
 public class TestConduitInitialization {
 
@@ -174,6 +173,16 @@ public class TestConduitInitialization {
    */
   @Test
   public void testLocalStreamService() throws Exception {
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    testServicesOnCluster("test-lss-conduit.xml", clustersToProcess, 1, 1, 0, 0);
+  }
+
+  /*
+   * testcluster1---- local stream service and purger service will be populated
+   */
+  @Test
+  public void testDisabledLocalStreamService() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
     testServicesOnCluster("test-lss-conduit.xml", clustersToProcess, 1, 1, 0, 0);

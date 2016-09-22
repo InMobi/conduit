@@ -92,7 +92,7 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
       String rootDir = getTextValue((Element) configList.item(0), ROOTDIR);
       if (rootDir == null)
         throw new ParseException("rootdir element not found in defaults", 0);
-      
+
       defaults.put(ROOTDIR, rootDir);
       String retention = getTextValue((Element) configList.item(0),
           RETENTION_IN_HOURS);
@@ -192,6 +192,8 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
   }
 
   private SourceStream getStream(Element el) throws Exception {
+
+    Set<String> enabledSources = new HashSet<String>();
     Map<String, Integer> sourceStreams = new HashMap<String, Integer>();
     // get sources for each stream
     String streamName = el.getAttribute(NAME);
@@ -205,30 +207,34 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
         logger.info("HCat is not enabled for stream " + streamName);
       }
     }
-    boolean isEnabled = true;
-    String isEnabledStr = el.getAttribute(IS_ENABLED_STREAM);
-    if (isEnabledStr != null && !isEnabledStr.isEmpty()) {
-      isEnabled = Boolean.parseBoolean(isEnabledStr);
-      if (isEnabled) {
-        logger.info("isEnabled is enabled for stream " + streamName);
-      } else {
-        logger.info("isEnabled is not enabled for stream " + streamName);
-      }
-    }
     NodeList sourceList = el.getElementsByTagName(SOURCE);
     for (int i = 0; i < sourceList.getLength(); i++) {
+
       Element source = (Element) sourceList.item(i);
       // for each source
       String clusterName = getTextValue(source, NAME);
       int rententionInHours = getRetention(source, RETENTION_IN_HOURS);
+      String isEnabledStr = source.getAttribute(IS_STREAM_ENABLED);
+      boolean isEnabled = true;
+      if (isEnabledStr != null && !isEnabledStr.isEmpty()) {
+        isEnabled = Boolean.parseBoolean(isEnabledStr);
+        if (isEnabled) {
+          logger.info("isEnabled is enabled for clusterName " + clusterName);
+        } else {
+          logger.info("isEnabled is not enabled for clusterName " + clusterName);
+        }
+      }
       logger.debug(" StreamSource :: streamname " + streamName
           + " retentioninhours " + rententionInHours + " " + "clusterName "
           + clusterName + " isHCatEnabled " + isHCatEnabled+" isEnabled "+isEnabled);
+      if (isEnabled) {
+        enabledSources.add(clusterName);
+      }
       sourceStreams.put(clusterName, new Integer(rententionInHours));
     }
     // get all destinations for this stream
     readConsumeStreams(streamName, el, isHCatEnabled);
-    return new SourceStream(streamName, sourceStreams, isHCatEnabled, isEnabled);
+    return new SourceStream(streamName, sourceStreams, isHCatEnabled, enabledSources);
   }
 
   private void readConsumeStreams(String streamName, Element el,

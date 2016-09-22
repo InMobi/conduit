@@ -136,20 +136,16 @@ public class Conduit implements Service, ConduitConstants {
         copyAuditUtilJarToClusterFs(cluster, auditUtilSrcJar);
         Iterator<String> iterator = cluster.getSourceStreams().iterator();
         Set<String> streamsToProcess = new HashSet<String>();
-        Map<String, SourceStream> sourceStreams = config.getSourceStreams();
         while (iterator.hasNext()) {
-          int count=0;
-          while (iterator.hasNext() && ++count <= numStreamsLocalService) {
-            String streamName = iterator.next();
-            SourceStream sourceStream = sourceStreams.get(streamName);
-            if(!sourceStream.isEnabled()) {
-              LOG.info("Stream <" + streamName + "> is not enabled...");
-              continue;
+          for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
+            String stream = iterator.next();
+            if (config.getSourceStreams().get(stream).getEnabledSources().contains(cluster.getName())) {
+              streamsToProcess.add(stream);
             }
-            streamsToProcess.add(streamName);
           }
           if (streamsToProcess.size() > 0) {
-            services.add(getLocalStreamService(config, cluster, currentCluster,streamsToProcess));
+            services.add(getLocalStreamService(config, cluster, currentCluster,
+                streamsToProcess));
             streamsToProcess = new HashSet<String>();
           }
         }
