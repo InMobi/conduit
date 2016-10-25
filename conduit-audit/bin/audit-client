@@ -27,7 +27,6 @@
 CLIENT_AUDIT_QUERY_CLASS="com.inmobi.conduit.audit.query.AuditDbQuery"
 CLIENT_FEEDER_CLASS="com.inmobi.conduit.audit.AuditStats"
 CLIENT_ADMIN_CLASS="com.inmobi.conduit.audit.AuditAdmin"
-CLIENT_LATENCY_CLASS="com.inmobi.conduit.audit.tools.StreamLatencyMetrics"
 
 ################################
 # functions
@@ -67,8 +66,6 @@ Usage: $0 audit [-group <TIER,HOSTNAME,TOPIC,CLUSTER>]
        $0 admin -checkpoint [-daily] -date <dd-mm-yyyy> --conf <confdir>
        $0 admin -check -rolledup [-daily] -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
        $0 admin -check -created -date <dd-mm-yyyy> [-n <num of days>] --conf <confdir>
-       $0 latency -latency <-streams(comma separated) -clusters(comma separated) -urls(comma separated)>
-           [-percentile(comma separated) -days(number of days beyond to current time) -hours(number of hours beyond from now)]
 EOF
 }
 
@@ -116,9 +113,6 @@ case "$mode" in
     ;;
   admin)
     opt_admin=1
-    ;;
-  latency)
-    opt_latency=1
     ;;
   *)
     error "Unknown or unspecified command '$mode'"
@@ -286,8 +280,6 @@ else
   else
     if [ -n "$opt_admin" ] ; then
       run_client $CLIENT_ADMIN_CLASS $args
-    elif [ -n "$opt_latency" ] ; then
-      run_client $CLIENT_LATENCY_CLASS $args
     else
       error "This message should never appear" 1
     fi
