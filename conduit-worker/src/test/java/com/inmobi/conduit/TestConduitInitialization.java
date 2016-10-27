@@ -178,14 +178,12 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-lss-conduit.xml", clustersToProcess, 1, 1, 0, 0);
   }
 
-  /*
-   * testcluster1---- local stream service and purger service will be populated
-   */
   @Test
   public void testDisabledLocalStreamService() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
-    testServicesOnCluster("test-lss-conduit.xml", clustersToProcess, 1, 1, 0, 0);
+    clustersToProcess.add("testcluster2");
+    testServicesOnCluster("test-lss-disable-conduit.xml", clustersToProcess, 1, 1, 1, 0);
   }
 
   /*
