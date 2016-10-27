@@ -18,35 +18,25 @@
 
 package com.inmobi.conduit.distcp.tools.mapred;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.EnumSet;
 import java.util.Map;
+
+import com.inmobi.conduit.distcp.tools.DistCpConstants;
+import com.inmobi.conduit.distcp.tools.DistCpOptions.FileAttribute;
+import com.inmobi.conduit.distcp.tools.util.*;
+import com.inmobi.messaging.util.AuditUtil;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.Mapper;
-
-import com.inmobi.conduit.distcp.tools.DistCpConstants;
-import com.inmobi.conduit.distcp.tools.DistCpOptions.FileAttribute;
-import com.inmobi.conduit.distcp.tools.util.DistCpUtils;
-import com.inmobi.conduit.distcp.tools.util.HadoopCompat;
-import com.inmobi.conduit.distcp.tools.util.RetriableCommand;
-import com.inmobi.conduit.distcp.tools.util.ThrottledInputStream;
-import com.inmobi.messaging.util.AuditUtil;
 
 /**
  * This class extends RetriableCommand to implement the copy of files,
@@ -111,7 +101,8 @@ public class RetriableFileCopyCommand extends RetriableCommand {
 
       compareFileLengths(sourceFileStatus, tmpTargetPath, configuration, bytesRead);
       if (bytesRead > 0) {
-        compareCheckSums(sourceFS, sourceFileStatus.getPath(), targetFS, tmpTargetPath);
+        //Commenting this as fix for merge only feature...
+//        compareCheckSums(sourceFS, sourceFileStatus.getPath(), targetFS, tmpTargetPath);
       }
       promoteTmpToTarget(tmpTargetPath, target, targetFS);
       return bytesRead;
