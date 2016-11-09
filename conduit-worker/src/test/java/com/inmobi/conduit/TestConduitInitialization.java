@@ -180,11 +180,6 @@ public class TestConduitInitialization {
 
   @Test
   public void testDisabledLocalStreamService() throws Exception {
-//    Set<String> clustersToProcess = new HashSet<String>();
-//    clustersToProcess.add("testcluster1");
-//    clustersToProcess.add("testcluster2");
-//    testServicesOnCluster("test-lss-disable-conduit.xml", clustersToProcess, 1, 2, 1, 0);
-
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
     testServicesOnCluster("test-lss-disable-conduit.xml", clustersToProcess, 0, 1, 2, 0);
