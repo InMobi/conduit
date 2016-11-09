@@ -192,7 +192,6 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
   }
 
   private SourceStream getStream(Element el) throws Exception {
-
     Set<String> enabledSources = new HashSet<String>();
     Map<String, Integer> sourceStreams = new HashMap<String, Integer>();
     // get sources for each stream
@@ -216,7 +215,7 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
       int rententionInHours = getRetention(source, RETENTION_IN_HOURS);
       String isEnabledStr = source.getAttribute(IS_STREAM_ENABLED);
       boolean isEnabled = true;
-      if (isEnabledStr != null && !isEnabledStr.isEmpty()) {
+      if (null != isEnabledStr && !isEnabledStr.isEmpty()) {
         isEnabled = Boolean.parseBoolean(isEnabledStr);
         if (isEnabled) {
           logger.info("isEnabled is enabled for clusterName " + clusterName);

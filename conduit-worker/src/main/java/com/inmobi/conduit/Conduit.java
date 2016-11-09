@@ -143,6 +143,8 @@ public class Conduit implements Service, ConduitConstants {
             String stream = iterator.next();
             if (config.getSourceStreams().get(stream).getEnabledSources().contains(cluster.getName())) {
               streamsToProcess.add(stream);
+            } else {
+              LOG.info("Stream " + stream + " not configured for local stream processing");
             }
           }
           if (streamsToProcess.size() > 0) {

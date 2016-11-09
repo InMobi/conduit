@@ -1,8 +1,8 @@
 <conduit>
   <defaults>
-    <rootdir>/conduittest1</rootdir>
+    <rootdir>/mergeonlyservice</rootdir>
     <retentioninhours>24</retentioninhours>
-    <trashretentioninhours>24</trashretentioninhours>
+    <trashretentioninhours>48</trashretentioninhours>
   </defaults>
 
   <!-- A stream can have only one primary and multiple mirrors as destinations
@@ -30,18 +30,15 @@
   </streams>
 
   <clusters>
-    <cluster name="testcluster1"
-             hdfsurl="file:///tmp/lsstest/testcluster1"
+    <cluster name="testcluster1" hdfsurl="file:///tmp/mergeservicetest/testcluster1"
              jturl="local"
              jobqueuename="default"
     >
     </cluster>
-    <cluster name="testcluster2"
-             hdfsurl="file:///tmp/lsstest/testcluster2"
+    <cluster name="testcluster2" hdfsurl="file:////tmp/mergeservicetest/testcluster2"
              jturl="local"
              jobqueuename="default"
     >
     </cluster>
-
   </clusters>
 </conduit>
