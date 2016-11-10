@@ -144,7 +144,11 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
   @Test
   public void testFindDiffBetweenLastAddedPartTimeAndFirstPath() throws Exception {
 	  Conduit.setHcatDBName("conduit3");
-	  TestHCatUtil.createDatabase("conduit3");
+    try {
+      TestHCatUtil.createDatabase("conduit3");
+    } catch (AlreadyExistsException ae) {
+      LOG.warn(ae);
+    }
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
         service.getFileSystem().delete(
@@ -188,14 +192,17 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
     Conduit.setHcatDBName("conduit2");
     Conduit.setHCatEnabled(true);
     dbName = Conduit.getHcatDBName();
-    TestHCatUtil.createDatabase(dbName);
+    try {
+      TestHCatUtil.createDatabase(dbName);
+    } catch (AlreadyExistsException ae) {
+        LOG.warn(ae);
+    }
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
         service.getFileSystem().delete(
             new Path(service.getCluster().getRootDir()), true);
         String tableName = "conduit_local_" + stream;
         table = thutil.createTable(Conduit.getHcatDBName(), tableName);
-
         Calendar cal1 = Calendar.getInstance();
         Date currentTime1 = cal1.getTime();
         cal1.add(Calendar.HOUR_OF_DAY, -2);
