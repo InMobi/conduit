@@ -7,7 +7,16 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.inmobi.conduit.*;
+import com.inmobi.conduit.AbstractService;
+import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
+import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
+import com.inmobi.conduit.DestinationStream;
+import com.inmobi.conduit.FSCheckpointProvider;
+import com.inmobi.conduit.SourceStream;
+import com.inmobi.conduit.TestMiniClusterUtil;
 import com.inmobi.conduit.local.TestLocalStreamService;
 import com.inmobi.conduit.metrics.AbsoluteGauge;
 import com.inmobi.conduit.metrics.ConduitMetrics;

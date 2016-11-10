@@ -17,9 +17,20 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.inmobi.conduit.AbstractService;
+import com.inmobi.conduit.Cluster;
+import com.inmobi.conduit.Conduit;
 import com.inmobi.conduit.ConduitConfig;
+import com.inmobi.conduit.ConduitConfigParser;
+import com.inmobi.conduit.ConduitConstants;
+import com.inmobi.conduit.FSCheckpointProvider;
+import com.inmobi.conduit.SourceStream;
 import com.inmobi.conduit.metrics.AbsoluteGauge;
+import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.conduit.utils.CalendarHelper;
+import com.inmobi.conduit.utils.DatePathComparator;
+import com.inmobi.conduit.utils.FileUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,18 +47,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
-import com.inmobi.conduit.AbstractService;
-import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.Conduit;
-import com.inmobi.conduit.ConduitConfigParser;
-import com.inmobi.conduit.ConduitConstants;
-import com.inmobi.conduit.FSCheckpointProvider;
-import com.inmobi.conduit.SourceStream;
-import com.inmobi.conduit.utils.DatePathComparator;
-import com.inmobi.conduit.utils.FileUtil;
 
 public class MergeCheckpointTest {
 

@@ -217,15 +217,11 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
       boolean isEnabled = true;
       if (null != isEnabledStr && !isEnabledStr.isEmpty()) {
         isEnabled = Boolean.parseBoolean(isEnabledStr);
-        if (isEnabled) {
-          logger.info("isEnabled is enabled for clusterName " + clusterName);
-        } else {
-          logger.info("isEnabled is not enabled for clusterName " + clusterName);
-        }
+        logger.info("isEnabled flag is " + isEnabled + " for localstream for clusterName " + clusterName);
       }
       logger.debug(" StreamSource :: streamname " + streamName
           + " retentioninhours " + rententionInHours + " " + "clusterName "
-          + clusterName + " isHCatEnabled " + isHCatEnabled+" isEnabled "+isEnabled);
+          + clusterName + " isHCatEnabled " + isHCatEnabled + " isEnabled " + isEnabled);
       if (isEnabled) {
         enabledSources.add(clusterName);
       }
