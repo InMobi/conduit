@@ -239,6 +239,7 @@ public class MergeCheckpointTest {
     }
   }
 
+  //Commeting this test for releasing merge-only feature, this test case was failing b4 merging this feature
 //  @Test
   public void testMergeNoCheckPointNoDataOnDest() throws Exception {
     ConduitConfig config = setup("test-mss-conduit.xml");
@@ -280,6 +281,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
+  //Commeting this test for releasing merge-only feature, this test case was failing b4 merging this feature
   /**
    * Data from one of the source is present on destination and no data from
    * other source
@@ -364,6 +366,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
+  //Commeting this test for releasing merge-only feature, this test case was failing b4 merging this feature
 //  @Test
   public void testMergeNoCheckPointSourceDataPresentInDiffDirOnDest()
       throws Exception {
@@ -427,6 +430,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
+  //Commeting this test for releasing merge-only feature, this test case was failing b4 merging this feature
 //  @Test
   public void testMergeWithCheckPoint() throws Exception {
     ConduitConfig config = setup("test-mss-conduit.xml");
@@ -482,6 +486,7 @@ public class MergeCheckpointTest {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MergedStreamService",AbstractService.RETRY_RENAME,"test1").getValue().longValue() , 0);
   }
 
+  //Commeting this test for releasing merge-only feature, this test case was failing b4 merging this feature
 //  @Test
   public void testMergetNoChkPointEmptyDirAtSource() throws Exception {
     ConduitConfig config = setup("test-mss-conduit.xml");
