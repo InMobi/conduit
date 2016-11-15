@@ -1,13 +1,16 @@
 package com.inmobi.conduit;
 
 
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import com.inmobi.conduit.local.TestLocalStreamService;
+import com.inmobi.conduit.utils.CalendarHelper;
+import com.inmobi.conduit.utils.TestHCatUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.impl.LogFactoryImpl;
@@ -22,17 +25,6 @@ import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.Conduit;
-import com.inmobi.conduit.ConduitConfig;
-import com.inmobi.conduit.ConduitConfigParser;
-import com.inmobi.conduit.FSCheckpointProvider;
-import com.inmobi.conduit.SourceStream;
-import com.inmobi.conduit.TestMiniClusterUtil;
-import com.inmobi.conduit.local.TestLocalStreamService;
-import com.inmobi.conduit.utils.CalendarHelper;
-import com.inmobi.conduit.utils.TestHCatUtil;
 
 
 public class TestHCatPartitionMethods extends TestMiniClusterUtil {
@@ -99,7 +91,11 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
     TestHCatUtil thutil = new TestHCatUtil();
     Conduit.setHcatDBName("conduit1");
     dbName = Conduit.getHcatDBName();
-    TestHCatUtil.createDatabase(dbName);
+    try {
+      TestHCatUtil.createDatabase(dbName);
+    } catch (AlreadyExistsException e) {
+      LOG.warn("Database " + dbName + "already exists ");
+    }
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
         String tableName = "conduit_local_" + stream;
@@ -148,7 +144,11 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
   @Test
   public void testFindDiffBetweenLastAddedPartTimeAndFirstPath() throws Exception {
 	  Conduit.setHcatDBName("conduit3");
-	  TestHCatUtil.createDatabase("conduit3");
+    try {
+      TestHCatUtil.createDatabase("conduit3");
+    } catch (AlreadyExistsException ae) {
+      LOG.warn(ae);
+    }
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
         service.getFileSystem().delete(
@@ -192,14 +192,17 @@ public class TestHCatPartitionMethods extends TestMiniClusterUtil {
     Conduit.setHcatDBName("conduit2");
     Conduit.setHCatEnabled(true);
     dbName = Conduit.getHcatDBName();
-    TestHCatUtil.createDatabase(dbName);
+    try {
+      TestHCatUtil.createDatabase(dbName);
+    } catch (AlreadyExistsException ae) {
+        LOG.warn(ae);
+    }
     for (TestLocalStreamService service : services) {
       for (String stream : streamsToProcess) {
         service.getFileSystem().delete(
             new Path(service.getCluster().getRootDir()), true);
         String tableName = "conduit_local_" + stream;
         table = thutil.createTable(Conduit.getHcatDBName(), tableName);
-
         Calendar cal1 = Calendar.getInstance();
         Date currentTime1 = cal1.getTime();
         cal1.add(Calendar.HOUR_OF_DAY, -2);

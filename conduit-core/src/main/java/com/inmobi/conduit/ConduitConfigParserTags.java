@@ -20,4 +20,5 @@ public interface ConduitConfigParserTags {
   public static final String COPYMAPPER_IMPL="copyMapperClass";
   String CLUSTER_READ_URL="readUrl";
   public static final String HCAT_ENABLED_PER_STREAM = "hcatenabled";
+  public static final String IS_STREAM_ENABLED = "isenabled";
 }

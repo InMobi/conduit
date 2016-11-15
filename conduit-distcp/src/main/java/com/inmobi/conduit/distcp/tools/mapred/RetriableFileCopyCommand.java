@@ -28,6 +28,14 @@ import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.Map;
 
+import com.inmobi.conduit.distcp.tools.DistCpConstants;
+import com.inmobi.conduit.distcp.tools.DistCpOptions.FileAttribute;
+import com.inmobi.conduit.distcp.tools.util.DistCpUtils;
+import com.inmobi.conduit.distcp.tools.util.HadoopCompat;
+import com.inmobi.conduit.distcp.tools.util.RetriableCommand;
+import com.inmobi.conduit.distcp.tools.util.ThrottledInputStream;
+import com.inmobi.messaging.util.AuditUtil;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,14 +47,6 @@ import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapreduce.Mapper;
-
-import com.inmobi.conduit.distcp.tools.DistCpConstants;
-import com.inmobi.conduit.distcp.tools.DistCpOptions.FileAttribute;
-import com.inmobi.conduit.distcp.tools.util.DistCpUtils;
-import com.inmobi.conduit.distcp.tools.util.HadoopCompat;
-import com.inmobi.conduit.distcp.tools.util.RetriableCommand;
-import com.inmobi.conduit.distcp.tools.util.ThrottledInputStream;
-import com.inmobi.messaging.util.AuditUtil;
 
 /**
  * This class extends RetriableCommand to implement the copy of files,
@@ -91,8 +91,8 @@ public class RetriableFileCopyCommand extends RetriableCommand {
 
   private long doCopy(FileStatus sourceFileStatus, Path target,
                       Mapper.Context context,
- EnumSet<FileAttribute> fileAttributes,
-      Map<Long, Long> received)
+                      EnumSet<FileAttribute> fileAttributes,
+                      Map<Long, Long> received)
           throws IOException {
 
     Path tmpTargetPath = getTmpFile(target, context);
@@ -111,7 +111,11 @@ public class RetriableFileCopyCommand extends RetriableCommand {
 
       compareFileLengths(sourceFileStatus, tmpTargetPath, configuration, bytesRead);
       if (bytesRead > 0) {
-        compareCheckSums(sourceFS, sourceFileStatus.getPath(), targetFS, tmpTargetPath);
+        //Commenting this as fix for merge only feature...
+        //Since client gz version may not match with hadoops gz version, and
+        //if distcp opens the file and write to dest folder using gzoutputstream, checksum will fail.
+        //comparing filelenghts should prevent corrupted files for not getting copied to dest folder.
+//        compareCheckSums(sourceFS, sourceFileStatus.getPath(), targetFS, tmpTargetPath);
       }
       promoteTmpToTarget(tmpTargetPath, target, targetFS);
       return bytesRead;

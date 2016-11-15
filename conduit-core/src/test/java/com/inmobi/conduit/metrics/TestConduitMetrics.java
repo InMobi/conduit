@@ -5,12 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Gauge;
 
 public class TestConduitMetrics {
 
@@ -113,7 +113,7 @@ public class TestConduitMetrics {
     ConduitMetrics.updateSWGuage(serviceName, guageName, context, 4);
     Assert.assertEquals(abGauge.getValue().longValue(), 5);
     try {
-      Thread.sleep(1000);
+      Thread.sleep(25000);
     } catch (Exception ex) {
       Assert.fail(ex.getMessage());
     }

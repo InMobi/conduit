@@ -18,22 +18,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
-import com.inmobi.conduit.ConduitConfig;
-import com.inmobi.conduit.ConduitConfigParser;
-import com.inmobi.conduit.ConduitConstants;
+import com.inmobi.conduit.*;
 import com.inmobi.conduit.metrics.AbsoluteGauge;
+import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
 import com.inmobi.conduit.utils.FileUtil;
+import com.inmobi.messaging.Message;
+import com.inmobi.messaging.util.AuditUtil;
+
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
@@ -51,21 +47,6 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.metrics.SlidingTimeWindowGauge;
-import com.inmobi.conduit.AbstractService;
-import com.inmobi.conduit.CheckpointProvider;
-import com.inmobi.conduit.Cluster;
-import com.inmobi.conduit.ClusterTest;
-import com.inmobi.conduit.DestinationStream;
-import com.inmobi.conduit.FSCheckpointProvider;
-import com.inmobi.conduit.SourceStream;
-import com.inmobi.conduit.TestMiniClusterUtil;
-import com.inmobi.messaging.Message;
-import com.inmobi.messaging.util.AuditUtil;
 
 public class LocalStreamServiceTest extends TestMiniClusterUtil {
   private static Logger LOG = Logger.getLogger(LocalStreamServiceTest.class);
@@ -305,7 +286,8 @@ public class LocalStreamServiceTest extends TestMiniClusterUtil {
     sourcestreams.put("cluster1", new Integer(retentioninhours));
 
     Map<String, SourceStream> streamMap = new HashMap<String, SourceStream>();
-    streamMap.put("stream1", new SourceStream("stream1", sourcestreams, false));
+//    streamMap.put("stream1", new SourceStream("stream1", sourcestreams, false, true));
+    streamMap.put("stream1", new SourceStream("stream1", sourcestreams, false, new HashSet<String>()));
 
     sourcestreams.clear();
 

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.inmobi.conduit.distcp.MergedStreamService;
 import com.inmobi.conduit.distcp.MirrorStreamService;
 import com.inmobi.conduit.local.LocalStreamService;
 import com.inmobi.conduit.purge.DataPurgerService;
@@ -13,8 +14,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.inmobi.conduit.distcp.MergedStreamService;
-
 public class TestConduitInitialization {
 
   @BeforeMethod
@@ -22,21 +21,21 @@ public class TestConduitInitialization {
     Conduit.setHCatEnabled(false);
   }
 
-  public void setUP(String filename, Set<String> clustersToProcess, 
-      List<AbstractService> listOfServices) throws Exception {
+  public void setUP(String filename, Set<String> clustersToProcess,
+                    List<AbstractService> listOfServices) throws Exception {
     ConduitConfigParser configParser = new ConduitConfigParser(filename);
     ConduitConfig config = configParser.getConfig();
     Conduit conduit = new Conduit(config, clustersToProcess);
     listOfServices.addAll(conduit.init());
   }
-  
-  public void testServicesOnCluster(String confFile, Set<String> clustersToProcess, 
-      int numOfLocalServices, int numOfPurgerServices, int numofMergeServices, 
-      int numOfMirrorServices)
-          throws Exception {
+
+  public void testServicesOnCluster(String confFile, Set<String> clustersToProcess,
+                                    int numOfLocalServices, int numOfPurgerServices, int numofMergeServices,
+                                    int numOfMirrorServices)
+      throws Exception {
     List<AbstractService> listOfServices = new ArrayList<AbstractService>();
     setUP(confFile, clustersToProcess, listOfServices);
-    
+
     Assert.assertEquals(numOfPurgerServices, getNumOfPurgerServices(
         listOfServices));
     Assert.assertEquals(numOfLocalServices, getNumOfLocalStreamServices(
@@ -44,9 +43,9 @@ public class TestConduitInitialization {
     Assert.assertEquals(numofMergeServices, getNumOfMergeStreamServices(
         listOfServices));
     Assert.assertEquals(numOfMirrorServices, getNumOfMirrorStreamServices(
-        listOfServices));  
+        listOfServices));
   }
-  
+
   /*
    * Expected O/P:
    * Local stream services  - 1, Merge Stream services  - 4, 
@@ -59,7 +58,7 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 6, 1, 6,
         0);
   }
-  
+
   /*
    * Expected O/P:
    * Local stream services  - 1, Merge Stream services  - 4, 
@@ -72,7 +71,7 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 6, 1, 4,
         3);
   }
-  
+
   /*
    * Expected O/P:
    * Local stream services  - 1, Merge Stream services  - 4, 
@@ -85,7 +84,7 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 4, 1, 4,
         3);
   }
-  
+
   /*
    * Expected O/P:
    * Local stream services  - 0, Merge Stream services  - 4, 
@@ -97,7 +96,7 @@ public class TestConduitInitialization {
     clustersToProcess.add("testcluster4");
     testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 0, 1, 4, 0);
   }
-  
+
   /*
    * Expected O/P:
    * Local stream services  - 1, Merge Stream services  - 4, 
@@ -110,7 +109,7 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 4, 1, 4,
         0);
   }
-  
+
   /*
    * Local stream service -- 4. 
    * Ex: testcluster1, testcluster2, testcluster3, testcluster5 are the sources 
@@ -158,7 +157,7 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 20, 5,
         22, 6);
   }
-  
+
   @Test
   public void testConfWithMultipleClusters() throws Exception {
     Set<String> clustersToProcess = new HashSet<String>();
@@ -168,7 +167,7 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-combo-conduit.xml", clustersToProcess, 12, 3,
         14, 3);
   }
-  
+
   /*
    * testcluster1---- local stream service and purger service will be populated
    */
@@ -177,6 +176,22 @@ public class TestConduitInitialization {
     Set<String> clustersToProcess = new HashSet<String>();
     clustersToProcess.add("testcluster1");
     testServicesOnCluster("test-lss-conduit.xml", clustersToProcess, 1, 1, 0, 0);
+  }
+
+  @Test
+  public void testDisabledLocalStreamService() throws Exception {
+    Set<String> clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    testServicesOnCluster("test-lss-disable-conduit.xml", clustersToProcess, 0, 1, 2, 0);
+
+    clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster2");
+    testServicesOnCluster("test-lss-disable-conduit.xml", clustersToProcess, 1, 1, 0, 0);
+
+    clustersToProcess = new HashSet<String>();
+    clustersToProcess.add("testcluster1");
+    clustersToProcess.add("testcluster2");
+    testServicesOnCluster("test-lss-disable-conduit.xml", clustersToProcess, 1, 2, 2, 0);
   }
 
   /*
@@ -194,7 +209,7 @@ public class TestConduitInitialization {
     testServicesOnCluster("test-mergedss-conduit.xml", clustersToProcess, 1, 1, 0,
         0);
   }
-  
+
   /*
    * testcluster2--- merged and purger services  (2 services)
    */
@@ -250,8 +265,7 @@ public class TestConduitInitialization {
     return numOfLocalServices;
   }
 
-  protected int getNumOfMergeStreamServices(List<AbstractService> listOfServices) 
-  {
+  protected int getNumOfMergeStreamServices(List<AbstractService> listOfServices) {
     int numOfMergeServices = 0;
     for (AbstractService service : listOfServices) {
       if (service instanceof MergedStreamService) {

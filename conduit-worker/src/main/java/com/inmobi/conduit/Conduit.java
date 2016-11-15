@@ -26,7 +26,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.inmobi.conduit.distcp.MergedStreamService;
+import com.inmobi.conduit.distcp.MirrorStreamService;
 import com.inmobi.conduit.local.LocalStreamService;
+import com.inmobi.conduit.metrics.ConduitMetrics;
+import com.inmobi.conduit.purge.DataPurgerService;
+import com.inmobi.conduit.utils.FileUtil;
+import com.inmobi.conduit.utils.SecureLoginUtil;
+import com.inmobi.conduit.zookeeper.CuratorLeaderManager;
+import com.inmobi.messaging.ClientConfig;
+import com.inmobi.messaging.publisher.MessagePublisher;
+import com.inmobi.messaging.publisher.MessagePublisherFactory;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,20 +45,8 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
-
-import com.inmobi.conduit.metrics.ConduitMetrics;
-import com.inmobi.conduit.distcp.MergedStreamService;
-import com.inmobi.conduit.distcp.MirrorStreamService;
-import com.inmobi.conduit.purge.DataPurgerService;
-import com.inmobi.conduit.utils.FileUtil;
-import com.inmobi.conduit.utils.SecureLoginUtil;
-import com.inmobi.conduit.zookeeper.CuratorLeaderManager;
-import com.inmobi.messaging.ClientConfig;
-import com.inmobi.messaging.publisher.MessagePublisher;
-import com.inmobi.messaging.publisher.MessagePublisherFactory;
 
 public class Conduit implements Service, ConduitConstants {
   private static Logger LOG = Logger.getLogger(Conduit.class);
@@ -142,7 +140,12 @@ public class Conduit implements Service, ConduitConstants {
         Set<String> streamsToProcess = new HashSet<String>();
         while (iterator.hasNext()) {
           for (int i = 0; i < numStreamsLocalService && iterator.hasNext(); i++) {
-            streamsToProcess.add(iterator.next());
+            String stream = iterator.next();
+            if (config.getSourceStreams().get(stream).getEnabledSources().contains(cluster.getName())) {
+              streamsToProcess.add(stream);
+            } else {
+              LOG.info("Stream " + stream + " not configured for local stream processing");
+            }
           }
           if (streamsToProcess.size() > 0) {
             services.add(getLocalStreamService(config, cluster, currentCluster,

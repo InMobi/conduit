@@ -92,7 +92,7 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
       String rootDir = getTextValue((Element) configList.item(0), ROOTDIR);
       if (rootDir == null)
         throw new ParseException("rootdir element not found in defaults", 0);
-      
+
       defaults.put(ROOTDIR, rootDir);
       String retention = getTextValue((Element) configList.item(0),
           RETENTION_IN_HOURS);
@@ -192,6 +192,7 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
   }
 
   private SourceStream getStream(Element el) throws Exception {
+    Set<String> enabledSources = new HashSet<String>();
     Map<String, Integer> sourceStreams = new HashMap<String, Integer>();
     // get sources for each stream
     String streamName = el.getAttribute(NAME);
@@ -207,18 +208,28 @@ public class ConduitConfigParser implements ConduitConfigParserTags {
     }
     NodeList sourceList = el.getElementsByTagName(SOURCE);
     for (int i = 0; i < sourceList.getLength(); i++) {
+
       Element source = (Element) sourceList.item(i);
       // for each source
       String clusterName = getTextValue(source, NAME);
       int rententionInHours = getRetention(source, RETENTION_IN_HOURS);
+      String isEnabledStr = source.getAttribute(IS_STREAM_ENABLED);
+      boolean isEnabled = true;
+      if (null != isEnabledStr && !isEnabledStr.isEmpty()) {
+        isEnabled = Boolean.parseBoolean(isEnabledStr);
+      }
+      logger.info("isEnabled flag is " + isEnabled + " for localstream for clusterName " + clusterName);
       logger.debug(" StreamSource :: streamname " + streamName
           + " retentioninhours " + rententionInHours + " " + "clusterName "
-          + clusterName + " isHCatEnabled " + isHCatEnabled);
+          + clusterName + " isHCatEnabled " + isHCatEnabled + " isEnabled " + isEnabled);
+      if (isEnabled) {
+        enabledSources.add(clusterName);
+      }
       sourceStreams.put(clusterName, new Integer(rententionInHours));
     }
     // get all destinations for this stream
     readConsumeStreams(streamName, el, isHCatEnabled);
-    return new SourceStream(streamName, sourceStreams, isHCatEnabled);
+    return new SourceStream(streamName, sourceStreams, isHCatEnabled, enabledSources);
   }
 
   private void readConsumeStreams(String streamName, Element el,
