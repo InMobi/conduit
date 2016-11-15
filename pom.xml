@@ -15,7 +15,7 @@
     <module>conduit-distcp</module>
     <module>conduit-worker</module>
     <module>conduit-dist</module>
-    <!--<module>conduit-audit</module>-->
+    <module>conduit-audit</module>
     <!--<module>conduit-visualization</module>-->
   </modules>
 

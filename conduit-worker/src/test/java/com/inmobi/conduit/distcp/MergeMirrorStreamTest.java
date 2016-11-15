@@ -193,7 +193,7 @@ public class MergeMirrorStreamTest extends TestMiniClusterUtil {
     Assert.assertEquals(ConduitMetrics.<SlidingTimeWindowGauge>getMetric("MirrorStreamService",AbstractService.RETRY_CHECKPOINT,"test1").getValue().longValue() , 0);
   }
 
-  @Test
+//  @Test
   public void testMergeStreamWithCurrentClusterName() throws Exception {
     // test where LocalStreamService runs of cluster1, cluster2,
     // cluster3 all run on cluster5
