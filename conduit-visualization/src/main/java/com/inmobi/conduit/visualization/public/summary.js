@@ -12,11 +12,10 @@ function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency,
   //loadLatencySummary();
 }
 
-function addSummaryBox(treeList) {
-  console.log("adding summary box with isCountView:" + isCountView);
-  clearSummary();
+function addSummaryBox() {
+	clearSummary();
   if (isCountView) {
-    loadCountSummary(treeList);
+    loadCountSummary();
   } else {
     loadLatencySummary();
   }
@@ -42,48 +41,83 @@ function loadLatencySummary() {
   }
 }
 
-function loadCountSummary(treeList) {
-  console.log("loading count summary");
-  var publisherCount = 0,
-    agentReceivedCount = 0,
-    agentSentCount = 0,
-    collectorReceivedCount = 0,
-    collectorSentCount = 0,
-    hdfsCount = 0,
-    localCount = 0,
-    mergeCount = 0,
-    mirrorCount = 0;
-  treeList.forEach(function (cl) {
-    cl.forEach(function (n) {
-      switch (n.tier.toLowerCase()) {
-      case 'publisher':
-        publisherCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'agent':
-        agentReceivedCount += parseInt(n.aggregatemessagesreceived, 10);
-        agentSentCount += parseInt(n.aggregatemessagesent, 10);
-        break;
-      case 'collector':
-        collectorReceivedCount += parseInt(n.aggregatemessagesreceived, 10);
-        collectorSentCount += parseInt(n.aggregatemessagesent, 10);
-        break;
-      case 'hdfs':
-        hdfsCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'local':
-        localCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'merge':
-        mergeCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
-      case 'mirror':
-        mirrorCount += parseInt(n.aggregatemessagesreceived, 10);
-        break;
+function calculateCount(n, totalCountMap) {
+  switch (n.tier.toLowerCase()) {
+    case 'publisher':
+      if (totalCountMap['publisher'] == undefined) {
+        totalCountMap['publisher'] = 0;
       }
-    });
+      totalCountMap['publisher'] += n.aggregatemessagesreceived;
+      break;
+    case 'agent':
+      if (totalCountMap['agent'] == undefined) {
+        totalCountMap['agent'] = new Object();
+      }
+      if (totalCountMap['agent']['received'] == undefined) {
+        totalCountMap['agent']['received'] = 0;
+      }
+      totalCountMap['agent']['received'] += n.aggregatemessagesreceived;
+      if (totalCountMap['agent']['sent'] == undefined) {
+        totalCountMap['agent']['sent'] = 0;
+      }
+      totalCountMap['agent']['sent'] += n.aggregatemessagesent;
+      break;
+    case 'collector':
+      if (totalCountMap['collector'] == undefined) {
+        totalCountMap['collector'] = new Object();
+      }
+      if (totalCountMap['collector']['received'] == undefined) {
+        totalCountMap['collector']['received'] = 0;
+      }
+      totalCountMap['collector']['received'] += n.aggregatemessagesreceived;
+      if (totalCountMap['collector']['sent'] == undefined) {
+        totalCountMap['collector']['sent'] = 0;
+      }
+      totalCountMap['collector']['sent'] += n.aggregatemessagesent;
+      break;
+    case 'hdfs':
+      if (totalCountMap['hdfs'] == undefined) {
+        totalCountMap['hdfs'] = 0;
+      }
+      totalCountMap['hdfs'] += n.aggregatemessagesreceived;
+      break;
+    case 'local':
+      if (totalCountMap['local'] == undefined) {
+        totalCountMap['local'] = 0;
+      }
+      totalCountMap['local'] += n.aggregatemessagesreceived;
+      break;
+    case 'merge':
+      if (totalCountMap['merge'] == undefined) {
+        totalCountMap['merge'] = 0;
+      }
+      totalCountMap['merge'] += n.aggregatemessagesreceived;
+      break;
+    case 'mirror':
+      if (totalCountMap['mirror'] == undefined) {
+        totalCountMap['mirror'] = 0;
+      }
+      totalCountMap['mirror'] += n.aggregatemessagesreceived;
+      break;
+  }  
+  n.children.forEach(function(c) {
+    if (!isDummyNode(c)) {
+      calculateCount(c, totalCountMap);
+    }
   });
-  document.getElementById("summaryPanel")
-    .innerHTML = "";
+}
+
+function loadCountSummary() {
+  console.log("loading count summary");
+  var totalCountMap = new Object();
+  for (var c in rootNodesMap) {
+    var tierMap = rootNodesMap[c];
+    for (var t in tierMap) {
+      var n = tierMap[t];
+      calculateCount(n, totalCountMap);
+    }
+  }
+  document.getElementById("summaryPanel").innerHTML = "";
   var div = document.createElement('div');
   var t = document.createElement('table');
   var currentRow = 0;
@@ -91,54 +125,51 @@ function loadCountSummary(treeList) {
     .insertCell(0)
     .innerHTML = "<b>Summary:</b>";
   div.appendChild(t);
-  document.getElementById("summaryPanel")
-    .appendChild(div);
+  document.getElementById("summaryPanel").appendChild(div);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Publisher",
-    publisherCount, 0, 0, false);
+    totalCountMap['publisher'], 0, 0, false);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Agent",
-    agentReceivedCount, agentSentCount, publisherCount, false);
+    totalCountMap['agent']['received'], totalCountMap['agent']['sent'], totalCountMap['publisher'], false);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Collector",
-    collectorReceivedCount, collectorSentCount, agentSentCount, false);
+    totalCountMap['collector']['received'], totalCountMap['collector']['sent'], totalCountMap['agent']['sent'], false);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "HDFS",
-    hdfsCount, 0, collectorSentCount, false);
+    totalCountMap['hdfs'], 0, totalCountMap['collector']['sent'], false);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Local",
-    localCount, 0, hdfsCount, false);
-  var comparableLocalNum = getComparableCountValue("local", "merge", treeList);
-  var comparableMergeNum = getComparableCountValue("merge", "mirror", treeList);
+    totalCountMap['local'], 0, totalCountMap['hdfs'], false);
+  var comparableLocalNum = getComparableCountValue("LOCAL", "MERGE");
+  var comparableMergeNum = getComparableCountValue("MERGE", "MIRROR");
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Merge",
-    mergeCount, 0, comparableLocalNum, true);
+    totalCountMap['merge'], 0, comparableLocalNum, true);
   currentRow = addTierCountDetailsToSummary(div, currentRow, "Mirror",
-    mirrorCount, 0, comparableMergeNum, true);
+    totalCountMap['mirror'], 0, comparableMergeNum, true);
 }
 
-function getComparableCountValue(sourceTier, targetTier, treeList) {
+function getComparableCountValue(sourceTier, targetTier) {
+  // Return -1 if no nodes of targetTier or sourceTier are found in the rootNodesMap
+  // else return corresponding number of messages sent by sourceTier
   var count = -1;
-  for (var i = 0; i < rootNodes.length; i++) {
-    if (rootNodes[i].tier.equalsIgnoreCase(targetTier)) {
+  for (var c in rootNodesMap) {
+    var node = rootNodesMap[c][targetTier];
+    if (node != undefined) {
       if (count == -1) {
         count = 0;
       }
-      var tnode = rootNodes[i];
-      tnode.streamSourceList.forEach(function (topicList) {
-        var topic = topicList.topic;
-        topicList.source.forEach(function (cluster) {
+      for (var t in node.topicSourceMap) {
+        node.topicSourceMap[t].forEach(function(cluster) {
           var isFound = false;
-          for (var i = 0; i < rootNodes.length; i++) {
-            if (rootNodes[i].tier.equalsIgnoreCase(sourceTier) && rootNodes[
-              i].clusterName == cluster) {
-              isFound = true;
-              rootNodes[i].allreceivedtopicstats.forEach(function (stats) {
-                if (stats.topic == topic) {
-                  count += stats.messages;
-                }
-              });
+          var sourceNode = rootNodesMap[cluster][sourceTier];
+          if (sourceNode != undefined) {
+            isFound = true;
+            var num = sourceNode.topicReceivedMap[t];
+            if (num != undefined) {
+              count += num;
             }
           }
           if (!isFound) {
             return -1;
           }
         });
-      });
+      }
     }
   }
   return count;
@@ -253,6 +284,15 @@ function appendHealthStatusIndicator(id, health) {
 
 function addTierCountDetailsToSummary(div, currentRow, tier, received, sent,
   childCount) {
+  if (received == undefined) {
+    received = 0;
+  }
+  if (sent == undefined) {
+    sent = 0;
+  }
+  if (childCount == undefined) {
+    childCount = 0;
+  }
   var health;
   if (tier == 'Publisher' && received != 0) {
     health = 0;
