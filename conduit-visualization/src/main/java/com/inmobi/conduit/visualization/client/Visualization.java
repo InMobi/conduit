@@ -43,8 +43,15 @@ public class Visualization implements EntryPoint, ClickHandler {
   private int rolledUpTillDays;
   private int dailyRolledUpTillDays;
   DataServiceWrapper serviceInstance = new DataServiceWrapper();
+  private static Visualization instance;
+
+  public void init() {
+    instance = this;
+  }
 
   public void onModuleLoad() {
+    init();
+    exportSummaryQueryFunction();
     buildStreamsAndClustersList();
   }
 
@@ -653,4 +660,18 @@ public class Visualization implements EntryPoint, ClickHandler {
     hdfsSla, localSla, mergeSla, mirrorSla, percentileForSla,
     percentageForLoss, percentageForWarn, lossWarnThresholdDiff,isDevMode);
   }-*/;
+
+  public static native void exportSummaryQueryFunction()/*-{
+    $wnd.fireLatencyQuery = @com.inmobi.conduit.visualization.client.Visualization::fireLatencyQuery(*);
+  }-*/;
+
+  public static void fireLatencyQuery(String stTime, String edTime,
+                                      String selectedCluster, String selectedStream) {
+    System.out.println("Query start:"+stTime+", Query end:"+edTime+", " +
+        "Query stream:"+selectedCluster+",Query cluster:"+selectedStream);
+
+    String clientJson = ClientDataHelper.getInstance()
+        .setGraphDataRequest(stTime, edTime, selectedStream, selectedCluster);
+    instance.getTierLatencyData(clientJson);
+  }
 }

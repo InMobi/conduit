@@ -9,7 +9,7 @@ function setTierLatencyValues(pLatency, aLatency, cLatency, hLatency, lLatency,
   tierLatencyMap["local"] = lLatency;
   tierLatencyMap["merge"] = meLatency;
   tierLatencyMap["mirror"] = miLatency;
-  //loadLatencySummary();
+  loadLatencySummary();
 }
 
 function addSummaryBox(treeList) {
