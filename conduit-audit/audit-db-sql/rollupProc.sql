@@ -10,6 +10,7 @@ DECLARE
  selectquery text;
  valueString text;
  disinherit text;
+ dropTable text;
  inherit text;
  destRowsRet integer;
  srcRowsRet integer;
@@ -35,6 +36,8 @@ disinherit = 'ALTER TABLE ' || srcTable || ' NO INHERIT ' || masterTable ;
 EXECUTE disinherit;
 inherit = 'ALTER TABLE ' || destTable || ' INHERIT ' || masterTable ;
 EXECUTE inherit;
+dropTable = 'DROP TABLE ' || srcTable ;
+EXECUTE dropTable;
 END IF;
 END;
 $BODY$
