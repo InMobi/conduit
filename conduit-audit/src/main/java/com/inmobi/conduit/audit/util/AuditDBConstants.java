@@ -36,4 +36,12 @@ public interface AuditDBConstants {
   public static final String DEFAULT_DAILY_CHECKPOINT_KEY = "dailyRollupChkPt";
   public static final int DEFAULT_GAP_BTW_ROLLUP_TILLDAYS = 30;
   public static final int DEFAULT_HOURLY_ROLLUP_TILLDAYS = 5;
+
+  public static final String KDC_REFERESH_KEY = "kdc.referesh.interval.miniutes";
+  public static final int DEFAULT_KDC_REFERESH_VALUE_MINUTES = 360;
+  public static final String KERBEROSE_ENABLED_KEY = "kerberos.isenabled";
+  public static final boolean DEFAULT_KERBEROSE_ENABLED_VALUE = false;
+  public static final String KDC_PRINCIPAL = "kdc.principal";
+  public static final String KDC_KEYTAB = "kdc.keytab";
+
 }

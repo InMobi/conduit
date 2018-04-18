@@ -4,15 +4,23 @@ import com.inmobi.conduit.FSCheckpointProvider;
 import com.inmobi.conduit.audit.util.AuditDBConstants;
 import com.inmobi.conduit.audit.util.AuditDBHelper;
 import com.inmobi.messaging.ClientConfig;
+import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.SecurityUtil;
+import org.apache.hadoop.security.UserGroupInformation;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public abstract class AuditDBService implements Runnable {
   // Rollup check point directory and key are added to parent class since
@@ -42,8 +50,63 @@ public abstract class AuditDBService implements Runnable {
 
   @Override
   public void run() {
+    boolean isKerberoseEnabled = config.getBoolean(AuditDBConstants.KERBEROSE_ENABLED_KEY,
+            AuditDBConstants.DEFAULT_KERBEROSE_ENABLED_VALUE);
+
+    LOG.info("Kerberose Authentication : " + isKerberoseEnabled);
+
+    if (isKerberoseEnabled) {
+      LOG.info("Starting timertask for KDC ticket refresh.");
+      refereshKDCTicket();
+    }
+
     execute();
   }
+
+  private void refereshKDCTicket() {
+    try {
+      Timer t = new Timer();
+
+      int interval = config.getInteger(AuditDBConstants.KDC_REFERESH_KEY,
+              AuditDBConstants.DEFAULT_KDC_REFERESH_VALUE_MINUTES);
+
+      final String principal = config.getString(AuditDBConstants.KDC_PRINCIPAL);
+      final String keytabFilePath = config.getString(AuditDBConstants.KDC_KEYTAB);
+
+      LOG.info("KDC ticket referesh interval : " + interval);
+
+      t.scheduleAtFixedRate(new TimerTask() {
+
+        @Override
+        public void run() {
+          try {
+            refreshLensTGT(principal, keytabFilePath);
+          } catch (Exception e) {
+            LOG.error("Unable to referesh KDC ticket... " + e.toString());
+        }
+      }
+
+    },0,interval);
+
+    } catch (Exception ex) {
+      LOG.error("Unable to start KDC refresh thread, " + ex.toString());
+      throw new RuntimeException(ex);
+    }
+  }
+
+  private void refreshLensTGT(String principal, String keytabFilePath) throws IOException, IllegalArgumentException {
+
+    Configuration hadoopConf = new Configuration();
+    hadoopConf.set("hadoop.security.authentication", "kerberos");
+
+    UserGroupInformation.setConfiguration(hadoopConf);
+
+    UserGroupInformation.loginUserFromKeytab(principal, keytabFilePath);
+
+    LOG.info("Got Kerberos ticket, keytab: " + keytabFilePath + ", Lens principal: " + principal);
+
+  }
+
 
   public void start() {
     thread = new Thread(this, getServiceName());
